@@ -87,6 +87,29 @@ function updateSave(patch) {
   localStorage.setItem(WORLD_SAVE_KEY, JSON.stringify({ ...getSave(), ...patch }));
 }
 
+async function saveProgressServer(payload) {
+  try {
+    const response = await fetch("/FYP/api/save_progress.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) return false;
+    const data = await response.json();
+    return Boolean(data.ok);
+  } catch {
+    return false;
+  }
+}
+
+function questionSkillCode(question) {
+  const raw = String(question?.skill || question?.primarySkill || "VOCABULARY").toUpperCase();
+  if (raw === "SENTENCECONSTRUCTION") return "SENTENCE_CONSTRUCTION";
+  if (raw === "ITENGLISH") return "IT_ENGLISH";
+  if (raw === "GRAMMAR") return "GRAMMAR";
+  return raw;
+}
+
 function formatType(type) {
   return type === "TRUE_FALSE" ? "TRUE / FALSE"
     : type === "ODD_WORD_OUT" ? "ODD WORD OUT"
@@ -258,6 +281,16 @@ function resolve(value, button, timedOut) {
     power: Number(saved.power || 0) + Number(q.englishPower || 1)
   });
 
+  void saveProgressServer({
+    xpDelta: Number(q.xp || 10),
+    coinDelta: Number(q.coins || 5),
+    englishPowerDelta: Number(q.englishPower || 1),
+    englishSkillCode: questionSkillCode(q),
+    sourceType: "QUESTION",
+    sourceId: null,
+    description: "Question reward: " + q.id
+  });
+
   playAttackAnimation();
   updateHp();
   ui.battleMessage.textContent = "Direct hit! English Power deals " + damage + " damage.";
@@ -324,7 +357,7 @@ function returnToMapAfterBattle() {
   window.clearInterval(state.timerId);
   sessionStorage.setItem("englishPowerQuest.escape.v1", state.enemy.id);
   sessionStorage.removeItem(BATTLE_KEY);
-  window.location.href = "/FYP/index.html";
+  window.location.href = "/FYP/index.php";
 }
 
 function runAway() {
@@ -374,7 +407,7 @@ function showResult(victory, title, text, rewards) {
     if (victory) {
       sessionStorage.removeItem(BATTLE_KEY);
       sessionStorage.removeItem("englishPowerQuest.escape.v1");
-      window.location.href = "/FYP/index.html";
+      window.location.href = "/FYP/index.php";
     } else {
       window.location.reload();
     }
@@ -398,6 +431,16 @@ function finishVictory() {
     questStep: state.enemy.id === "slime-01"
       ? Math.max(Number(saved.questStep || 0), 2)
       : Number(saved.questStep || 0)
+  });
+
+  void saveProgressServer({
+    xpDelta: state.enemy.xp,
+    coinDelta: state.enemy.coins,
+    englishPowerDelta: 2,
+    englishSkillCode: "VOCABULARY",
+    sourceType: "ENEMY",
+    sourceId: state.enemy.id === "slime-01" ? 1 : state.enemy.id === "bat-01" ? 2 : 3,
+    description: "Defeated " + state.enemy.name
   });
 
   showResult(
