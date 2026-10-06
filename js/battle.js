@@ -314,6 +314,8 @@ function resolve(value, button, timedOut) {
   if (state.enemyHp <= 0) {
     window.setTimeout(finishVictory, 800);
   } else {
+    // Keep FIGHT mode active: one FIGHT selection starts a continuous
+    // question battle until victory/defeat.
     window.setTimeout(enemyTurn, 900);
   }
 }
@@ -328,7 +330,9 @@ function enemyTurn() {
   if (state.playerHp <= 0) {
     window.setTimeout(finishDefeat, 800);
   } else {
-    window.setTimeout(showBattleMenu, 750);
+    // Do not return to the command menu after every question.
+    // Continue directly with the next English challenge.
+    window.setTimeout(startQuestion, 750);
   }
 }
 
@@ -349,7 +353,8 @@ function useSkill() {
   ui.battleMessage.textContent = "Knowledge Focus activated! Your next correct FIGHT deals +50% damage.";
   showMenu("Knowledge Focus", "The next correct English attack is empowered.");
   
-  // A skill consumes the player's turn.
+  // A skill consumes the player's turn. After the enemy attacks,
+  // the next English question starts automatically.
   window.setTimeout(enemyTurn, 850);
 }
 function useItem() {
@@ -507,7 +512,7 @@ function bindBattleEvents() {
     event.preventDefault();
     if (state.completed) return;
     showQuestionPanel();
-    ui.battleMessage.textContent = "FIGHT selected! Use your English to attack.";
+    ui.battleMessage.textContent = "FIGHT selected! Keep answering to defeat the enemy.";
     startQuestion();
   });
 
