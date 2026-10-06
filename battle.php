@@ -31,6 +31,7 @@ session_start();
         <div class="monster-name-box">
           <strong id="battleEnemyLabel">WORD SLIME</strong>
           <span id="battleEnemyRole">WORD CREATURE</span>
+          <span class="enemy-difficulty-tag" id="enemyDifficulty">EASY</span>
         </div>
         <div class="hp-card enemy">
           <div class="hp-top"><span>HP</span><b id="enemyHpText">60 / 60</b></div>
@@ -110,6 +111,6 @@ session_start();
     </div>
   </main>
 
-  <script type="module" src="/FYP/js/battle.js?v=20261006-06-05"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261006-07"></script>
 </body>
 </html>
