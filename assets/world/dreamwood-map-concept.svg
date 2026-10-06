@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#123e4d"/><stop offset="1" stop-color="#6d8f91"/>
+    </linearGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#496b70"/><stop offset="1" stop-color="#1b343b"/>
+    </linearGradient>
+    <pattern id="pixelGrass" width="28" height="18" patternUnits="userSpaceOnUse">
+      <rect width="28" height="18" fill="#6d8a4c"/>
+      <rect x="3" y="4" width="5" height="3" fill="#8da85a"/>
+      <rect x="17" y="10" width="4" height="3" fill="#4f713f"/>
+    </pattern>
+    <filter id="soft"><feGaussianBlur stdDeviation="3"/></filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <circle cx="1300" cy="190" r="82" fill="#e8d18d" opacity=".9"/>
+  <g opacity=".25" fill="#dbe3df" filter="url(#soft)">
+    <path d="M0 220 Q150 150 300 225 T620 220 T950 225 T1280 215 T1600 220 V340 H0Z"/>
+  </g>
+
+  <!-- distant mountains -->
+  <path d="M0 390 L180 270 330 390 470 240 650 390 820 230 1010 390 1180 250 1370 390 1510 280 1600 340 V500 H0Z" fill="#455d62"/>
+  <path d="M0 425 L240 330 390 430 560 310 720 430 900 300 1080 430 1260 315 1450 430 1600 350 V520 H0Z" fill="#344b51"/>
+
+  <!-- trees -->
+  <g>
+    <g transform="translate(120 300)"><rect x="35" y="90" width="18" height="130" fill="#4a3928"/><circle cx="44" cy="72" r="78" fill="#23482d"/><circle cx="5" cy="92" r="50" fill="#1d3d28"/><circle cx="82" cy="95" r="55" fill="#2c5430"/></g>
+    <g transform="translate(300 310)"><rect x="42" y="80" width="17" height="135" fill="#4a3928"/><circle cx="50" cy="62" r="78" fill="#315a31"/><circle cx="8" cy="85" r="52" fill="#24472a"/><circle cx="91" cy="88" r="55" fill="#3a6838"/></g>
+    <g transform="translate(1080 315)"><rect x="45" y="80" width="18" height="130" fill="#4a3928"/><circle cx="54" cy="58" r="80" fill="#274a2e"/><circle cx="10" cy="90" r="55" fill="#1e3d27"/><circle cx="98" cy="88" r="55" fill="#356237"/></g>
+    <g transform="translate(1370 305)"><rect x="42" y="90" width="18" height="130" fill="#4a3928"/><circle cx="50" cy="65" r="76" fill="#2d5730"/><circle cx="8" cy="92" r="50" fill="#21442a"/><circle cx="91" cy="88" r="55" fill="#3b6837"/></g>
+  </g>
+
+  <!-- ground -->
+  <rect y="505" width="1600" height="115" fill="url(#pixelGrass)"/>
+  <path d="M0 610 H1600 V660 H0Z" fill="#493a2d"/>
+  <path d="M0 660 H1600 V900 H0Z" fill="url(#water)"/>
+  <g opacity=".45" stroke="#9bb0ad" stroke-width="3">
+    <path d="M0 705 H420 M560 740 H980 M1110 700 H1510 M80 815 H520 M700 850 H1450"/>
+  </g>
+
+  <!-- village house -->
+  <g transform="translate(95 385)">
+    <rect x="0" y="80" width="245" height="125" fill="#b98d62" stroke="#33271f" stroke-width="8"/>
+    <path d="M-20 85 L120 0 270 85Z" fill="#5b382d" stroke="#2c2320" stroke-width="9"/>
+    <rect x="88" y="125" width="54" height="80" fill="#4a3025"/>
+    <rect x="30" y="112" width="38" height="35" fill="#8ec1bd" stroke="#2e3431" stroke-width="6"/>
+    <rect x="175" y="112" width="38" height="35" fill="#8ec1bd" stroke="#2e3431" stroke-width="6"/>
+    <rect x="15" y="65" width="215" height="12" fill="#d4b179"/>
+    <circle cx="25" cy="170" r="10" fill="#f2b84b"/><circle cx="225" cy="170" r="10" fill="#f2b84b"/>
+  </g>
+
+  <!-- sign and lanterns -->
+  <g transform="translate(430 425)">
+    <rect x="4" y="0" width="10" height="105" fill="#533b29"/>
+    <rect x="-35" y="-8" width="88" height="45" rx="5" fill="#254c62" stroke="#d7bd77" stroke-width="5"/>
+    <text x="9" y="20" text-anchor="middle" font-family="monospace" font-size="18" fill="#f4e4b0">MAPLE</text>
+  </g>
+  <g fill="#f5bd55" stroke="#4a3828" stroke-width="5">
+    <rect x="520" y="455" width="24" height="40"/><rect x="965" y="455" width="24" height="40"/>
+  </g>
+
+  <!-- bridge -->
+  <g transform="translate(1070 505)">
+    <rect x="0" y="0" width="360" height="28" fill="#7b5638" stroke="#3d2b20" stroke-width="7"/>
+    <path d="M20 0 V75 M85 0 V75 M150 0 V75 M215 0 V75 M280 0 V75 M345 0 V75" stroke="#493326" stroke-width="12"/>
+  </g>
+
+  <!-- player -->
+  <g transform="translate(735 405)">
+    <ellipse cx="34" cy="118" rx="45" ry="12" fill="#17252a" opacity=".5"/>
+    <rect x="18" y="50" width="34" height="58" rx="8" fill="#9b463f"/>
+    <rect x="22" y="80" width="12" height="38" fill="#2b2730"/><rect x="39" y="80" width="12" height="38" fill="#2b2730"/>
+    <circle cx="35" cy="36" r="22" fill="#d79b72"/>
+    <path d="M9 36 Q35 5 62 36 L55 24 Q35 8 15 25Z" fill="#20253a"/>
+    <path d="M4 62 Q35 40 66 62 L56 91 Q35 80 14 91Z" fill="#243b5b"/>
+    <rect x="58" y="63" width="8" height="62" fill="#d7c38c" transform="rotate(-35 58 63)"/>
+  </g>
+
+  <!-- Elder Rowan -->
+  <g transform="translate(520 410)">
+    <ellipse cx="34" cy="112" rx="38" ry="10" fill="#17252a" opacity=".45"/>
+    <path d="M7 110 Q34 48 61 110Z" fill="#53606a"/>
+    <circle cx="34" cy="40" r="20" fill="#d9ad87"/>
+    <path d="M15 45 Q34 10 53 45 Q42 33 26 35Z" fill="#e2ddd2"/>
+    <rect x="63" y="44" width="8" height="74" fill="#64472d"/>
+    <path d="M57 44 Q67 25 77 44Z" fill="#d0b875"/>
+  </g>
+
+  <!-- quest marker -->
+  <g transform="translate(560 325)">
+    <path d="M20 0 L40 12 V42 Q20 58 0 42 V12Z" fill="#f0c64c" stroke="#4c3822" stroke-width="6"/>
+    <text x="20" y="36" text-anchor="middle" font-family="monospace" font-size="28" font-weight="bold" fill="#3d2c1e">!</text>
+  </g>
+
+  <!-- distant castle -->
+  <g transform="translate(1210 260)" fill="#252f43" stroke="#1b2433" stroke-width="8">
+    <rect x="0" y="100" width="300" height="160"/>
+    <rect x="30" y="35" width="65" height="225"/><rect x="120" y="0" width="70" height="260"/><rect x="215" y="55" width="58" height="205"/>
+    <path d="M25 35 L62 0 100 35Z M112 0 L155 -40 198 0Z M208 55 L244 18 280 55Z"/>
+  </g>
+  <g fill="#f1bf64"><rect x="55" y="105" width="16" height="30"/><rect x="145" y="80" width="16" height="30"/><rect x="230" y="120" width="14" height="28"/></g>
+
+  <!-- title plate -->
+  <g transform="translate(48 48)">
+    <rect width="420" height="92" rx="12" fill="#101b25" opacity=".92" stroke="#d7bd77" stroke-width="4"/>
+    <text x="24" y="38" font-family="Georgia,serif" font-size="28" fill="#f4e4b0">ENGLISH POWER QUEST</text>
+    <text x="24" y="70" font-family="monospace" font-size="20" fill="#9fc5c7">DREAMWOOD · MAPLE TOWN</text>
+  </g>
+
+  <!-- quest panel -->
+  <g transform="translate(1190 48)">
+    <rect width="350" height="130" rx="10" fill="#e2c98e" stroke="#493723" stroke-width="6"/>
+    <text x="22" y="36" font-family="Georgia,serif" font-size="22" font-weight="bold" fill="#35291e">MAIN QUEST</text>
+    <text x="22" y="68" font-family="monospace" font-size="22" fill="#35291e">THE SILENT VILLAGE</text>
+    <text x="22" y="98" font-family="monospace" font-size="16" fill="#4e4030">Talk to Elder Rowan</text>
+    <text x="22" y="119" font-family="monospace" font-size="16" fill="#4e4030">and begin the quest.</text>
+  </g>
+</svg>
