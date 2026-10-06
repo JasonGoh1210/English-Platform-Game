@@ -3,14 +3,168 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="description" content="English Power Quest - a fantasy RPG for improving English skills.">
   <title>English Power Quest</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <main id="app">
-    <h1>English Power Quest</h1>
-    <p>Game prototype loading...</p>
-  </main>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">ENGLISH POWER QUEST</p>
+        <h1>Dreamwood</h1>
+      </div>
+      <div class="topbar-actions">
+        <button id="soundToggle" class="icon-button" type="button" aria-label="Toggle sound">🔊</button>
+        <button id="resetSave" class="icon-button danger" type="button" aria-label="Reset save">↻</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="player-strip panel">
+        <div class="player-identity">
+          <div id="playerAvatar" class="avatar">🧙</div>
+          <div>
+            <p class="label">PLAYER</p>
+            <h2 id="playerName">Rookie</h2>
+            <p id="playerTier" class="muted">Level 1 · Rookie</p>
+          </div>
+        </div>
+
+        <div class="resource-group">
+          <div class="resource">
+            <div class="resource-header">
+              <span>HP</span>
+              <span id="playerHpText">100 / 100</span>
+            </div>
+            <div class="bar"><div id="playerHpBar" class="bar-fill hp"></div></div>
+          </div>
+          <div class="resource">
+            <div class="resource-header">
+              <span>XP</span>
+              <span id="xpText">0 / 100</span>
+            </div>
+            <div class="bar"><div id="xpBar" class="bar-fill xp"></div></div>
+          </div>
+        </div>
+
+        <div class="wallet">
+          <span>🪙 <strong id="coinsText">0</strong></span>
+          <span>⭐ <strong id="skillPointsText">0</strong></span>
+        </div>
+      </section>
+
+      <section class="growth-panel panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">PERSONAL GROWTH</p>
+            <h2>English Power</h2>
+          </div>
+          <strong id="totalPowerText" class="power-total">0</strong>
+        </div>
+
+        <div class="power-grid">
+          <div class="power-card"><span>Vocabulary</span><strong id="vocabularyPower">0</strong></div>
+          <div class="power-card"><span>Grammar</span><strong id="grammarPower">0</strong></div>
+          <div class="power-card"><span>Sentence</span><strong id="sentencePower">0</strong></div>
+          <div class="power-card"><span>IT English</span><strong id="itEnglishPower">0</strong></div>
+        </div>
+      </section>
+
+      <section class="arena panel">
+        <div class="arena-meta">
+          <span id="worldDescription">A magical forest of words and discovery.</span>
+          <span id="stageText">Stage 1 / 6</span>
+        </div>
+
+        <div class="battlefield">
+          <div class="character-side">
+            <div id="playerSprite" class="sprite player-sprite" aria-label="Player">🧙</div>
+            <div class="character-name">YOU</div>
+            <div id="comboBadge" class="combo-badge hidden">COMBO x1</div>
+          </div>
+
+          <div class="vs-mark">VS</div>
+
+          <div class="character-side enemy-side">
+            <div id="enemySprite" class="sprite enemy-sprite" aria-label="Enemy">🟢</div>
+            <div id="enemyName" class="character-name">Word Slime</div>
+            <div id="enemyType" class="enemy-type">SMALL MONSTER</div>
+            <div class="enemy-hp">
+              <div class="resource-header">
+                <span>HP</span>
+                <span id="enemyHpText">60 / 60</span>
+              </div>
+              <div class="bar"><div id="enemyHpBar" class="bar-fill enemy"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="bossPhase" class="boss-phase hidden"></div>
+        <div id="statusMessage" class="status-message">Choose your answer to attack.</div>
+      </section>
+
+      <section class="question-panel panel">
+        <div class="question-header">
+          <div>
+            <span id="questionType" class="tag">TRUE / FALSE</span>
+            <span id="questionDifficulty" class="tag difficulty">EASY</span>
+          </div>
+          <div id="timerText" class="timer">5.0s</div>
+        </div>
+
+        <h2 id="questionText">Loading question...</h2>
+        <p id="questionPrompt" class="question-prompt"></p>
+
+        <div id="answerArea" class="answer-grid" aria-live="polite"></div>
+
+        <div class="battle-actions">
+          <button id="nextQuestion" class="secondary-button hidden" type="button">Continue</button>
+        </div>
+      </section>
+
+      <section class="log-panel panel">
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">BATTLE LOG</p>
+            <h2>Adventure Notes</h2>
+          </div>
+          <span id="accuracyText" class="muted">Accuracy 0%</span>
+        </div>
+        <div id="battleLog" class="battle-log"></div>
+      </section>
+
+      <section class="skills-panel panel">
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">CHARACTER GROWTH</p>
+            <h2>Skill Tree</h2>
+          </div>
+          <span class="muted">Skill Points: <strong id="skillPointsText2">0</strong></span>
+        </div>
+        <div id="skillList" class="skill-list"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>English Power Quest MVP</span>
+      <span>Level up your character. Level up yourself.</span>
+    </footer>
+  </div>
+
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div id="modalIcon" class="modal-icon">🏆</div>
+      <p id="modalEyebrow" class="eyebrow">VICTORY</p>
+      <h2 id="modalTitle">Enemy Defeated!</h2>
+      <p id="modalText">You got stronger.</p>
+      <div id="modalRewards" class="modal-rewards"></div>
+      <button id="modalButton" class="primary-button" type="button">Continue</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
   <script type="module" src="js/main.js"></script>
 </body>
