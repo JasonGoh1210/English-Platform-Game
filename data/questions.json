@@ -1,0 +1,11 @@
+[
+  {
+    "id": 1,
+    "type": "TRUE_FALSE",
+    "skill": "VOCABULARY",
+    "difficulty": "EASY",
+    "question": "\"Huge\" means \"very large\".",
+    "answer": true,
+    "explanation": "Huge means very large."
+  }
+]
