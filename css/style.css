@@ -2202,3 +2202,31 @@ button { font: inherit; }
   42% { transform: translate(-58px,20px) !important; }
   100% { transform: translate(0,0) !important; }
 }
+
+/* HUD avatar: show only the upper body of the supplied full-body character */
+.pixel-avatar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.pixel-avatar img {
+  width: 82px;
+  height: 82px;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+  image-rendering: pixelated;
+  transform: translateY(8px) scale(1.28);
+  transform-origin: center top;
+}
+
+@media (max-width: 520px) {
+  .pixel-avatar img {
+    width: 72px;
+    height: 72px;
+    transform: translateY(7px) scale(1.2);
+  }
+}
