@@ -2183,3 +2183,22 @@ button { font: inherit; }
     bottom: 42px;
   }
 }
+
+/* Battle character: use the supplied player artwork exactly as uploaded */
+.battle-player-art {
+  content: url("/FYP/assets/player/dark-adventurer-exact.png");
+  object-fit: contain;
+  image-rendering: pixelated;
+  transform: none !important;
+  filter: drop-shadow(0 22px 18px rgba(0,0,0,.20));
+}
+
+.battle-player-art.attack {
+  animation: battlePlayerExactAttack 420ms ease;
+}
+
+@keyframes battlePlayerExactAttack {
+  0% { transform: translate(0,0) !important; }
+  42% { transform: translate(-58px,20px) !important; }
+  100% { transform: translate(0,0) !important; }
+}
