@@ -10,55 +10,89 @@
 <body class="battle-page">
   <main class="battle-screen">
     <header class="battle-header">
-      <div>
-        <span class="battle-kicker">ENCOUNTER</span>
+      <div class="battle-title">
+        <span class="battle-kicker">WILD ENCOUNTER</span>
         <h1 id="battleEnemyName">Word Slime</h1>
       </div>
-      <a class="back-link" href="/FYP/index.html">RETURN TO MAP</a>
+      <a class="back-link" href="/FYP/index.html">RUN TO MAP</a>
     </header>
 
-    <section class="battle-arena-page">
-      <div class="battle-character battle-character-player">
-        <div class="character-shadow"></div>
-        <div class="character-sprite player-figure">
-          <span class="cape"></span><span class="body"></span><span class="head"></span><span class="blade"></span>
+    <section class="battlefield-pokemon-layout" aria-label="Battle scene">
+      <div class="scene-haze haze-one"></div>
+      <div class="scene-haze haze-two"></div>
+
+      <div class="battle-monster monster-side">
+        <div class="monster-shadow"></div>
+        <div class="monster-sprite" id="enemyFigure">🟢</div>
+        <div class="monster-name-box">
+          <strong id="battleEnemyLabel">WORD SLIME</strong>
+          <span id="battleEnemyRole">WORD CREATURE</span>
         </div>
-        <strong>YOU</strong>
-        <span class="character-role">LANGUAGE ADVENTURER</span>
+        <div class="hp-card enemy">
+          <div class="hp-top"><span>HP</span><b id="enemyHpText">60 / 60</b></div>
+          <div class="battle-bar"><div id="enemyHpBar"></div></div>
+        </div>
       </div>
 
-      <div class="battle-vs">VS</div>
-
-      <div class="battle-character battle-character-enemy">
-        <div class="character-shadow"></div>
-        <div class="character-sprite enemy-figure" id="enemyFigure">🟢</div>
-        <strong id="battleEnemyLabel">WORD SLIME</strong>
-        <span class="character-role" id="battleEnemyRole">FOREST ENEMY</span>
+      <div class="battle-player player-side">
+        <div class="player-shadow"></div>
+        <div class="battle-character-sprite player-figure-large">
+          <span class="player-cape"></span>
+          <span class="player-body"></span>
+          <span class="player-head"></span>
+          <span class="player-sword"></span>
+        </div>
+        <div class="player-name-box">
+          <strong>YOU</strong>
+          <span>LANGUAGE ADVENTURER</span>
+        </div>
+        <div class="hp-card player">
+          <div class="hp-top"><span>HP</span><b id="playerHpText">100 / 100</b></div>
+          <div class="battle-bar"><div id="playerHpBar"></div></div>
+        </div>
       </div>
-      <div class="arena-lines"></div>
     </section>
 
-    <section class="battle-bars">
-      <div class="combatant-bar">
-        <div class="bar-label"><span>PLAYER HP</span><b id="playerHpText">100 / 100</b></div>
-        <div class="battle-bar"><div id="playerHpBar"></div></div>
-      </div>
-      <div class="combatant-bar">
-        <div class="bar-label"><span id="enemyDifficulty">EASY</span><b id="enemyHpText">60 / 60</b></div>
-        <div class="battle-bar"><div id="enemyHpBar"></div></div>
-      </div>
-    </section>
+    <section class="battle-command-zone">
+      <div class="battle-message-line" id="battleMessage">A wild Word Slime appeared!</div>
 
-    <section class="battle-question-page">
-      <div class="battle-question-meta">
-        <span id="questionType">TRUE / FALSE</span>
-        <span id="questionDifficulty">EASY</span>
-        <span class="battle-timer" id="timerText">5.0s</span>
+      <div id="battleMenu" class="battle-menu">
+        <div class="command-prompt">
+          <strong id="commandPrompt">What will you do?</strong>
+          <span id="menuSubtext">Choose an action.</span>
+        </div>
+
+        <div class="command-grid">
+          <button class="command-button fight" id="fightButton">
+            <span class="command-icon">⚔</span>
+            <span>FIGHT</span>
+          </button>
+          <button class="command-button skill" id="skillButton">
+            <span class="command-icon">✦</span>
+            <span>SKILL</span>
+          </button>
+          <button class="command-button item" id="itemButton">
+            <span class="command-icon">◈</span>
+            <span>ITEM</span>
+          </button>
+          <button class="command-button run" id="runButton">
+            <span class="command-icon">↩</span>
+            <span>RUN</span>
+          </button>
+        </div>
       </div>
-      <h2 id="questionText">Loading question...</h2>
-      <p id="questionPrompt">Choose the correct answer to attack.</p>
-      <div id="answerArea" class="battle-answers"></div>
-      <div class="battle-message" id="battleMessage">Correct answers damage the enemy. Wrong answers let the enemy strike back.</div>
+
+      <div id="questionPanel" class="question-panel hidden">
+        <div class="question-top">
+          <span id="questionType">TRUE / FALSE</span>
+          <span id="questionDifficulty">EASY</span>
+          <span class="battle-timer" id="timerText">5.0s</span>
+        </div>
+        <h2 id="questionText">Loading question...</h2>
+        <p id="questionPrompt">Answer correctly to attack.</p>
+        <div id="answerArea" class="battle-answers"></div>
+        <button class="back-to-menu" id="backToMenu">← Back to menu</button>
+      </div>
     </section>
 
     <div class="battle-result hidden" id="battleResult">
@@ -71,6 +105,7 @@
       </div>
     </div>
   </main>
+
   <script type="module" src="/FYP/js/battle.js"></script>
 </body>
 </html>
