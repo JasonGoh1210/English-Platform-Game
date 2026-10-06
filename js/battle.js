@@ -314,9 +314,10 @@ function resolve(value, button, timedOut) {
   if (state.enemyHp <= 0) {
     window.setTimeout(finishVictory, 800);
   } else {
-    // Keep FIGHT mode active: one FIGHT selection starts a continuous
-    // question battle until victory/defeat.
-    window.setTimeout(enemyTurn, 900);
+    // Correct answers are the player's successful attack turn.
+    // The enemy does NOT counterattack after a correct answer.
+    // Continue directly to the next English question.
+    window.setTimeout(startQuestion, 900);
   }
 }
 function enemyTurn() {
