@@ -45,7 +45,7 @@ const WORLD_SAVE_KEY = "englishPowerQuest.world.v2";
 const BATTLE_KEY = "englishPowerQuest.battle";
 const ESCAPE_KEY = "englishPowerQuest.escape.v1";
 
-function saveWorldState() {
+function saveWorldState(overrides = {}) {
   localStorage.setItem(WORLD_SAVE_KEY, JSON.stringify({
     playerX: world.player.x,
     questStep: world.questStep,
@@ -53,7 +53,8 @@ function saveWorldState() {
     xp: world.xp,
     power: world.power,
     level: world.level,
-    defeatedEnemyIds: enemies.filter(enemy => enemy.defeated).map(enemy => enemy.id)
+    defeatedEnemyIds: enemies.filter(enemy => enemy.defeated).map(enemy => enemy.id),
+    ...overrides
   }));
 }
 
@@ -294,7 +295,12 @@ function syncHUD() {
 
 function startBattle(enemy) {
   if (!enemy || enemy.defeated) return;
-  saveWorldState();
+
+  // Save a safe spawn point before leaving the map so refreshing the map
+  // cannot immediately retrigger the same encounter.
+  const safeX = Math.max(100, enemy.x - 220);
+  saveWorldState({ playerX: safeX });
+
   sessionStorage.setItem(BATTLE_KEY, JSON.stringify({ enemyId: enemy.id }));
   sessionStorage.removeItem(ESCAPE_KEY);
   window.location.href = "/FYP/battle.php";
