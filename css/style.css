@@ -1889,3 +1889,31 @@ button { font: inherit; }
 @media (max-width: 520px) {
   .battle-player-art { width: 145px; height: 155px; }
 }
+
+/* Use the exact supplied character art without distortion */
+.pixel-avatar {
+  overflow: hidden;
+}
+.pixel-avatar img {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.battle-player-art {
+  width: 250px;
+  height: 250px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 22px 18px rgba(0,0,0,.2));
+  transform: scaleX(-1);
+}
+
+@media (max-width: 760px) {
+  .battle-player-art { width: 190px; height: 190px; }
+}
+@media (max-width: 520px) {
+  .battle-player-art { width: 150px; height: 150px; }
+  .pixel-avatar img { width: 50px; height: 50px; }
+}
