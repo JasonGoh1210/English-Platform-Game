@@ -297,7 +297,7 @@ function startBattle(enemy) {
   saveWorldState();
   sessionStorage.setItem(BATTLE_KEY, JSON.stringify({ enemyId: enemy.id }));
   sessionStorage.removeItem(ESCAPE_KEY);
-  window.location.href = "/FYP/battle.html";
+  window.location.href = "/FYP/battle.php";
 }
 
 function update(dt) {
