@@ -1,0 +1,26 @@
+[
+  {
+    "id": "Dreamwood",
+    "name": "Dreamwood",
+    "description": "A magical forest of words and discovery.",
+    "order": 1,
+    "requiredLevel": 1,
+    "status": "UNLOCKED"
+  },
+  {
+    "id": "Skyreach",
+    "name": "Skyreach",
+    "description": "A floating world focused on grammar and sentence building.",
+    "order": 2,
+    "requiredLevel": 3,
+    "status": "LOCKED"
+  },
+  {
+    "id": "Cyberia",
+    "name": "Cyberia",
+    "description": "A technology realm focused on IT English.",
+    "order": 3,
+    "requiredLevel": 5,
+    "status": "LOCKED"
+  }
+]
