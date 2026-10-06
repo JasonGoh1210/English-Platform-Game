@@ -21,6 +21,7 @@ const ui = {
   enemyLabel: document.getElementById("battleEnemyLabel"),
   enemyRole: document.getElementById("battleEnemyRole"),
   enemyFigure: document.getElementById("enemyFigure"),
+  playerSprite: document.getElementById("battlePlayerSprite"),
   enemyDifficulty: document.getElementById("enemyDifficulty"),
   playerHpText: document.getElementById("playerHpText"),
   playerHpBar: document.getElementById("playerHpBar"),
@@ -399,7 +400,7 @@ function runAway() {
 }
 
 function playAttackAnimation() {
-  const player = document.querySelector(".player-figure-large");
+  const player = document.querySelector("#battlePlayerSprite");
   const enemy = document.querySelector(".monster-sprite");
   player.classList.remove("attack");
   enemy.classList.remove("hit");
@@ -410,7 +411,7 @@ function playAttackAnimation() {
 }
 
 function playEnemyAttackAnimation() {
-  const player = document.querySelector(".player-figure-large");
+  const player = document.querySelector("#battlePlayerSprite");
   const enemy = document.querySelector(".monster-sprite");
   player.classList.remove("hit");
   enemy.classList.remove("attack-enemy");
@@ -560,6 +561,7 @@ async function init() {
   ui.enemyFigure.textContent =
     state.enemy.type === "slime" ? "🟢" :
     state.enemy.type === "bat" ? "🦇" : "🛡️";
+  if (ui.playerSprite) ui.playerSprite.src = "/FYP/assets/player/dark-adventurer.svg";
 
   bindBattleEvents();
   updateHp();
