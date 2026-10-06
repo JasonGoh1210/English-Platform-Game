@@ -1,6 +1,7 @@
-// Application entry point.
-// Start the game from this file.
-
 import { startGame } from "./game.js";
 
-startGame();
+startGame().catch((error) => {
+  console.error(error);
+  const status = document.getElementById("statusMessage");
+  if (status) status.textContent = "Unable to start the game. Check the console for details.";
+});
