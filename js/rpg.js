@@ -42,6 +42,8 @@ const world = {
 };
 
 const WORLD_SAVE_KEY = "englishPowerQuest.world.v2";
+const BATTLE_KEY = "englishPowerQuest.battle";
+const ESCAPE_KEY = "englishPowerQuest.escape.v1";
 
 function saveWorldState() {
   localStorage.setItem(WORLD_SAVE_KEY, JSON.stringify({
@@ -132,6 +134,31 @@ const enemies = [
   { id: "guardian-01", x: 3990, type: "guardian", name: "Grammar Guardian", difficulty: "MEDIUM", hp: 100, damage: 12, xp: 30, coins: 15, defeated: false }
 ];
 
+function restoreEscapeState() {
+  try {
+    const activeBattle = JSON.parse(sessionStorage.getItem(BATTLE_KEY) || "null");
+    if (activeBattle?.enemyId && !sessionStorage.getItem(ESCAPE_KEY)) {
+      sessionStorage.setItem(ESCAPE_KEY, activeBattle.enemyId);
+      sessionStorage.removeItem(BATTLE_KEY);
+    }
+  } catch {
+    sessionStorage.removeItem(BATTLE_KEY);
+  }
+}
+
+function getEscapedEnemyId() {
+  return sessionStorage.getItem(ESCAPE_KEY);
+}
+
+function clearEscapeWhenFarEnough() {
+  const escapedId = getEscapedEnemyId();
+  if (!escapedId) return;
+  const enemy = enemies.find(item => item.id === escapedId);
+  if (!enemy || Math.abs(enemy.x - world.player.x) >= 180) {
+    sessionStorage.removeItem(ESCAPE_KEY);
+  }
+}
+
 function resize() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   canvas.width = Math.floor(window.innerWidth * dpr);
@@ -192,14 +219,26 @@ function nearestNPC() {
 function nearestEnemy() {
   let best = null;
   let dist = Infinity;
+  const escapedId = getEscapedEnemyId();
+
   for (const enemy of enemies) {
     if (enemy.defeated) continue;
+
+    // After RUN or browser-back from battle, give the player enough space
+    // to move away before the same encounter can trigger again.
+    if (enemy.id === escapedId) {
+      const escapeDistance = Math.abs(enemy.x - world.player.x);
+      if (escapeDistance < 180) continue;
+    }
+
     const d = Math.abs(enemy.x - world.player.x);
     if (d < dist) {
       dist = d;
       best = enemy;
     }
   }
+
+  if (escapedId) clearEscapeWhenFarEnough();
   return dist < 72 ? best : null;
 }
 
@@ -256,9 +295,8 @@ function syncHUD() {
 function startBattle(enemy) {
   if (!enemy || enemy.defeated) return;
   saveWorldState();
-  sessionStorage.setItem("englishPowerQuest.battle", JSON.stringify({
-    enemyId: enemy.id
-  }));
+  sessionStorage.setItem(BATTLE_KEY, JSON.stringify({ enemyId: enemy.id }));
+  sessionStorage.removeItem(ESCAPE_KEY);
   window.location.href = "/FYP/battle.html";
 }
 
@@ -632,6 +670,7 @@ function loop(now) {
 }
 
 loadWorldState();
+restoreEscapeState();
 updateQuest();
 syncHUD();
 loadQuestions().then(() => requestAnimationFrame(loop));
