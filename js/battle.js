@@ -69,8 +69,13 @@ const state = {
 function getEnemy() {
   try {
     const saved = JSON.parse(sessionStorage.getItem(BATTLE_KEY) || "null");
-    return enemies[saved?.enemyId] || enemies["slime-01"];
+    if (!saved?.enemyId) {
+      window.location.replace("/FYP/index.php");
+      return enemies["slime-01"];
+    }
+    return enemies[saved.enemyId] || enemies["slime-01"];
   } catch {
+    window.location.replace("/FYP/index.php");
     return enemies["slime-01"];
   }
 }
