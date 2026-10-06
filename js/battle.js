@@ -556,7 +556,7 @@ async function init() {
   ui.enemyName.textContent = state.enemy.name;
   ui.enemyLabel.textContent = state.enemy.name.toUpperCase();
   ui.enemyRole.textContent = state.enemy.role;
-  ui.enemyDifficulty.textContent = state.enemy.difficulty;
+  if (ui.enemyDifficulty) ui.enemyDifficulty.textContent = state.enemy.difficulty;
   ui.enemyFigure.textContent =
     state.enemy.type === "slime" ? "🟢" :
     state.enemy.type === "bat" ? "🦇" : "🛡️";
@@ -575,6 +575,14 @@ async function init() {
     console.error("English Power Quest battle error:", error);
   }
 }
+
+window.addEventListener("unhandledrejection", (event) => {
+  if (ui.battleMessage) {
+    const reason = event.reason instanceof Error ? event.reason.message : String(event.reason);
+    ui.battleMessage.textContent = "Battle error: " + reason;
+  }
+  console.error("English Power Quest unhandled rejection:", event.reason);
+});
 
 window.addEventListener("error", (event) => {
   if (ui.battleMessage && event.error) {
