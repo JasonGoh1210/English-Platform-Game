@@ -1849,3 +1849,11 @@ button { font: inherit; }
     grid-template-columns: 55px 1fr;
   }
 }
+
+.enemy-difficulty-tag {
+  margin-top: 3px;
+  color: #f0d88a;
+  font-size: .48rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
