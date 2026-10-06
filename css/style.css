@@ -1528,3 +1528,293 @@ button { font: inherit; }
   .command-button { min-height: 51px; font-size: .75rem; }
   .battle-answer-button { min-height: 45px; font-size: .72rem; }
 }
+
+
+/* Pixel RPG UI theme inspired by classic handheld RPG interfaces */
+.pixel-world-ui,
+.pixel-world-ui button {
+  font-family: "Courier New", Courier, monospace;
+}
+
+.pixel-world-ui {
+  background: #14212a;
+}
+
+.pixel-world-ui #gameCanvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.pixel-world-ui .hud {
+  padding: 9px 11px;
+  grid-template-columns: minmax(300px, 1fr) minmax(250px, 310px);
+  gap: 10px;
+  align-items: start;
+}
+
+.pixel-player-card,
+.pixel-quest-card {
+  border: 3px solid #17222a;
+  outline: 2px solid #d6b56f;
+  box-shadow:
+    0 0 0 4px #493922,
+    4px 4px 0 rgba(0,0,0,.35);
+}
+
+.pixel-player-card {
+  width: min(500px, 100%);
+  min-height: 88px;
+  display: grid;
+  grid-template-columns: 74px 1fr 72px;
+  gap: 8px;
+  padding: 7px;
+  background: linear-gradient(#1d2a33, #10181e);
+  color: #f5f0dd;
+}
+
+.pixel-avatar {
+  display: grid;
+  place-items: center;
+  min-height: 72px;
+  border: 2px solid #8a7449;
+  background:
+    radial-gradient(circle at 50% 28%, #2d4350 0 19%, transparent 20%),
+    linear-gradient(#32434c, #1a2730);
+  font-size: 2.4rem;
+  image-rendering: pixelated;
+}
+
+.pixel-player-info {
+  min-width: 0;
+}
+
+.pixel-player-name {
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: .06em;
+}
+
+.pixel-level {
+  color: #d2d8d3;
+  font-size: .68rem;
+  margin-bottom: 4px;
+}
+
+.pixel-stat-row {
+  display: grid;
+  grid-template-columns: 22px 1fr 72px;
+  align-items: center;
+  gap: 5px;
+  margin-top: 3px;
+  font-size: .6rem;
+  font-weight: 900;
+}
+
+.pixel-meter {
+  height: 10px;
+  padding: 2px;
+  background: #0b1115;
+  border: 1px solid #646e71;
+}
+
+.pixel-meter > div {
+  height: 100%;
+  transition: width 220ms ease;
+}
+
+.hp-meter { background: #e74745; }
+.xp-meter { background: #4c98ca; }
+
+.pixel-currency-list {
+  display: grid;
+  align-content: center;
+  gap: 7px;
+  padding-left: 4px;
+  border-left: 2px solid #4a5560;
+  font-size: .68rem;
+}
+
+.pixel-currency-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  align-items: center;
+}
+
+.pixel-coin { color: #f1c24f; }
+.pixel-star { color: #ffd96a; }
+.pixel-book { color: #d8c6a1; }
+
+.pixel-quest-card {
+  justify-self: end;
+  width: 100%;
+  max-width: 310px;
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 8px;
+  padding: 10px 11px;
+  background:
+    linear-gradient(#f0dfac, #dbc38e);
+  color: #34271b;
+  border-color: #4a3823;
+  outline-color: #b98d42;
+}
+
+.pixel-quest-card .quest-icon {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #71521e;
+  color: #4b3715;
+  background: #f0bb32;
+  font-weight: 1000;
+  box-shadow: inset 0 0 0 2px #ffe9a0;
+}
+
+.pixel-small-label {
+  display: block;
+  color: #795924;
+  font-size: .52rem;
+  font-weight: 1000;
+  letter-spacing: .12em;
+}
+
+.pixel-quest-card strong {
+  display: block;
+  margin-top: 2px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: .82rem;
+}
+
+.pixel-quest-card p {
+  margin: 3px 0 0;
+  font-size: .64rem;
+  color: #5c4c39;
+}
+
+.pixel-location {
+  top: 92px;
+  border: 2px solid #151f25;
+  outline: 2px solid #d0b066;
+  border-radius: 0;
+  background: rgba(17,25,30,.84);
+  color: #f5edcf;
+  font-family: "Courier New", Courier, monospace;
+  letter-spacing: .08em;
+  box-shadow: 3px 3px 0 rgba(0,0,0,.35);
+}
+
+.pixel-world-ui .dialogue {
+  left: 10px;
+  right: 10px;
+  bottom: 12px;
+  transform: none;
+  width: auto;
+  max-width: 660px;
+  display: grid;
+  grid-template-columns: 82px 1fr;
+  gap: 10px;
+  padding: 7px;
+  border: 3px solid #17222a;
+  outline: 2px solid #c8a65e;
+  border-radius: 0;
+  background: #0f171d;
+  box-shadow: 5px 5px 0 rgba(0,0,0,.42);
+}
+
+.dialogue-portrait {
+  display: grid;
+  place-items: center;
+  min-height: 82px;
+  background: linear-gradient(#4b3b2b, #261e18);
+  border: 2px solid #6e5632;
+  font-size: 2.55rem;
+}
+
+.dialogue-body {
+  padding: 4px 7px 5px;
+}
+
+.pixel-world-ui .dialogue-name {
+  color: #f0cc5e;
+  font-family: "Courier New", Courier, monospace;
+  font-size: .75rem;
+  letter-spacing: .06em;
+  text-transform: none;
+}
+
+.pixel-world-ui .dialogue p {
+  margin: 7px 0 8px;
+  color: #f3f1e4;
+  font-family: "Courier New", Courier, monospace;
+  font-size: .76rem;
+  line-height: 1.4;
+}
+
+.pixel-world-ui .dialogue button {
+  border: 2px solid #b18a49;
+  border-radius: 0;
+  padding: 5px 8px;
+  background: #2e3c43;
+  color: #f5f1df;
+  font-size: .63rem;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #11191d;
+}
+
+.pixel-control {
+  border: 2px solid #11191d;
+  outline: 2px solid #aa8a51;
+  border-radius: 0;
+  background: #26363d;
+  color: #f2ecd7;
+  box-shadow: 3px 3px 0 rgba(0,0,0,.35);
+  font-family: "Courier New", Courier, monospace;
+  font-weight: 1000;
+}
+
+.pixel-control.interact {
+  color: #f2ca5b;
+}
+
+.pixel-hint {
+  right: 11px;
+  bottom: 15px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: .56rem;
+  padding: 4px 6px;
+  background: rgba(10,17,22,.62);
+  border: 1px solid rgba(255,255,255,.18);
+}
+
+@media (max-width: 780px) {
+  .pixel-world-ui .hud {
+    grid-template-columns: 1fr;
+  }
+  .pixel-quest-card {
+    justify-self: stretch;
+    max-width: none;
+  }
+  .pixel-player-card {
+    width: min(520px, 100%);
+  }
+  .pixel-location { top: 170px; }
+}
+
+@media (max-width: 520px) {
+  .pixel-world-ui .hud { padding: 7px; }
+  .pixel-player-card { grid-template-columns: 55px 1fr 55px; }
+  .pixel-avatar { min-height: 62px; font-size: 2rem; }
+  .pixel-stat-row { grid-template-columns: 21px 1fr 59px; font-size: .53rem; }
+  .pixel-currency-list { font-size: .56rem; }
+  .pixel-quest-card strong { font-size: .72rem; }
+  .pixel-location { top: 142px; }
+  .pixel-world-ui .dialogue {
+    left: 7px; right: 7px; bottom: 66px;
+    grid-template-columns: 55px 1fr;
+  }
+  .dialogue-portrait { min-height: 60px; font-size: 1.8rem; }
+  .pixel-world-ui .dialogue p { font-size: .66rem; }
+  .pixel-world-ui .dialogue button { font-size: .56rem; }
+}
