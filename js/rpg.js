@@ -12,7 +12,22 @@ const ui = {
   dialogue: document.getElementById("dialogue"),
   dialogueName: document.getElementById("dialogueName"),
   dialogueText: document.getElementById("dialogueText"),
-  dialogueButton: document.getElementById("dialogueButton")
+  dialogueButton: document.getElementById("dialogueButton"),
+  battleOverlay: document.getElementById("battleOverlay"),
+  battleTurnText: document.getElementById("battleTurnText"),
+  battleEnemySprite: document.getElementById("battleEnemySprite"),
+  battleEnemyName: document.getElementById("battleEnemyName"),
+  battleEnemyHpText: document.getElementById("battleEnemyHpText"),
+  battleEnemyHpBar: document.getElementById("battleEnemyHpBar"),
+  battlePlayerHpText: document.getElementById("battlePlayerHpText"),
+  battlePlayerHpBar: document.getElementById("battlePlayerHpBar"),
+  battleQuestionType: document.getElementById("battleQuestionType"),
+  battleDifficulty: document.getElementById("battleDifficulty"),
+  battleTimer: document.getElementById("battleTimer"),
+  battleQuestionText: document.getElementById("battleQuestionText"),
+  battlePrompt: document.getElementById("battlePrompt"),
+  battleAnswers: document.getElementById("battleAnswers"),
+  battleMessage: document.getElementById("battleMessage")
 };
 
 const world = {
@@ -37,11 +52,14 @@ const world = {
   xp: 0,
   power: 0,
   level: 1,
-  interacting: false
+  interacting: false,
+  battle: null
 };
 
 const keys = new Set();
 const touch = { left: false, right: false };
+let questions = [];
+let lastTime = 0;
 
 const npcs = [
   {
@@ -93,9 +111,9 @@ const landmarks = [
 ];
 
 const enemies = [
-  { x: 2300, type: "slime", name: "Word Slime" },
-  { x: 3020, type: "bat", name: "Confusion Bat" },
-  { x: 3990, type: "guardian", name: "Grammar Guardian" }
+  { id: "slime-01", x: 2300, type: "slime", name: "Word Slime", difficulty: "EASY", hp: 60, damage: 10, xp: 20, coins: 10, defeated: false },
+  { id: "bat-01", x: 3020, type: "bat", name: "Confusion Bat", difficulty: "EASY", hp: 70, damage: 10, xp: 25, coins: 12, defeated: false },
+  { id: "guardian-01", x: 3990, type: "guardian", name: "Grammar Guardian", difficulty: "MEDIUM", hp: 100, damage: 12, xp: 30, coins: 15, defeated: false }
 ];
 
 function resize() {
@@ -112,8 +130,7 @@ window.addEventListener("keydown", (e) => {
   const k = e.key.toLowerCase();
   if (["arrowleft","arrowright","a","d"," ","e"].includes(k)) e.preventDefault();
   keys.add(k);
-
-  if ((k === "e" || k === " ") && !e.repeat) interact();
+  if ((k === "e" || k === " ") && !e.repeat && !world.battle) interact();
 });
 
 window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
@@ -156,8 +173,22 @@ function nearestNPC() {
   return dist < 95 ? best : null;
 }
 
+function nearestEnemy() {
+  let best = null;
+  let dist = Infinity;
+  for (const enemy of enemies) {
+    if (enemy.defeated) continue;
+    const d = Math.abs(enemy.x - world.player.x);
+    if (d < dist) {
+      dist = d;
+      best = enemy;
+    }
+  }
+  return dist < 72 ? best : null;
+}
+
 function interact() {
-  if (world.interacting) return;
+  if (world.interacting || world.battle) return;
   const npc = nearestNPC();
 
   if (npc) {
@@ -205,24 +236,302 @@ function syncHUD() {
   ui.coins.textContent = world.coins;
 }
 
+function startBattle(enemy) {
+  if (world.battle || enemy.defeated) return;
+  world.battle = {
+    enemy,
+    enemyHp: enemy.hp,
+    playerHp: 100,
+    playerMaxHp: 100,
+    currentQuestion: null,
+    usedQuestionIds: [],
+    questionStartedAt: 0,
+    timerId: null,
+    locked: false,
+    sentenceSelected: []
+  };
+  touch.left = false;
+  touch.right = false;
+  keys.delete("arrowleft");
+  keys.delete("arrowright");
+  keys.delete("a");
+  keys.delete("d");
+  ui.battleOverlay.classList.remove("hidden");
+  ui.battleEnemySprite.textContent = enemy.type === "slime" ? "🟢" : enemy.type === "bat" ? "🦇" : "🛡️";
+  ui.battleEnemyName.textContent = enemy.name;
+  ui.battleMessage.textContent = "The " + enemy.name + " blocks your path! Answer to attack.";
+  loadBattleQuestion();
+}
+
+function pickBattleQuestion() {
+  const battle = world.battle;
+  const enemy = battle.enemy;
+  let pool = questions.filter(q => q.difficulty === enemy.difficulty);
+
+  if (!pool.length) pool = questions.slice();
+
+  const fresh = pool.filter(q => !battle.usedQuestionIds.includes(q.id));
+  pool = fresh.length ? fresh : pool;
+
+  const q = pool[Math.floor(Math.random() * pool.length)];
+  battle.usedQuestionIds.push(q.id);
+  return q;
+}
+
+function formatType(type) {
+  if (type === "TRUE_FALSE") return "TRUE / FALSE";
+  if (type === "ODD_WORD_OUT") return "ODD WORD OUT";
+  if (type === "SENTENCE_BUILDER") return "SENTENCE BUILDER";
+  return type;
+}
+
+function normalizedSentenceAnswer(question, words) {
+  const result = Array.isArray(words) ? words : [];
+  return result.map(v => String(v).trim()).join(" ").replace(/s+/g, " ").trim().toLowerCase();
+}
+
+function correctForQuestion(question, value) {
+  if (question.type === "TRUE_FALSE") return value === Boolean(question.answer);
+  if (question.type === "ODD_WORD_OUT") return String(value).toLowerCase() === String(question.answer).toLowerCase();
+  if (question.type === "SENTENCE_BUILDER") {
+    return String(value).toLowerCase() === normalizedSentenceAnswer(question, question.answerOrder);
+  }
+  return false;
+}
+
+function questionAnswerText(question) {
+  if (question.type === "TRUE_FALSE") return question.answer ? "TRUE" : "FALSE";
+  if (question.type === "ODD_WORD_OUT") return question.answer;
+  if (question.type === "SENTENCE_BUILDER") return question.answerOrder.join(" ");
+  return "";
+}
+
+function loadBattleQuestion() {
+  const battle = world.battle;
+  if (!battle) return;
+
+  window.clearInterval(battle.timerId);
+  battle.locked = false;
+  battle.sentenceSelected = [];
+
+  const question = pickBattleQuestion();
+  battle.currentQuestion = question;
+  battle.questionStartedAt = performance.now();
+
+  ui.battleTurnText.textContent = "YOUR TURN";
+  ui.battleQuestionType.textContent = formatType(question.type);
+  ui.battleDifficulty.textContent = question.difficulty;
+  ui.battleQuestionText.textContent = question.question;
+  ui.battlePrompt.textContent = question.prompt || "Choose the correct answer to strike.";
+  ui.battleAnswers.innerHTML = "";
+
+  if (question.type === "TRUE_FALSE") {
+    renderChoice("TRUE", true);
+    renderChoice("FALSE", false);
+  } else if (question.type === "ODD_WORD_OUT") {
+    question.words.forEach(word => renderChoice(word, word));
+    ui.battleAnswers.classList.remove("sentence-mode");
+  } else if (question.type === "SENTENCE_BUILDER") {
+    renderSentenceBuilder(question);
+  }
+
+  let remaining = Number(question.timeLimit || 5);
+  ui.battleTimer.classList.remove("warning");
+  ui.battleTimer.textContent = remaining.toFixed(1) + "s";
+  battle.timerId = window.setInterval(() => {
+    if (!world.battle || battle.locked) return;
+    remaining -= 0.1;
+    ui.battleTimer.textContent = Math.max(0, remaining).toFixed(1) + "s";
+    if (remaining <= 2) ui.battleTimer.classList.add("warning");
+    if (remaining <= 0) {
+      window.clearInterval(battle.timerId);
+      resolveBattleAnswer(null, null, true);
+    }
+  }, 100);
+
+  updateBattleHUD();
+}
+
+function renderChoice(label, value) {
+  const button = document.createElement("button");
+  button.className = "battle-answer-button";
+  button.type = "button";
+  button.textContent = label;
+  button.addEventListener("click", () => resolveBattleAnswer(value, button, false));
+  ui.battleAnswers.appendChild(button);
+}
+
+function renderSentenceBuilder(question) {
+  ui.battleAnswers.classList.add("sentence-mode");
+
+  const selected = document.createElement("div");
+  selected.className = "battle-sentence";
+
+  const bank = document.createElement("div");
+  bank.className = "battle-word-bank";
+
+  question.words.forEach(word => {
+    const button = document.createElement("button");
+    button.className = "battle-word-chip";
+    button.type = "button";
+    button.textContent = word;
+    button.addEventListener("click", () => {
+      if (world.battle?.locked || button.classList.contains("selected")) return;
+      button.classList.add("selected");
+      world.battle.sentenceSelected.push(word);
+      const chip = document.createElement("span");
+      chip.className = "battle-word-chip";
+      chip.textContent = word;
+      selected.appendChild(chip);
+    });
+    bank.appendChild(button);
+  });
+
+  const submit = document.createElement("button");
+  submit.className = "battle-submit";
+  submit.type = "button";
+  submit.textContent = "Build Sentence & Attack";
+  submit.addEventListener("click", () => {
+    const answer = normalizedSentenceAnswer(question, world.battle.sentenceSelected);
+    resolveBattleAnswer(answer, submit, false);
+  });
+
+  ui.battleAnswers.append(selected, bank, submit);
+}
+
+function resolveBattleAnswer(value, clickedButton, timedOut) {
+  const battle = world.battle;
+  if (!battle || battle.locked) return;
+
+  battle.locked = true;
+  window.clearInterval(battle.timerId);
+  ui.battleAnswers.querySelectorAll("button").forEach(button => { button.disabled = true; });
+
+  const question = battle.currentQuestion;
+  const correct = !timedOut && correctForQuestion(question, value);
+
+  if (clickedButton) clickedButton.classList.add(correct ? "correct" : "wrong");
+
+  if (correct) {
+    const elapsed = performance.now() - battle.questionStartedAt;
+    const fastBonus = elapsed <= Number(question.timeLimit || 5) * 1000 * .45;
+    const baseDamage = question.difficulty === "HARD" ? 30 : question.difficulty === "MEDIUM" ? 25 : 20;
+    const damage = Math.round(baseDamage * (fastBonus ? 1.1 : 1));
+
+    battle.enemyHp = Math.max(0, battle.enemyHp - damage);
+    world.xp += Number(question.xp || 10);
+    world.coins += Number(question.coins || 5);
+    world.power += Number(question.englishPower || 1);
+    syncHUD();
+    updateBattleHUD();
+
+    ui.battleMessage.textContent = "Correct! Your English Power strikes for " + damage + " damage.";
+    if (battle.enemyHp <= 0) {
+      window.setTimeout(finishBattleVictory, 650);
+    } else {
+      window.setTimeout(enemyTurnAfterCorrect, 700);
+    }
+  } else {
+    ui.battleMessage.textContent = timedOut
+      ? "Time's up! The enemy attacks."
+      : "Wrong answer. The enemy attacks.";
+    window.setTimeout(enemyTurn, 700);
+  }
+}
+
+function enemyTurnAfterCorrect() {
+  if (!world.battle) return;
+  enemyTurn();
+}
+
+function enemyTurn() {
+  const battle = world.battle;
+  if (!battle) return;
+
+  const damage = battle.enemy.damage;
+  battle.playerHp = Math.max(0, battle.playerHp - damage);
+  ui.battleTurnText.textContent = "ENEMY ATTACK";
+  ui.battleMessage.textContent = battle.enemy.name + " hits you for " + damage + " damage.";
+  updateBattleHUD();
+
+  if (battle.playerHp <= 0) {
+    window.setTimeout(finishBattleDefeat, 650);
+  } else {
+    window.setTimeout(loadBattleQuestion, 700);
+  }
+}
+
+function updateBattleHUD() {
+  const battle = world.battle;
+  if (!battle) return;
+
+  ui.battleEnemyHpText.textContent = battle.enemyHp + " / " + battle.enemy.hp;
+  ui.battleEnemyHpBar.style.width = Math.max(0, battle.enemyHp / battle.enemy.hp * 100) + "%";
+  ui.battlePlayerHpText.textContent = battle.playerHp + " / " + battle.playerMaxHp;
+  ui.battlePlayerHpBar.style.width = Math.max(0, battle.playerHp / battle.playerMaxHp * 100) + "%";
+}
+
+function finishBattleVictory() {
+  const battle = world.battle;
+  if (!battle) return;
+
+  window.clearInterval(battle.timerId);
+  battle.enemy.defeated = true;
+  world.battle = null;
+  ui.battleOverlay.classList.add("hidden");
+  world.xp += battle.enemy.xp;
+  world.coins += battle.enemy.coins;
+  world.power += 2;
+  syncHUD();
+
+  if (battle.enemy.id === "slime-01") {
+    world.questStep = Math.max(world.questStep, 2);
+    updateQuest();
+  }
+
+  ui.dialogueName.textContent = "Victory";
+  ui.dialogueText.textContent = battle.enemy.name + " defeated! The road ahead is safe.";
+  ui.dialogue.classList.remove("hidden");
+  world.interacting = true;
+}
+
+function finishBattleDefeat() {
+  const battle = world.battle;
+  if (!battle) return;
+  window.clearInterval(battle.timerId);
+  world.battle = null;
+  ui.battleOverlay.classList.add("hidden");
+  ui.dialogueName.textContent = "Defeated";
+  ui.dialogueText.textContent = "You were knocked down, but your learning progress is safe. Try the encounter again.";
+  ui.dialogue.classList.remove("hidden");
+  world.interacting = true;
+}
+
 function update(dt) {
   world.time += dt;
 
-  const left = keys.has("arrowleft") || keys.has("a") || touch.left;
-  const right = keys.has("arrowright") || keys.has("d") || touch.right;
-  const direction = (right ? 1 : 0) - (left ? 1 : 0);
+  if (!world.battle && !world.interacting) {
+    const left = keys.has("arrowleft") || keys.has("a") || touch.left;
+    const right = keys.has("arrowright") || keys.has("d") || touch.right;
+    const direction = (right ? 1 : 0) - (left ? 1 : 0);
 
-  world.player.vx = direction * world.player.speed;
-  if (direction !== 0) world.player.facing = direction;
+    world.player.vx = direction * world.player.speed;
+    if (direction !== 0) world.player.facing = direction;
 
-  world.player.x += world.player.vx * dt;
-  world.player.x = clamp(world.player.x, 100, world.width - 120);
-  world.player.bob += dt * (Math.abs(world.player.vx) > 1 ? 11 : 3);
+    world.player.x += world.player.vx * dt;
+    world.player.x = clamp(world.player.x, 100, world.width - 120);
+    world.player.bob += dt * (Math.abs(world.player.vx) > 1 ? 11 : 3);
+
+    const encounter = nearestEnemy();
+    if (encounter) {
+      startBattle(encounter);
+    }
+  }
 
   const targetCamera = clamp(world.player.x - window.innerWidth * 0.5, 0, world.width - window.innerWidth);
   world.cameraX += (targetCamera - world.cameraX) * Math.min(1, dt * 6);
 
-  if (world.player.x > 1000 && world.questStep === 1) {
+  if (!world.battle && world.player.x > 1000 && world.questStep === 1) {
     world.questStep = 2;
     world.xp += 50;
     world.power += 2;
@@ -308,20 +617,17 @@ function drawFarMountains(w, h) {
 function drawForestLayer(w, h, parallax, color, minSize, maxSize) {
   const start = Math.floor((world.cameraX * parallax) / 170) - 3;
   const end = start + Math.ceil(w / 170) + 7;
-
   for (let i = start; i < end; i++) {
     const xWorld = i * 170 + 70;
     const x = worldToScreen(xWorld, parallax);
     const size = minSize + Math.abs(i * 37 % (maxSize - minSize));
     const y = world.groundY - size * .58;
-
     ctx.fillStyle = color;
     ctx.beginPath();
     ctx.arc(x, y, size * .28, 0, Math.PI * 2);
     ctx.arc(x - size * .18, y + size * .06, size * .24, 0, Math.PI * 2);
     ctx.arc(x + size * .2, y + size * .02, size * .25, 0, Math.PI * 2);
     ctx.fill();
-
     ctx.fillStyle = "#3f4a35";
     ctx.fillRect(x - 6, y + size * .12, 12, size * .48);
   }
@@ -330,19 +636,15 @@ function drawForestLayer(w, h, parallax, color, minSize, maxSize) {
 function drawGround(w, h) {
   ctx.fillStyle = "#263a2d";
   ctx.fillRect(0, world.groundY, w, h - world.groundY);
-
   ctx.fillStyle = "#66784b";
   ctx.fillRect(0, world.groundY - 8, w, 8);
-
   const tile = 80;
   const start = Math.floor(world.cameraX / tile) - 1;
   const end = start + Math.ceil(w / tile) + 2;
-
   for (let i = start; i < end; i++) {
     const x = i * tile - world.cameraX;
     ctx.fillStyle = i % 2 === 0 ? "#34462f" : "#30412c";
     ctx.fillRect(x, world.groundY + 22, tile - 2, 55);
-
     ctx.fillStyle = "#536442";
     ctx.fillRect(x + 10, world.groundY + 17, 22, 5);
   }
@@ -352,7 +654,6 @@ function drawLandmarks() {
   for (const l of landmarks) {
     const x = worldToScreen(l.x);
     if (x < -220 || x > window.innerWidth + 220) continue;
-
     if (l.type === "house") drawHouse(x, world.groundY);
     if (l.type === "bridge") drawBridge(x, world.groundY);
     if (l.type === "camp") drawCamp(x, world.groundY);
@@ -451,10 +752,8 @@ function drawNPCs() {
   for (const npc of npcs) {
     const x = worldToScreen(npc.x);
     if (x < -100 || x > window.innerWidth + 100) continue;
-
     const bob = Math.sin(world.time * 3 + npc.x) * 2;
     drawCharacter(x, world.groundY + bob, npc.color, "#d8c7a4", false);
-
     if (Math.abs(npc.x - world.player.x) < 105) {
       ctx.fillStyle = "#f3c75f";
       ctx.font = "bold 12px system-ui";
@@ -466,9 +765,9 @@ function drawNPCs() {
 
 function drawEnemies() {
   for (const enemy of enemies) {
+    if (enemy.defeated) continue;
     const x = worldToScreen(enemy.x);
     if (x < -100 || x > window.innerWidth + 100) continue;
-
     if (enemy.type === "slime") {
       ctx.fillStyle = "#76b86b";
       ctx.beginPath();
@@ -497,6 +796,13 @@ function drawEnemies() {
       ctx.fillStyle = "#b5a18a";
       ctx.fillRect(x - 18, world.groundY - 75, 36, 26);
     }
+
+    if (Math.abs(enemy.x - world.player.x) < 80) {
+      ctx.fillStyle = "#ffce68";
+      ctx.font = "bold 11px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText("!", x, world.groundY - 103);
+    }
   }
 }
 
@@ -513,10 +819,8 @@ function drawCharacter(x, ground, coat, skin, player) {
   ctx.fillRect(x - 15, y - 55, 30, 43);
   ctx.fillStyle = skin;
   ctx.fillRect(x - 13, y - 78, 26, 25);
-
   ctx.fillStyle = player ? "#4b3625" : "#3b3028";
   ctx.fillRect(x - 17, y - 86, 34, 10);
-
   ctx.fillStyle = "#242c31";
   ctx.fillRect(x - 11, y - 14, 9, 14);
   ctx.fillRect(x + 2, y - 14, 9, 14);
@@ -539,23 +843,33 @@ function drawForeground(w, h) {
   const waterTop = world.waterY;
   ctx.fillStyle = "#1e4c59";
   ctx.fillRect(0, waterTop, w, h - waterTop);
-
   ctx.fillStyle = "rgba(167, 205, 196, .24)";
   for (let i = 0; i < 32; i++) {
     const x = ((i * 173 - world.cameraX * .65) % (w + 120)) - 60;
     const y = waterTop + 25 + ((i * 47) % Math.max(40, h - waterTop - 40));
     ctx.fillRect(x, y, 50 + (i % 3) * 18, 2);
   }
-
   ctx.fillStyle = "rgba(0,0,0,.12)";
   ctx.fillRect(0, waterTop - 3, w, 7);
 }
 
-function loop(now) {
-  if (!loop.last) loop.last = now;
-  const dt = Math.min(.033, (now - loop.last) / 1000);
-  loop.last = now;
+async function loadQuestions() {
+  try {
+    const response = await fetch("/FYP/data/questions.json", { cache: "no-store" });
+    if (!response.ok) throw new Error("Question data unavailable");
+    questions = await response.json();
+  } catch (error) {
+    questions = [
+      { id: "fallback-1", type: "TRUE_FALSE", difficulty: "EASY", question: "\"Assist\" means \"help\".", answer: true, explanation: "Assist means help.", timeLimit: 5, xp: 10, coins: 5, englishPower: 1 },
+      { id: "fallback-2", type: "TRUE_FALSE", difficulty: "EASY", question: "\"Fast\" means \"slow\".", answer: false, explanation: "Fast and slow are opposites.", timeLimit: 5, xp: 10, coins: 5, englishPower: 1 }
+    ];
+  }
+}
 
+function loop(now) {
+  if (!lastTime) lastTime = now;
+  const dt = Math.min(.033, (now - lastTime) / 1000);
+  lastTime = now;
   update(dt);
   draw();
   requestAnimationFrame(loop);
@@ -563,4 +877,4 @@ function loop(now) {
 
 updateQuest();
 syncHUD();
-requestAnimationFrame(loop);
+loadQuestions().then(() => requestAnimationFrame(loop));
