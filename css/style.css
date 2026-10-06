@@ -953,3 +953,578 @@ button { font: inherit; }
   .battle-answers { grid-template-columns: 1fr; }
   .result-rewards { grid-template-columns: repeat(3, 1fr); }
 }
+
+/* Battle page: classic four-command RPG layout */
+.battle-page {
+  overflow: auto;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 18% 24%, rgba(99, 150, 141, .24), transparent 27%),
+    radial-gradient(circle at 84% 18%, rgba(113, 150, 117, .14), transparent 24%),
+    linear-gradient(180deg, #224c56 0%, #8aad99 54%, #526b58 55%, #1b2c2b 100%);
+}
+
+.battle-screen {
+  position: relative;
+  width: min(1080px, 100%);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 14px 14px 24px;
+}
+
+.battle-header {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.battle-title h1 {
+  margin: 2px 0 0;
+  font-size: clamp(1.05rem, 3.5vw, 1.45rem);
+}
+
+.battle-kicker {
+  color: #fff4c9;
+  font-size: .58rem;
+  font-weight: 900;
+  letter-spacing: .14em;
+}
+
+.back-link {
+  padding: 7px 10px;
+  border: 1px solid rgba(255,255,255,.24);
+  border-radius: 9px;
+  color: white;
+  text-decoration: none;
+  background: rgba(10,27,31,.38);
+  font-size: .57rem;
+  font-weight: 900;
+  letter-spacing: .07em;
+}
+
+.battlefield-pokemon-layout {
+  position: relative;
+  min-height: 500px;
+  margin-top: 6px;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.17);
+  background:
+    radial-gradient(circle at 50% 54%, rgba(234, 241, 210, .25), transparent 29%),
+    linear-gradient(180deg, rgba(59, 109, 111, .45), rgba(148, 184, 139, .16) 52%, rgba(32, 67, 47, .78) 53%, rgba(43, 66, 48, .94) 100%);
+  box-shadow: 0 24px 70px rgba(0,0,0,.28);
+}
+
+.battlefield-pokemon-layout::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 22% 64%, rgba(204, 222, 164, .45) 0 12%, transparent 13%),
+    radial-gradient(ellipse at 80% 35%, rgba(190, 213, 165, .33) 0 10%, transparent 11%),
+    linear-gradient(0deg, rgba(38, 72, 48, .72), transparent 38%);
+  opacity: .8;
+}
+
+.scene-haze {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(20px);
+  opacity: .26;
+  background: #dce7cf;
+}
+
+.haze-one { width: 220px; height: 100px; left: 8%; top: 20%; }
+.haze-two { width: 260px; height: 120px; right: 4%; top: 13%; }
+
+.battle-monster,
+.battle-player {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.monster-side {
+  top: 38px;
+  left: 9%;
+  width: 300px;
+  align-items: center;
+}
+
+.player-side {
+  right: 6%;
+  bottom: 16px;
+  width: 340px;
+  align-items: center;
+}
+
+.monster-shadow,
+.player-shadow {
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  background: rgba(19, 42, 29, .34);
+  filter: blur(2px);
+}
+
+.monster-shadow {
+  width: 180px;
+  height: 32px;
+  bottom: 94px;
+}
+
+.player-shadow {
+  width: 240px;
+  height: 38px;
+  bottom: 74px;
+}
+
+.monster-sprite {
+  width: 180px;
+  height: 150px;
+  display: grid;
+  place-items: center;
+  font-size: 7rem;
+  filter: drop-shadow(0 14px 15px rgba(0,0,0,.22));
+  transform: translateY(6px);
+}
+
+.monster-name-box,
+.player-name-box {
+  display: grid;
+  gap: 2px;
+  text-align: center;
+  text-shadow: 0 1px 5px rgba(0,0,0,.25);
+}
+
+.monster-name-box strong,
+.player-name-box strong {
+  font-size: .82rem;
+  letter-spacing: .09em;
+}
+
+.monster-name-box span,
+.player-name-box span {
+  color: rgba(255,255,255,.72);
+  font-size: .55rem;
+  letter-spacing: .11em;
+  font-weight: 800;
+}
+
+.hp-card {
+  width: 235px;
+  margin-top: 9px;
+  padding: 8px 10px;
+  border: 1px solid rgba(17,39,31,.16);
+  border-radius: 10px;
+  background: rgba(247, 250, 230, .92);
+  color: #28382f;
+  box-shadow: 0 8px 20px rgba(0,0,0,.14);
+}
+
+.hp-card.player { width: 270px; }
+.hp-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 5px;
+  font-size: .62rem;
+  font-weight: 900;
+}
+
+.hp-card .battle-bar {
+  height: 11px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #596962;
+  border: 1px solid rgba(0,0,0,.12);
+}
+
+.hp-card #enemyHpBar,
+.hp-card #playerHpBar {
+  height: 100%;
+  width: 100%;
+  transition: width 220ms ease;
+}
+
+.hp-card #enemyHpBar { background: linear-gradient(90deg, #d85862, #f09a63); }
+.hp-card #playerHpBar { background: linear-gradient(90deg, #5aa96e, #a7cc70); }
+
+.battle-character-sprite {
+  position: relative;
+}
+
+.player-figure-large {
+  width: 250px;
+  height: 250px;
+  transform: scaleX(-1);
+  filter: drop-shadow(0 22px 18px rgba(0,0,0,.2));
+}
+
+.player-cape {
+  position: absolute;
+  width: 138px;
+  height: 172px;
+  left: 54px;
+  bottom: 24px;
+  clip-path: polygon(18% 0, 82% 0, 100% 100%, 0 100%);
+  background: linear-gradient(90deg, #244f5d, #467a84, #203f4d);
+}
+
+.player-body {
+  position: absolute;
+  width: 84px;
+  height: 118px;
+  left: 83px;
+  bottom: 42px;
+  border-radius: 23px 23px 14px 14px;
+  background: linear-gradient(90deg, #356879, #5a929b, #2a5867);
+}
+
+.player-head {
+  position: absolute;
+  width: 66px;
+  height: 65px;
+  left: 92px;
+  bottom: 150px;
+  border-radius: 17px;
+  background: #dbb38f;
+  box-shadow: inset 0 9px 0 #5c4937;
+}
+
+.player-sword {
+  position: absolute;
+  width: 13px;
+  height: 115px;
+  left: 62px;
+  bottom: 70px;
+  transform: rotate(28deg);
+  border-radius: 9px;
+  background: linear-gradient(90deg, #eff2e9, #99aaaa, #eff2e9);
+}
+
+.battle-command-zone {
+  position: relative;
+  z-index: 7;
+  margin-top: -1px;
+  padding: 11px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 14px;
+  background: rgba(7, 21, 28, .93);
+  box-shadow: 0 18px 45px rgba(0,0,0,.28);
+}
+
+.battle-message-line {
+  min-height: 38px;
+  display: grid;
+  place-items: center start;
+  padding: 8px 11px;
+  border-radius: 9px;
+  background: rgba(255,255,255,.05);
+  color: #f0f4ea;
+  font-size: .77rem;
+}
+
+.battle-menu {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 10px;
+  margin-top: 9px;
+}
+
+.command-prompt {
+  min-height: 122px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 15px;
+  border-radius: 11px;
+  background: linear-gradient(145deg, #eff1e6, #d9deca);
+  border: 3px solid #36443d;
+  color: #29362f;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.7);
+}
+
+.command-prompt strong {
+  font-family: Georgia, serif;
+  font-size: clamp(1rem, 3vw, 1.28rem);
+}
+
+.command-prompt span {
+  margin-top: 6px;
+  color: #657168;
+  font-size: .67rem;
+}
+
+.command-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.command-button {
+  min-height: 57px;
+  border: 3px solid #38443e;
+  border-radius: 11px;
+  color: #eff2e8;
+  cursor: pointer;
+  background: #4c5b53;
+  font-weight: 900;
+  letter-spacing: .08em;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+  transition: transform 100ms ease, filter 100ms ease;
+}
+
+.command-button:hover { filter: brightness(1.09); transform: translateY(-1px); }
+.command-button:active { transform: translateY(2px); }
+.command-icon { margin-right: 6px; font-size: .85rem; }
+
+.command-button.fight { background: #755a53; }
+.command-button.skill { background: #5d6581; }
+.command-button.item { background: #766f4f; }
+.command-button.run { background: #53665d; }
+
+.question-panel {
+  padding: 13px;
+  margin-top: 9px;
+  border: 2px solid #3d4a43;
+  border-radius: 11px;
+  background: #eef0e6;
+  color: #29362f;
+}
+
+.question-panel.hidden { display: none; }
+.question-top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.question-top span {
+  padding: 5px 7px;
+  border-radius: 6px;
+  border: 1px solid rgba(48,65,56,.14);
+  background: #dce3d6;
+  font-size: .58rem;
+  font-weight: 900;
+}
+
+.question-top .battle-timer {
+  margin-left: auto;
+  color: #684d32;
+}
+
+.question-top .battle-timer.warning {
+  color: #b34e46;
+}
+
+.question-panel h2 {
+  margin: 10px 0 5px;
+  font-size: clamp(.95rem, 3vw, 1.2rem);
+  line-height: 1.35;
+}
+
+.question-panel > p {
+  margin: 0 0 10px;
+  color: #69766e;
+  font-size: .7rem;
+}
+
+.battle-answers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.battle-answer-button {
+  min-height: 48px;
+  border: 2px solid #526057;
+  border-radius: 9px;
+  background: #dfe5d8;
+  color: #26342e;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.battle-answer-button.correct {
+  background: #c4e1bb;
+  border-color: #5f9660;
+}
+
+.battle-answer-button.wrong {
+  background: #e7bebe;
+  border-color: #a65c5c;
+}
+
+.battle-answer-button:disabled {
+  opacity: .72;
+  cursor: default;
+}
+
+.battle-answers.sentence-mode {
+  grid-template-columns: 1fr;
+}
+
+.battle-word-bank,
+.battle-sentence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.battle-sentence {
+  min-height: 43px;
+  padding: 7px;
+  border-radius: 8px;
+  border: 1px dashed #89958b;
+  background: #f8f9f3;
+}
+
+.battle-word-chip {
+  border: 1px solid #89958b;
+  border-radius: 8px;
+  padding: 7px 9px;
+  background: #dce3d7;
+  color: #2b3932;
+  cursor: pointer;
+  font-size: .68rem;
+  font-weight: 800;
+}
+
+.battle-word-chip.selected { opacity: .45; }
+
+.battle-submit,
+.back-to-menu {
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 11px;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.battle-submit { background: #4b6256; color: white; }
+.back-to-menu {
+  margin-top: 8px;
+  background: #cad3c9;
+  color: #304037;
+}
+
+.hidden { display: none !important; }
+
+.battle-result {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 15px;
+  background: rgba(8, 18, 22, .72);
+  backdrop-filter: blur(5px);
+}
+
+.result-card {
+  width: min(410px, 100%);
+  padding: 22px;
+  border: 2px solid #3c4b42;
+  border-radius: 15px;
+  background: #e9eee1;
+  color: #2b3830;
+  text-align: center;
+  box-shadow: 0 25px 90px rgba(0,0,0,.45);
+}
+
+.result-card h2 { margin: 6px 0 5px; }
+.result-card p { color: #627066; }
+
+.result-rewards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin: 14px 0;
+}
+
+.result-rewards div {
+  padding: 8px 6px;
+  border-radius: 9px;
+  background: #d9e1d4;
+}
+
+.result-rewards span {
+  display: block;
+  color: #68766d;
+  font-size: .58rem;
+}
+
+.result-rewards b { font-size: .9rem; }
+
+.result-card button {
+  width: 100%;
+  padding: 10px 13px;
+  border: 0;
+  border-radius: 9px;
+  background: #4b6256;
+  color: white;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.monster-sprite.attack-enemy,
+.player-figure-large.attack {
+  animation: battleLunge 420ms ease;
+}
+
+.monster-sprite.hit,
+.player-figure-large.hit {
+  animation: battleHit 360ms ease;
+}
+
+@keyframes battleLunge {
+  0% { transform: translate(0, 0) scale(1); }
+  42% { transform: translate(72px, 28px) scale(1.05); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes battleHit {
+  0%,100% { transform: translate(0,0); filter: brightness(1); }
+  30% { transform: translate(16px, -4px); filter: brightness(1.45); }
+  70% { transform: translate(-13px, 2px); filter: brightness(1.15); }
+}
+
+@media (max-width: 760px) {
+  .battlefield-pokemon-layout { min-height: 430px; }
+  .monster-side { left: 2%; top: 28px; width: 42%; }
+  .player-side { right: 0; bottom: 8px; width: 52%; }
+  .monster-sprite { width: 140px; height: 120px; font-size: 5rem; }
+  .hp-card { width: min(190px, 92%); }
+  .hp-card.player { width: min(220px, 95%); }
+  .player-figure-large { width: 190px; height: 200px; }
+  .player-cape { width: 110px; height: 140px; left: 42px; }
+  .player-body { width: 67px; height: 92px; left: 63px; }
+  .player-head { width: 53px; height: 52px; left: 70px; bottom: 122px; }
+  .player-sword { width: 10px; height: 92px; left: 47px; bottom: 56px; }
+  .battle-menu { grid-template-columns: 1fr; }
+  .command-prompt { min-height: 72px; }
+}
+
+@media (max-width: 520px) {
+  .battle-screen { padding: 8px 8px 16px; }
+  .battlefield-pokemon-layout { min-height: 355px; border-radius: 12px; }
+  .monster-side { top: 22px; left: 1%; width: 46%; }
+  .player-side { right: -2%; bottom: 2px; width: 58%; }
+  .monster-sprite { width: 115px; height: 95px; font-size: 4rem; }
+  .hp-card { width: 155px; padding: 6px 8px; }
+  .hp-card.player { width: 175px; }
+  .player-figure-large { width: 145px; height: 155px; }
+  .player-cape { width: 84px; height: 106px; left: 30px; bottom: 16px; }
+  .player-body { width: 52px; height: 72px; left: 48px; bottom: 31px; }
+  .player-head { width: 41px; height: 41px; left: 54px; bottom: 96px; }
+  .player-sword { width: 8px; height: 72px; left: 35px; bottom: 48px; }
+  .battle-message-line { font-size: .68rem; }
+  .command-button { min-height: 51px; font-size: .75rem; }
+  .battle-answer-button { min-height: 45px; font-size: .72rem; }
+}
