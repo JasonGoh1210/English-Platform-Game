@@ -41,7 +41,7 @@ session_start();
 
       <div class="battle-player player-side">
         <div class="player-shadow"></div>
-        <img class="battle-player-art" id="battlePlayerSprite" src="/FYP/assets/player/dark-adventurer.svg" alt="Player character">
+        <img class="battle-player-art" id="battlePlayerSprite" src="/FYP/assets/player/dark-adventurer-exact.png" alt="Player character">
         <div class="player-name-box">
           <strong>YOU</strong>
           <span>LANGUAGE ADVENTURER</span>
@@ -106,6 +106,6 @@ session_start();
     </div>
   </main>
 
-  <script type="module" src="/FYP/js/battle.js?v=20261006-09"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261006-10"></script>
 </body>
 </html>
