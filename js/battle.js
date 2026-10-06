@@ -63,7 +63,9 @@ const state = {
   locked: false,
   selectedWords: [],
   completed: false,
-  mode: "MENU"
+  mode: "MENU",
+  focusUsed: false,
+  turnLocked: false
 };
 
 function getEnemy() {
@@ -275,8 +277,13 @@ function resolve(value, button, timedOut) {
   const elapsed = performance.now() - state.questionStartAt;
   const fast = elapsed <= Number(q.timeLimit || 5) * 1000 * 0.45;
   const baseDamage = q.difficulty === "HARD" ? 30 : q.difficulty === "MEDIUM" ? 25 : 20;
-  const damage = Math.round(baseDamage * (fast ? 1.1 : 1));
 
+  const focusMultiplier = state.focusUsed ? 1.5 : 1;
+  const fastMultiplier = fast ? 1.1 : 1;
+  const damage = Math.round(baseDamage * focusMultiplier * fastMultiplier);
+
+  const usedFocus = state.focusUsed;
+  state.focusUsed = false;
   state.enemyHp = Math.max(0, state.enemyHp - damage);
 
   const saved = getSave();
@@ -298,7 +305,10 @@ function resolve(value, button, timedOut) {
 
   playAttackAnimation();
   updateHp();
-  ui.battleMessage.textContent = "Direct hit! English Power deals " + damage + " damage.";
+
+  ui.battleMessage.textContent = usedFocus
+    ? "Knowledge Focus! Direct hit for " + damage + " damage."
+    : "Direct hit! English Power deals " + damage + " damage.";
 
   if (state.enemyHp <= 0) {
     window.setTimeout(finishVictory, 800);
@@ -306,7 +316,6 @@ function resolve(value, button, timedOut) {
     window.setTimeout(enemyTurn, 900);
   }
 }
-
 function enemyTurn() {
   if (state.completed) return;
 
@@ -328,10 +337,20 @@ function showBattleMenu() {
 
 function useSkill() {
   if (state.completed) return;
-  showMenu("Skill", "Skills are coming soon. Use FIGHT to attack with your English Power.",);
-  ui.battleMessage.textContent = "SKILL selected — your Knowledge Skills will be added here.";
-}
 
+  if (state.focusUsed) {
+    showMenu("Skill", "Knowledge Focus is already active for your next FIGHT.");
+    ui.battleMessage.textContent = "Knowledge Focus is ready. Choose FIGHT.";
+    return;
+  }
+
+  state.focusUsed = true;
+  ui.battleMessage.textContent = "Knowledge Focus activated! Your next correct FIGHT deals +50% damage.";
+  showMenu("Knowledge Focus", "The next correct English attack is empowered.");
+  
+  // A skill consumes the player's turn.
+  window.setTimeout(enemyTurn, 850);
+}
 function useItem() {
   if (state.completed) return;
 
@@ -346,18 +365,27 @@ function useItem() {
 
   if (currentCoins < 5) {
     showMenu("Item", "You need 5 Coins for a Healing Herb.");
-    ui.battleMessage.textContent = "ITEM selected — you need 5 Coins for a Healing Herb.";
+    ui.battleMessage.textContent = "Not enough Coins for a Healing Herb.";
     return;
   }
 
   state.playerHp = Math.min(state.playerMaxHp, state.playerHp + 20);
+
   updateSave({ coins: currentCoins - 5 });
+  void saveProgressServer({
+    xpDelta: 0,
+    coinDelta: -5,
+    englishPowerDelta: 0,
+    englishSkillCode: "VOCABULARY",
+    sourceType: "SHOP_PURCHASE",
+    sourceId: null,
+    description: "Used Healing Herb in battle"
+  });
+
   updateHp();
-  ui.battleMessage.textContent = "Healing Herb restored 20 HP.";
-
-  setTimeout(enemyTurn, 700);
+  ui.battleMessage.textContent = "Healing Herb restored 20 HP. The enemy attacks!";
+  window.setTimeout(enemyTurn, 850);
 }
-
 function returnToMapAfterBattle() {
   window.clearInterval(state.timerId);
   sessionStorage.setItem("englishPowerQuest.escape.v1", state.enemy.id);
@@ -523,6 +551,7 @@ async function init() {
   ui.battleMessage.textContent = "Loading battle...";
   state.enemy = getEnemy();
   state.enemyHp = state.enemy.hp;
+  state.focusUsed = false;
 
   ui.enemyName.textContent = state.enemy.name;
   ui.enemyLabel.textContent = state.enemy.name.toUpperCase();
