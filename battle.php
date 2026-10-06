@@ -106,6 +106,6 @@ session_start();
     </div>
   </main>
 
-  <script type="module" src="/FYP/js/battle.js?v=20261006-10"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261006-11"></script>
 </body>
 </html>
