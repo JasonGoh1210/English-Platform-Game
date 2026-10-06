@@ -41,7 +41,7 @@ session_start();
 
       <div class="battle-player player-side">
         <div class="player-shadow"></div>
-        <img class="battle-player-art" id="battlePlayerSprite" src="/FYP/assets/player/dark-adventurer-original.svg" alt="Player character">
+        <img class="battle-player-art" id="battlePlayerSprite" src="/FYP/assets/player/dark-adventurer.svg" alt="Player character">
         <div class="player-name-box">
           <strong>YOU</strong>
           <span>LANGUAGE ADVENTURER</span>
