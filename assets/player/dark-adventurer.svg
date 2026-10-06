@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" shape-rendering="crispEdges">
+  <defs>
+    <linearGradient id="cloak" x1="0" x2="1">
+      <stop offset="0" stop-color="#08090e"/>
+      <stop offset=".5" stop-color="#1b1827"/>
+      <stop offset="1" stop-color="#05060a"/>
+    </linearGradient>
+    <linearGradient id="hair" x1="0" x2="1">
+      <stop offset="0" stop-color="#0a0a12"/>
+      <stop offset=".55" stop-color="#29223a"/>
+      <stop offset="1" stop-color="#07070c"/>
+    </linearGradient>
+  </defs>
+
+  <!-- soft shadow -->
+  <ellipse cx="64" cy="118" rx="31" ry="6" fill="#000" opacity=".35"/>
+
+  <!-- long cloak / coat -->
+  <path d="M43 65 L29 112 L45 108 L53 117 L64 106 L75 117 L83 108 L99 112 L85 65 Z" fill="url(#cloak)"/>
+  <path d="M47 70 L40 105 L53 99 L63 108 L73 99 L88 105 L81 70 Z" fill="#15121e"/>
+  <path d="M56 71 L64 104 L72 71 Z" fill="#242033"/>
+
+  <!-- arms -->
+  <path d="M45 68 L34 85 L40 90 L54 76 Z" fill="#111019"/>
+  <path d="M83 68 L94 84 L88 90 L74 76 Z" fill="#111019"/>
+
+  <!-- hands -->
+  <rect x="33" y="84" width="7" height="7" fill="#caa98d"/>
+  <rect x="88" y="83" width="7" height="7" fill="#caa98d"/>
+
+  <!-- neck -->
+  <rect x="58" y="55" width="12" height="12" fill="#caa98d"/>
+
+  <!-- head -->
+  <path d="M48 35 L54 25 L74 25 L82 36 L79 56 L70 63 L56 60 L49 51 Z" fill="#caa98d"/>
+
+  <!-- long dark hair -->
+  <path d="M47 39 L44 28 L53 16 L72 15 L83 25 L83 51 L77 64 L70 58 L70 44 L62 39 L55 54 L48 56 Z" fill="url(#hair)"/>
+  <path d="M46 33 L51 18 L71 12 L84 24 L80 29 L71 22 L55 24 L50 37 Z" fill="#08080f"/>
+  <path d="M50 39 L46 50 L50 65 L56 58 L55 45 Z" fill="#0b0a12"/>
+  <path d="M77 31 L85 42 L79 58 L73 57 L74 42 Z" fill="#0b0a12"/>
+
+  <!-- face opening -->
+  <path d="M57 32 L71 32 L76 38 L73 51 L66 56 L58 52 L54 42 Z" fill="#d4b292"/>
+
+  <!-- eyes -->
+  <rect x="58" y="39" width="4" height="3" fill="#1d1a25"/>
+  <rect x="69" y="39" width="4" height="3" fill="#1d1a25"/>
+
+  <!-- dark scarf / chest -->
+  <path d="M51 58 L64 69 L77 58 L73 74 L64 82 L55 74 Z" fill="#0b0b11"/>
+  <rect x="58" y="64" width="12" height="5" fill="#302a43"/>
+
+  <!-- boots -->
+  <path d="M48 103 L58 103 L58 117 L51 121 L44 116 Z" fill="#08090d"/>
+  <path d="M70 103 L80 103 L84 116 L77 121 L70 117 Z" fill="#08090d"/>
+
+  <!-- subtle cloak highlights -->
+  <rect x="39" y="92" width="3" height="14" fill="#2d273c"/>
+  <rect x="86" y="91" width="3" height="14" fill="#2d273c"/>
+</svg>
