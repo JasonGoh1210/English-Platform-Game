@@ -80,6 +80,11 @@ const touch = { left: false, right: false };
 let questions = [];
 let lastTime = 0;
 
+const playerSprite = new Image();
+let playerSpriteReady = false;
+playerSprite.src = "/FYP/assets/player/dark-adventurer.svg";
+playerSprite.onload = () => { playerSpriteReady = true; };
+
 const npcs = [
   {
     id: "elder",
@@ -612,8 +617,19 @@ function drawCharacter(x, ground, coat, skin, player) {
 
   ctx.fillStyle = "rgba(0,0,0,.25)";
   ctx.beginPath();
-  ctx.ellipse(x, ground + 4, 25, 8, 0, 0, Math.PI * 2);
+  ctx.ellipse(x, ground + 4, player ? 28 : 25, player ? 8 : 7, 0, 0, Math.PI * 2);
   ctx.fill();
+
+  if (player && playerSpriteReady) {
+    const drawW = 86;
+    const drawH = 112;
+    ctx.save();
+    ctx.translate(x, y - drawH);
+    if (world.player.facing < 0) ctx.scale(-1, 1);
+    ctx.drawImage(playerSprite, -drawW / 2, 0, drawW, drawH);
+    ctx.restore();
+    return;
+  }
 
   ctx.fillStyle = coat;
   ctx.fillRect(x - 15, y - 55, 30, 43);
@@ -633,7 +649,6 @@ function drawCharacter(x, ground, coat, skin, player) {
     ctx.fillRect(swordX - 2, y - 63, 4, 20);
   }
 }
-
 function drawPlayer() {
   const x = worldToScreen(world.player.x);
   drawCharacter(x, world.groundY, "#3f7181", "#d8b08b", true);
