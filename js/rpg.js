@@ -28,7 +28,9 @@ const world = {
     width: 34,
     height: 58,
     onGround: true,
-    bob: 0
+    bob: 0,
+    walkFrame: 0,
+    walkTimer: 0
   },
   cameraX: 0,
   time: 0,
@@ -81,9 +83,15 @@ let questions = [];
 let lastTime = 0;
 
 const playerSprite = new Image();
+const playerWalkSheet = new Image();
 let playerSpriteReady = false;
+let playerWalkReady = false;
+
 playerSprite.src = "/FYP/assets/player/dark-adventurer-exact.png";
 playerSprite.onload = () => { playerSpriteReady = true; };
+
+playerWalkSheet.src = "/FYP/assets/player/player_walk_right_6f_small.png";
+playerWalkSheet.onload = () => { playerWalkReady = true; };
 
 const npcs = [
   {
@@ -324,7 +332,18 @@ function update(dt) {
 
     world.player.x += world.player.vx * dt;
     world.player.x = clamp(world.player.x, 100, world.width - 120);
-    world.player.bob += dt * (Math.abs(world.player.vx) > 1 ? 11 : 3);
+
+    if (Math.abs(world.player.vx) > 1) {
+      world.player.walkTimer += dt;
+      const frameDuration = 0.11;
+      while (world.player.walkTimer >= frameDuration) {
+        world.player.walkTimer -= frameDuration;
+        world.player.walkFrame = (world.player.walkFrame + 1) % 6;
+      }
+    } else {
+      world.player.walkTimer = 0;
+      world.player.walkFrame = 0;
+    }
 
     const encounter = nearestEnemy();
     if (encounter) {
@@ -612,25 +631,51 @@ function drawEnemies() {
 }
 
 function drawCharacter(x, ground, coat, skin, player) {
-  const bob = player ? Math.sin(world.player.bob) * 2 : 0;
-  const y = ground + bob;
+  const y = ground;
 
   ctx.fillStyle = "rgba(0,0,0,.25)";
   ctx.beginPath();
-  ctx.ellipse(x, ground + 4, player ? 28 : 25, player ? 8 : 7, 0, 0, Math.PI * 2);
+  ctx.ellipse(x, ground + 4, player ? 30 : 25, player ? 8 : 7, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  if (player && playerSpriteReady) {
-    const drawW = 128;
-    const drawH = 128;
-    ctx.save();
-    ctx.translate(x, y - drawH);
-    // The supplied sprite faces left by default.
-    // +1 means right, -1 means left, so flip only when moving right.
-    if (world.player.facing > 0) ctx.scale(-1, 1);
-    ctx.drawImage(playerSprite, -drawW / 2, 0, drawW, drawH);
-    ctx.restore();
-    return;
+  if (player) {
+    if (Math.abs(world.player.vx) > 1 && playerWalkReady) {
+      const frameW = 48;
+      const frameH = 72;
+      const drawW = 96;
+      const drawH = 144;
+
+      ctx.save();
+      ctx.translate(x, y - drawH);
+
+      // Generated walk frames use a left-facing base pose.
+      // Flip only when moving right so movement direction and facing match.
+      if (world.player.facing > 0) ctx.scale(-1, 1);
+
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(
+        playerWalkSheet,
+        world.player.walkFrame * frameW, 0, frameW, frameH,
+        -drawW / 2, 0, drawW, drawH
+      );
+      ctx.restore();
+      return;
+    }
+
+    if (playerSpriteReady) {
+      const drawW = 128;
+      const drawH = 128;
+      ctx.save();
+      ctx.translate(x, y - drawH);
+
+      // The supplied idle sprite faces left by default.
+      if (world.player.facing > 0) ctx.scale(-1, 1);
+
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(playerSprite, -drawW / 2, 0, drawW, drawH);
+      ctx.restore();
+      return;
+    }
   }
 
   ctx.fillStyle = coat;
