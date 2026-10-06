@@ -41,7 +41,10 @@ try {
     $oldCoins = (int)$before['coins_total'];
     $oldLevel = (int)$before['level_no'];
     $newXp = $oldXp + $xp;
-    $newCoins = max(0, $oldCoins + $coins);
+    $newCoins = $oldCoins + $coins;
+    if ($newCoins < 0) {
+        throw new RuntimeException('Not enough Coins.');
+    }
 
     $levelStmt = $db->prepare(
         "SELECT level_no FROM levels
@@ -83,7 +86,7 @@ try {
         $stmt->execute();
     }
 
-    if ($coins > 0) {
+    if ($coins !== 0) {
         $stmt = $db->prepare(
             "INSERT INTO player_coin_transactions
              (player_id, amount, source_type, source_id, description)
