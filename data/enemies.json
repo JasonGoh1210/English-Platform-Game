@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "name": "Word Slime",
+    "type": "SMALL",
+    "hp": 60,
+    "damage": 10,
+    "difficulty": "EASY",
+    "rewardXP": 20,
+    "rewardCoins": 10
+  }
+]
