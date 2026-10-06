@@ -18,7 +18,7 @@ session_start();
 
     <div class="hud">
       <section class="pixel-player-card">
-        <div class="pixel-avatar">🧙</div>
+        <div class="pixel-avatar"><img src="/FYP/assets/player/dark-adventurer-exact.png" alt="Rookie character"></div>
         <div class="pixel-player-info">
           <div class="pixel-player-name">Rookie</div>
           <div class="pixel-level">Lv. <span id="levelText">1</span></div>
