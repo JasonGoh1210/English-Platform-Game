@@ -1857,3 +1857,35 @@ button { font: inherit; }
   font-weight: 900;
   letter-spacing: .12em;
 }
+
+/* Dark fantasy player sprite */
+.battle-player-art {
+  width: 250px;
+  height: 250px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 22px 18px rgba(0,0,0,.2));
+  transform: scaleX(-1);
+}
+
+.battle-player-art.attack {
+  animation: battleLungePlayer 420ms ease;
+}
+
+.battle-player-art.hit {
+  animation: battleHit 360ms ease;
+}
+
+@keyframes battleLungePlayer {
+  0% { transform: translate(0,0) scaleX(-1); }
+  42% { transform: translate(-58px, 20px) scaleX(-1); }
+  100% { transform: translate(0,0) scaleX(-1); }
+}
+
+@media (max-width: 760px) {
+  .battle-player-art { width: 190px; height: 200px; }
+}
+
+@media (max-width: 520px) {
+  .battle-player-art { width: 145px; height: 155px; }
+}
