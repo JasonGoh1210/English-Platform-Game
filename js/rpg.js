@@ -625,7 +625,9 @@ function drawCharacter(x, ground, coat, skin, player) {
     const drawH = 128;
     ctx.save();
     ctx.translate(x, y - drawH);
-    if (world.player.facing < 0) ctx.scale(-1, 1);
+    // The supplied sprite faces left by default.
+    // +1 means right, -1 means left, so flip only when moving right.
+    if (world.player.facing > 0) ctx.scale(-1, 1);
     ctx.drawImage(playerSprite, -drawW / 2, 0, drawW, drawH);
     ctx.restore();
     return;
