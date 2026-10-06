@@ -83,15 +83,30 @@ let questions = [];
 let lastTime = 0;
 
 const playerSprite = new Image();
-const playerWalkSheet = new Image();
 let playerSpriteReady = false;
-let playerWalkReady = false;
+
+const playerWalkFrames = {
+  right: Array.from({ length: 6 }, () => new Image()),
+  left: Array.from({ length: 6 }, () => new Image())
+};
+
+let playerWalkReadyCount = 0;
+const PLAYER_WALK_FRAME_COUNT = 6;
 
 playerSprite.src = "/FYP/assets/player/dark-adventurer-exact.png";
 playerSprite.onload = () => { playerSpriteReady = true; };
 
-playerWalkSheet.src = "/FYP/assets/player/player_walk_right_6f_small.png";
-playerWalkSheet.onload = () => { playerWalkReady = true; };
+for (const direction of ["right", "left"]) {
+  playerWalkFrames[direction].forEach((img, index) => {
+    img.src = "/FYP/assets/player/player_walk_" + direction + "_" + (index + 1) + ".png";
+    img.onload = () => { playerWalkReadyCount += 1; };
+  });
+}
+
+function hasWalkFrame(direction, index) {
+  const frame = playerWalkFrames[direction][index];
+  return Boolean(frame && frame.complete && frame.naturalWidth > 0);
+}
 
 const npcs = [
   {
@@ -335,10 +350,10 @@ function update(dt) {
 
     if (Math.abs(world.player.vx) > 1) {
       world.player.walkTimer += dt;
-      const frameDuration = 0.11;
+      const frameDuration = 0.13;
       while (world.player.walkTimer >= frameDuration) {
         world.player.walkTimer -= frameDuration;
-        world.player.walkFrame = (world.player.walkFrame + 1) % 6;
+        world.player.walkFrame = (world.player.walkFrame + 1) % PLAYER_WALK_FRAME_COUNT;
       }
     } else {
       world.player.walkTimer = 0;
@@ -639,23 +654,21 @@ function drawCharacter(x, ground, coat, skin, player) {
   ctx.fill();
 
   if (player) {
-    if (Math.abs(world.player.vx) > 1 && playerWalkReady) {
-      const frameW = 48;
-      const frameH = 72;
+    const direction = world.player.facing > 0 ? "right" : "left";
+    const frameIndex = world.player.walkFrame;
+    const moving = Math.abs(world.player.vx) > 1;
+    const frame = playerWalkFrames[direction][frameIndex];
+
+    if (moving && hasWalkFrame(direction, frameIndex)) {
       const drawW = 96;
       const drawH = 144;
 
       ctx.save();
       ctx.translate(x, y - drawH);
-
-      // Generated walk frames use a left-facing base pose.
-      // Flip only when moving right so movement direction and facing match.
-      if (world.player.facing > 0) ctx.scale(-1, 1);
-
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(
-        playerWalkSheet,
-        world.player.walkFrame * frameW, 0, frameW, frameH,
+        frame,
+        0, 0, frame.naturalWidth, frame.naturalHeight,
         -drawW / 2, 0, drawW, drawH
       );
       ctx.restore();
@@ -665,10 +678,10 @@ function drawCharacter(x, ground, coat, skin, player) {
     if (playerSpriteReady) {
       const drawW = 128;
       const drawH = 128;
+
       ctx.save();
       ctx.translate(x, y - drawH);
 
-      // The supplied idle sprite faces left by default.
       if (world.player.facing > 0) ctx.scale(-1, 1);
 
       ctx.imageSmoothingEnabled = false;
