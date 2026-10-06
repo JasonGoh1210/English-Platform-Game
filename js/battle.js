@@ -290,7 +290,8 @@ function showBattleMenu() {
 
 function useSkill() {
   if (state.completed) return;
-  showMenu("Skill", "No active skill is equipped yet. Choose FIGHT to use your English Power.",);
+  showMenu("Skill", "Skills are coming soon. Use FIGHT to attack with your English Power.",);
+  ui.battleMessage.textContent = "SKILL selected — your Knowledge Skills will be added here.";
 }
 
 function useItem() {
@@ -301,11 +302,13 @@ function useItem() {
 
   if (state.playerHp >= state.playerMaxHp) {
     showMenu("Item", "Your HP is already full.");
+    ui.battleMessage.textContent = "ITEM selected — your HP is already full.";
     return;
   }
 
   if (currentCoins < 5) {
     showMenu("Item", "You need 5 Coins for a Healing Herb.");
+    ui.battleMessage.textContent = "ITEM selected — you need 5 Coins for a Healing Herb.";
     return;
   }
 
@@ -413,24 +416,57 @@ function finishDefeat() {
 }
 
 function bindBattleEvents() {
-  ui.fightButton.addEventListener("click", () => {
+  if (!ui.fightButton || !ui.skillButton || !ui.itemButton || !ui.runButton || !ui.backToMenu) {
+    throw new Error("Battle command buttons are missing from the page.");
+  }
+
+  ui.fightButton.addEventListener("click", (event) => {
+    event.preventDefault();
     if (state.completed) return;
     showQuestionPanel();
-    ui.battleMessage.textContent = "What will you do? Use your English to attack!";
+    ui.battleMessage.textContent = "FIGHT selected! Use your English to attack.";
     startQuestion();
   });
 
-  ui.skillButton.addEventListener("click", useSkill);
-  ui.itemButton.addEventListener("click", useItem);
-  ui.runButton.addEventListener("click", runAway);
+  ui.skillButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    useSkill();
+  });
 
-  ui.backToMenu.addEventListener("click", () => {
+  ui.itemButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    useItem();
+  });
+
+  ui.runButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    runAway();
+  });
+
+  ui.backToMenu.addEventListener("click", (event) => {
+    event.preventDefault();
     window.clearInterval(state.timerId);
     showMenu("What will you do?", "Choose an action.");
+    ui.battleMessage.textContent = "Choose your next move.";
+  });
+
+  // Fallback delegation: keeps commands clickable even if another UI layer changes.
+  ui.battleMenu.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-command]");
+    if (!button || button.disabled) return;
+    if (button === ui.fightButton || button === ui.skillButton || button === ui.itemButton || button === ui.runButton) return;
+
+    const action = button.dataset.command;
+    if (action === "fight") ui.fightButton.click();
+    if (action === "skill") ui.skillButton.click();
+    if (action === "item") ui.itemButton.click();
+    if (action === "run") ui.runButton.click();
   });
 }
 
 async function init() {
+  document.body.classList.add("battle-js-ready");
+  ui.battleMessage.textContent = "Loading battle...";
   state.enemy = getEnemy();
   state.enemyHp = state.enemy.hp;
 
@@ -452,9 +488,15 @@ async function init() {
     ui.battleMessage.textContent = "A wild " + state.enemy.name + " appeared!";
     showBattleMenu();
   } catch (error) {
-    ui.battleMessage.textContent = "Unable to load the English challenge.";
-    console.error(error);
+    ui.battleMessage.textContent = "Battle setup error: " + error.message;
+    console.error("English Power Quest battle error:", error);
   }
 }
+
+window.addEventListener("error", (event) => {
+  if (ui.battleMessage && event.error) {
+    ui.battleMessage.textContent = "Battle error: " + (event.error.message || "Unknown error");
+  }
+});
 
 init();
