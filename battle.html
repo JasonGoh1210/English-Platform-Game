@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101b24">
+  <title>English Power Quest · Battle</title>
+  <link rel="stylesheet" href="/FYP/css/style.css">
+</head>
+<body class="battle-page">
+  <main class="battle-screen">
+    <header class="battle-header">
+      <div>
+        <span class="battle-kicker">ENCOUNTER</span>
+        <h1 id="battleEnemyName">Word Slime</h1>
+      </div>
+      <a class="back-link" href="/FYP/index.html">RETURN TO MAP</a>
+    </header>
+
+    <section class="battle-arena-page">
+      <div class="battle-character battle-character-player">
+        <div class="character-shadow"></div>
+        <div class="character-sprite player-figure">
+          <span class="cape"></span><span class="body"></span><span class="head"></span><span class="blade"></span>
+        </div>
+        <strong>YOU</strong>
+        <span class="character-role">LANGUAGE ADVENTURER</span>
+      </div>
+
+      <div class="battle-vs">VS</div>
+
+      <div class="battle-character battle-character-enemy">
+        <div class="character-shadow"></div>
+        <div class="character-sprite enemy-figure" id="enemyFigure">🟢</div>
+        <strong id="battleEnemyLabel">WORD SLIME</strong>
+        <span class="character-role" id="battleEnemyRole">FOREST ENEMY</span>
+      </div>
+      <div class="arena-lines"></div>
+    </section>
+
+    <section class="battle-bars">
+      <div class="combatant-bar">
+        <div class="bar-label"><span>PLAYER HP</span><b id="playerHpText">100 / 100</b></div>
+        <div class="battle-bar"><div id="playerHpBar"></div></div>
+      </div>
+      <div class="combatant-bar">
+        <div class="bar-label"><span id="enemyDifficulty">EASY</span><b id="enemyHpText">60 / 60</b></div>
+        <div class="battle-bar"><div id="enemyHpBar"></div></div>
+      </div>
+    </section>
+
+    <section class="battle-question-page">
+      <div class="battle-question-meta">
+        <span id="questionType">TRUE / FALSE</span>
+        <span id="questionDifficulty">EASY</span>
+        <span class="battle-timer" id="timerText">5.0s</span>
+      </div>
+      <h2 id="questionText">Loading question...</h2>
+      <p id="questionPrompt">Choose the correct answer to attack.</p>
+      <div id="answerArea" class="battle-answers"></div>
+      <div class="battle-message" id="battleMessage">Correct answers damage the enemy. Wrong answers let the enemy strike back.</div>
+    </section>
+
+    <div class="battle-result hidden" id="battleResult">
+      <div class="result-card">
+        <span class="battle-kicker" id="resultKicker">VICTORY</span>
+        <h2 id="resultTitle">Enemy Defeated!</h2>
+        <p id="resultText">You got stronger.</p>
+        <div class="result-rewards" id="resultRewards"></div>
+        <button id="resultButton">Return to Map</button>
+      </div>
+    </div>
+  </main>
+  <script type="module" src="/FYP/js/battle.js"></script>
+</body>
+</html>
