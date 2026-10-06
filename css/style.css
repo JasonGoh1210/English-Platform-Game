@@ -1917,3 +1917,130 @@ button { font: inherit; }
   .battle-player-art { width: 150px; height: 150px; }
   .pixel-avatar img { width: 50px; height: 50px; }
 }
+
+/* Final battle positioning: player left, monster right, same vertical level */
+.battlefield-pokemon-layout {
+  min-height: 500px;
+}
+
+.battle-monster,
+.battle-player {
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+  width: 320px;
+}
+
+.battle-monster {
+  left: 3%;
+  right: auto;
+}
+
+.battle-player {
+  left: auto;
+  right: 3%;
+}
+
+.battle-monster .monster-sprite,
+.battle-player .battle-player-art {
+  width: 220px;
+  height: 220px;
+}
+
+.battle-monster .monster-shadow,
+.battle-player .player-shadow {
+  bottom: 82px;
+}
+
+.battle-monster .hp-card,
+.battle-player .hp-card {
+  margin-top: 8px;
+}
+
+@media (max-width: 900px) {
+  .battle-monster,
+  .battle-player {
+    width: 270px;
+  }
+
+  .battle-monster {
+    left: 1%;
+  }
+
+  .battle-player {
+    right: 1%;
+  }
+
+  .battle-monster .monster-sprite,
+  .battle-player .battle-player-art {
+    width: 190px;
+    height: 190px;
+  }
+}
+
+@media (max-width: 760px) {
+  .battlefield-pokemon-layout {
+    min-height: 430px;
+  }
+
+  .battle-monster,
+  .battle-player {
+    top: 44%;
+    width: 46%;
+  }
+
+  .battle-monster {
+    left: 0;
+  }
+
+  .battle-player {
+    right: 0;
+  }
+
+  .battle-monster .monster-sprite,
+  .battle-player .battle-player-art {
+    width: 145px;
+    height: 145px;
+  }
+
+  .battle-monster .hp-card,
+  .battle-player .hp-card {
+    width: min(185px, 95%);
+  }
+
+  .battle-monster .monster-shadow,
+  .battle-player .player-shadow {
+    width: 130px;
+    bottom: 58px;
+  }
+}
+
+@media (max-width: 520px) {
+  .battlefield-pokemon-layout {
+    min-height: 350px;
+  }
+
+  .battle-monster,
+  .battle-player {
+    top: 43%;
+    width: 49%;
+  }
+
+  .battle-monster .monster-sprite,
+  .battle-player .battle-player-art {
+    width: 112px;
+    height: 112px;
+  }
+
+  .battle-monster .hp-card,
+  .battle-player .hp-card {
+    width: 150px;
+    padding: 6px 8px;
+  }
+
+  .battle-monster .monster-shadow,
+  .battle-player .player-shadow {
+    width: 92px;
+    bottom: 42px;
+  }
+}
