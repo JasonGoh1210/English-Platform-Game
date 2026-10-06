@@ -345,8 +345,9 @@ function resolveAnswer(value, clickedButton = null, timedOut = false) {
   disableAnswerButtons();
   if (clickedButton) clickedButton.classList.add(isCorrect ? "correct" : "wrong");
 
+  const repeated = questionIsRepeat(state.player, question.id);
   recordAnswer(state.player, isCorrect, question.id);
-  if (isCorrect) handleCorrect(question);
+  if (isCorrect) handleCorrect(question, repeated);
   else handleWrong(question, timedOut);
 
   savePlayer(state.player);
@@ -354,10 +355,8 @@ function resolveAnswer(value, clickedButton = null, timedOut = false) {
   updateEnemyUI();
 }
 
-function handleCorrect(question) {
+function handleCorrect(question, repeated) {
   playTone("correct");
-
-  const repeated = questionIsRepeat(state.player, question.id);
   const reward = createQuestionReward(question, repeated);
   const result = handleCorrectAnswer(state.combat, question);
 
