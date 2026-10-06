@@ -1,0 +1,12 @@
+[
+  { "level": 1, "requiredXP": 0, "skillPointsOnLevelUp": 0, "tier": "Rookie" },
+  { "level": 2, "requiredXP": 100, "skillPointsOnLevelUp": 1, "tier": "Rookie" },
+  { "level": 3, "requiredXP": 250, "skillPointsOnLevelUp": 1, "tier": "Explorer" },
+  { "level": 4, "requiredXP": 450, "skillPointsOnLevelUp": 1, "tier": "Explorer" },
+  { "level": 5, "requiredXP": 700, "skillPointsOnLevelUp": 1, "tier": "Warrior" },
+  { "level": 6, "requiredXP": 1000, "skillPointsOnLevelUp": 1, "tier": "Warrior" },
+  { "level": 7, "requiredXP": 1350, "skillPointsOnLevelUp": 1, "tier": "Elite Warrior" },
+  { "level": 8, "requiredXP": 1750, "skillPointsOnLevelUp": 1, "tier": "Elite Warrior" },
+  { "level": 9, "requiredXP": 2200, "skillPointsOnLevelUp": 1, "tier": "Elite Warrior" },
+  { "level": 10, "requiredXP": 2700, "skillPointsOnLevelUp": 1, "tier": "English Master" }
+]
