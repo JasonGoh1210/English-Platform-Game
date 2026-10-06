@@ -320,11 +320,16 @@ function useItem() {
   setTimeout(enemyTurn, 700);
 }
 
-function runAway() {
-  if (state.completed) return;
+function returnToMapAfterBattle() {
   window.clearInterval(state.timerId);
+  sessionStorage.setItem("englishPowerQuest.escape.v1", state.enemy.id);
   sessionStorage.removeItem(BATTLE_KEY);
   window.location.href = "/FYP/index.html";
+}
+
+function runAway() {
+  if (state.completed) return;
+  returnToMapAfterBattle();
 }
 
 function playAttackAnimation() {
@@ -368,6 +373,7 @@ function showResult(victory, title, text, rewards) {
   ui.resultButton.onclick = () => {
     if (victory) {
       sessionStorage.removeItem(BATTLE_KEY);
+      sessionStorage.removeItem("englishPowerQuest.escape.v1");
       window.location.href = "/FYP/index.html";
     } else {
       window.location.reload();
