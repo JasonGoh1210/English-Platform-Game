@@ -561,7 +561,7 @@ async function init() {
   ui.enemyFigure.textContent =
     state.enemy.type === "slime" ? "🟢" :
     state.enemy.type === "bat" ? "🦇" : "🛡️";
-  if (ui.playerSprite) ui.playerSprite.src = "/FYP/assets/player/dark-adventurer-original.svg";
+  if (ui.playerSprite) ui.playerSprite.src = "/FYP/assets/player/dark-adventurer.svg";
 
   bindBattleEvents();
   updateHp();
