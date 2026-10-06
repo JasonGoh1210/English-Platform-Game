@@ -1818,3 +1818,34 @@ button { font: inherit; }
   .pixel-world-ui .dialogue p { font-size: .66rem; }
   .pixel-world-ui .dialogue button { font-size: .56rem; }
 }
+
+/* Center the story dialogue box on the map */
+.pixel-world-ui .dialogue {
+  left: 50%;
+  right: auto;
+  bottom: 82px;
+  transform: translateX(-50%);
+  width: min(760px, calc(100vw - 32px));
+  max-width: 760px;
+}
+
+@media (max-width: 780px) {
+  .pixel-world-ui .dialogue {
+    left: 50%;
+    right: auto;
+    bottom: 78px;
+    transform: translateX(-50%);
+    width: calc(100vw - 20px);
+  }
+}
+
+@media (max-width: 520px) {
+  .pixel-world-ui .dialogue {
+    left: 50%;
+    right: auto;
+    bottom: 70px;
+    transform: translateX(-50%);
+    width: calc(100vw - 14px);
+    grid-template-columns: 55px 1fr;
+  }
+}
