@@ -82,7 +82,7 @@ let lastTime = 0;
 
 const playerSprite = new Image();
 let playerSpriteReady = false;
-playerSprite.src = "/FYP/assets/player/dark-adventurer-original.svg";
+playerSprite.src = "/FYP/assets/player/dark-adventurer.svg";
 playerSprite.onload = () => { playerSpriteReady = true; };
 
 const npcs = [
