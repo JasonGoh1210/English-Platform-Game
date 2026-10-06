@@ -82,7 +82,7 @@ let lastTime = 0;
 
 const playerSprite = new Image();
 let playerSpriteReady = false;
-playerSprite.src = "/FYP/assets/player/dark-adventurer.svg";
+playerSprite.src = "/FYP/assets/player/dark-adventurer-exact.png";
 playerSprite.onload = () => { playerSpriteReady = true; };
 
 const npcs = [
@@ -621,8 +621,8 @@ function drawCharacter(x, ground, coat, skin, player) {
   ctx.fill();
 
   if (player && playerSpriteReady) {
-    const drawW = 86;
-    const drawH = 112;
+    const drawW = 128;
+    const drawH = 128;
     ctx.save();
     ctx.translate(x, y - drawH);
     if (world.player.facing < 0) ctx.scale(-1, 1);
