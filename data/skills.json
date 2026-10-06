@@ -1,0 +1,23 @@
+[
+  {
+    "id": "knowledge-boost",
+    "name": "Knowledge Boost",
+    "description": "Passive: difficult questions become more rewarding in future versions.",
+    "branch": "VOCABULARY",
+    "cost": 2
+  },
+  {
+    "id": "second-chance",
+    "name": "Second Chance",
+    "description": "Future active skill: retry one difficult challenge without an enemy hit.",
+    "branch": "UTILITY",
+    "cost": 2
+  },
+  {
+    "id": "combo-master",
+    "name": "Combo Master",
+    "description": "Future passive skill: increases the maximum combo damage bonus.",
+    "branch": "COMBO",
+    "cost": 3
+  }
+]
