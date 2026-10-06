@@ -12,22 +12,7 @@ const ui = {
   dialogue: document.getElementById("dialogue"),
   dialogueName: document.getElementById("dialogueName"),
   dialogueText: document.getElementById("dialogueText"),
-  dialogueButton: document.getElementById("dialogueButton"),
-  battleOverlay: document.getElementById("battleOverlay"),
-  battleTurnText: document.getElementById("battleTurnText"),
-  battleEnemySprite: document.getElementById("battleEnemySprite"),
-  battleEnemyName: document.getElementById("battleEnemyName"),
-  battleEnemyHpText: document.getElementById("battleEnemyHpText"),
-  battleEnemyHpBar: document.getElementById("battleEnemyHpBar"),
-  battlePlayerHpText: document.getElementById("battlePlayerHpText"),
-  battlePlayerHpBar: document.getElementById("battlePlayerHpBar"),
-  battleQuestionType: document.getElementById("battleQuestionType"),
-  battleDifficulty: document.getElementById("battleDifficulty"),
-  battleTimer: document.getElementById("battleTimer"),
-  battleQuestionText: document.getElementById("battleQuestionText"),
-  battlePrompt: document.getElementById("battlePrompt"),
-  battleAnswers: document.getElementById("battleAnswers"),
-  battleMessage: document.getElementById("battleMessage")
+  dialogueButton: document.getElementById("dialogueButton")
 };
 
 const world = {
@@ -55,6 +40,37 @@ const world = {
   interacting: false,
   battle: null
 };
+
+const WORLD_SAVE_KEY = "englishPowerQuest.world.v2";
+
+function saveWorldState() {
+  localStorage.setItem(WORLD_SAVE_KEY, JSON.stringify({
+    playerX: world.player.x,
+    questStep: world.questStep,
+    coins: world.coins,
+    xp: world.xp,
+    power: world.power,
+    level: world.level,
+    defeatedEnemyIds: enemies.filter(enemy => enemy.defeated).map(enemy => enemy.id)
+  }));
+}
+
+function loadWorldState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(WORLD_SAVE_KEY) || "null");
+    if (!saved) return;
+    world.player.x = clamp(Number(saved.playerX) || world.player.x, 100, world.width - 120);
+    world.questStep = Number(saved.questStep) || 0;
+    world.coins = Number(saved.coins) || 0;
+    world.xp = Number(saved.xp) || 0;
+    world.power = Number(saved.power) || 0;
+    world.level = Number(saved.level) || 1;
+    const defeated = new Set(Array.isArray(saved.defeatedEnemyIds) ? saved.defeatedEnemyIds : []);
+    enemies.forEach(enemy => { enemy.defeated = defeated.has(enemy.id); });
+  } catch (error) {
+    console.warn("Unable to restore map progress.");
+  }
+}
 
 const keys = new Set();
 const touch = { left: false, right: false };
@@ -203,6 +219,7 @@ function interact() {
       world.power += 1;
       updateQuest();
       syncHUD();
+      saveWorldState();
     }
     return;
   }
@@ -237,280 +254,18 @@ function syncHUD() {
 }
 
 function startBattle(enemy) {
-  if (world.battle || enemy.defeated) return;
-  world.battle = {
-    enemy,
-    enemyHp: enemy.hp,
-    playerHp: 100,
-    playerMaxHp: 100,
-    currentQuestion: null,
-    usedQuestionIds: [],
-    questionStartedAt: 0,
-    timerId: null,
-    locked: false,
-    sentenceSelected: []
-  };
-  touch.left = false;
-  touch.right = false;
-  keys.delete("arrowleft");
-  keys.delete("arrowright");
-  keys.delete("a");
-  keys.delete("d");
-  ui.battleOverlay.classList.remove("hidden");
-  ui.battleEnemySprite.textContent = enemy.type === "slime" ? "🟢" : enemy.type === "bat" ? "🦇" : "🛡️";
-  ui.battleEnemyName.textContent = enemy.name;
-  ui.battleMessage.textContent = "The " + enemy.name + " blocks your path! Answer to attack.";
-  loadBattleQuestion();
-}
-
-function pickBattleQuestion() {
-  const battle = world.battle;
-  const enemy = battle.enemy;
-  let pool = questions.filter(q => q.difficulty === enemy.difficulty);
-
-  if (!pool.length) pool = questions.slice();
-
-  const fresh = pool.filter(q => !battle.usedQuestionIds.includes(q.id));
-  pool = fresh.length ? fresh : pool;
-
-  const q = pool[Math.floor(Math.random() * pool.length)];
-  battle.usedQuestionIds.push(q.id);
-  return q;
-}
-
-function formatType(type) {
-  if (type === "TRUE_FALSE") return "TRUE / FALSE";
-  if (type === "ODD_WORD_OUT") return "ODD WORD OUT";
-  if (type === "SENTENCE_BUILDER") return "SENTENCE BUILDER";
-  return type;
-}
-
-function normalizedSentenceAnswer(question, words) {
-  const result = Array.isArray(words) ? words : [];
-  return result.map(v => String(v).trim()).join(" ").replace(/s+/g, " ").trim().toLowerCase();
-}
-
-function correctForQuestion(question, value) {
-  if (question.type === "TRUE_FALSE") return value === Boolean(question.answer);
-  if (question.type === "ODD_WORD_OUT") return String(value).toLowerCase() === String(question.answer).toLowerCase();
-  if (question.type === "SENTENCE_BUILDER") {
-    return String(value).toLowerCase() === normalizedSentenceAnswer(question, question.answerOrder);
-  }
-  return false;
-}
-
-function questionAnswerText(question) {
-  if (question.type === "TRUE_FALSE") return question.answer ? "TRUE" : "FALSE";
-  if (question.type === "ODD_WORD_OUT") return question.answer;
-  if (question.type === "SENTENCE_BUILDER") return question.answerOrder.join(" ");
-  return "";
-}
-
-function loadBattleQuestion() {
-  const battle = world.battle;
-  if (!battle) return;
-
-  window.clearInterval(battle.timerId);
-  battle.locked = false;
-  battle.sentenceSelected = [];
-
-  const question = pickBattleQuestion();
-  battle.currentQuestion = question;
-  battle.questionStartedAt = performance.now();
-
-  ui.battleTurnText.textContent = "YOUR TURN";
-  ui.battleQuestionType.textContent = formatType(question.type);
-  ui.battleDifficulty.textContent = question.difficulty;
-  ui.battleQuestionText.textContent = question.question;
-  ui.battlePrompt.textContent = question.prompt || "Choose the correct answer to strike.";
-  ui.battleAnswers.innerHTML = "";
-
-  if (question.type === "TRUE_FALSE") {
-    renderChoice("TRUE", true);
-    renderChoice("FALSE", false);
-  } else if (question.type === "ODD_WORD_OUT") {
-    question.words.forEach(word => renderChoice(word, word));
-    ui.battleAnswers.classList.remove("sentence-mode");
-  } else if (question.type === "SENTENCE_BUILDER") {
-    renderSentenceBuilder(question);
-  }
-
-  let remaining = Number(question.timeLimit || 5);
-  ui.battleTimer.classList.remove("warning");
-  ui.battleTimer.textContent = remaining.toFixed(1) + "s";
-  battle.timerId = window.setInterval(() => {
-    if (!world.battle || battle.locked) return;
-    remaining -= 0.1;
-    ui.battleTimer.textContent = Math.max(0, remaining).toFixed(1) + "s";
-    if (remaining <= 2) ui.battleTimer.classList.add("warning");
-    if (remaining <= 0) {
-      window.clearInterval(battle.timerId);
-      resolveBattleAnswer(null, null, true);
-    }
-  }, 100);
-
-  updateBattleHUD();
-}
-
-function renderChoice(label, value) {
-  const button = document.createElement("button");
-  button.className = "battle-answer-button";
-  button.type = "button";
-  button.textContent = label;
-  button.addEventListener("click", () => resolveBattleAnswer(value, button, false));
-  ui.battleAnswers.appendChild(button);
-}
-
-function renderSentenceBuilder(question) {
-  ui.battleAnswers.classList.add("sentence-mode");
-
-  const selected = document.createElement("div");
-  selected.className = "battle-sentence";
-
-  const bank = document.createElement("div");
-  bank.className = "battle-word-bank";
-
-  question.words.forEach(word => {
-    const button = document.createElement("button");
-    button.className = "battle-word-chip";
-    button.type = "button";
-    button.textContent = word;
-    button.addEventListener("click", () => {
-      if (world.battle?.locked || button.classList.contains("selected")) return;
-      button.classList.add("selected");
-      world.battle.sentenceSelected.push(word);
-      const chip = document.createElement("span");
-      chip.className = "battle-word-chip";
-      chip.textContent = word;
-      selected.appendChild(chip);
-    });
-    bank.appendChild(button);
-  });
-
-  const submit = document.createElement("button");
-  submit.className = "battle-submit";
-  submit.type = "button";
-  submit.textContent = "Build Sentence & Attack";
-  submit.addEventListener("click", () => {
-    const answer = normalizedSentenceAnswer(question, world.battle.sentenceSelected);
-    resolveBattleAnswer(answer, submit, false);
-  });
-
-  ui.battleAnswers.append(selected, bank, submit);
-}
-
-function resolveBattleAnswer(value, clickedButton, timedOut) {
-  const battle = world.battle;
-  if (!battle || battle.locked) return;
-
-  battle.locked = true;
-  window.clearInterval(battle.timerId);
-  ui.battleAnswers.querySelectorAll("button").forEach(button => { button.disabled = true; });
-
-  const question = battle.currentQuestion;
-  const correct = !timedOut && correctForQuestion(question, value);
-
-  if (clickedButton) clickedButton.classList.add(correct ? "correct" : "wrong");
-
-  if (correct) {
-    const elapsed = performance.now() - battle.questionStartedAt;
-    const fastBonus = elapsed <= Number(question.timeLimit || 5) * 1000 * .45;
-    const baseDamage = question.difficulty === "HARD" ? 30 : question.difficulty === "MEDIUM" ? 25 : 20;
-    const damage = Math.round(baseDamage * (fastBonus ? 1.1 : 1));
-
-    battle.enemyHp = Math.max(0, battle.enemyHp - damage);
-    world.xp += Number(question.xp || 10);
-    world.coins += Number(question.coins || 5);
-    world.power += Number(question.englishPower || 1);
-    syncHUD();
-    updateBattleHUD();
-
-    ui.battleMessage.textContent = "Correct! Your English Power strikes for " + damage + " damage.";
-    if (battle.enemyHp <= 0) {
-      window.setTimeout(finishBattleVictory, 650);
-    } else {
-      window.setTimeout(enemyTurnAfterCorrect, 700);
-    }
-  } else {
-    ui.battleMessage.textContent = timedOut
-      ? "Time's up! The enemy attacks."
-      : "Wrong answer. The enemy attacks.";
-    window.setTimeout(enemyTurn, 700);
-  }
-}
-
-function enemyTurnAfterCorrect() {
-  if (!world.battle) return;
-  enemyTurn();
-}
-
-function enemyTurn() {
-  const battle = world.battle;
-  if (!battle) return;
-
-  const damage = battle.enemy.damage;
-  battle.playerHp = Math.max(0, battle.playerHp - damage);
-  ui.battleTurnText.textContent = "ENEMY ATTACK";
-  ui.battleMessage.textContent = battle.enemy.name + " hits you for " + damage + " damage.";
-  updateBattleHUD();
-
-  if (battle.playerHp <= 0) {
-    window.setTimeout(finishBattleDefeat, 650);
-  } else {
-    window.setTimeout(loadBattleQuestion, 700);
-  }
-}
-
-function updateBattleHUD() {
-  const battle = world.battle;
-  if (!battle) return;
-
-  ui.battleEnemyHpText.textContent = battle.enemyHp + " / " + battle.enemy.hp;
-  ui.battleEnemyHpBar.style.width = Math.max(0, battle.enemyHp / battle.enemy.hp * 100) + "%";
-  ui.battlePlayerHpText.textContent = battle.playerHp + " / " + battle.playerMaxHp;
-  ui.battlePlayerHpBar.style.width = Math.max(0, battle.playerHp / battle.playerMaxHp * 100) + "%";
-}
-
-function finishBattleVictory() {
-  const battle = world.battle;
-  if (!battle) return;
-
-  window.clearInterval(battle.timerId);
-  battle.enemy.defeated = true;
-  world.battle = null;
-  ui.battleOverlay.classList.add("hidden");
-  world.xp += battle.enemy.xp;
-  world.coins += battle.enemy.coins;
-  world.power += 2;
-  syncHUD();
-
-  if (battle.enemy.id === "slime-01") {
-    world.questStep = Math.max(world.questStep, 2);
-    updateQuest();
-  }
-
-  ui.dialogueName.textContent = "Victory";
-  ui.dialogueText.textContent = battle.enemy.name + " defeated! The road ahead is safe.";
-  ui.dialogue.classList.remove("hidden");
-  world.interacting = true;
-}
-
-function finishBattleDefeat() {
-  const battle = world.battle;
-  if (!battle) return;
-  window.clearInterval(battle.timerId);
-  world.battle = null;
-  ui.battleOverlay.classList.add("hidden");
-  ui.dialogueName.textContent = "Defeated";
-  ui.dialogueText.textContent = "You were knocked down, but your learning progress is safe. Try the encounter again.";
-  ui.dialogue.classList.remove("hidden");
-  world.interacting = true;
+  if (!enemy || enemy.defeated) return;
+  saveWorldState();
+  sessionStorage.setItem("englishPowerQuest.battle", JSON.stringify({
+    enemyId: enemy.id
+  }));
+  window.location.href = "/FYP/battle.html";
 }
 
 function update(dt) {
   world.time += dt;
 
-  if (!world.battle && !world.interacting) {
+  if (!world.interacting) {
     const left = keys.has("arrowleft") || keys.has("a") || touch.left;
     const right = keys.has("arrowright") || keys.has("d") || touch.right;
     const direction = (right ? 1 : 0) - (left ? 1 : 0);
@@ -531,13 +286,14 @@ function update(dt) {
   const targetCamera = clamp(world.player.x - window.innerWidth * 0.5, 0, world.width - window.innerWidth);
   world.cameraX += (targetCamera - world.cameraX) * Math.min(1, dt * 6);
 
-  if (!world.battle && world.player.x > 1000 && world.questStep === 1) {
+  if (world.player.x > 1000 && world.questStep === 1) {
     world.questStep = 2;
     world.xp += 50;
     world.power += 2;
     world.coins += 10;
     updateQuest();
     syncHUD();
+    saveWorldState();
   }
 
   ui.location.textContent =
@@ -875,6 +631,7 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 
+loadWorldState();
 updateQuest();
 syncHUD();
 loadQuestions().then(() => requestAnimationFrame(loop));
