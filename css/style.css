@@ -2044,3 +2044,142 @@ button { font: inherit; }
     bottom: 42px;
   }
 }
+
+/* Final diagonal battle stance: monster upper-right, player lower-left */
+.battlefield-pokemon-layout {
+  min-height: 500px;
+}
+
+.battle-monster,
+.battle-player {
+  width: 320px;
+  transform: none;
+}
+
+.battle-monster {
+  top: 34px;
+  right: 3%;
+  left: auto;
+  bottom: auto;
+}
+
+.battle-player {
+  top: auto;
+  right: auto;
+  left: 3%;
+  bottom: 8px;
+}
+
+.battle-monster .monster-sprite,
+.battle-player .battle-player-art {
+  width: 220px;
+  height: 220px;
+}
+
+.battle-monster .monster-shadow,
+.battle-player .player-shadow {
+  bottom: 82px;
+}
+
+@media (max-width: 900px) {
+  .battle-monster,
+  .battle-player {
+    width: 270px;
+  }
+
+  .battle-monster {
+    top: 24px;
+    right: 1%;
+  }
+
+  .battle-player {
+    left: 1%;
+    bottom: 4px;
+  }
+
+  .battle-monster .monster-sprite,
+  .battle-player .battle-player-art {
+    width: 185px;
+    height: 185px;
+  }
+}
+
+@media (max-width: 760px) {
+  .battlefield-pokemon-layout {
+    min-height: 430px;
+  }
+
+  .battle-monster,
+  .battle-player {
+    width: 48%;
+  }
+
+  .battle-monster {
+    top: 18px;
+    right: 0;
+    left: auto;
+  }
+
+  .battle-player {
+    left: 0;
+    bottom: 3px;
+    right: auto;
+    top: auto;
+  }
+
+  .battle-monster .monster-sprite,
+  .battle-player .battle-player-art {
+    width: 145px;
+    height: 145px;
+  }
+
+  .battle-monster .hp-card,
+  .battle-player .hp-card {
+    width: min(185px, 95%);
+  }
+
+  .battle-monster .monster-shadow,
+  .battle-player .player-shadow {
+    width: 130px;
+    bottom: 58px;
+  }
+}
+
+@media (max-width: 520px) {
+  .battlefield-pokemon-layout {
+    min-height: 350px;
+  }
+
+  .battle-monster,
+  .battle-player {
+    width: 50%;
+  }
+
+  .battle-monster {
+    top: 12px;
+    right: 0;
+  }
+
+  .battle-player {
+    left: 0;
+    bottom: 0;
+  }
+
+  .battle-monster .monster-sprite,
+  .battle-player .battle-player-art {
+    width: 112px;
+    height: 112px;
+  }
+
+  .battle-monster .hp-card,
+  .battle-player .hp-card {
+    width: 150px;
+    padding: 6px 8px;
+  }
+
+  .battle-monster .monster-shadow,
+  .battle-player .player-shadow {
+    width: 92px;
+    bottom: 42px;
+  }
+}
