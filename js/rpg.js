@@ -1,3 +1,5 @@
+import { t, getLanguage, onLanguageChange } from "./i18n.js";
+
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -49,6 +51,7 @@ const world = {
   travelMenu: false,
   selectedDestinationIndex: 0,
   portalX: 4870,
+  currentDialogueNpcId: null,
   battle: null
 };
 
@@ -125,6 +128,9 @@ const npcs = [
     x: 1050,
     name: "Elder Rowan",
     title: "Village Elder",
+    titleKey: "npc.elder.title",
+    nameKey: "npc.elder.name",
+    dialogueKeys: ["npc.elder.1", "npc.elder.2", "npc.elder.3"],
     color: "#c79b6d",
     dialogue: [
       "Welcome to Maple Town, traveller.",
@@ -137,6 +143,9 @@ const npcs = [
     x: 1770,
     name: "Mira",
     title: "Wandering Merchant",
+    titleKey: "npc.mira.title",
+    nameKey: "npc.mira.name",
+    dialogueKeys: ["npc.mira.1", "npc.mira.2", "npc.mira.3"],
     color: "#c57f62",
     dialogue: [
       "You are heading into Whispering Forest, aren't you?",
@@ -149,6 +158,9 @@ const npcs = [
     x: 3550,
     name: "Kai",
     title: "System Keeper",
+    titleKey: "npc.kai.title",
+    nameKey: "npc.kai.name",
+    dialogueKeys: ["npc.kai.1", "npc.kai.2", "npc.kai.3"],
     color: "#5f9db0",
     dialogue: [
       "These ruins belonged to the old network builders.",
@@ -172,32 +184,44 @@ const destinations = [
   {
     id: "maple",
     name: "Maple Town",
+    nameKey: "destination.maple.name",
     category: "SAFE HAVEN",
+    categoryKey: "destination.safe",
     description: "A peaceful village where your adventure and first words begin.",
+    descriptionKey: "destination.maple.description",
     scene: "maple",
     spawnX: 650
   },
   {
     id: "forest",
     name: "Whispering Forest",
+    nameKey: "destination.forest.name",
     category: "VOCABULARY TRAIL",
+    categoryKey: "destination.vocab",
     description: "Follow the lantern-lit path and uncover the language hidden in the woods.",
+    descriptionKey: "destination.forest.description",
     scene: "forest",
     spawnX: 1400
   },
   {
     id: "camp",
     name: "Old Camp Road",
+    nameKey: "destination.camp.name",
     category: "SURVIVAL ROUTE",
+    categoryKey: "destination.survival",
     description: "Rest by the old camp before travelling deeper into the forgotten road.",
+    descriptionKey: "destination.camp.description",
     scene: "camp",
     spawnX: 2650
   },
   {
     id: "ruins",
     name: "Ancient Ruins",
+    nameKey: "destination.ruins.name",
     category: "ANCIENT CHALLENGE",
+    categoryKey: "destination.challenge",
     description: "Explore the silent stone ruins and the secrets of the old network builders.",
+    descriptionKey: "destination.ruins.description",
     scene: "ruins",
     spawnX: 3680
   }
@@ -306,6 +330,7 @@ document.querySelectorAll("[data-destination-index]").forEach((button) => {
 ui.dialogueButton.addEventListener("click", () => {
   if (world.interacting) {
     world.interacting = false;
+    world.currentDialogueNpcId = null;
     ui.dialogue.classList.add("hidden");
   }
 });
@@ -353,8 +378,12 @@ function nearestEnemy() {
   return dist < 72 ? best : null;
 }
 
+function settingsIsOpen() {
+  return !document.getElementById("settingsScreen")?.classList.contains("hidden");
+}
+
 function interact() {
-  if (world.interacting || world.battle || world.travelMenu) return;
+  if (world.interacting || world.battle || world.travelMenu || settingsIsOpen()) return;
 
   // Check the portal first so it remains usable even beside an NPC.
   if (Math.abs(world.portalX - world.player.x) < 112) {
@@ -366,8 +395,9 @@ function interact() {
 
   if (npc) {
     world.interacting = true;
-    ui.dialogueName.textContent = npc.name + " · " + npc.title;
-    ui.dialogueText.textContent = npc.dialogue[world.questStep % npc.dialogue.length];
+    world.currentDialogueNpcId = npc.id;
+    ui.dialogueName.textContent = t(npc.nameKey) + " · " + t(npc.titleKey);
+    ui.dialogueText.textContent = t(npc.dialogueKeys[world.questStep % npc.dialogueKeys.length]);
     ui.dialogue.classList.remove("hidden");
 
     if (npc.id === "elder" && world.questStep === 0) {
@@ -393,22 +423,23 @@ function interact() {
   const sign = landmarks.find(l => l.type === "sign" && Math.abs(l.x - world.player.x) < 85);
   if (sign) {
     world.interacting = true;
-    ui.dialogueName.textContent = "Road Sign";
-    ui.dialogueText.textContent = "The sign reads: “The forest path is quiet, but the old words still remain.”";
+    world.currentDialogueNpcId = "sign";
+    ui.dialogueName.textContent = t("npc.sign.name");
+    ui.dialogueText.textContent = t("npc.sign.text");
     ui.dialogue.classList.remove("hidden");
   }
 }
 
 function renderDestinationSelection() {
   const destination = destinations[world.selectedDestinationIndex] || destinations[0];
-  ui.destinationCategory.textContent = destination.category;
-  ui.destinationTitle.textContent = destination.name;
-  ui.destinationDescription.textContent = destination.description;
+  ui.destinationCategory.textContent = t(destination.categoryKey);
+  ui.destinationTitle.textContent = t(destination.nameKey);
+  ui.destinationDescription.textContent = t(destination.descriptionKey);
   ui.destinationCount.textContent =
     String(world.selectedDestinationIndex + 1).padStart(2, "0") +
     " / " + String(destinations.length).padStart(2, "0");
   ui.destinationScene.dataset.scene = destination.scene;
-  ui.destinationScene.setAttribute("aria-label", destination.name + " landscape");
+  ui.destinationScene.setAttribute("aria-label", t(destination.nameKey) + (getLanguage() === "zh" ? "场景" : " landscape"));
 
   document.querySelectorAll("[data-destination-index]").forEach((button) => {
     const active = Number(button.dataset.destinationIndex) === world.selectedDestinationIndex;
@@ -468,16 +499,44 @@ function travelToSelectedDestination() {
 
 function updateQuest() {
   if (world.questStep === 0) {
-    ui.questTitle.textContent = "The First Words";
-    ui.questText.textContent = "Find the village elder.";
+    ui.questTitle.textContent = t("quest.first.title");
+    ui.questText.textContent = t("quest.first.text");
   } else if (world.questStep === 1) {
-    ui.questTitle.textContent = "Into Whispering Forest";
-    ui.questText.textContent = "Walk east and find the old camp.";
+    ui.questTitle.textContent = t("quest.forest.title");
+    ui.questText.textContent = t("quest.forest.text");
   } else {
-    ui.questTitle.textContent = "The Silent Road";
-    ui.questText.textContent = "Reach the ancient gate.";
+    ui.questTitle.textContent = t("quest.road.title");
+    ui.questText.textContent = t("quest.road.text");
   }
 }
+
+function updateLocation() {
+  ui.location.textContent =
+    world.player.x < 1250 ? t("location.maple") :
+    world.player.x < 2300 ? t("location.forest") :
+    world.player.x < 3400 ? t("location.camp") :
+    t("location.ruins");
+}
+
+function refreshWorldLanguage() {
+  updateQuest();
+  updateLocation();
+  if (world.currentDialogueNpcId) {
+    if (world.currentDialogueNpcId === "sign") {
+      ui.dialogueName.textContent = t("npc.sign.name");
+      ui.dialogueText.textContent = t("npc.sign.text");
+    } else {
+      const npc = npcs.find(item => item.id === world.currentDialogueNpcId);
+      if (npc) {
+        ui.dialogueName.textContent = t(npc.nameKey) + " · " + t(npc.titleKey);
+        ui.dialogueText.textContent = t(npc.dialogueKeys[world.questStep % npc.dialogueKeys.length]);
+      }
+    }
+  }
+  if (world.travelMenu) renderDestinationSelection();
+}
+
+onLanguageChange(refreshWorldLanguage);
 
 function syncHUD() {
   ui.level.textContent = world.level;
@@ -548,7 +607,7 @@ function startBattle(enemy) {
 function update(dt) {
   world.time += dt;
 
-  if (!world.interacting && !world.travelMenu) {
+  if (!world.interacting && !world.travelMenu && !settingsIsOpen()) {
     const left = keys.has("arrowleft") || keys.has("a") || touch.left;
     const right = keys.has("arrowright") || keys.has("d") || touch.right;
     const direction = (right ? 1 : 0) - (left ? 1 : 0);
@@ -599,11 +658,7 @@ function update(dt) {
     });
   }
 
-  ui.location.textContent =
-    world.player.x < 1250 ? "MAPLE TOWN" :
-    world.player.x < 2300 ? "WHISPERING FOREST" :
-    world.player.x < 3400 ? "OLD CAMP ROAD" :
-    "ANCIENT RUINS";
+  updateLocation();
 }
 
 function draw() {
@@ -795,9 +850,9 @@ function drawPortal() {
   ctx.textAlign = "center";
   ctx.font = "bold 13px 'Courier New', monospace";
   ctx.fillStyle = "#091317";
-  ctx.fillText("REALM GATE", x + 2, ground - 215 + 2);
+  ctx.fillText(t("portal.name"), x + 2, ground - 215 + 2);
   ctx.fillStyle = "#f4dc91";
-  ctx.fillText("REALM GATE", x, ground - 215);
+  ctx.fillText(t("portal.name"), x, ground - 215);
 
   if (nearby) {
     ctx.fillStyle = "rgba(7, 16, 20, 0.9)";
@@ -805,9 +860,9 @@ function drawPortal() {
     ctx.strokeStyle = "#cfb16d";
     ctx.lineWidth = 2;
     ctx.strokeRect(x - 91, ground - 248, 182, 22);
-    ctx.font = "bold 10px 'Courier New', monospace";
+    ctx.font = getLanguage() === "zh" ? "bold 11px sans-serif" : "bold 10px 'Courier New', monospace";
     ctx.fillStyle = "#fff3c6";
-    ctx.fillText("E / INTERACT TO TRAVEL", x, ground - 233);
+    ctx.fillText(t("portal.interact"), x, ground - 233);
   }
 
   ctx.restore();
@@ -894,7 +949,7 @@ function drawSign(x, ground, text) {
   ctx.fillStyle = "#26362d";
   ctx.font = "bold 12px system-ui";
   ctx.textAlign = "center";
-  ctx.fillText(text, x, ground - 89);
+  ctx.fillText(getLanguage() === "zh" ? "枫叶镇 →" : text, x, ground - 89);
 }
 
 function drawNPCs() {
