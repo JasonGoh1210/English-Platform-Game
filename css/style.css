@@ -2230,3 +2230,35 @@ button { font: inherit; }
     transform: translateY(7px) scale(1.2);
   }
 }
+
+/* Actions remain accessible while the player is answering consecutive questions */
+.question-battle-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.battle-action-button {
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 2px solid #536259;
+  border-radius: 0;
+  background: #34473f;
+  color: #f2efdf;
+  font-family: "Courier New", Courier, monospace;
+  font-size: .64rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 rgba(0,0,0,.18);
+}
+
+.battle-action-button:hover { filter: brightness(1.15); }
+.battle-action-button:active { transform: translateY(1px); }
+.battle-action-button.danger { background: #633f3d; border-color: #7b5550; }
+
+@media (max-width: 520px) {
+  .question-battle-actions { gap: 5px; }
+  .battle-action-button { flex: 1; padding: 7px 5px; font-size: .57rem; }
+}
