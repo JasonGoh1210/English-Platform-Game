@@ -190,9 +190,188 @@ const playerWalkFrames = {
 
 const PLAYER_WALK_FRAME_COUNT = 6;
 
+// The supplied walking PNGs contain transparent pixels inside parts of the
+// cloak/body. Repair only small, fully enclosed transparent holes after load.
+// Background-connected transparency (between legs and around the flowing cape)
+// is preserved, so the sprite silhouette and transparent background remain.
+function repairEnclosedSpriteHoles(img) {
+  if (img.dataset.alphaRepairDone === "true") return;
+  img.dataset.alphaRepairDone = "true";
+
+  try {
+    const width = img.naturalWidth;
+    const height = img.naturalHeight;
+    if (!width || !height) return;
+
+    const repairCanvas = document.createElement("canvas");
+    repairCanvas.width = width;
+    repairCanvas.height = height;
+    const repairCtx = repairCanvas.getContext("2d", { willReadFrequently: true });
+    repairCtx.clearRect(0, 0, width, height);
+    repairCtx.drawImage(img, 0, 0);
+
+    const imageData = repairCtx.getImageData(0, 0, width, height);
+    const pixels = imageData.data;
+    const total = width * height;
+    const outside = new Uint8Array(total);
+    const queue = new Int32Array(total);
+    const transparentThreshold = 24;
+    let head = 0;
+    let tail = 0;
+
+    const enqueueOutside = (index) => {
+      if (!outside[index] && pixels[index * 4 + 3] < transparentThreshold) {
+        outside[index] = 1;
+        queue[tail++] = index;
+      }
+    };
+
+    // Flood-fill transparency connected to the outer image border.
+    for (let x = 0; x < width; x += 1) {
+      enqueueOutside(x);
+      enqueueOutside((height - 1) * width + x);
+    }
+    for (let y = 0; y < height; y += 1) {
+      enqueueOutside(y * width);
+      enqueueOutside(y * width + width - 1);
+    }
+
+    while (head < tail) {
+      const index = queue[head++];
+      const x = index % width;
+      const y = Math.floor(index / width);
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          if (dx === 0 && dy === 0) continue;
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+          enqueueOutside(ny * width + nx);
+        }
+      }
+    }
+
+    const filled = new Uint8Array(total);
+    let repairedPixels = 0;
+
+    // Find internal alpha holes. Skip huge regions because they may be deliberate
+    // cut-outs; for small holes, propagate the nearest clothing/outline colour.
+    for (let start = 0; start < total; start += 1) {
+      if (outside[start] || filled[start] || pixels[start * 4 + 3] >= transparentThreshold) continue;
+
+      head = 0;
+      tail = 0;
+      queue[tail++] = start;
+      filled[start] = 2;
+      const component = [];
+
+      while (head < tail) {
+        const index = queue[head++];
+        component.push(index);
+        const x = index % width;
+        const y = Math.floor(index / width);
+        for (let dy = -1; dy <= 1; dy += 1) {
+          for (let dx = -1; dx <= 1; dx += 1) {
+            if (dx === 0 && dy === 0) continue;
+            const nx = x + dx;
+            const ny = y + dy;
+            if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+            const next = ny * width + nx;
+            if (!outside[next] && !filled[next] && pixels[next * 4 + 3] < transparentThreshold) {
+              filled[next] = 2;
+              queue[tail++] = next;
+            }
+          }
+        }
+      }
+
+      if (component.length > 1500) {
+        component.forEach(index => { filled[index] = 1; });
+        continue;
+      }
+
+      // Seed the hole edge with the nearest adjacent opaque pixel colour.
+      head = 0;
+      tail = 0;
+      for (const index of component) {
+        const x = index % width;
+        const y = Math.floor(index / width);
+        for (let dy = -1; dy <= 1 && !filled[index === -1 ? 0 : index + total]; dy += 1) {
+          for (let dx = -1; dx <= 1; dx += 1) {
+            if (dx === 0 && dy === 0) continue;
+            const nx = x + dx;
+            const ny = y + dy;
+            if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+            const neighbour = ny * width + nx;
+            if (pixels[neighbour * 4 + 3] >= transparentThreshold) {
+              const p = index * 4;
+              const n = neighbour * 4;
+              pixels[p] = pixels[n];
+              pixels[p + 1] = pixels[n + 1];
+              pixels[p + 2] = pixels[n + 2];
+              pixels[p + 3] = 255;
+              filled[index] = 3;
+              queue[tail++] = index;
+              repairedPixels += 1;
+              break;
+            }
+          }
+          if (filled[index] === 3) break;
+        }
+      }
+
+      // Propagate edge colours through the remaining transparent pixels in the hole.
+      while (head < tail) {
+        const index = queue[head++];
+        const x = index % width;
+        const y = Math.floor(index / width);
+        for (let dy = -1; dy <= 1; dy += 1) {
+          for (let dx = -1; dx <= 1; dx += 1) {
+            if (dx === 0 && dy === 0) continue;
+            const nx = x + dx;
+            const ny = y + dy;
+            if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+            const next = ny * width + nx;
+            if (filled[next] !== 2) continue;
+            const p = next * 4;
+            const n = index * 4;
+            pixels[p] = pixels[n];
+            pixels[p + 1] = pixels[n + 1];
+            pixels[p + 2] = pixels[n + 2];
+            pixels[p + 3] = 255;
+            filled[next] = 3;
+            queue[tail++] = next;
+            repairedPixels += 1;
+          }
+        }
+      }
+
+      // Leave any unseeded component untouched rather than inventing colours.
+      component.forEach(index => {
+        if (filled[index] === 2) {
+          filled[index] = 1;
+          pixels[index * 4 + 3] = 0;
+        }
+      });
+    }
+
+    if (repairedPixels > 0) {
+      repairCtx.putImageData(imageData, 0, 0);
+      img.dataset.alphaRepairDataUrl = repairCanvas.toDataURL("image/png");
+      img.src = img.dataset.alphaRepairDataUrl;
+      img.dataset.alphaRepairDataUrl = "";
+      console.debug("[English Power Quest] Repaired enclosed sprite holes:", repairedPixels);
+    }
+  } catch (error) {
+    // If canvas pixel access is unavailable, keep the original image usable.
+    console.warn("[English Power Quest] Sprite transparency repair skipped.", error);
+  }
+}
+
 for (const direction of ["right", "left"]) {
   playerWalkFrames[direction].forEach((img, index) => {
     const frameName = "player_walk_" + direction + "_" + (index + 1);
+    img.onload = () => repairEnclosedSpriteHoles(img);
     img.onerror = () => {
       // The detailed PNG frames are preferred. Keep the SVG frames as a safe fallback.
       if (img.dataset.svgFallbackTried !== "true") {
