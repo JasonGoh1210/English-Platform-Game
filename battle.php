@@ -85,7 +85,7 @@ session_start();
       <div id="questionPanel" class="question-panel hidden">
         <div class="question-top">
           <span id="questionType" data-i18n="battle.trueFalse">TRUE / FALSE</span>
-          <span id="questionDifficulty">EASY</span>
+          <span id="questionDifficulty" data-i18n="battle.easy">EASY</span>
           <span class="battle-timer" id="timerText">5.0s</span>
         </div>
         <h2 id="questionText" data-i18n="battle.loadingQuestion">Loading question...</h2>
