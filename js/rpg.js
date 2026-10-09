@@ -103,6 +103,16 @@ let lastTime = 0;
 const playerSprite = new Image();
 let playerSpriteReady = false;
 
+// Shared monster artwork for map encounters, using the uploaded asset.
+const monsterSprite = new Image();
+let monsterSpriteReady = false;
+monsterSprite.onload = () => { monsterSpriteReady = true; };
+monsterSprite.onerror = () => {
+  monsterSpriteReady = false;
+  console.warn("[English Power Quest] Unable to load map monster artwork.");
+};
+monsterSprite.src = "/FYP/images/player_walk_frames/monster/Monster.png?v=20261010-mapmonster1";
+
 const playerWalkFrames = {
   right: Array.from({ length: 6 }, () => new Image()),
   left: Array.from({ length: 6 }, () => new Image())
@@ -1306,7 +1316,13 @@ function drawEnemies() {
     if (Boolean(enemy.caveOnly) !== world.insideCave) continue;
     const x = worldToScreen(enemy.x);
     if (x < -100 || x > window.innerWidth + 100) continue;
-    if (enemy.type === "slime") {
+    if (monsterSpriteReady) {
+      // Draw the supplied monster PNG in place of the old canvas-drawn shapes.
+      // Keep the fallback shapes below in case the image cannot be loaded.
+      const drawHeight = enemy.type === "wraith" ? 110 : 92;
+      const drawWidth = enemy.type === "wraith" ? 78 : 92;
+      ctx.drawImage(monsterSprite, x - drawWidth / 2, world.groundY - drawHeight, drawWidth, drawHeight);
+    } else if (enemy.type === "slime") {
       ctx.fillStyle = "#76b86b";
       ctx.beginPath();
       ctx.arc(x, world.groundY - 28, 28, Math.PI, 0);
