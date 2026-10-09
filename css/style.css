@@ -3492,3 +3492,46 @@ button { font: inherit; }
   .typing-cave-win-actions { flex-direction: column; }
   .typing-cave-win-actions button { width: 100%; }
 }
+
+
+/* Show the final incorrect answer and a learning explanation in the defeat dialog. */
+.typing-cave-lose-review {
+  display: grid;
+  gap: 6px;
+  max-height: min(30vh, 220px);
+  overflow: auto;
+  margin: 14px 0 18px;
+  padding: 12px 13px;
+  border: 1px solid rgba(215, 164, 197, .38);
+  border-radius: 10px;
+  background: rgba(10, 10, 18, .34);
+  text-align: left;
+}
+.typing-cave-lose-review p {
+  margin: 0;
+  color: #e5dce8;
+  font-size: .78rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.typing-cave-lose-review .typing-cave-review-attempt {
+  color: #ffc3cf;
+  font-weight: 800;
+}
+.typing-cave-lose-review .typing-cave-review-correct {
+  color: #bdebb8;
+  font-weight: 900;
+}
+.typing-cave-lose-review .typing-cave-review-explanation {
+  color: #ffe6ac;
+}
+.typing-cave-lose-review .typing-cave-review-meaning {
+  color: #c9dbe8;
+}
+.typing-cave-lose-panel > p:not(.typing-cave-lose-kicker) {
+  margin-bottom: 10px;
+}
+@media (max-width: 480px) {
+  .typing-cave-lose-review { max-height: 28vh; padding: 9px 10px; }
+  .typing-cave-lose-review p { font-size: .72rem; }
+}
