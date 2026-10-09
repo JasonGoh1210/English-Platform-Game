@@ -144,6 +144,6 @@ session_start();
     </div>
   </div>
 
-  <script type="module" src="/FYP/js/rpg.js?v=20261009-cave2"></script>
+  <script type="module" src="/FYP/js/rpg.js?v=20261009-cave3"></script>
 </body>
 </html>
