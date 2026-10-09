@@ -872,6 +872,10 @@ function submitTypingAnswer() {
   typingCaveState.approachSteps = Math.max(0, typingCaveState.approachSteps - 1);
   typingCaveState.passiveTimer = 0;
   renderTypingQuestion();
+  // During the short success pause, show the level just completed.
+  typingUi.stageLabel.textContent = isChinese
+    ? `第 ${typingCaveState.completedLevels} / ${TYPING_CAVE_TOTAL_LEVELS} 关`
+    : `LEVEL ${typingCaveState.completedLevels} / ${TYPING_CAVE_TOTAL_LEVELS}`;
 
   typingUi.input.disabled = true;
   typingUi.submit.disabled = true;
