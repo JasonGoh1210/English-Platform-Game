@@ -2948,3 +2948,315 @@ button { font: inherit; }
   .settings-language-options { gap: 7px; }
   .settings-language-options button { font-size: .68rem; }
 }
+
+
+/* Typing Cavern: a separate word challenge beside the Echo Cave. */
+.typing-cave-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  grid-template-rows: auto auto minmax(190px, 1fr) auto auto;
+  gap: 10px;
+  overflow: auto;
+  padding: clamp(10px, 2.2vh, 22px) clamp(12px, 3vw, 36px) 8px;
+  color: #f5f2fc;
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(107, 76, 154, .24), transparent 47%),
+    linear-gradient(180deg, #10131f 0%, #1c202c 48%, #0d1018 100%);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.typing-cave-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .26;
+  background:
+    linear-gradient(154deg, transparent 0 9%, #070a12 9.2% 16%, transparent 16.2% 100%),
+    linear-gradient(206deg, transparent 0 11%, #070a12 11.2% 18%, transparent 18.2% 100%),
+    radial-gradient(circle at 12% 20%, #a995c8 0 1px, transparent 2px),
+    radial-gradient(circle at 81% 32%, #a995c8 0 1px, transparent 2px);
+  background-size: 100% 160px, 100% 165px, 97px 89px, 131px 113px;
+}
+.typing-cave-header,
+.typing-cave-question-card,
+.typing-cave-stage,
+.typing-cave-controls,
+.typing-cave-footer { position: relative; z-index: 1; }
+.typing-cave-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.typing-cave-heading { min-width: 0; }
+.typing-cave-kicker {
+  color: #c5a7f4;
+  font-size: .63rem;
+  font-weight: 900;
+  letter-spacing: .17em;
+}
+.typing-cave-heading h1 {
+  margin: 2px 0 4px;
+  color: #faf5ff;
+  font-size: clamp(1.2rem, 3.2vw, 1.85rem);
+  line-height: 1.08;
+}
+.typing-cave-heading p {
+  margin: 0;
+  color: #c4c1d4;
+  font-size: clamp(.7rem, 1.5vw, .85rem);
+}
+.typing-cave-exit,
+.typing-cave-answer-row button,
+.typing-cave-retry {
+  border: 1px solid #8871ad;
+  border-radius: 9px;
+  padding: 10px 14px;
+  color: #f6edff;
+  background: #382e4d;
+  font-weight: 850;
+  cursor: pointer;
+}
+.typing-cave-exit { flex: 0 0 auto; }
+.typing-cave-question-card {
+  width: min(820px, 100%);
+  justify-self: center;
+  padding: 12px 18px 13px;
+  border: 1px solid rgba(192, 164, 240, .55);
+  border-radius: 15px;
+  background: rgba(33, 54, 61, .94);
+  box-shadow: 0 8px 28px rgba(0,0,0,.25);
+  text-align: center;
+}
+.typing-cave-question-label {
+  display: block;
+  color: #d6cc82;
+  font-size: .61rem;
+  font-weight: 1000;
+  letter-spacing: .16em;
+}
+.typing-cave-question-card h2 {
+  margin: 5px auto 4px;
+  max-width: 760px;
+  color: #fff;
+  font-size: clamp(.98rem, 2.1vw, 1.35rem);
+  line-height: 1.33;
+}
+.typing-cave-translation {
+  margin: 4px 0 8px;
+  color: #c8e5eb;
+  font-size: .84rem;
+}
+.typing-cave-hint-label {
+  display: block;
+  margin-top: 8px;
+  color: #c2b1df;
+  font-size: .67rem;
+}
+.typing-cave-letter-hint {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-height: 29px;
+  margin-top: 6px;
+}
+.typing-cave-letter {
+  display: grid;
+  place-items: center;
+  width: 31px;
+  height: 31px;
+  border: 1px solid rgba(231,221,255,.38);
+  border-radius: 7px;
+  color: #9ca5ae;
+  background: rgba(255,255,255,.06);
+  font-size: .92rem;
+  font-weight: 900;
+}
+.typing-cave-letter.revealed {
+  color: #fff3b9;
+  border-color: #d9bf78;
+  background: rgba(224,194,116,.16);
+}
+.typing-cave-stage {
+  min-height: 205px;
+  overflow: hidden;
+  border: 1px solid rgba(189,163,226,.25);
+  border-radius: 13px;
+  background:
+    radial-gradient(ellipse at 50% 90%, rgba(133,100,164,.25), transparent 52%),
+    linear-gradient(180deg, #141723 0%, #202631 68%, #30303b 100%);
+}
+.typing-cave-rocks {
+  position: absolute;
+  inset: 0 0 20%;
+  opacity: .8;
+  background:
+    linear-gradient(160deg, transparent 0 16%, #090c14 16.2% 22%, transparent 22.2% 100%),
+    linear-gradient(200deg, transparent 0 14%, #0a0d15 14.2% 21%, transparent 21.2% 100%),
+    repeating-linear-gradient(90deg, transparent 0 120px, rgba(6,9,16,.24) 121px 127px, transparent 128px 208px);
+}
+.typing-cave-ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 20%;
+  border-top: 5px solid #8f8260;
+  background: repeating-linear-gradient(90deg, #282a33 0 78px, #373740 79px 81px, #242630 82px 155px);
+}
+.typing-cave-player,
+.typing-cave-monster {
+  position: absolute;
+  bottom: max(11%, 22px);
+  display: flex;
+  align-items: end;
+  justify-content: center;
+}
+.typing-cave-player {
+  left: 13%;
+  width: clamp(95px, 13vw, 150px);
+  height: clamp(130px, 24vh, 205px);
+}
+.typing-cave-player img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 10px 7px rgba(0,0,0,.36));
+}
+.typing-cave-monster {
+  left: 88%;
+  width: clamp(105px, 15vw, 190px);
+  height: clamp(105px, 20vh, 175px);
+  transform: translateX(-50%);
+  transition: left 700ms cubic-bezier(.2,.72,.34,1);
+}
+.typing-cave-monster img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 13px rgba(161,113,220,.22));
+  animation: typingCaveMonsterFloat 2.6s ease-in-out infinite;
+}
+@keyframes typingCaveMonsterFloat {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+.typing-cave-threat {
+  position: absolute;
+  right: 14px;
+  bottom: calc(20% + 10px);
+  width: min(225px, 33%);
+  color: #d6c8eb;
+  font-size: .58rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+.typing-cave-threat-track {
+  height: 8px;
+  margin-top: 5px;
+  overflow: hidden;
+  border: 1px solid #7d718c;
+  border-radius: 999px;
+  background: #171922;
+}
+.typing-cave-threat-track div {
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #d5c26d, #c56b92, #d74b5b);
+  transition: width 350ms ease;
+}
+.typing-cave-controls {
+  width: min(760px, 100%);
+  justify-self: center;
+}
+.typing-cave-form label {
+  display: block;
+  margin-bottom: 6px;
+  color: #e5d6fc;
+  font-size: .76rem;
+  font-weight: 850;
+}
+.typing-cave-answer-row {
+  display: flex;
+  gap: 9px;
+}
+.typing-cave-answer-row input {
+  min-width: 0;
+  flex: 1;
+  height: 44px;
+  padding: 10px 13px;
+  border: 1px solid #9380b1;
+  border-radius: 9px;
+  outline: none;
+  color: #fff;
+  background: #171923;
+  font: 700 1rem ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+.typing-cave-answer-row input:focus {
+  border-color: #e4d18a;
+  box-shadow: 0 0 0 3px rgba(228,209,138,.15);
+}
+.typing-cave-answer-row input:disabled { opacity: .58; }
+.typing-cave-answer-row button {
+  min-width: 115px;
+  border-color: #c4a8e5;
+  color: #251b34;
+  background: linear-gradient(#e8d9fa, #bda0e0);
+}
+.typing-cave-answer-row button:disabled { opacity: .5; cursor: not-allowed; }
+.typing-cave-message {
+  min-height: 1.3em;
+  margin: 7px 0 0;
+  color: #c5c8d1;
+  text-align: center;
+  font-size: .77rem;
+}
+.typing-cave-message.success { color: #a9edb9; }
+.typing-cave-message.warning { color: #ffdc8b; }
+.typing-cave-message.danger { color: #ff9caa; }
+.typing-cave-retry {
+  display: block;
+  margin: 7px auto 0;
+  border-color: #dbb77a;
+  color: #2a2012;
+  background: linear-gradient(#ffe6a3, #d3a55e);
+}
+.typing-cave-footer {
+  margin: 0;
+  color: rgba(220,214,239,.58);
+  text-align: center;
+  font-size: .56rem;
+  letter-spacing: .12em;
+}
+@media (max-height: 700px) {
+  .typing-cave-screen { gap: 7px; padding-top: 9px; }
+  .typing-cave-question-card { padding: 8px 15px; }
+  .typing-cave-stage { min-height: 155px; }
+  .typing-cave-player { height: 140px; }
+  .typing-cave-monster { height: 130px; }
+}
+@media (max-width: 650px) {
+  .typing-cave-screen { grid-template-rows: auto auto minmax(190px, 1fr) auto auto; gap: 9px; padding: 10px; }
+  .typing-cave-header { gap: 7px; }
+  .typing-cave-kicker { font-size: .5rem; letter-spacing: .07em; }
+  .typing-cave-heading h1 { font-size: 1.15rem; }
+  .typing-cave-heading p { max-width: 34ch; font-size: .65rem; }
+  .typing-cave-exit { padding: 8px; font-size: .64rem; }
+  .typing-cave-question-card { padding: 10px; }
+  .typing-cave-question-card h2 { font-size: .9rem; }
+  .typing-cave-translation { font-size: .75rem; }
+  .typing-cave-letter { width: 25px; height: 27px; font-size: .8rem; }
+  .typing-cave-player { left: 10%; width: 100px; height: 140px; }
+  .typing-cave-monster { width: 125px; height: 125px; }
+  .typing-cave-threat { right: 8px; width: 33%; font-size: .5rem; }
+  .typing-cave-answer-row button { min-width: 92px; padding: 8px; }
+  .typing-cave-answer-row input { height: 42px; font-size: .91rem; }
+}
