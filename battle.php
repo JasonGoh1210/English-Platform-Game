@@ -15,13 +15,13 @@ session_start();
   <main class="battle-screen">
     <header class="battle-header">
       <div class="battle-title">
-        <span class="battle-kicker">WILD ENCOUNTER</span>
+        <span class="battle-kicker" data-i18n="battle.kicker">WILD ENCOUNTER</span>
         <h1 id="battleEnemyName">Word Slime</h1>
       </div>
-      <a class="back-link" href="/FYP/index.php" id="returnMapLink">RUN TO MAP</a>
+      <a class="back-link" href="/FYP/index.php" id="returnMapLink" data-i18n="battle.back">RUN TO MAP</a>
     </header>
 
-    <section class="battlefield-pokemon-layout" aria-label="Battle scene">
+    <section class="battlefield-pokemon-layout" aria-label="Battle scene" data-i18n-aria-label="battle.scene">
       <div class="scene-haze haze-one"></div>
       <div class="scene-haze haze-two"></div>
 
@@ -30,7 +30,7 @@ session_start();
         <div class="monster-sprite" id="enemyFigure">🟢</div>
         <div class="monster-name-box">
           <strong id="battleEnemyLabel">WORD SLIME</strong>
-          <span id="battleEnemyRole">WORD CREATURE</span>
+          <span id="battleEnemyRole" data-i18n="battle.wordCreature">WORD CREATURE</span>
           <span class="enemy-difficulty-tag" id="enemyDifficulty">EASY</span>
         </div>
         <div class="hp-card enemy">
@@ -43,8 +43,8 @@ session_start();
         <div class="player-shadow"></div>
         <img class="battle-player-art" id="battlePlayerSprite" src="/FYP/assets/player/dark-adventurer-exact.png" alt="Player character">
         <div class="player-name-box">
-          <strong>YOU</strong>
-          <span>LANGUAGE ADVENTURER</span>
+          <strong data-i18n="battle.you">YOU</strong>
+          <span data-i18n="battle.adventurer">LANGUAGE ADVENTURER</span>
         </div>
         <div class="hp-card player">
           <div class="hp-top"><span>HP</span><b id="playerHpText">100 / 100</b></div>
@@ -54,62 +54,80 @@ session_start();
     </section>
 
     <section class="battle-command-zone">
-      <div class="battle-message-line" id="battleMessage">A wild opponent appeared!</div>
+      <div class="battle-message-line" id="battleMessage" data-i18n="battle.initialMessage">A wild opponent appeared!</div>
 
       <div id="battleMenu" class="battle-menu">
         <div class="command-prompt">
-          <strong id="commandPrompt">What will you do?</strong>
-          <span id="menuSubtext">Choose an action.</span>
+          <strong id="commandPrompt" data-i18n="battle.whatDo">What will you do?</strong>
+          <span id="menuSubtext" data-i18n="battle.chooseAction">Choose an action.</span>
         </div>
 
         <div class="command-grid">
           <button class="command-button fight" id="fightButton">
             <span class="command-icon">⚔</span>
-            <span>FIGHT</span>
+            <span data-i18n="battle.fight">FIGHT</span>
           </button>
           <button class="command-button skill" id="skillButton">
             <span class="command-icon">✦</span>
-            <span>SKILL</span>
+            <span data-i18n="battle.skill">SKILL</span>
           </button>
           <button class="command-button item" id="itemButton">
             <span class="command-icon">◈</span>
-            <span>ITEM</span>
+            <span data-i18n="battle.item">ITEM</span>
           </button>
           <button class="command-button run" id="runButton">
             <span class="command-icon">↩</span>
-            <span>RUN</span>
+            <span data-i18n="battle.run">RUN</span>
           </button>
         </div>
       </div>
 
       <div id="questionPanel" class="question-panel hidden">
         <div class="question-top">
-          <span id="questionType">TRUE / FALSE</span>
+          <span id="questionType" data-i18n="battle.trueFalse">TRUE / FALSE</span>
           <span id="questionDifficulty">EASY</span>
           <span class="battle-timer" id="timerText">5.0s</span>
         </div>
-        <h2 id="questionText">Loading question...</h2>
-        <p id="questionPrompt">Answer correctly to attack.</p>
+        <h2 id="questionText" data-i18n="battle.loadingQuestion">Loading question...</h2>
+        <p class="question-translation hidden" id="questionTranslation"></p>
+        <p id="questionPrompt" data-i18n="battle.answerPrompt">Answer correctly to attack.</p>
         <div id="answerArea" class="battle-answers"></div>
-        <div class="question-battle-actions" aria-label="Battle actions">
-          <button type="button" id="activeSkillButton" class="battle-action-button">✦ SKILL</button>
-          <button type="button" id="activeItemButton" class="battle-action-button">◈ ITEM</button>
-          <button type="button" id="activeRunButton" class="battle-action-button danger">↩ RUN</button>
+        <div class="question-battle-actions" aria-label="Battle actions" data-i18n-aria-label="battle.actions">
+          <button type="button" id="activeSkillButton" class="battle-action-button"><span>✦ </span><span data-i18n="battle.skill">SKILL</span></button>
+          <button type="button" id="activeItemButton" class="battle-action-button"><span>◈ </span><span data-i18n="battle.item">ITEM</span></button>
+          <button type="button" id="activeRunButton" class="battle-action-button danger"><span>↩ </span><span data-i18n="battle.run">RUN</span></button>
         </div>
       </div>
     </section>
 
     <div class="battle-result hidden" id="battleResult">
       <div class="result-card">
-        <span class="battle-kicker" id="resultKicker">VICTORY</span>
-        <h2 id="resultTitle">Enemy Defeated!</h2>
-        <p id="resultText">You got stronger.</p>
+        <span class="battle-kicker" id="resultKicker" data-i18n="battle.victory">VICTORY</span>
+        <h2 id="resultTitle" data-i18n="battle.enemyDefeated">Enemy Defeated!</h2>
+        <p id="resultText" data-i18n="battle.stronger">You got stronger.</p>
         <div class="result-rewards" id="resultRewards"></div>
-        <button id="resultButton">Return to Map</button>
+        <button id="resultButton" data-i18n="battle.returnMap">Return to Map</button>
       </div>
     </div>
   </main>
 
-  <script type="module" src="/FYP/js/battle.js?v=20261009-audit2"></script>
+  <button type="button" class="settings-open-button battle-settings-open" id="settingsOpenButton" data-i18n="settings.button">⚙ SETTINGS</button>
+
+  <div class="settings-screen hidden" id="settingsScreen" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <section class="settings-panel">
+      <div class="settings-panel-kicker">ENGLISH POWER QUEST</div>
+      <h2 id="settingsTitle" data-i18n="settings.title">SETTINGS</h2>
+      <p data-i18n="settings.subtitle">Make the game comfortable for you.</p>
+      <div class="settings-language-label" data-i18n="settings.language">LANGUAGE / 语言</div>
+      <div class="settings-language-options">
+        <button type="button" data-set-language="en" data-i18n="settings.english">English</button>
+        <button type="button" data-set-language="zh" data-i18n="settings.chinese">简体中文</button>
+      </div>
+      <p class="settings-saved" data-i18n="settings.saved">Your language choice is saved automatically.</p>
+      <button type="button" class="settings-close-button" id="settingsCloseButton" data-i18n="settings.close">CLOSE</button>
+    </section>
+  </div>
+
+  <script type="module" src="/FYP/js/battle.js?v=20261009-language1"></script>
 </body>
 </html>
