@@ -17,12 +17,12 @@ try {
     $allowedCoin = ['QUESTION','ENEMY','BOSS','QUEST','WEEKLY_EVENT','SHOP_PURCHASE','ADMIN_ADJUSTMENT'];
     $allowedPower = ['QUESTION','REVIEW','QUEST','BENCHMARK','ADMIN_ADJUSTMENT'];
 
-    if (!in_array($body['sourceType'] ?? 'QUESTION', $allowedXp, true)) {
-        $body['sourceType'] = 'QUESTION';
-    }
-    $sourceType = strtoupper((string)$body['sourceType']);
-    $coinSource = in_array($sourceType, $allowedCoin, true) ? $sourceType : 'QUESTION';
-    $powerSource = in_array($sourceType, $allowedPower, true) ? $sourceType : 'QUESTION';
+    // Validate each ledger's source independently. For example, SHOP_PURCHASE
+    // is valid for the coin ledger but not for XP or English Power.
+    $requestedSource = strtoupper(trim((string)($body['sourceType'] ?? 'QUESTION')));
+    $xpSource = in_array($requestedSource, $allowedXp, true) ? $requestedSource : 'QUESTION';
+    $coinSource = in_array($requestedSource, $allowedCoin, true) ? $requestedSource : 'QUESTION';
+    $powerSource = in_array($requestedSource, $allowedPower, true) ? $requestedSource : 'QUESTION';
 
     $db = epq_db();
     $playerId = epq_demo_player_id($db);
@@ -82,7 +82,7 @@ try {
              (player_id, amount, source_type, source_id, description)
              VALUES (?, ?, ?, ?, ?)"
         );
-        $stmt->bind_param('iisis', $playerId, $xp, $sourceType, $sourceId, $description);
+        $stmt->bind_param('iisis', $playerId, $xp, $xpSource, $sourceId, $description);
         $stmt->execute();
     }
 
