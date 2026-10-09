@@ -128,6 +128,6 @@ session_start();
     </section>
   </div>
 
-  <script type="module" src="/FYP/js/battle.js?v=20261009-language1"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261010-sprites1"></script>
 </body>
 </html>
