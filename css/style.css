@@ -2807,3 +2807,145 @@ button { font: inherit; }
   .destination-actions { grid-template-columns: 1fr; gap: 8px; }
   .destination-back, .destination-travel { min-height: 39px; }
 }
+
+
+/* Bilingual language settings shared by the world map and battle screen */
+.settings-open-button {
+  position: absolute;
+  z-index: 12;
+  top: 104px;
+  right: 14px;
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 2px solid #161f24;
+  outline: 2px solid #b99a5d;
+  border-radius: 0;
+  color: #f6edcf;
+  background: linear-gradient(#33464a, #17252b);
+  font-family: "Courier New", "Microsoft YaHei", monospace;
+  font-size: .62rem;
+  font-weight: 1000;
+  letter-spacing: .04em;
+  cursor: pointer;
+  box-shadow: 3px 4px 0 rgba(0,0,0,.38);
+}
+
+.settings-open-button:hover { filter: brightness(1.16); }
+.settings-open-button:active { transform: translateY(2px); }
+
+.settings-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  color: #f4efd9;
+  background: rgba(2, 5, 7, .82);
+  backdrop-filter: blur(4px);
+  font-family: "Courier New", "Microsoft YaHei", monospace;
+}
+
+.settings-panel {
+  width: min(430px, 100%);
+  padding: 25px 24px 22px;
+  border: 3px solid #29363b;
+  outline: 2px solid #b99a5d;
+  background: linear-gradient(#1d2b32, #10181d);
+  box-shadow: 8px 9px 0 rgba(0,0,0,.5);
+  text-align: center;
+}
+
+.settings-panel-kicker {
+  color: #9ba9a6;
+  font-size: .55rem;
+  font-weight: 900;
+  letter-spacing: .2em;
+}
+
+.settings-panel h2 {
+  margin: 9px 0 7px;
+  color: #f1d17e;
+  font-size: clamp(1.35rem, 5vw, 1.75rem);
+  letter-spacing: .08em;
+}
+
+.settings-panel p {
+  margin: 0 auto 17px;
+  color: #c7d0ca;
+  font-size: .78rem;
+  line-height: 1.55;
+}
+
+.settings-language-label {
+  margin: 4px 0 9px;
+  color: #f3e9c8;
+  font-size: .7rem;
+  font-weight: 900;
+}
+
+.settings-language-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.settings-language-options button,
+.settings-close-button {
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 2px solid #57686b;
+  border-radius: 0;
+  color: #e9eee4;
+  background: #2b3d43;
+  font-family: "Courier New", "Microsoft YaHei", monospace;
+  font-size: .75rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.settings-language-options button.active {
+  border-color: #f4d47f;
+  color: #3a2a16;
+  background: linear-gradient(#ffe9a5, #d8a84d);
+  box-shadow: 3px 3px 0 #0b1013;
+}
+
+.settings-saved {
+  margin: 13px 0 17px !important;
+  color: #9fac9f !important;
+  font-size: .63rem !important;
+}
+
+.settings-close-button {
+  min-width: 128px;
+  border-color: #9b8355;
+  color: #f6e6b7;
+  background: #303a3b;
+}
+
+.settings-screen button:focus-visible {
+  outline: 3px solid #fff0b1;
+  outline-offset: 3px;
+}
+
+.battle-settings-open {
+  top: 67px;
+  right: 17px;
+}
+
+.question-translation {
+  margin: -2px 0 10px;
+  color: #ffe6a0;
+  font-size: .78rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 780px) {
+  .settings-open-button { top: 176px; right: 10px; }
+  .battle-settings-open { top: 72px; right: 10px; }
+  .settings-panel { padding: 22px 17px 18px; }
+  .settings-language-options { gap: 7px; }
+  .settings-language-options button { font-size: .68rem; }
+}
