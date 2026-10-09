@@ -271,13 +271,15 @@ const messages = {
 
 export function getLanguage() {
   try {
-    return localStorage.getItem(LANGUAGE_KEY) === "zh" ? "zh" : "en";
+    const savedLanguage = localStorage.getItem(LANGUAGE_KEY);
+    // The game is intended for English beginners, so start in Chinese on first visit.
+    return savedLanguage === "en" ? "en" : "zh";
   } catch {
-    return "en";
+    return "zh";
   }
 }
 
-export function t(key, values = {}) {
+export function t(key, values = {})
   const language = getLanguage();
   let value = messages[language]?.[key] ?? messages.en[key] ?? key;
   for (const [name, replacement] of Object.entries(values)) {
