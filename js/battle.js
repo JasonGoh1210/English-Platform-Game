@@ -4,14 +4,17 @@ const WORLD_SAVE_KEY = "englishPowerQuest.world.v2";
 const enemies = {
   "slime-01": {
     id: "slime-01", name: "Word Slime", type: "slime", difficulty: "EASY",
+    questionTypes: ["TRUE_FALSE", "ODD_WORD_OUT"],
     hp: 60, damage: 10, xp: 20, coins: 10, role: "WORD CREATURE"
   },
   "bat-01": {
     id: "bat-01", name: "Confusion Bat", type: "bat", difficulty: "EASY",
+    questionTypes: ["TRUE_FALSE", "ODD_WORD_OUT"],
     hp: 70, damage: 10, xp: 25, coins: 12, role: "FOREST ENEMY"
   },
   "guardian-01": {
     id: "guardian-01", name: "Grammar Guardian", type: "guardian", difficulty: "MEDIUM",
+    questionTypes: ["TRUE_FALSE", "SENTENCE_BUILDER"],
     hp: 100, damage: 12, xp: 30, coins: 15, role: "ANCIENT GUARDIAN"
   }
 };
@@ -165,8 +168,22 @@ function disableAnswers() {
 }
 
 function chooseQuestion() {
-  const sourcePool = state.questions.filter(q => q.difficulty === state.enemy.difficulty);
-  const pool = sourcePool.length ? sourcePool : state.questions;
+  const supportsType = question =>
+    !Array.isArray(state.enemy.questionTypes) ||
+    state.enemy.questionTypes.includes(question.type);
+
+  // Keep each enemy's question types aligned with the game design data.
+  let pool = state.questions.filter(
+    q => q.difficulty === state.enemy.difficulty && supportsType(q)
+  );
+
+  if (!pool.length) {
+    pool = state.questions.filter(supportsType);
+  }
+  if (!pool.length) {
+    pool = state.questions;
+  }
+
   const fresh = pool.filter(q => !state.usedQuestionIds.includes(q.id));
   const candidates = fresh.length ? fresh : pool;
   const question = candidates[Math.floor(Math.random() * candidates.length)];
