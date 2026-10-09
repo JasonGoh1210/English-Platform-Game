@@ -96,7 +96,6 @@ session_start();
           <button type="button" id="activeItemButton" class="battle-action-button">◈ ITEM</button>
           <button type="button" id="activeRunButton" class="battle-action-button danger">↩ RUN</button>
         </div>
-        <button class="back-to-menu" id="backToMenu">← Back to menu</button>
       </div>
     </section>
 
@@ -111,6 +110,6 @@ session_start();
     </div>
   </main>
 
-  <script type="module" src="/FYP/js/battle.js?v=20261009-audit1"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261009-audit2"></script>
 </body>
 </html>
