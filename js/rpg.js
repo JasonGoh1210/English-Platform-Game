@@ -288,6 +288,15 @@ function interact() {
       updateQuest();
       syncHUD();
       saveWorldState();
+      void saveServerProgress({
+        xpDelta: 25,
+        coinDelta: 0,
+        englishPowerDelta: 1,
+        englishSkillCode: "VOCABULARY",
+        sourceType: "QUEST",
+        sourceId: null,
+        description: "Completed quest: The First Words"
+      });
     }
     return;
   }
@@ -319,6 +328,52 @@ function syncHUD() {
   ui.xp.textContent = world.xp;
   ui.power.textContent = world.power;
   ui.coins.textContent = world.coins;
+}
+
+async function saveServerProgress(payload) {
+  try {
+    const response = await fetch("/FYP/api/save_progress.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data?.ok) {
+      console.warn("Server did not save map reward:", data?.error || response.statusText);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.warn("Map reward will remain local until the PHP API is available.", error);
+    return false;
+  }
+}
+
+async function loadServerPlayer() {
+  try {
+    const response = await fetch("/FYP/api/player.php", { cache: "no-store" });
+    if (!response.ok) return false;
+    const data = await response.json();
+    if (!data?.ok || !data.player) return false;
+
+    // Once the DB API is available, use its progression balances as the
+    // authoritative values instead of allowing localStorage to drift.
+    world.level = Number(data.player.level || 1);
+    world.xp = Number(data.player.xp || 0);
+    world.coins = Number(data.player.coins || 0);
+    world.power = Number(data.player.englishPowerTotal || 0);
+    syncHUD();
+    saveWorldState({
+      level: world.level,
+      xp: world.xp,
+      coins: world.coins,
+      power: world.power
+    });
+    return true;
+  } catch (error) {
+    console.warn("Player API unavailable; continuing with local save.", error);
+    return false;
+  }
 }
 
 function startBattle(enemy) {
@@ -377,6 +432,15 @@ function update(dt) {
     updateQuest();
     syncHUD();
     saveWorldState();
+    void saveServerProgress({
+      xpDelta: 50,
+      coinDelta: 10,
+      englishPowerDelta: 2,
+      englishSkillCode: "IT_ENGLISH",
+      sourceType: "QUEST",
+      sourceId: null,
+      description: "Completed quest: Into Whispering Forest"
+    });
   }
 
   ui.location.textContent =
@@ -754,4 +818,6 @@ loadWorldState();
 restoreEscapeState();
 updateQuest();
 syncHUD();
-loadQuestions().then(() => requestAnimationFrame(loop));
+
+Promise.all([loadServerPlayer(), loadQuestions()])
+  .finally(() => requestAnimationFrame(loop));
