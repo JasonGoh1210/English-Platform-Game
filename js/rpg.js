@@ -1319,8 +1319,8 @@ function drawEnemies() {
     if (monsterSpriteReady) {
       // Draw the supplied monster PNG in place of the old canvas-drawn shapes.
       // Keep the fallback shapes below in case the image cannot be loaded.
-      const drawHeight = enemy.type === "wraith" ? 110 : 92;
-      const drawWidth = enemy.type === "wraith" ? 78 : 92;
+      const drawHeight = enemy.type === "wraith" ? 220 : 184;
+      const drawWidth = enemy.type === "wraith" ? 156 : 184;
       ctx.drawImage(monsterSprite, x - drawWidth / 2, world.groundY - drawHeight, drawWidth, drawHeight);
     } else if (enemy.type === "slime") {
       ctx.fillStyle = "#76b86b";
