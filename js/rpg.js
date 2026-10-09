@@ -12,7 +12,13 @@ const ui = {
   dialogue: document.getElementById("dialogue"),
   dialogueName: document.getElementById("dialogueName"),
   dialogueText: document.getElementById("dialogueText"),
-  dialogueButton: document.getElementById("dialogueButton")
+  dialogueButton: document.getElementById("dialogueButton"),
+  destinationScreen: document.getElementById("destinationScreen"),
+  destinationScene: document.getElementById("destinationScene"),
+  destinationCategory: document.getElementById("destinationCategory"),
+  destinationTitle: document.getElementById("destinationTitle"),
+  destinationDescription: document.getElementById("destinationDescription"),
+  destinationCount: document.getElementById("destinationCount")
 };
 
 const world = {
@@ -40,6 +46,9 @@ const world = {
   power: 0,
   level: 1,
   interacting: false,
+  travelMenu: false,
+  selectedDestinationIndex: 0,
+  portalX: 4870,
   battle: null
 };
 
@@ -50,6 +59,7 @@ const ESCAPE_KEY = "englishPowerQuest.escape.v1";
 function saveWorldState(overrides = {}) {
   localStorage.setItem(WORLD_SAVE_KEY, JSON.stringify({
     playerX: world.player.x,
+    portalX: world.portalX,
     questStep: world.questStep,
     coins: world.coins,
     xp: world.xp,
@@ -65,6 +75,7 @@ function loadWorldState() {
     const saved = JSON.parse(localStorage.getItem(WORLD_SAVE_KEY) || "null");
     if (!saved) return;
     world.player.x = clamp(Number(saved.playerX) || world.player.x, 100, world.width - 120);
+    world.portalX = clamp(Number(saved.portalX) || world.portalX, 160, world.width - 160);
     world.questStep = Number(saved.questStep) || 0;
     world.coins = Number(saved.coins) || 0;
     world.xp = Number(saved.xp) || 0;
@@ -157,6 +168,41 @@ const landmarks = [
   { x: 4380, type: "gate" }
 ];
 
+const destinations = [
+  {
+    id: "maple",
+    name: "Maple Town",
+    category: "SAFE HAVEN",
+    description: "A peaceful village where your adventure and first words begin.",
+    scene: "maple",
+    spawnX: 650
+  },
+  {
+    id: "forest",
+    name: "Whispering Forest",
+    category: "VOCABULARY TRAIL",
+    description: "Follow the lantern-lit path and uncover the language hidden in the woods.",
+    scene: "forest",
+    spawnX: 1400
+  },
+  {
+    id: "camp",
+    name: "Old Camp Road",
+    category: "SURVIVAL ROUTE",
+    description: "Rest by the old camp before travelling deeper into the forgotten road.",
+    scene: "camp",
+    spawnX: 2650
+  },
+  {
+    id: "ruins",
+    name: "Ancient Ruins",
+    category: "ANCIENT CHALLENGE",
+    description: "Explore the silent stone ruins and the secrets of the old network builders.",
+    scene: "ruins",
+    spawnX: 3680
+  }
+];
+
 const enemies = [
   { id: "slime-01", x: 2300, type: "slime", name: "Word Slime", difficulty: "EASY", hp: 60, damage: 10, xp: 20, coins: 10, defeated: false },
   { id: "bat-01", x: 3020, type: "bat", name: "Confusion Bat", difficulty: "EASY", hp: 70, damage: 10, xp: 25, coins: 12, defeated: false },
@@ -200,6 +246,31 @@ resize();
 
 window.addEventListener("keydown", (e) => {
   const k = e.key.toLowerCase();
+
+  if (world.travelMenu) {
+    if (["arrowleft", "a"].includes(k)) {
+      e.preventDefault();
+      if (!e.repeat) selectDestination(-1);
+      return;
+    }
+    if (["arrowright", "d"].includes(k)) {
+      e.preventDefault();
+      if (!e.repeat) selectDestination(1);
+      return;
+    }
+    if (k === "enter" || k === " ") {
+      e.preventDefault();
+      if (!e.repeat) travelToSelectedDestination();
+      return;
+    }
+    if (k === "escape") {
+      e.preventDefault();
+      if (!e.repeat) closeDestinationMenu();
+      return;
+    }
+    return;
+  }
+
   if (["arrowleft","arrowright","a","d"," ","e"].includes(k)) e.preventDefault();
   keys.add(k);
   if ((k === "e" || k === " ") && !e.repeat && !world.battle) interact();
@@ -220,6 +291,17 @@ function bindHoldButton(id, prop) {
 bindHoldButton("leftButton", "left");
 bindHoldButton("rightButton", "right");
 document.getElementById("interactButton").addEventListener("click", interact);
+
+document.getElementById("destinationPrev").addEventListener("click", () => selectDestination(-1));
+document.getElementById("destinationNext").addEventListener("click", () => selectDestination(1));
+document.getElementById("destinationBack").addEventListener("click", closeDestinationMenu);
+document.getElementById("destinationTravel").addEventListener("click", travelToSelectedDestination);
+document.querySelectorAll("[data-destination-index]").forEach((button) => {
+  button.addEventListener("click", () => {
+    world.selectedDestinationIndex = Number(button.dataset.destinationIndex) || 0;
+    renderDestinationSelection();
+  });
+});
 
 ui.dialogueButton.addEventListener("click", () => {
   if (world.interacting) {
@@ -272,7 +354,14 @@ function nearestEnemy() {
 }
 
 function interact() {
-  if (world.interacting || world.battle) return;
+  if (world.interacting || world.battle || world.travelMenu) return;
+
+  // Check the portal first so it remains usable even beside an NPC.
+  if (Math.abs(world.portalX - world.player.x) < 112) {
+    openDestinationMenu();
+    return;
+  }
+
   const npc = nearestNPC();
 
   if (npc) {
@@ -308,6 +397,73 @@ function interact() {
     ui.dialogueText.textContent = "The sign reads: “The forest path is quiet, but the old words still remain.”";
     ui.dialogue.classList.remove("hidden");
   }
+}
+
+function renderDestinationSelection() {
+  const destination = destinations[world.selectedDestinationIndex] || destinations[0];
+  ui.destinationCategory.textContent = destination.category;
+  ui.destinationTitle.textContent = destination.name;
+  ui.destinationDescription.textContent = destination.description;
+  ui.destinationCount.textContent =
+    String(world.selectedDestinationIndex + 1).padStart(2, "0") +
+    " / " + String(destinations.length).padStart(2, "0");
+  ui.destinationScene.dataset.scene = destination.scene;
+  ui.destinationScene.setAttribute("aria-label", destination.name + " landscape");
+
+  document.querySelectorAll("[data-destination-index]").forEach((button) => {
+    const active = Number(button.dataset.destinationIndex) === world.selectedDestinationIndex;
+    button.classList.toggle("active", active);
+    if (active) {
+      button.setAttribute("aria-current", "true");
+    } else {
+      button.removeAttribute("aria-current");
+    }
+  });
+}
+
+function selectDestination(direction) {
+  if (!world.travelMenu) return;
+  world.selectedDestinationIndex =
+    (world.selectedDestinationIndex + direction + destinations.length) % destinations.length;
+  renderDestinationSelection();
+}
+
+function openDestinationMenu() {
+  world.travelMenu = true;
+  world.player.vx = 0;
+  keys.clear();
+  touch.left = false;
+  touch.right = false;
+  renderDestinationSelection();
+  ui.destinationScreen.classList.remove("hidden");
+}
+
+function closeDestinationMenu() {
+  world.travelMenu = false;
+  ui.destinationScreen.classList.add("hidden");
+  keys.clear();
+}
+
+function travelToSelectedDestination() {
+  const destination = destinations[world.selectedDestinationIndex] || destinations[0];
+
+  world.player.x = destination.spawnX;
+  world.player.vx = 0;
+  world.player.facing = 1;
+  world.player.walkFrame = 0;
+  world.player.walkTimer = 0;
+
+  // Keep a usable return gate near the arrival point in each destination.
+  world.portalX = Math.min(world.width - 180, destination.spawnX + 145);
+  world.cameraX = clamp(
+    world.player.x - window.innerWidth * 0.5,
+    0,
+    Math.max(0, world.width - window.innerWidth)
+  );
+
+  world.travelMenu = false;
+  ui.destinationScreen.classList.add("hidden");
+  saveWorldState({ playerX: world.player.x, portalX: world.portalX });
 }
 
 function updateQuest() {
@@ -392,7 +548,7 @@ function startBattle(enemy) {
 function update(dt) {
   world.time += dt;
 
-  if (!world.interacting) {
+  if (!world.interacting && !world.travelMenu) {
     const left = keys.has("arrowleft") || keys.has("a") || touch.left;
     const right = keys.has("arrowright") || keys.has("d") || touch.right;
     const direction = (right ? 1 : 0) - (left ? 1 : 0);
@@ -461,6 +617,7 @@ function draw() {
   drawForestLayer(w, h, 0.30, "#23483a", 200, 340);
   drawGround(w, h);
   drawLandmarks();
+  drawPortal();
   drawNPCs();
   drawEnemies();
   drawPlayer();
@@ -565,6 +722,95 @@ function drawLandmarks() {
     if (l.type === "gate") drawGate(x, world.groundY);
     if (l.type === "sign") drawSign(x, world.groundY, l.text);
   }
+}
+
+function drawPortal() {
+  const x = worldToScreen(world.portalX);
+  const ground = world.groundY;
+  if (x < -150 || x > window.innerWidth + 150) return;
+
+  const nearby = Math.abs(world.portalX - world.player.x) < 145;
+  const pulse = 1 + Math.sin(world.time * 3.4) * 0.06;
+
+  ctx.save();
+
+  const glow = ctx.createRadialGradient(x, ground - 92, 4, x, ground - 92, 116 * pulse);
+  glow.addColorStop(0, "rgba(104, 238, 218, 0.46)");
+  glow.addColorStop(0.42, "rgba(65, 177, 181, 0.20)");
+  glow.addColorStop(1, "rgba(35, 105, 124, 0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(x - 125, ground - 225, 250, 245);
+
+  // Stone frame, assembled from chunky blocks to match the pixel-art map.
+  ctx.fillStyle = "#293b42";
+  ctx.fillRect(x - 67, ground - 145, 22, 145);
+  ctx.fillRect(x + 45, ground - 145, 22, 145);
+  ctx.fillRect(x - 61, ground - 162, 26, 18);
+  ctx.fillRect(x + 35, ground - 162, 26, 18);
+  ctx.fillRect(x - 46, ground - 178, 25, 18);
+  ctx.fillRect(x + 21, ground - 178, 25, 18);
+  ctx.fillRect(x - 25, ground - 190, 50, 16);
+
+  ctx.fillStyle = "#829398";
+  ctx.fillRect(x - 63, ground - 141, 5, 136);
+  ctx.fillRect(x + 58, ground - 141, 5, 136);
+  ctx.fillRect(x - 55, ground - 158, 11, 4);
+  ctx.fillRect(x + 44, ground - 158, 11, 4);
+  ctx.fillRect(x - 39, ground - 174, 10, 4);
+  ctx.fillRect(x + 29, ground - 174, 10, 4);
+  ctx.fillRect(x - 17, ground - 186, 34, 4);
+
+  // The portal itself breathes with animated teal and blue light.
+  ctx.beginPath();
+  ctx.moveTo(x - 39, ground);
+  ctx.lineTo(x - 39, ground - 111);
+  ctx.quadraticCurveTo(x - 39, ground - 153, x, ground - 153);
+  ctx.quadraticCurveTo(x + 39, ground - 153, x + 39, ground - 111);
+  ctx.lineTo(x + 39, ground);
+  ctx.closePath();
+  ctx.fillStyle = "#071319";
+  ctx.fill();
+
+  const portalLight = ctx.createLinearGradient(x - 34, ground - 130, x + 35, ground - 8);
+  portalLight.addColorStop(0, "rgba(96, 255, 223, 0.92)");
+  portalLight.addColorStop(0.48, "rgba(37, 152, 179, 0.76)");
+  portalLight.addColorStop(1, "rgba(27, 70, 112, 0.92)");
+  ctx.fillStyle = portalLight;
+  ctx.fill();
+
+  ctx.globalAlpha = 0.55 + Math.sin(world.time * 5) * 0.12;
+  ctx.fillStyle = "#c1fff0";
+  for (let i = 0; i < 8; i++) {
+    const particleY = ground - 20 - ((world.time * 42 + i * 23) % 116);
+    const particleX = x + Math.sin(world.time * 2.7 + i * 2.1) * (12 + (i % 3) * 6);
+    ctx.fillRect(Math.round(particleX), Math.round(particleY), 3 + (i % 2), 5);
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.fillStyle = "#111e24";
+  ctx.fillRect(x - 77, ground - 7, 154, 10);
+  ctx.fillStyle = "#c5a76a";
+  ctx.fillRect(x - 68, ground - 5, 136, 4);
+
+  ctx.textAlign = "center";
+  ctx.font = "bold 13px 'Courier New', monospace";
+  ctx.fillStyle = "#091317";
+  ctx.fillText("REALM GATE", x + 2, ground - 215 + 2);
+  ctx.fillStyle = "#f4dc91";
+  ctx.fillText("REALM GATE", x, ground - 215);
+
+  if (nearby) {
+    ctx.fillStyle = "rgba(7, 16, 20, 0.9)";
+    ctx.fillRect(x - 91, ground - 248, 182, 22);
+    ctx.strokeStyle = "#cfb16d";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x - 91, ground - 248, 182, 22);
+    ctx.font = "bold 10px 'Courier New', monospace";
+    ctx.fillStyle = "#fff3c6";
+    ctx.fillText("E / INTERACT TO TRAVEL", x, ground - 233);
+  }
+
+  ctx.restore();
 }
 
 function drawHouse(x, ground) {
