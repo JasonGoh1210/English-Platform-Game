@@ -242,7 +242,7 @@ function repairEnclosedSpriteHoles(img) {
       const y = Math.floor(index / width);
       for (let dy = -1; dy <= 1; dy += 1) {
         for (let dx = -1; dx <= 1; dx += 1) {
-          if (dx === 0 && dy === 0) continue;
+          if (Math.abs(dx) + Math.abs(dy) !== 1) continue;
           const nx = x + dx;
           const ny = y + dy;
           if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
@@ -254,8 +254,9 @@ function repairEnclosedSpriteHoles(img) {
     const filled = new Uint8Array(total);
     let repairedPixels = 0;
 
-    // Find internal alpha holes. Skip huge regions because they may be deliberate
-    // cut-outs; for small holes, propagate the nearest clothing/outline colour.
+    // Find internal alpha holes using four-way connectivity. This prevents a
+    // single diagonal contact with the outside background from hiding a hole.
+    // Large regions remain untouched to avoid filling real gaps between limbs.
     for (let start = 0; start < total; start += 1) {
       if (outside[start] || filled[start] || pixels[start * 4 + 3] >= transparentThreshold) continue;
 
@@ -272,7 +273,7 @@ function repairEnclosedSpriteHoles(img) {
         const y = Math.floor(index / width);
         for (let dy = -1; dy <= 1; dy += 1) {
           for (let dx = -1; dx <= 1; dx += 1) {
-            if (dx === 0 && dy === 0) continue;
+            if (Math.abs(dx) + Math.abs(dy) !== 1) continue;
             const nx = x + dx;
             const ny = y + dy;
             if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
@@ -285,7 +286,7 @@ function repairEnclosedSpriteHoles(img) {
         }
       }
 
-      if (component.length > 1500) {
+      if (component.length > 6000) {
         component.forEach(index => { filled[index] = 1; });
         continue;
       }
@@ -298,7 +299,7 @@ function repairEnclosedSpriteHoles(img) {
         const y = Math.floor(index / width);
         for (let dy = -1; dy <= 1; dy += 1) {
           for (let dx = -1; dx <= 1; dx += 1) {
-            if (dx === 0 && dy === 0) continue;
+            if (Math.abs(dx) + Math.abs(dy) !== 1) continue;
             const nx = x + dx;
             const ny = y + dy;
             if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
@@ -327,7 +328,7 @@ function repairEnclosedSpriteHoles(img) {
         const y = Math.floor(index / width);
         for (let dy = -1; dy <= 1; dy += 1) {
           for (let dx = -1; dx <= 1; dx += 1) {
-            if (dx === 0 && dy === 0) continue;
+            if (Math.abs(dx) + Math.abs(dy) !== 1) continue;
             const nx = x + dx;
             const ny = y + dy;
             if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
@@ -376,12 +377,12 @@ for (const direction of ["right", "left"]) {
       // The detailed PNG frames are preferred. Keep the SVG frames as a safe fallback.
       if (img.dataset.svgFallbackTried !== "true") {
         img.dataset.svgFallbackTried = "true";
-        img.src = "/FYP/images/player_walk_frames/svg_frames/" + frameName + ".svg?v=20261010-assets2";
+        img.src = "/FYP/images/player_walk_frames/svg_frames/" + frameName + ".svg?v=20261010-assets3";
         return;
       }
       console.warn("[English Power Quest] Unable to load player frame:", frameName);
     };
-    img.src = "/FYP/images/player_walk_frames/png_frames/" + frameName + ".png?v=20261010-assets2";
+    img.src = "/FYP/images/player_walk_frames/png_frames/" + frameName + ".png?v=20261010-assets3";
   });
 }
 
