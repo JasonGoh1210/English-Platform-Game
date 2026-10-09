@@ -139,7 +139,10 @@ session_start();
       </header>
 
       <section class="typing-cave-question-card" aria-live="polite">
-        <span class="typing-cave-question-label" id="typingCaveQuestionLabel">TYPE THE WORD THAT MEANS</span>
+        <div class="typing-cave-question-topline">
+          <span class="typing-cave-question-label" id="typingCaveQuestionLabel">TYPE THE WORD THAT MEANS</span>
+          <span class="typing-cave-stage-label" id="typingCaveStageLabel">LEVEL 1 / 3</span>
+        </div>
         <h2 id="typingCaveQuestion">To propel something through the air with a movement of the arm and hand. To toss or hurl.</h2>
         <p class="typing-cave-translation hidden" id="typingCaveTranslation"></p>
         <span class="typing-cave-hint-label" id="typingCaveHintLabel">Letters are revealed as the monster approaches</span>
@@ -187,6 +190,19 @@ session_start();
         </section>
       </div>
 
+      <div class="typing-cave-win-overlay hidden" id="typingCaveWinOverlay" role="alertdialog" aria-modal="true" aria-labelledby="typingCaveWinTitle" aria-describedby="typingCaveWinMessage">
+        <section class="typing-cave-win-panel">
+          <div class="typing-cave-win-icon" aria-hidden="true">✦</div>
+          <p class="typing-cave-win-kicker">TYPING CAVERN · COMPLETE</p>
+          <h2 id="typingCaveWinTitle">CAVE CLEARED!</h2>
+          <p id="typingCaveWinMessage">You completed all three levels and pushed the monster away!</p>
+          <div class="typing-cave-win-actions">
+            <button type="button" id="typingCaveWinReplay">PLAY AGAIN</button>
+            <button type="button" id="typingCaveWinExit">BACK TO MAP</button>
+          </div>
+        </section>
+      </div>
+
       <p class="typing-cave-footer">ENTER · SUBMIT ANSWER &nbsp; / &nbsp; ESC · EXIT</p>
     </section>
 
@@ -206,6 +222,6 @@ session_start();
     </div>
   </div>
 
-  <script type="module" src="/FYP/js/rpg.js?v=20261010-typingcave3"></script>
+  <script type="module" src="/FYP/js/rpg.js?v=20261010-typingcave5"></script>
 </body>
 </html>
