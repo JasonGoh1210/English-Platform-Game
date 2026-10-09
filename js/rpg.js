@@ -42,7 +42,12 @@ const typingUi = {
   submit: document.getElementById("typingCaveSubmit"),
   message: document.getElementById("typingCaveMessage"),
   retry: document.getElementById("typingCaveRetry"),
-  threatLabel: document.getElementById("typingCaveThreatLabel")
+  threatLabel: document.getElementById("typingCaveThreatLabel"),
+  loseOverlay: document.getElementById("typingCaveLoseOverlay"),
+  loseTitle: document.getElementById("typingCaveLoseTitle"),
+  loseMessage: document.getElementById("typingCaveLoseMessage"),
+  loseRetry: document.getElementById("typingCaveLoseRetry"),
+  loseExit: document.getElementById("typingCaveLoseExit")
 };
 
 const typingCaveState = {
@@ -400,6 +405,8 @@ document.getElementById("destinationTravel").addEventListener("click", travelToS
 
 typingUi.exit.addEventListener("click", closeTypingCave);
 typingUi.retry.addEventListener("click", retryTypingCave);
+typingUi.loseRetry.addEventListener("click", retryTypingCave);
+typingUi.loseExit.addEventListener("click", closeTypingCave);
 typingUi.form.addEventListener("submit", (event) => {
   event.preventDefault();
   submitTypingAnswer();
@@ -633,7 +640,8 @@ function renderTypingQuestion() {
   typingUi.hintLabel.textContent = isChinese ? "怪物靠近时会逐步揭示字母" : "Letters are revealed as the monster approaches";
 
   const answer = String(word.answer).toUpperCase();
-  const revealCount = Math.min(answer.length, Math.max(1, typingCaveState.approachSteps + 1));
+  const maxRevealCount = Math.max(1, answer.length - 2); // Always hide the last two letters.
+  const revealCount = Math.min(maxRevealCount, Math.max(1, typingCaveState.approachSteps + 1));
   typingUi.hint.replaceChildren();
   for (let index = 0; index < answer.length; index += 1) {
     const slot = document.createElement("span");
@@ -685,6 +693,7 @@ async function openTypingCave() {
   typingUi.input.disabled = true;
   typingUi.submit.disabled = true;
   typingUi.retry.classList.add("hidden");
+  typingUi.loseOverlay.classList.add("hidden");
   setTypingMessage(getLanguage() === "zh" ? "正在准备单词挑战……" : "Preparing word challenge…");
   updateTypingCaveVisuals();
 
@@ -726,13 +735,17 @@ function advanceTypingMonster(reason) {
     typingCaveState.busy = true;
     typingUi.input.disabled = true;
     typingUi.submit.disabled = true;
-    typingUi.retry.classList.remove("hidden");
-    setTypingMessage(
-      isChinese
-        ? "怪物追上你了！再试一次，趁它靠近前答对单词。"
-        : "The monster caught up! Try again and answer before it reaches you.",
-      "danger"
-    );
+    typingUi.retry.classList.add("hidden");
+
+    typingUi.loseTitle.textContent = isChinese ? "你输了！" : "YOU LOSE";
+    typingUi.loseMessage.textContent = isChinese
+      ? "怪物追上你了。再试一次，记得在最后两个字母揭晓前打出答案！"
+      : "The monster caught you. Try again and type the word before it reaches you.";
+    typingUi.loseRetry.textContent = isChinese ? "再挑战一次" : "TRY AGAIN";
+    typingUi.loseExit.textContent = isChinese ? "返回地图" : "BACK TO MAP";
+    typingUi.loseOverlay.classList.remove("hidden");
+    typingUi.loseRetry.focus();
+    setTypingMessage(isChinese ? "挑战失败。" : "Challenge failed.", "danger");
     return;
   }
 
@@ -807,6 +820,7 @@ function retryTypingCave() {
   typingCaveState.busy = false;
   typingCaveState.gameOver = false;
   typingCaveState.roundToken += 1;
+  typingUi.loseOverlay.classList.add("hidden");
   typingUi.input.value = "";
   typingUi.input.disabled = false;
   typingUi.submit.disabled = false;
