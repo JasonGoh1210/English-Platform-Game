@@ -91,6 +91,11 @@ session_start();
         <h2 id="questionText">Loading question...</h2>
         <p id="questionPrompt">Answer correctly to attack.</p>
         <div id="answerArea" class="battle-answers"></div>
+        <div class="question-battle-actions" aria-label="Battle actions">
+          <button type="button" id="activeSkillButton" class="battle-action-button">✦ SKILL</button>
+          <button type="button" id="activeItemButton" class="battle-action-button">◈ ITEM</button>
+          <button type="button" id="activeRunButton" class="battle-action-button danger">↩ RUN</button>
+        </div>
         <button class="back-to-menu" id="backToMenu">← Back to menu</button>
       </div>
     </section>
@@ -106,6 +111,6 @@ session_start();
     </div>
   </main>
 
-  <script type="module" src="/FYP/js/battle.js?v=20261006-11"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261009-audit1"></script>
 </body>
 </html>
