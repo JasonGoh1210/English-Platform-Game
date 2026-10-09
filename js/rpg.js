@@ -1460,6 +1460,7 @@ function loop(now) {
 }
 
 loadWorldState();
+recenterCamera();
 restoreEscapeState();
 updateQuest();
 syncHUD();
