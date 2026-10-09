@@ -144,6 +144,6 @@ session_start();
     </div>
   </div>
 
-  <script type="module" src="/FYP/js/rpg.js?v=20261010-characterfix3"></script>
+  <script type="module" src="/FYP/js/rpg.js?v=20261010-characterfix4"></script>
 </body>
 </html>
