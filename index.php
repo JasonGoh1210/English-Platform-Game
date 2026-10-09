@@ -10,7 +10,7 @@ session_start();
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-characterfix2">
 </head>
 <body>
   <div class="game-shell pixel-world-ui">
@@ -18,7 +18,7 @@ session_start();
 
     <div class="hud">
       <section class="pixel-player-card">
-        <div class="pixel-avatar"><img src="/FYP/assets/player/dark-adventurer-exact.png" alt="Rookie character"></div>
+        <div class="pixel-avatar"><img src="/FYP/images/player_walk_frames/png_frames/Player_Stand.png?v=20261010-characterfix2" alt="Rookie character"></div>
         <div class="pixel-player-info">
           <div class="pixel-player-name" data-i18n="player.name">Rookie</div>
           <div class="pixel-level"><span data-i18n="player.level">Lv.</span> <span id="levelText">1</span></div>
