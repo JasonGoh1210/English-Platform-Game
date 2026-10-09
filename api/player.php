@@ -27,9 +27,10 @@ try {
     );
     $statsStmt->bind_param('i', $playerId);
     $statsStmt->execute();
+    $statsResult = $statsStmt->get_result();
 
     $stats = [];
-    while ($row = $statsStmt->get_result()->fetch_assoc()) {
+    while ($row = $statsResult->fetch_assoc()) {
         $stats[$row['skill_code']] = [
             'name' => $row['skill_name'],
             'power' => (int)$row['current_power'],
