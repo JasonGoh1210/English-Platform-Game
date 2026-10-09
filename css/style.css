@@ -2186,7 +2186,6 @@ button { font: inherit; }
 
 /* Battle character: use the supplied player artwork exactly as uploaded */
 .battle-player-art {
-  content: url("/FYP/assets/player/dark-adventurer-exact.png");
   object-fit: contain;
   image-rendering: pixelated;
   transform: none !important;
