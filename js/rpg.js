@@ -461,7 +461,7 @@ function recenterCamera() {
 
 function enterCave() {
   world.insideCave = true;
-  world.player.x = 4435;
+  world.player.x = 4480;
   world.player.vx = 0;
   world.player.facing = 1;
   world.player.walkFrame = 0;
@@ -1047,7 +1047,7 @@ function drawCaveExit() {
 }
 
 function drawCaveDetails() {
-  const positions = [4535, 4650, 4920, 5050];
+  const positions = [4590, 4670, 4920, 5050];
   for (let i = 0; i < positions.length; i++) {
     const x = worldToScreen(positions[i]);
     if (x < -80 || x > window.innerWidth + 80) continue;
