@@ -43,6 +43,9 @@ const ui = {
   questionPrompt: document.getElementById("questionPrompt"),
   answerArea: document.getElementById("answerArea"),
   backToMenu: document.getElementById("backToMenu"),
+  activeSkillButton: document.getElementById("activeSkillButton"),
+  activeItemButton: document.getElementById("activeItemButton"),
+  activeRunButton: document.getElementById("activeRunButton"),
   battleResult: document.getElementById("battleResult"),
   resultKicker: document.getElementById("resultKicker"),
   resultTitle: document.getElementById("resultTitle"),
@@ -342,42 +345,41 @@ function showBattleMenu() {
 }
 
 function useSkill() {
-  if (state.completed) return;
+  if (state.completed || state.locked) return;
 
   if (state.focusUsed) {
-    showMenu("Skill", "Knowledge Focus is already active for your next FIGHT.");
-    ui.battleMessage.textContent = "Knowledge Focus is ready. Choose FIGHT.";
+    ui.battleMessage.textContent = "Knowledge Focus is already active for your next correct answer.";
     return;
   }
 
   state.focusUsed = true;
-  ui.battleMessage.textContent = "Knowledge Focus activated! Your next correct FIGHT deals +50% damage.";
-  showMenu("Knowledge Focus", "The next correct English attack is empowered.");
-  
-  // A skill consumes the player's turn. After the enemy attacks,
-  // the next English question starts automatically.
-  window.setTimeout(enemyTurn, 850);
+  ui.battleMessage.textContent = "Knowledge Focus activated! Your next correct answer deals +50% damage.";
+
+  // If SKILL is selected before the first FIGHT, start the continuous
+  // question flow. During combat, leave the current question/timer alone.
+  if (ui.questionPanel.classList.contains("hidden")) {
+    showQuestionPanel();
+    startQuestion();
+  }
 }
 function useItem() {
-  if (state.completed) return;
+  if (state.completed || state.locked) return;
 
+  const questionAlreadyOpen = !ui.questionPanel.classList.contains("hidden");
   const save = getSave();
   const currentCoins = Number(save.coins || 0);
 
   if (state.playerHp >= state.playerMaxHp) {
-    showMenu("Item", "Your HP is already full.");
-    ui.battleMessage.textContent = "ITEM selected — your HP is already full.";
+    ui.battleMessage.textContent = "ITEM unavailable — your HP is already full.";
     return;
   }
 
   if (currentCoins < 5) {
-    showMenu("Item", "You need 5 Coins for a Healing Herb.");
-    ui.battleMessage.textContent = "Not enough Coins for a Healing Herb.";
+    ui.battleMessage.textContent = "Not enough Coins for a Healing Herb (cost: 5).";
     return;
   }
 
   state.playerHp = Math.min(state.playerMaxHp, state.playerHp + 20);
-
   updateSave({ coins: currentCoins - 5 });
   void saveProgressServer({
     xpDelta: 0,
@@ -390,8 +392,14 @@ function useItem() {
   });
 
   updateHp();
-  ui.battleMessage.textContent = "Healing Herb restored 20 HP. The enemy attacks!";
-  window.setTimeout(enemyTurn, 850);
+  ui.battleMessage.textContent = "Healing Herb restored up to 20 HP for 5 Coins.";
+
+  // Do not force another command selection. If the player used the item
+  // from the initial menu, continue straight into the question flow.
+  if (!questionAlreadyOpen) {
+    showQuestionPanel();
+    startQuestion();
+  }
 }
 function returnToMapAfterBattle() {
   window.clearInterval(state.timerId);
@@ -466,20 +474,21 @@ function finishVictory() {
   updateSave({
     xp: Number(saved.xp || 0) + state.enemy.xp,
     coins: Number(saved.coins || 0) + state.enemy.coins,
-    power: Number(saved.power || 0) + 2,
     defeatedEnemyIds: [...defeated],
     questStep: state.enemy.id === "slime-01"
       ? Math.max(Number(saved.questStep || 0), 2)
       : Number(saved.questStep || 0)
   });
 
+  // Enemy victory grants XP and Coins. English Power is awarded for
+  // learning activities (correct answers/learning quests), not kills.
   void saveProgressServer({
     xpDelta: state.enemy.xp,
     coinDelta: state.enemy.coins,
-    englishPowerDelta: 2,
+    englishPowerDelta: 0,
     englishSkillCode: "VOCABULARY",
     sourceType: "ENEMY",
-    sourceId: state.enemy.id === "slime-01" ? 1 : state.enemy.id === "bat-01" ? 2 : 3,
+    sourceId: null,
     description: "Defeated " + state.enemy.name
   });
 
@@ -487,7 +496,7 @@ function finishVictory() {
     true,
     state.enemy.name + " defeated!",
     "The road is safe again. Your knowledge made you stronger.",
-    [["XP", "+" + state.enemy.xp], ["Coins", "+" + state.enemy.coins], ["POWER", "+2"]]
+    [["XP", "+" + state.enemy.xp], ["Coins", "+" + state.enemy.coins]]
   );
 }
 
@@ -532,6 +541,21 @@ function bindBattleEvents() {
     runAway();
   });
 
+  ui.activeSkillButton?.addEventListener("click", (event) => {
+    event.preventDefault();
+    useSkill();
+  });
+
+  ui.activeItemButton?.addEventListener("click", (event) => {
+    event.preventDefault();
+    useItem();
+  });
+
+  ui.activeRunButton?.addEventListener("click", (event) => {
+    event.preventDefault();
+    runAway();
+  });
+
   ui.backToMenu.addEventListener("click", (event) => {
     event.preventDefault();
     window.clearInterval(state.timerId);
@@ -567,7 +591,7 @@ async function init() {
   ui.enemyFigure.textContent =
     state.enemy.type === "slime" ? "🟢" :
     state.enemy.type === "bat" ? "🦇" : "🛡️";
-  if (ui.playerSprite) ui.playerSprite.src = "/FYP/assets/player/dark-adventurer.svg";
+  if (ui.playerSprite) ui.playerSprite.src = "/FYP/assets/player/dark-adventurer-exact.png";
 
   bindBattleEvents();
   updateHp();
