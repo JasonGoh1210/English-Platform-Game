@@ -48,6 +48,10 @@ const typingUi = {
   loseOverlay: document.getElementById("typingCaveLoseOverlay"),
   loseTitle: document.getElementById("typingCaveLoseTitle"),
   loseMessage: document.getElementById("typingCaveLoseMessage"),
+  loseAttempt: document.getElementById("typingCaveLoseAttempt"),
+  loseCorrect: document.getElementById("typingCaveLoseCorrect"),
+  loseExplanation: document.getElementById("typingCaveLoseExplanation"),
+  loseMeaning: document.getElementById("typingCaveLoseMeaning"),
   loseRetry: document.getElementById("typingCaveLoseRetry"),
   loseExit: document.getElementById("typingCaveLoseExit"),
   winOverlay: document.getElementById("typingCaveWinOverlay"),
@@ -67,6 +71,7 @@ const typingCaveState = {
   currentWord: null,
   seenIds: new Set(),
   completedLevels: 0,
+  lastMistake: null,
   monsterLeft: TYPING_CAVE_START_POSITION,
   approachSteps: 0,
   passiveTimer: 0,
@@ -635,6 +640,7 @@ function chooseTypingWord() {
   const word = available[Math.floor(Math.random() * available.length)];
   typingCaveState.seenIds.add(word.id);
   typingCaveState.currentWord = word;
+  typingCaveState.lastMistake = null;
   return word;
 }
 
@@ -760,8 +766,29 @@ function advanceTypingMonster(reason) {
 
     typingUi.loseTitle.textContent = isChinese ? "你输了！" : "YOU LOSE";
     typingUi.loseMessage.textContent = isChinese
-      ? "怪物追上你了。再试一次，记得在最后两个字母揭晓前打出答案！"
-      : "The monster caught you. Try again and type the word before it reaches you.";
+      ? "怪物追上你了。看一下本题的答案和拼写解释，再挑战一次吧。"
+      : "The monster caught you. Review this word and its spelling explanation, then try again.";
+
+    const reviewWord = typingCaveState.currentWord;
+    const lastMistake = typingCaveState.lastMistake;
+    typingUi.loseAttempt.textContent = isChinese
+      ? "你输入的答案：" + (lastMistake ? lastMistake.typedAnswer : "本题没有提交错误答案（超时）")
+      : "Your answer: " + (lastMistake ? lastMistake.typedAnswer : "No incorrect answer submitted (time ran out)");
+    typingUi.loseCorrect.textContent = isChinese
+      ? "正确答案：" + (lastMistake ? lastMistake.correctAnswer : String(reviewWord?.answer || "").toUpperCase())
+      : "Correct answer: " + (lastMistake ? lastMistake.correctAnswer : String(reviewWord?.answer || "").toUpperCase());
+    typingUi.loseExplanation.textContent = isChinese
+      ? "拼写解释：" + (lastMistake
+        ? lastMistake.explanation
+        : "本题超时，未提交答案。请根据下方单词释义记住正确拼写。")
+      : "Explanation: " + (lastMistake
+        ? lastMistake.explanation
+        : "Time ran out before an answer was submitted. Review the word meaning below and remember its spelling.");
+    typingUi.loseMeaning.textContent = isChinese
+      ? "题目释义：" + (reviewWord?.definitionZh || reviewWord?.definition || "")
+      : "Definition: " + (reviewWord?.definition || "") +
+        (reviewWord?.definitionZh ? " · 中文：" + reviewWord.definitionZh : "");
+
     typingUi.loseRetry.textContent = isChinese ? "再挑战一次" : "TRY AGAIN";
     typingUi.loseExit.textContent = isChinese ? "返回地图" : "BACK TO MAP";
     typingUi.loseOverlay.classList.remove("hidden");
@@ -834,6 +861,11 @@ function showTypingSpellingFeedback(typedAnswer, correctAnswer) {
 
   typingUi.spellingFeedback.textContent = message;
   typingUi.spellingFeedback.classList.remove("hidden");
+  typingCaveState.lastMistake = {
+    typedAnswer: typed.toUpperCase(),
+    correctAnswer: correct.toUpperCase(),
+    explanation: message
+  };
 }
 
 function clearTypingSpellingFeedback() {
@@ -859,6 +891,7 @@ function submitTypingAnswer() {
   }
 
   clearTypingSpellingFeedback();
+  typingCaveState.lastMistake = null;
 
   typingCaveState.busy = true;
   const token = ++typingCaveState.roundToken;
