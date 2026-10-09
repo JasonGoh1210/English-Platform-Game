@@ -228,7 +228,7 @@ const destinations = [
     description: "Explore the silent stone ruins and the secrets of the old network builders.",
     descriptionKey: "destination.ruins.description",
     scene: "ruins",
-    spawnX: 3680
+    spawnX: 4100
   }
 ];
 
@@ -1047,7 +1047,7 @@ function drawCaveExit() {
 }
 
 function drawCaveDetails() {
-  const positions = [4470, 4570, 4920, 5050];
+  const positions = [4535, 4650, 4920, 5050];
   for (let i = 0; i < positions.length; i++) {
     const x = worldToScreen(positions[i]);
     if (x < -80 || x > window.innerWidth + 80) continue;
