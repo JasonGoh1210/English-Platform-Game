@@ -222,6 +222,6 @@ session_start();
     </div>
   </div>
 
-  <script type="module" src="/FYP/js/rpg.js?v=20261010-typingcave5"></script>
+  <script type="module" src="/FYP/js/rpg.js?v=20261010-typingcave6"></script>
 </body>
 </html>
