@@ -144,6 +144,6 @@ session_start();
     </div>
   </div>
 
-  <script type="module" src="/FYP/js/rpg.js?v=20261010-walkrestore1"></script>
+  <script type="module" src="/FYP/js/rpg.js?v=20261010-mapmonster1"></script>
 </body>
 </html>
