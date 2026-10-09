@@ -116,7 +116,7 @@ playerSprite.onload = () => { playerSpriteReady = true; };
 
 for (const direction of ["right", "left"]) {
   playerWalkFrames[direction].forEach((img, index) => {
-    img.src = "/FYP/assets/player/player_walk_" + direction + "_" + (index + 1) + ".png";
+    img.src = "/FYP/assets/player/player_walk_" + direction + "_" + (index + 1) + ".svg";
     img.onload = () => { playerWalkReadyCount += 1; };
   });
 }
