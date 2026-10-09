@@ -1377,9 +1377,11 @@ function drawCharacter(x, ground, coat, skin, player) {
   const selectedFrame = walkingFrame[currentWalkIndex];
   const frameReady = Boolean(player && hasWalkFrame(currentWalkDirection, currentWalkIndex));
   const idleFrame = player ? playerWalkFrames[currentWalkDirection][0] : null;
-  const displayFrame = moving
-    ? (frameReady ? selectedFrame : idleFrame)
-    : (hasWalkFrame(currentWalkDirection, 0) ? idleFrame : null);
+  const displayFrame = player
+    ? (moving
+      ? (frameReady ? selectedFrame : idleFrame)
+      : (hasWalkFrame(currentWalkDirection, 0) ? idleFrame : null))
+    : null;
   const displayFrameReady = Boolean(displayFrame && displayFrame.complete && displayFrame.naturalWidth > 0);
 
   // Walking sprites include a ground contact shadow. Idle sprites use the same first
