@@ -10,7 +10,7 @@ session_start();
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-characterfix2">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-typingcave1">
 </head>
 <body>
   <div class="game-shell pixel-world-ui">
@@ -128,6 +128,53 @@ session_start();
         <p class="destination-help" data-i18n="destination.help">← / → CHANGE LOCATION &nbsp; · &nbsp; ENTER TRAVEL &nbsp; · &nbsp; ESC CLOSE</p>
       </div>
     </div>
+    <section class="typing-cave-screen hidden" id="typingCaveScreen" role="dialog" aria-modal="true" aria-labelledby="typingCaveTitle">
+      <header class="typing-cave-header">
+        <div class="typing-cave-heading">
+          <span class="typing-cave-kicker" id="typingCaveKicker">BEYOND THE ECHO · TYPING CHALLENGE</span>
+          <h1 id="typingCaveTitle">Word Cavern</h1>
+          <p id="typingCaveInstructions">Type the English word that matches the definition. The monster is getting closer!</p>
+        </div>
+        <button type="button" class="typing-cave-exit" id="typingCaveExit">↩ BACK TO MAP</button>
+      </header>
+
+      <section class="typing-cave-question-card" aria-live="polite">
+        <span class="typing-cave-question-label" id="typingCaveQuestionLabel">TYPE THE WORD THAT MEANS</span>
+        <h2 id="typingCaveQuestion">To propel something through the air with a movement of the arm and hand. To toss or hurl.</h2>
+        <p class="typing-cave-translation hidden" id="typingCaveTranslation"></p>
+        <span class="typing-cave-hint-label" id="typingCaveHintLabel">Letters are revealed as the monster approaches</span>
+        <div class="typing-cave-letter-hint" id="typingCaveLetterHint" aria-label="Letter hints"></div>
+      </section>
+
+      <div class="typing-cave-stage" id="typingCaveStage" aria-label="Monster approach scene">
+        <div class="typing-cave-rocks"></div>
+        <div class="typing-cave-ground"></div>
+        <div class="typing-cave-player">
+          <img src="/FYP/images/player_walk_frames/png_frames/Player_Stand.png?v=20261010-typingcave1" alt="Player character">
+        </div>
+        <div class="typing-cave-monster" id="typingCaveMonster">
+          <img src="/FYP/images/player_walk_frames/monster/Monster.png?v=20261010-typingcave1" alt="Approaching monster">
+        </div>
+        <div class="typing-cave-threat">
+          <span id="typingCaveThreatLabel">MONSTER APPROACH</span>
+          <div class="typing-cave-threat-track"><div id="typingCaveThreatBar"></div></div>
+        </div>
+      </div>
+
+      <div class="typing-cave-controls">
+        <form id="typingCaveForm" class="typing-cave-form">
+          <label for="typingCaveInput" id="typingCaveAnswerLabel">Type your answer</label>
+          <div class="typing-cave-answer-row">
+            <input id="typingCaveInput" name="typingCaveAnswer" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" placeholder="Type an English word…" disabled>
+            <button type="submit" id="typingCaveSubmit" disabled>SUBMIT</button>
+          </div>
+        </form>
+        <p class="typing-cave-message" id="typingCaveMessage" role="status">Type the word and press Enter.</p>
+        <button type="button" class="typing-cave-retry hidden" id="typingCaveRetry">TRY AGAIN</button>
+      </div>
+      <p class="typing-cave-footer">ENTER · SUBMIT ANSWER &nbsp; / &nbsp; ESC · EXIT</p>
+    </section>
+
     <div class="settings-screen hidden" id="settingsScreen" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
       <section class="settings-panel">
         <div class="settings-panel-kicker">ENGLISH POWER QUEST</div>
@@ -144,6 +191,6 @@ session_start();
     </div>
   </div>
 
-  <script type="module" src="/FYP/js/rpg.js?v=20261010-characterfix4"></script>
+  <script type="module" src="/FYP/js/rpg.js?v=20261010-typingcave1"></script>
 </body>
 </html>
