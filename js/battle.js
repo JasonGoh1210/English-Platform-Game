@@ -45,7 +45,6 @@ const ui = {
   questionText: document.getElementById("questionText"),
   questionPrompt: document.getElementById("questionPrompt"),
   answerArea: document.getElementById("answerArea"),
-  backToMenu: document.getElementById("backToMenu"),
   activeSkillButton: document.getElementById("activeSkillButton"),
   activeItemButton: document.getElementById("activeItemButton"),
   activeRunButton: document.getElementById("activeRunButton"),
@@ -531,7 +530,7 @@ function finishDefeat() {
 }
 
 function bindBattleEvents() {
-  if (!ui.fightButton || !ui.skillButton || !ui.itemButton || !ui.runButton || !ui.backToMenu) {
+  if (!ui.fightButton || !ui.skillButton || !ui.itemButton || !ui.runButton) {
     throw new Error("Battle command buttons are missing from the page.");
   }
 
@@ -571,13 +570,6 @@ function bindBattleEvents() {
   ui.activeRunButton?.addEventListener("click", (event) => {
     event.preventDefault();
     runAway();
-  });
-
-  ui.backToMenu.addEventListener("click", (event) => {
-    event.preventDefault();
-    window.clearInterval(state.timerId);
-    showMenu("What will you do?", "Choose an action.");
-    ui.battleMessage.textContent = "Choose your next move.";
   });
 
   // Fallback delegation: keeps commands clickable even if another UI layer changes.
