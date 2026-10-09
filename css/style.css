@@ -3381,3 +3381,114 @@ button { font: inherit; }
     font-size: .72rem;
   }
 }
+
+
+/* Three-stage progress and victory dialog for the typing cavern. */
+.typing-cave-question-topline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.typing-cave-stage-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 23px;
+  padding: 3px 9px;
+  border: 1px solid rgba(226, 204, 141, .62);
+  border-radius: 999px;
+  color: #ffe8a3;
+  background: rgba(226, 204, 141, .1);
+  font-size: .62rem;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+.typing-cave-win-overlay {
+  position: absolute;
+  z-index: 21;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(5, 8, 14, .8);
+  backdrop-filter: blur(6px);
+}
+.typing-cave-win-panel {
+  width: min(460px, 100%);
+  padding: 28px 24px 24px;
+  border: 2px solid #c1b078;
+  border-radius: 16px;
+  color: #fbf8e9;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(115, 173, 133, .23), transparent 58%),
+    linear-gradient(180deg, #23382f, #151f20);
+  box-shadow: 0 20px 70px rgba(0,0,0,.58), 0 0 35px rgba(133,190,137,.14);
+  text-align: center;
+  animation: typingCaveWinAppear 260ms ease-out both;
+}
+.typing-cave-win-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 12px;
+  border: 2px solid #d8c477;
+  border-radius: 50%;
+  color: #ffe7a2;
+  background: rgba(213, 190, 109, .15);
+  font-size: 2rem;
+}
+.typing-cave-win-kicker {
+  margin: 0 0 6px;
+  color: #d4d09b;
+  font-size: .6rem;
+  font-weight: 900;
+  letter-spacing: .19em;
+}
+.typing-cave-win-panel h2 {
+  margin: 0;
+  color: #d8f2bc;
+  font-size: clamp(1.85rem, 6vw, 2.7rem);
+  line-height: 1;
+  letter-spacing: .04em;
+  text-shadow: 0 3px 0 #325643;
+}
+.typing-cave-win-panel > p:not(.typing-cave-win-kicker) {
+  margin: 13px auto 20px;
+  max-width: 37ch;
+  color: #e1e9d9;
+  font-size: .9rem;
+  line-height: 1.55;
+}
+.typing-cave-win-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.typing-cave-win-actions button {
+  min-width: 145px;
+  min-height: 43px;
+  padding: 10px 14px;
+  border: 1px solid #c4ca94;
+  border-radius: 9px;
+  color: #1b2c20;
+  background: linear-gradient(#e4f1c2, #b7d396);
+  font-weight: 900;
+  cursor: pointer;
+}
+.typing-cave-win-actions button:last-child {
+  color: #f3f1e5;
+  background: #35463d;
+}
+.typing-cave-win-actions button:hover { filter: brightness(1.1); }
+@keyframes typingCaveWinAppear {
+  from { opacity: 0; transform: translateY(8px) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (max-width: 480px) {
+  .typing-cave-win-panel { padding: 22px 15px 18px; }
+  .typing-cave-win-actions { flex-direction: column; }
+  .typing-cave-win-actions button { width: 100%; }
+}
