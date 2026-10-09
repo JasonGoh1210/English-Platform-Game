@@ -2,79 +2,64 @@
 
 ## English Power Quest
 
-A mobile-friendly fantasy RPG prototype that turns English practice into combat and character progression.
+A mobile-friendly fantasy RPG prototype that teaches English through exploration, battles and progression.
 
-### Current MVP
+## Current implementation
 
-- Dreamwood world
-- Player HP, XP, Coins and Skill Points
-- English Power tracking
-- True / False Sprint
-- Odd Word Out
-- Sentence Builder
-- 3 regular enemies
-- 1 elite monster
-- 1 mini boss with phases
-- 1 main boss with phases
-- Combo and fast-answer damage bonuses
-- Repeat-question reward handling
-- Personal English accuracy tracking
-- Local browser save using localStorage
-- Responsive UI
+- Canvas-based exploration map with keyboard and touch movement
+- NPC dialogue and map events
+- Separate PHP battle page with continuous English questions
+- True/False, Odd Word Out and Sentence Builder question types
+- Battle rewards, HP, Coins, XP and English Power
+- LocalStorage still stores map position, defeated map enemies and quest-step flags
+- PHP endpoints can read the demo player and write balance/ledger changes to MySQL
+- MySQL schema includes accounts, player stats, quests, enemies/bosses, combat logs, mastery, inventory and reward ledgers
 
-### Game loop
+> This is still a prototype. Login is not implemented; the current PHP API resolves the hard-coded `demo` player. The browser also sends reward deltas to the API, so reward validation is not yet server-authoritative. Do not deploy this version as a public multi-user game.
 
-Explore -> Encounter -> English Challenge -> Answer -> Attack -> Defeat -> Reward -> Improve -> Progress
+## Run locally with XAMPP
 
-### Reward rules
+1. Put the repository under your XAMPP-served folder, or configure your Apache Alias to point to the repository.
+2. Start Apache and MySQL.
+3. Open `http://localhost/FYP/index.php` (adjust `/FYP` if your Alias differs).
 
-Easy: +10 XP, +5 Coins, +1 English Power
-Medium: +15 XP, +8 Coins, +2 English Power
-Hard: +20 XP, +10 Coins, +3 English Power
+The project uses paths beginning with `/FYP/`, so if you use a different URL prefix, update those paths consistently in PHP, JavaScript and CSS.
 
-Wrong answers give no question reward and cost the current action.
+## Database setup
 
-### Run locally
+For a **new, empty local database**, import in this order using phpMyAdmin:
 
-Because the game loads JSON files and ES modules, use a local web server.
+1. `database/english_power_quest_schema.sql`
+2. `database/demo_seed.sql`
 
-Example:
-python -m http.server 8000
+Check `config/db.php` for the local MySQL credentials.
 
-Then open:
-http://localhost:8000
+If you already imported the older schema, **do not import the full schema again**. Back up your database first, then review and run `database/migrations/001_question_codes_and_difficulty_fk.sql` once. That migration is for the old schema only; it will fail if you already added the column or constraint.
 
-### Database
+## Known gaps before a final FYP release
 
-The MySQL schema is stored in:
-database/english_power_quest_schema.sql
+- Add login/logout and use the authenticated PHP session instead of the hard-coded demo player.
+- Replace client-supplied reward deltas with server-side answer validation.
+- Import `data/questions.json` and `data/enemies.json` into MySQL (or establish one authoritative runtime source).
+- Persist answer attempts, accuracy, mastery, combat sessions and quest claims in the database.
+- Replace LocalStorage quest/reward state with DB-backed progress and idempotent reward claims.
+- Use a restricted MySQL account and avoid returning raw exception messages outside local development.
 
-The browser MVP currently uses localStorage so the core gameplay can be tested before the backend/API is connected to MySQL.
+See [`docs/CODE_DATABASE_AUDIT.md`](docs/CODE_DATABASE_AUDIT.md) for the code/database audit and priorities.
 
-### Repository structure
+## Main folders
 
-index.html
-css/style.css
-js/main.js
-js/game.js
-js/player.js
-js/combat.js
-js/question.js
-js/save.js
-data/questions.json
-data/enemies.json
-data/levels.json
-data/skills.json
-data/worlds.json
-assets/player/
-assets/enemies/
-assets/world/
-assets/ui/
-database/english_power_quest_schema.sql
+- `index.php`, `battle.php`: map and battle pages
+- `js/`: Canvas movement and battle logic
+- `css/style.css`: game UI
+- `data/`: JSON question/enemy/level/skill/world content
+- `api/`: PHP JSON endpoints
+- `config/db.php`: MySQL connection
+- `database/`: schema, demo seed and migrations
+- `assets/player/`: player sprites
 
-### Design principle
+## Design principle
 
-Level up your character. Level up yourself.
+**Level up your character. Level up yourself.**
 
-Core emotional outcome:
-I GOT STRONGER.
+Core emotional outcome: **I GOT STRONGER.**
