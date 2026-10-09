@@ -41,6 +41,7 @@ const typingUi = {
   input: document.getElementById("typingCaveInput"),
   submit: document.getElementById("typingCaveSubmit"),
   message: document.getElementById("typingCaveMessage"),
+  spellingFeedback: document.getElementById("typingCaveSpellingFeedback"),
   retry: document.getElementById("typingCaveRetry"),
   threatLabel: document.getElementById("typingCaveThreatLabel"),
   loseOverlay: document.getElementById("typingCaveLoseOverlay"),
@@ -689,6 +690,7 @@ async function openTypingCave() {
   typingCaveState.roundToken += 1;
 
   typingUi.screen.classList.remove("hidden");
+  clearTypingSpellingFeedback();
   typingUi.input.value = "";
   typingUi.input.disabled = true;
   typingUi.submit.disabled = true;
@@ -758,6 +760,68 @@ function advanceTypingMonster(reason) {
   typingUi.input.focus();
 }
 
+function showTypingSpellingFeedback(typedAnswer, correctAnswer) {
+  const typed = String(typedAnswer || "").trim().toLowerCase();
+  const correct = String(correctAnswer || "").trim().toLowerCase();
+  const isChinese = getLanguage() === "zh";
+  let differenceIndex = 0;
+
+  while (
+    differenceIndex < typed.length &&
+    differenceIndex < correct.length &&
+    typed[differenceIndex] === correct[differenceIndex]
+  ) {
+    differenceIndex += 1;
+  }
+
+  const position = differenceIndex + 1;
+  const enteredLetter = typed[differenceIndex] || "";
+  const expectedLetter = correct[differenceIndex] || "";
+  let message;
+
+  // Detect one missing character (for example, "bandwidth" typed without "d").
+  const missingLetter =
+    typed.length < correct.length &&
+    correct.slice(0, differenceIndex) === typed.slice(0, differenceIndex) &&
+    correct.slice(differenceIndex + 1) === typed.slice(differenceIndex);
+
+  // Detect one extra character.
+  const extraLetter =
+    typed.length > correct.length &&
+    typed.slice(0, differenceIndex) === correct.slice(0, differenceIndex) &&
+    typed.slice(differenceIndex + 1) === correct.slice(differenceIndex);
+
+  if (missingLetter) {
+    message = isChinese
+      ? `你漏了第 ${position} 个字母：这里需要补上 “${expectedLetter.toUpperCase()}”。字母数量和顺序都会影响拼写，请检查这一处再试。`
+      : `You missed letter ${position}: add “${expectedLetter.toUpperCase()}” here. The number and order of letters matter, so check this spot and try again.`;
+  } else if (extraLetter) {
+    message = isChinese
+      ? `第 ${position} 个字母多输入了 “${enteredLetter.toUpperCase()}”。这个位置不需要多一个字母，请检查拼写长度和后面的字母顺序。`
+      : `You added an extra “${enteredLetter.toUpperCase()}” at position ${position}. Check the word length and the order of the remaining letters.`;
+  } else if (enteredLetter && expectedLetter) {
+    message = isChinese
+      ? `第 ${position} 个字母拼错了：你输入 “${enteredLetter.toUpperCase()}”，这个位置应该是 “${expectedLetter.toUpperCase()}”。从左到右核对字母顺序，再重新输入。`
+      : `Letter ${position} is incorrect: you typed “${enteredLetter.toUpperCase()}”, but this position should be “${expectedLetter.toUpperCase()}”. Check the letter order and try again.`;
+  } else if (typed.length < correct.length) {
+    message = isChinese
+      ? `你的答案少了字母。这个单词需要 ${correct.length} 个字母，你输入了 ${typed.length} 个；请检查结尾是否漏字母。`
+      : `Your answer is missing letters. This word has ${correct.length} letters, but you entered ${typed.length}. Check the ending.`;
+  } else {
+    message = isChinese
+      ? `你的答案比正确拼写长。这个单词需要 ${correct.length} 个字母，你输入了 ${typed.length} 个；请检查是否多打了字母。`
+      : `Your answer is longer than the correct spelling. This word has ${correct.length} letters, but you entered ${typed.length}. Check for extra letters.`;
+  }
+
+  typingUi.spellingFeedback.textContent = message;
+  typingUi.spellingFeedback.classList.remove("hidden");
+}
+
+function clearTypingSpellingFeedback() {
+  typingUi.spellingFeedback.textContent = "";
+  typingUi.spellingFeedback.classList.add("hidden");
+}
+
 function submitTypingAnswer() {
   if (!world.typingCaveOpen || typingCaveState.busy || typingCaveState.gameOver || !typingCaveState.currentWord) return;
   const typed = typingUi.input.value.trim().toLowerCase().replace(/\s+/g, " ");
@@ -770,9 +834,12 @@ function submitTypingAnswer() {
   const correctAnswer = String(typingCaveState.currentWord.answer).trim().toLowerCase();
   if (typed !== correctAnswer) {
     typingUi.input.value = "";
+    showTypingSpellingFeedback(typed, correctAnswer);
     advanceTypingMonster("wrong");
     return;
   }
+
+  clearTypingSpellingFeedback();
 
   typingCaveState.busy = true;
   const token = ++typingCaveState.roundToken;
@@ -803,6 +870,7 @@ function submitTypingAnswer() {
     typingCaveState.approachSteps = 0;
     typingCaveState.passiveTimer = 0;
     typingCaveState.busy = false;
+    clearTypingSpellingFeedback();
     typingUi.input.value = "";
     typingUi.input.disabled = false;
     typingUi.submit.disabled = false;
@@ -821,6 +889,7 @@ function retryTypingCave() {
   typingCaveState.gameOver = false;
   typingCaveState.roundToken += 1;
   typingUi.loseOverlay.classList.add("hidden");
+  clearTypingSpellingFeedback();
   typingUi.input.value = "";
   typingUi.input.disabled = false;
   typingUi.submit.disabled = false;
