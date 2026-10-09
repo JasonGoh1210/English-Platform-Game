@@ -178,9 +178,13 @@ function localizeBattleStaticText() {
 onLanguageChange(() => {
   localizeBattleStaticText();
   if (state.battleMessageTranslation) {
+    const messageValues = { ...state.battleMessageTranslation.values };
+    if (Object.prototype.hasOwnProperty.call(messageValues, "enemy") && state.enemy) {
+      messageValues.enemy = localEnemyName();
+    }
     ui.battleMessage.textContent = t(
       state.battleMessageTranslation.key,
-      state.battleMessageTranslation.values
+      messageValues
     );
   }
   if (state.resultType) renderStoredResult();
