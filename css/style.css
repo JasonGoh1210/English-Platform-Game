@@ -3260,3 +3260,94 @@ button { font: inherit; }
   .typing-cave-answer-row button { min-width: 92px; padding: 8px; }
   .typing-cave-answer-row input { height: 42px; font-size: .91rem; }
 }
+
+
+/* Clear defeat dialog shown when the monster catches the player. */
+.typing-cave-lose-overlay {
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(5, 6, 13, .78);
+  backdrop-filter: blur(5px);
+}
+.typing-cave-lose-panel {
+  width: min(430px, 100%);
+  padding: 28px 24px 24px;
+  border: 2px solid #bd8aab;
+  border-radius: 16px;
+  color: #fdf5ff;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(170, 75, 108, .24), transparent 58%),
+    linear-gradient(180deg, #27202e, #15141f);
+  box-shadow: 0 20px 70px rgba(0,0,0,.58), 0 0 35px rgba(183,73,107,.14);
+  text-align: center;
+  animation: typingCaveLoseAppear 240ms ease-out both;
+}
+.typing-cave-lose-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 12px;
+  border: 2px solid #e0a4b6;
+  border-radius: 50%;
+  color: #ffdce5;
+  background: rgba(170, 68, 98, .24);
+  font-size: 1.7rem;
+}
+.typing-cave-lose-kicker {
+  margin: 0 0 5px;
+  color: #d7a4c5;
+  font-size: .6rem;
+  font-weight: 900;
+  letter-spacing: .19em;
+}
+.typing-cave-lose-panel h2 {
+  margin: 0;
+  color: #ffb4c2;
+  font-size: clamp(2rem, 6vw, 2.9rem);
+  line-height: 1;
+  letter-spacing: .06em;
+  text-shadow: 0 3px 0 #652c4b;
+}
+.typing-cave-lose-panel > p:not(.typing-cave-lose-kicker) {
+  margin: 13px auto 20px;
+  max-width: 34ch;
+  color: #e3d9e6;
+  font-size: .9rem;
+  line-height: 1.55;
+}
+.typing-cave-lose-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.typing-cave-lose-actions button {
+  min-width: 145px;
+  min-height: 43px;
+  padding: 10px 14px;
+  border: 1px solid #c6a0d8;
+  border-radius: 9px;
+  color: #281b34;
+  background: linear-gradient(#f0d9fa, #c3a0df);
+  font-weight: 900;
+  cursor: pointer;
+}
+.typing-cave-lose-actions button:last-child {
+  color: #f8edf9;
+  background: #383044;
+}
+.typing-cave-lose-actions button:hover { filter: brightness(1.1); }
+@keyframes typingCaveLoseAppear {
+  from { opacity: 0; transform: translateY(8px) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (max-width: 480px) {
+  .typing-cave-lose-panel { padding: 22px 15px 18px; }
+  .typing-cave-lose-actions { flex-direction: column; }
+  .typing-cave-lose-actions button { width: 100%; }
+}
