@@ -71,8 +71,63 @@ session_start();
     </div>
 
     <div class="hint pixel-hint">A / D or ← / → to move&nbsp;&nbsp; • &nbsp;E / SPACE to interact</div>
+
+    <div class="destination-screen hidden" id="destinationScreen" role="dialog" aria-modal="true" aria-labelledby="destinationTitle">
+      <div class="destination-topbar">
+        <span>ENGLISH POWER QUEST</span>
+        <span>WORLD GATE · 01</span>
+      </div>
+
+      <div class="destination-content">
+        <header class="destination-heading">
+          <p class="destination-kicker">THE ANCIENT PORTAL</p>
+          <h1>REALM GATE</h1>
+          <div class="destination-plaque">CHOOSE YOUR DESTINATION</div>
+        </header>
+
+        <div class="destination-carousel">
+          <button class="destination-arrow" id="destinationPrev" type="button" aria-label="Previous destination">◀</button>
+
+          <section class="destination-card" aria-live="polite">
+            <div class="destination-scene" id="destinationScene" data-scene="maple" aria-hidden="true">
+              <div class="destination-scene-stars"></div>
+              <div class="destination-sun"></div>
+              <div class="destination-mountains"></div>
+              <div class="destination-forest"></div>
+              <div class="destination-landmark"></div>
+              <div class="destination-ground"></div>
+              <div class="destination-road"></div>
+            </div>
+            <div class="destination-card-top">
+              <span id="destinationCategory">SAFE HAVEN</span>
+              <span id="destinationCount">01 / 04</span>
+            </div>
+            <div class="destination-card-copy">
+              <h2 id="destinationTitle">Maple Town</h2>
+              <p id="destinationDescription">A peaceful village where your adventure and first words begin.</p>
+            </div>
+          </section>
+
+          <button class="destination-arrow" id="destinationNext" type="button" aria-label="Next destination">▶</button>
+        </div>
+
+        <div class="destination-dots" aria-label="Choose a destination">
+          <button type="button" class="active" data-destination-index="0" aria-label="Select Maple Town" aria-current="true">■</button>
+          <button type="button" data-destination-index="1" aria-label="Select Whispering Forest">■</button>
+          <button type="button" data-destination-index="2" aria-label="Select Old Camp Road">■</button>
+          <button type="button" data-destination-index="3" aria-label="Select Ancient Ruins">■</button>
+        </div>
+
+        <div class="destination-actions">
+          <button class="destination-back" id="destinationBack" type="button">↩ BACK TO MAP</button>
+          <button class="destination-travel" id="destinationTravel" type="button">TRAVEL HERE <span>▶</span></button>
+        </div>
+
+        <p class="destination-help">← / → CHANGE LOCATION &nbsp; · &nbsp; ENTER TRAVEL &nbsp; · &nbsp; ESC CLOSE</p>
+      </div>
+    </div>
   </div>
 
-  <script type="module" src="/FYP/js/rpg.js"></script>
+  <script type="module" src="/FYP/js/rpg.js?v=20261009-portal1"></script>
 </body>
 </html>
