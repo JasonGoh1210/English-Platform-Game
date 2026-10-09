@@ -296,7 +296,7 @@ function repairEnclosedSpriteHoles(img) {
       for (const index of component) {
         const x = index % width;
         const y = Math.floor(index / width);
-        for (let dy = -1; dy <= 1 && !filled[index === -1 ? 0 : index + total]; dy += 1) {
+        for (let dy = -1; dy <= 1; dy += 1) {
           for (let dx = -1; dx <= 1; dx += 1) {
             if (dx === 0 && dy === 0) continue;
             const nx = x + dx;
