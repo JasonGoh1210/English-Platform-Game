@@ -122,12 +122,12 @@ for (const direction of ["right", "left"]) {
       // The detailed PNG frames are preferred. Keep the SVG frames as a safe fallback.
       if (img.dataset.svgFallbackTried !== "true") {
         img.dataset.svgFallbackTried = "true";
-        img.src = "/FYP/assets/player/" + frameName + ".svg";
+        img.src = "/FYP/images/player_walk_frames/svg_frames/" + frameName + ".svg";
         return;
       }
       console.warn("[English Power Quest] Unable to load player frame:", frameName);
     };
-    img.src = "/FYP/assets/player/" + frameName + ".png";
+    img.src = "/FYP/images/player_walk_frames/png_frames/" + frameName + ".png";
   });
 }
 
