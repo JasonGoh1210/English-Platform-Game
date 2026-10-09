@@ -100,9 +100,6 @@ const touch = { left: false, right: false };
 let questions = [];
 let lastTime = 0;
 
-const playerSprite = new Image();
-let playerSpriteReady = false;
-
 // Dedicated idle sprite: the old code incorrectly used walk frame 1 while standing,
 // which made the character look jagged and visually incomplete.
 const playerStandSprite = new Image();
@@ -112,7 +109,7 @@ playerStandSprite.onerror = () => {
   playerStandReady = false;
   console.warn("[English Power Quest] Unable to load Player_Stand.png; using walk frame fallback.");
 };
-playerStandSprite.src = "/FYP/images/player_walk_frames/png_frames/Player_Stand.png?v=20261010-characterfix1";
+playerStandSprite.src = "/FYP/images/player_walk_frames/png_frames/Player_Stand.png?v=20261010-characterfix2";
 
 // Shared monster artwork for map encounters, using the uploaded asset.
 const monsterSprite = new Image();
@@ -129,16 +126,11 @@ const playerWalkFrames = {
   left: Array.from({ length: 6 }, () => new Image())
 };
 
-let playerWalkReadyCount = 0;
 const PLAYER_WALK_FRAME_COUNT = 6;
-
-playerSprite.src = "/FYP/assets/player/dark-adventurer-exact.png";
-playerSprite.onload = () => { playerSpriteReady = true; };
 
 for (const direction of ["right", "left"]) {
   playerWalkFrames[direction].forEach((img, index) => {
     const frameName = "player_walk_" + direction + "_" + (index + 1);
-    img.onload = () => { playerWalkReadyCount += 1; };
     img.onerror = () => {
       // The detailed PNG frames are preferred. Keep the SVG frames as a safe fallback.
       if (img.dataset.svgFallbackTried !== "true") {
@@ -1408,64 +1400,50 @@ function drawCharacter(x, ground, coat, skin, player) {
     player && hasWalkFrame(currentWalkDirection, currentWalkIndex)
   );
 
-  // Use the clean, dedicated stand image at rest. Only use directional frames
-  // during movement; if a walk frame is still loading, keep the stand art visible.
-  const useWalkingFrame = Boolean(moving && selectedFrameReady);
-  const displayFrame = player
-    ? (useWalkingFrame
-      ? selectedFrame
-      : (playerStandReady ? playerStandSprite : (
-        hasWalkFrame(currentWalkDirection, 0) ? walkingFrame[0] : null
-      )))
-    : null;
+  // Walk only while the player is moving. At rest, use the dedicated clean
+  // Player_Stand.png instead of leaving the character frozen in a walk pose.
+  let displayFrame = null;
+  let displayFrameIsWalk = false;
+  if (player && moving && selectedFrameReady) {
+    displayFrame = selectedFrame;
+    displayFrameIsWalk = true;
+  } else if (player && playerStandReady && playerStandSprite.complete && playerStandSprite.naturalWidth > 0) {
+    displayFrame = playerStandSprite;
+  } else if (player && hasWalkFrame(currentWalkDirection, 0)) {
+    // Recovery path if the stand image is missing: show a valid directional frame.
+    displayFrame = walkingFrame[0];
+    displayFrameIsWalk = true;
+  }
+
   const displayFrameReady = Boolean(
     displayFrame && displayFrame.complete && displayFrame.naturalWidth > 0
   );
-  const standFallbackReady = Boolean(
-    player && !displayFrameReady && playerStandReady &&
-    playerStandSprite.complete && playerStandSprite.naturalWidth > 0
-  );
 
-  if (!displayFrameReady && !standFallbackReady) {
+  if (!displayFrameReady) {
     ctx.fillStyle = "rgba(0,0,0,.25)";
     ctx.beginPath();
     ctx.ellipse(x, ground + 4, player ? 30 : 25, player ? 8 : 7, 0, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  if (player) {
-    if (displayFrameReady) {
-      // Walk assets are portrait frames (256×384); the stand asset is square (128×128).
-      // Preserve each asset's intended aspect ratio so the character is not stretched.
-      const drawW = useWalkingFrame ? 96 : 144;
-      const drawH = 144;
+  if (player && displayFrameReady) {
+    // Keep the player's visible height consistent across the square stand art
+    // and the portrait walk frames. Walk frames already have separate directions.
+    const drawW = displayFrameIsWalk ? 96 : 128;
+    const drawH = 144;
 
-      ctx.save();
-      ctx.translate(x, y);
-      // Player_Stand.png faces right. Mirror only that idle art when facing left;
-      // the walk PNGs already have separate left/right versions.
-      if (!useWalkingFrame && world.player.facing < 0) ctx.scale(-1, 1);
-      ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(
-        displayFrame,
-        0, 0, displayFrame.naturalWidth, displayFrame.naturalHeight,
-        -drawW / 2, -drawH, drawW, drawH
-      );
-      ctx.restore();
-      return;
-    }
-
-    if (playerSpriteReady) {
-      const drawW = 128;
-      const drawH = 128;
-      ctx.save();
-      ctx.translate(x, y - drawH);
-      if (world.player.facing > 0) ctx.scale(-1, 1);
-      ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(playerSprite, -drawW / 2, 0, drawW, drawH);
-      ctx.restore();
-      return;
-    }
+    ctx.save();
+    ctx.translate(x, y);
+    // Player_Stand.png faces right; mirror only this stand image when facing left.
+    if (!displayFrameIsWalk && world.player.facing < 0) ctx.scale(-1, 1);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(
+      displayFrame,
+      0, 0, displayFrame.naturalWidth, displayFrame.naturalHeight,
+      -drawW / 2, -drawH, drawW, drawH
+    );
+    ctx.restore();
+    return;
   }
 
   ctx.fillStyle = coat;
