@@ -10,7 +10,7 @@ session_start();
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-typingcave1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-typingcave2">
 </head>
 <body>
   <div class="game-shell pixel-world-ui">
