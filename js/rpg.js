@@ -471,6 +471,10 @@ function recenterCamera() {
 
 function enterCave() {
   world.insideCave = true;
+  // Cave monsters respawn when the player enters the cave again.
+  enemies.forEach(enemy => {
+    if (enemy.caveOnly) enemy.defeated = false;
+  });
   world.player.x = 4480;
   world.player.vx = 0;
   world.player.facing = 1;
@@ -696,8 +700,7 @@ function update(dt) {
 
     if (Math.abs(world.player.vx) > 1) {
       world.player.walkTimer += dt;
-      // A slightly faster cadence makes the six-frame walk cycle read clearly.
-      const frameDuration = 0.095;
+      const frameDuration = 0.13;
       while (world.player.walkTimer >= frameDuration) {
         world.player.walkTimer -= frameDuration;
         world.player.walkFrame = (world.player.walkFrame + 1) % PLAYER_WALK_FRAME_COUNT;
@@ -1372,7 +1375,6 @@ function drawCharacter(x, ground, coat, skin, player) {
     : null;
   const moving = Boolean(player && Math.abs(world.player.vx) > 1);
   const currentWalkIndex = player ? world.player.walkFrame : 0;
-  const animationPhase = moving ? world.time * Math.PI * 2 * 1.85 : 0;
   const walkingFrame = playerWalkFrames[currentWalkDirection || "right"] || [];
   const selectedFrame = walkingFrame[currentWalkIndex];
   const frameReady = Boolean(player && hasWalkFrame(currentWalkDirection, currentWalkIndex));
@@ -1384,8 +1386,6 @@ function drawCharacter(x, ground, coat, skin, player) {
     : null;
   const displayFrameReady = Boolean(displayFrame && displayFrame.complete && displayFrame.naturalWidth > 0);
 
-  // Walking sprites include a ground contact shadow. Idle sprites use the same first
-  // directional frame, so there is no jarring switch to a different character drawing.
   if (!displayFrameReady) {
     ctx.fillStyle = "rgba(0,0,0,.25)";
     ctx.beginPath();
@@ -1397,22 +1397,14 @@ function drawCharacter(x, ground, coat, skin, player) {
     if (displayFrameReady) {
       const drawW = 96;
       const drawH = 144;
-      const stepBob = moving ? Math.abs(Math.sin(animationPhase)) * 3.5 : 0;
-      const strideX = moving ? Math.sin(animationPhase) * 1.8 : 0;
-      const lean = moving
-        ? Math.sin(animationPhase) * 0.035 * (world.player.facing > 0 ? 1 : -1)
-        : 0;
 
       ctx.save();
-      // Rotate around the feet, keep the feet close to the ground, and add a subtle
-      // alternating bounce so movement remains visible even on similar adjacent frames.
-      ctx.translate(x + strideX, y);
-      ctx.rotate(lean);
+      ctx.translate(x, y);
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(
         displayFrame,
         0, 0, displayFrame.naturalWidth, displayFrame.naturalHeight,
-        -drawW / 2, -drawH - stepBob, drawW, drawH
+        -drawW / 2, -drawH, drawW, drawH
       );
       ctx.restore();
       return;
