@@ -696,7 +696,8 @@ function update(dt) {
 
     if (Math.abs(world.player.vx) > 1) {
       world.player.walkTimer += dt;
-      const frameDuration = 0.13;
+      // A slightly faster cadence makes the six-frame walk cycle read clearly.
+      const frameDuration = 0.095;
       while (world.player.walkTimer >= frameDuration) {
         world.player.walkTimer -= frameDuration;
         world.player.walkFrame = (world.player.walkFrame + 1) % PLAYER_WALK_FRAME_COUNT;
@@ -1369,16 +1370,21 @@ function drawCharacter(x, ground, coat, skin, player) {
   const currentWalkDirection = player
     ? (world.player.facing > 0 ? "right" : "left")
     : null;
+  const moving = Boolean(player && Math.abs(world.player.vx) > 1);
   const currentWalkIndex = player ? world.player.walkFrame : 0;
-  const walkingFrameReady = Boolean(
-    player &&
-    Math.abs(world.player.vx) > 1 &&
-    hasWalkFrame(currentWalkDirection, currentWalkIndex)
-  );
+  const animationPhase = moving ? world.time * Math.PI * 2 * 1.85 : 0;
+  const walkingFrame = playerWalkFrames[currentWalkDirection || "right"] || [];
+  const selectedFrame = walkingFrame[currentWalkIndex];
+  const frameReady = Boolean(player && hasWalkFrame(currentWalkDirection, currentWalkIndex));
+  const idleFrame = player ? playerWalkFrames[currentWalkDirection][0] : null;
+  const displayFrame = moving
+    ? (frameReady ? selectedFrame : idleFrame)
+    : (hasWalkFrame(currentWalkDirection, 0) ? idleFrame : null);
+  const displayFrameReady = Boolean(displayFrame && displayFrame.complete && displayFrame.naturalWidth > 0);
 
-  // Walk-frame PNGs already include their own ground contact/shadow.
-  // Draw the procedural ellipse only for idle characters to avoid a double shadow.
-  if (!walkingFrameReady) {
+  // Walking sprites include a ground contact shadow. Idle sprites use the same first
+  // directional frame, so there is no jarring switch to a different character drawing.
+  if (!displayFrameReady) {
     ctx.fillStyle = "rgba(0,0,0,.25)";
     ctx.beginPath();
     ctx.ellipse(x, ground + 4, player ? 30 : 25, player ? 8 : 7, 0, 0, Math.PI * 2);
@@ -1386,22 +1392,25 @@ function drawCharacter(x, ground, coat, skin, player) {
   }
 
   if (player) {
-    const direction = currentWalkDirection;
-    const frameIndex = currentWalkIndex;
-    const moving = Math.abs(world.player.vx) > 1;
-    const frame = playerWalkFrames[direction][frameIndex];
-
-    if (moving && hasWalkFrame(direction, frameIndex)) {
+    if (displayFrameReady) {
       const drawW = 96;
       const drawH = 144;
+      const stepBob = moving ? Math.abs(Math.sin(animationPhase)) * 3.5 : 0;
+      const strideX = moving ? Math.sin(animationPhase) * 1.8 : 0;
+      const lean = moving
+        ? Math.sin(animationPhase) * 0.035 * (world.player.facing > 0 ? 1 : -1)
+        : 0;
 
       ctx.save();
-      ctx.translate(x, y - drawH);
+      // Rotate around the feet, keep the feet close to the ground, and add a subtle
+      // alternating bounce so movement remains visible even on similar adjacent frames.
+      ctx.translate(x + strideX, y);
+      ctx.rotate(lean);
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(
-        frame,
-        0, 0, frame.naturalWidth, frame.naturalHeight,
-        -drawW / 2, 0, drawW, drawH
+        displayFrame,
+        0, 0, displayFrame.naturalWidth, displayFrame.naturalHeight,
+        -drawW / 2, -drawH - stepBob, drawW, drawH
       );
       ctx.restore();
       return;
@@ -1410,12 +1419,9 @@ function drawCharacter(x, ground, coat, skin, player) {
     if (playerSpriteReady) {
       const drawW = 128;
       const drawH = 128;
-
       ctx.save();
       ctx.translate(x, y - drawH);
-
       if (world.player.facing > 0) ctx.scale(-1, 1);
-
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(playerSprite, -drawW / 2, 0, drawW, drawH);
       ctx.restore();
