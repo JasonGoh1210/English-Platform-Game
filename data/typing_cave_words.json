@@ -1,0 +1,74 @@
+[
+  {
+    "id": "throw",
+    "answer": "throw",
+    "definition": "To propel something through the air with a movement of the arm and hand. To toss or hurl.",
+    "definitionZh": "用手臂和手的动作把东西抛向空中；投掷。"
+  },
+  {
+    "id": "upload",
+    "answer": "upload",
+    "definition": "To transfer a file from your device to a remote computer or server.",
+    "definitionZh": "把文件从自己的设备传到远程电脑或服务器。"
+  },
+  {
+    "id": "fragile",
+    "answer": "fragile",
+    "definition": "Easily broken, damaged, or harmed.",
+    "definitionZh": "容易破碎、损坏或受到伤害的。"
+  },
+  {
+    "id": "reliable",
+    "answer": "reliable",
+    "definition": "Able to be trusted or depended on to work well.",
+    "definitionZh": "值得信任、可以依靠并且表现稳定的。"
+  },
+  {
+    "id": "debug",
+    "answer": "debug",
+    "definition": "To find and remove errors from a computer program.",
+    "definitionZh": "找出并修正电脑程序中的错误。"
+  },
+  {
+    "id": "database",
+    "answer": "database",
+    "definition": "An organized collection of related data stored for access and management.",
+    "definitionZh": "为了检索和管理而整理、储存的相关数据集合。"
+  },
+  {
+    "id": "bandwidth",
+    "answer": "bandwidth",
+    "definition": "The amount of data that a network connection can carry in a given time.",
+    "definitionZh": "网络连接在一定时间内可以传输的数据量。"
+  },
+  {
+    "id": "compile",
+    "answer": "compile",
+    "definition": "To translate source code into a form a computer can execute.",
+    "definitionZh": "把源代码转换成电脑能够执行的形式。"
+  },
+  {
+    "id": "encrypt",
+    "answer": "encrypt",
+    "definition": "To convert information into a coded form to prevent unauthorized reading.",
+    "definitionZh": "把信息转换成编码，防止未经授权的人读取。"
+  },
+  {
+    "id": "query",
+    "answer": "query",
+    "definition": "A request for information, especially from a database.",
+    "definitionZh": "请求获取信息的指令，尤其常用于数据库。"
+  },
+  {
+    "id": "efficient",
+    "answer": "efficient",
+    "definition": "Working well without wasting time, energy, or resources.",
+    "definitionZh": "在不浪费时间、精力或资源的情况下有效完成工作的。"
+  },
+  {
+    "id": "authenticate",
+    "answer": "authenticate",
+    "definition": "To verify that a user or system is really who or what it claims to be.",
+    "definitionZh": "验证用户或系统的身份是否真实。"
+  }
+]
