@@ -110,6 +110,7 @@ CREATE TABLE difficulties (
 
 CREATE TABLE questions (
     question_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    question_code VARCHAR(60) NOT NULL UNIQUE,
     question_type_id INT UNSIGNED NOT NULL,
     primary_skill_id INT UNSIGNED NOT NULL,
     difficulty_id INT UNSIGNED NOT NULL,
@@ -306,7 +307,9 @@ CREATE TABLE enemies (
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_enemies_world
-        FOREIGN KEY (world_id) REFERENCES worlds(world_id)
+        FOREIGN KEY (world_id) REFERENCES worlds(world_id),
+    CONSTRAINT fk_enemies_difficulty
+        FOREIGN KEY (difficulty_code) REFERENCES difficulties(difficulty_code)
 );
 
 CREATE TABLE enemy_question_pool (
