@@ -116,8 +116,18 @@ playerSprite.onload = () => { playerSpriteReady = true; };
 
 for (const direction of ["right", "left"]) {
   playerWalkFrames[direction].forEach((img, index) => {
-    img.src = "/FYP/assets/player/player_walk_" + direction + "_" + (index + 1) + ".svg";
+    const frameName = "player_walk_" + direction + "_" + (index + 1);
     img.onload = () => { playerWalkReadyCount += 1; };
+    img.onerror = () => {
+      // The detailed PNG frames are preferred. Keep the SVG frames as a safe fallback.
+      if (img.dataset.svgFallbackTried !== "true") {
+        img.dataset.svgFallbackTried = "true";
+        img.src = "/FYP/assets/player/" + frameName + ".svg";
+        return;
+      }
+      console.warn("[English Power Quest] Unable to load player frame:", frameName);
+    };
+    img.src = "/FYP/assets/player/" + frameName + ".png";
   });
 }
 
@@ -1356,15 +1366,28 @@ function drawEnemies() {
 
 function drawCharacter(x, ground, coat, skin, player) {
   const y = ground;
+  const currentWalkDirection = player
+    ? (world.player.facing > 0 ? "right" : "left")
+    : null;
+  const currentWalkIndex = player ? world.player.walkFrame : 0;
+  const walkingFrameReady = Boolean(
+    player &&
+    Math.abs(world.player.vx) > 1 &&
+    hasWalkFrame(currentWalkDirection, currentWalkIndex)
+  );
 
-  ctx.fillStyle = "rgba(0,0,0,.25)";
-  ctx.beginPath();
-  ctx.ellipse(x, ground + 4, player ? 30 : 25, player ? 8 : 7, 0, 0, Math.PI * 2);
-  ctx.fill();
+  // Walk-frame PNGs already include their own ground contact/shadow.
+  // Draw the procedural ellipse only for idle characters to avoid a double shadow.
+  if (!walkingFrameReady) {
+    ctx.fillStyle = "rgba(0,0,0,.25)";
+    ctx.beginPath();
+    ctx.ellipse(x, ground + 4, player ? 30 : 25, player ? 8 : 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   if (player) {
-    const direction = world.player.facing > 0 ? "right" : "left";
-    const frameIndex = world.player.walkFrame;
+    const direction = currentWalkDirection;
+    const frameIndex = currentWalkIndex;
     const moving = Math.abs(world.player.vx) > 1;
     const frame = playerWalkFrames[direction][frameIndex];
 
