@@ -1738,7 +1738,7 @@ button { font: inherit; }
 
 .pixel-world-ui .dialogue-name {
   color: #f0cc5e;
-  font-family: "Courier New", Courier, monospace;
+  font-family: "Courier New", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
   font-size: .75rem;
   letter-spacing: .06em;
   text-transform: none;
@@ -1747,7 +1747,7 @@ button { font: inherit; }
 .pixel-world-ui .dialogue p {
   margin: 7px 0 8px;
   color: #f3f1e4;
-  font-family: "Courier New", Courier, monospace;
+  font-family: "Courier New", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
   font-size: .76rem;
   line-height: 1.4;
 }
