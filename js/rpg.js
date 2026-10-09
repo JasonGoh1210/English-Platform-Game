@@ -52,6 +52,7 @@ const world = {
   selectedDestinationIndex: 0,
   portalX: 4870,
   currentDialogueNpcId: null,
+  currentDialogueIndex: 0,
   battle: null
 };
 
@@ -396,8 +397,9 @@ function interact() {
   if (npc) {
     world.interacting = true;
     world.currentDialogueNpcId = npc.id;
+    world.currentDialogueIndex = world.questStep % npc.dialogueKeys.length;
     ui.dialogueName.textContent = t(npc.nameKey) + " · " + t(npc.titleKey);
-    ui.dialogueText.textContent = t(npc.dialogueKeys[world.questStep % npc.dialogueKeys.length]);
+    ui.dialogueText.textContent = t(npc.dialogueKeys[world.currentDialogueIndex]);
     ui.dialogue.classList.remove("hidden");
 
     if (npc.id === "elder" && world.questStep === 0) {
@@ -529,7 +531,7 @@ function refreshWorldLanguage() {
       const npc = npcs.find(item => item.id === world.currentDialogueNpcId);
       if (npc) {
         ui.dialogueName.textContent = t(npc.nameKey) + " · " + t(npc.titleKey);
-        ui.dialogueText.textContent = t(npc.dialogueKeys[world.questStep % npc.dialogueKeys.length]);
+        ui.dialogueText.textContent = t(npc.dialogueKeys[world.currentDialogueIndex]);
       }
     }
   }
