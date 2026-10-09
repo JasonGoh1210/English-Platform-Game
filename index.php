@@ -10,7 +10,7 @@ session_start();
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-typingcave3">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-typingcave4">
 </head>
 <body>
   <div class="game-shell pixel-world-ui">
@@ -170,6 +170,7 @@ session_start();
           </div>
         </form>
         <p class="typing-cave-message" id="typingCaveMessage" role="status">Type the word and press Enter.</p>
+        <p class="typing-cave-spelling-feedback hidden" id="typingCaveSpellingFeedback" role="status" aria-live="polite"></p>
         <button type="button" class="typing-cave-retry hidden" id="typingCaveRetry">TRY AGAIN</button>
       </div>
 
@@ -205,6 +206,6 @@ session_start();
     </div>
   </div>
 
-  <script type="module" src="/FYP/js/rpg.js?v=20261010-typingcave2"></script>
+  <script type="module" src="/FYP/js/rpg.js?v=20261010-typingcave3"></script>
 </body>
 </html>
