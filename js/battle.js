@@ -689,11 +689,24 @@ async function init() {
   ui.enemyLabel.textContent = localEnemyName().toUpperCase();
   ui.enemyRole.textContent = t(state.enemy.roleKey);
   if (ui.enemyDifficulty) ui.enemyDifficulty.textContent = t("battle." + String(state.enemy.difficulty).toLowerCase());
-  ui.enemyFigure.textContent =
-    state.enemy.type === "slime" ? "🟢" :
-    state.enemy.type === "bat" ? "🦇" :
-    state.enemy.type === "wraith" ? "👻" : "🛡️";
-  if (ui.playerSprite) ui.playerSprite.src = "/FYP/assets/player/dark-adventurer-exact.png";
+  // Use the supplied image assets for the battle scene.
+  ui.enemyFigure.textContent = "";
+  const monsterArt = document.createElement("img");
+  monsterArt.src = "/FYP/images/player_walk_frames/monster/Monster.png";
+  monsterArt.alt = state.enemy.name;
+  monsterArt.draggable = false;
+  monsterArt.style.width = "100%";
+  monsterArt.style.height = "100%";
+  monsterArt.style.objectFit = "contain";
+  monsterArt.style.imageRendering = "pixelated";
+  ui.enemyFigure.appendChild(monsterArt);
+  if (ui.playerSprite) {
+    ui.playerSprite.src = "/FYP/images/player_walk_frames/png_frames/Player_Stand.png";
+    ui.playerSprite.onerror = () => {
+      ui.playerSprite.onerror = null;
+      ui.playerSprite.src = "/FYP/assets/player/dark-adventurer-exact.png";
+    };
+  }
 
   bindBattleEvents();
   updateHp();
