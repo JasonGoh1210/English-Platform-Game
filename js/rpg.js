@@ -1427,9 +1427,9 @@ function drawCharacter(x, ground, coat, skin, player) {
   }
 
   if (player && displayFrameReady) {
-    // Keep the player's visible height consistent across the square stand art
-    // and the portrait walk frames. Walk frames already have separate directions.
-    const drawW = displayFrameIsWalk ? 96 : 128;
+    // Keep each asset's aspect ratio: walk frames use a 2:3 portrait box,
+    // while Player_Stand.png uses a square box. Both remain bottom-aligned at the feet.
+    const drawW = displayFrameIsWalk ? 96 : 144;
     const drawH = 144;
 
     ctx.save();
