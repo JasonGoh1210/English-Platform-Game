@@ -713,7 +713,7 @@ function update(dt) {
 
     if (Math.abs(world.player.vx) > 1) {
       world.player.walkTimer += dt;
-      const frameDuration = 0.13;
+      const frameDuration = 0.22;
       while (world.player.walkTimer >= frameDuration) {
         world.player.walkTimer -= frameDuration;
         world.player.walkFrame = (world.player.walkFrame + 1) % PLAYER_WALK_FRAME_COUNT;
