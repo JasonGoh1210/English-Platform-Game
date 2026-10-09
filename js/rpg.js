@@ -23,8 +23,42 @@ const ui = {
   destinationCount: document.getElementById("destinationCount")
 };
 
+const typingUi = {
+  screen: document.getElementById("typingCaveScreen"),
+  exit: document.getElementById("typingCaveExit"),
+  kicker: document.getElementById("typingCaveKicker"),
+  title: document.getElementById("typingCaveTitle"),
+  instructions: document.getElementById("typingCaveInstructions"),
+  questionLabel: document.getElementById("typingCaveQuestionLabel"),
+  question: document.getElementById("typingCaveQuestion"),
+  translation: document.getElementById("typingCaveTranslation"),
+  hintLabel: document.getElementById("typingCaveHintLabel"),
+  hint: document.getElementById("typingCaveLetterHint"),
+  monster: document.getElementById("typingCaveMonster"),
+  threatBar: document.getElementById("typingCaveThreatBar"),
+  form: document.getElementById("typingCaveForm"),
+  answerLabel: document.getElementById("typingCaveAnswerLabel"),
+  input: document.getElementById("typingCaveInput"),
+  submit: document.getElementById("typingCaveSubmit"),
+  message: document.getElementById("typingCaveMessage"),
+  retry: document.getElementById("typingCaveRetry"),
+  threatLabel: document.getElementById("typingCaveThreatLabel")
+};
+
+const typingCaveState = {
+  words: [],
+  currentWord: null,
+  seenIds: new Set(),
+  monsterLeft: 88,
+  approachSteps: 0,
+  passiveTimer: 0,
+  busy: false,
+  gameOver: false,
+  roundToken: 0
+};
+
 const world = {
-  width: 5200,
+  width: 5800,
   groundY: 520,
   waterY: 650,
   player: {
@@ -50,10 +84,11 @@ const world = {
   interacting: false,
   travelMenu: false,
   selectedDestinationIndex: 0,
-  portalX: 4870,
+  portalX: 5500,
   currentDialogueNpcId: null,
   currentDialogueIndex: 0,
   insideCave: false,
+  typingCaveOpen: false,
   battle: null
 };
 
@@ -81,7 +116,11 @@ function loadWorldState() {
     const saved = JSON.parse(localStorage.getItem(WORLD_SAVE_KEY) || "null");
     if (!saved) return;
     world.player.x = clamp(Number(saved.playerX) || world.player.x, 100, world.width - 120);
-    world.portalX = clamp(Number(saved.portalX) || world.portalX, 160, world.width - 160);
+    const savedPortalX = Number(saved.portalX);
+    // Migrate the old default portal away from the new typing-cave entrance.
+    world.portalX = savedPortalX === 4870
+      ? 5500
+      : clamp(savedPortalX || world.portalX, 160, world.width - 160);
     world.insideCave = Boolean(saved.insideCave);
     world.questStep = Number(saved.questStep) || 0;
     world.coins = Number(saved.coins) || 0;
@@ -205,7 +244,8 @@ const landmarks = [
   { x: 2780, type: "tower" },
   { x: 3450, type: "ruins" },
   { x: 4380, type: "gate" },
-  { x: 4630, type: "cave" }
+  { x: 4630, type: "cave" },
+  { x: 5050, type: "typingCave" }
 ];
 
 const destinations = [
@@ -300,6 +340,14 @@ resize();
 window.addEventListener("keydown", (e) => {
   const k = e.key.toLowerCase();
 
+  if (world.typingCaveOpen) {
+    if (k === "escape") {
+      e.preventDefault();
+      if (!e.repeat) closeTypingCave();
+    }
+    return;
+  }
+
   if (world.travelMenu) {
     if (["arrowleft", "a"].includes(k)) {
       e.preventDefault();
@@ -349,6 +397,13 @@ document.getElementById("destinationPrev").addEventListener("click", () => selec
 document.getElementById("destinationNext").addEventListener("click", () => selectDestination(1));
 document.getElementById("destinationBack").addEventListener("click", closeDestinationMenu);
 document.getElementById("destinationTravel").addEventListener("click", travelToSelectedDestination);
+
+typingUi.exit.addEventListener("click", closeTypingCave);
+typingUi.retry.addEventListener("click", retryTypingCave);
+typingUi.form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  submitTypingAnswer();
+});
 document.querySelectorAll("[data-destination-index]").forEach((button) => {
   button.addEventListener("click", () => {
     world.selectedDestinationIndex = Number(button.dataset.destinationIndex) || 0;
@@ -419,6 +474,14 @@ function interact() {
   if (!world.insideCave && Math.abs(world.portalX - world.player.x) < 112) {
     openDestinationMenu();
     return;
+  }
+
+  if (!world.insideCave) {
+    const typingCave = landmarks.find(item => item.type === "typingCave");
+    if (typingCave && Math.abs(typingCave.x - world.player.x) < 118) {
+      openTypingCave();
+      return;
+    }
   }
 
   if (world.insideCave) {
@@ -516,6 +579,241 @@ function leaveCave() {
   recenterCamera();
   updateLocation();
   saveWorldState({ playerX: world.player.x, insideCave: false });
+}
+
+const fallbackTypingWords = [
+  { id: "throw", answer: "throw", definition: "To propel something through the air with a movement of the arm and hand. To toss or hurl.", definitionZh: "用手臂和手的动作把东西抛向空中；投掷。" },
+  { id: "upload", answer: "upload", definition: "To transfer a file from your device to a remote computer or server.", definitionZh: "把文件从自己的设备传到远程电脑或服务器。" },
+  { id: "debug", answer: "debug", definition: "To find and remove errors from a computer program.", definitionZh: "找出并修正电脑程序中的错误。" }
+];
+
+async function ensureTypingCaveWords() {
+  if (typingCaveState.words.length) return typingCaveState.words;
+  try {
+    const response = await fetch("/FYP/data/typing_cave_words.json", { cache: "no-store" });
+    if (!response.ok) throw new Error("Typing cave word data unavailable");
+    const data = await response.json();
+    typingCaveState.words = Array.isArray(data)
+      ? data.filter(item => item && item.id && item.answer && item.definition)
+      : [];
+  } catch (error) {
+    console.warn("Typing cave will use its built-in vocabulary fallback.", error);
+  }
+  if (!typingCaveState.words.length) typingCaveState.words = fallbackTypingWords;
+  return typingCaveState.words;
+}
+
+function chooseTypingWord() {
+  if (!typingCaveState.words.length) return null;
+  let available = typingCaveState.words.filter(word => !typingCaveState.seenIds.has(word.id));
+  if (!available.length) {
+    typingCaveState.seenIds.clear();
+    available = typingCaveState.words;
+  }
+  const word = available[Math.floor(Math.random() * available.length)];
+  typingCaveState.seenIds.add(word.id);
+  typingCaveState.currentWord = word;
+  return word;
+}
+
+function renderTypingQuestion() {
+  const word = typingCaveState.currentWord;
+  if (!typingUi.screen || !word) return;
+  const isChinese = getLanguage() === "zh";
+
+  typingUi.kicker.textContent = isChinese ? "回声之外 · 英语打字挑战" : "BEYOND THE ECHO · TYPING CHALLENGE";
+  typingUi.title.textContent = isChinese ? "字谜洞穴" : "Word Cavern";
+  typingUi.instructions.textContent = isChinese
+    ? "根据上方解释输入正确的英文单词。怪物会慢慢靠近！"
+    : "Type the English word that matches the definition. The monster is getting closer!";
+  typingUi.questionLabel.textContent = isChinese ? "输入符合以下解释的单词" : "TYPE THE WORD THAT MEANS";
+  typingUi.question.textContent = word.definition;
+  typingUi.translation.textContent = word.definitionZh || "";
+  typingUi.translation.classList.toggle("hidden", !isChinese || !word.definitionZh);
+  typingUi.hintLabel.textContent = isChinese ? "怪物靠近时会逐步揭示字母" : "Letters are revealed as the monster approaches";
+
+  const answer = String(word.answer).toUpperCase();
+  const revealCount = Math.min(answer.length, Math.max(1, typingCaveState.approachSteps + 1));
+  typingUi.hint.replaceChildren();
+  for (let index = 0; index < answer.length; index += 1) {
+    const slot = document.createElement("span");
+    slot.className = "typing-cave-letter" + (index < revealCount ? " revealed" : "");
+    slot.textContent = index < revealCount ? answer[index] : "·";
+    typingUi.hint.appendChild(slot);
+  }
+
+  typingUi.answerLabel.textContent = isChinese ? "输入英文答案" : "Type your answer";
+  typingUi.input.setAttribute("aria-label", typingUi.answerLabel.textContent);
+  typingUi.input.maxLength = Math.max(12, answer.length + 2);
+  typingUi.threatLabel.textContent = isChinese ? "怪物接近程度" : "MONSTER APPROACH";
+  typingUi.submit.textContent = isChinese ? "提交答案" : "SUBMIT";
+  typingUi.retry.textContent = isChinese ? "再试一次" : "TRY AGAIN";
+  typingUi.exit.textContent = isChinese ? "↩ 返回地图" : "↩ BACK TO MAP";
+  updateTypingCaveVisuals();
+}
+
+function updateTypingCaveVisuals() {
+  typingUi.monster.style.left = typingCaveState.monsterLeft + "%";
+  const threat = Math.max(0, Math.min(100, (88 - typingCaveState.monsterLeft) / 58 * 100));
+  typingUi.threatBar.style.width = threat + "%";
+}
+
+function setTypingMessage(text, kind = "") {
+  typingUi.message.textContent = text;
+  typingUi.message.classList.remove("success", "warning", "danger");
+  if (kind) typingUi.message.classList.add(kind);
+}
+
+async function openTypingCave() {
+  if (world.typingCaveOpen) return;
+  world.typingCaveOpen = true;
+  world.player.vx = 0;
+  keys.clear();
+  touch.left = false;
+  touch.right = false;
+
+  typingCaveState.monsterLeft = 88;
+  typingCaveState.approachSteps = 0;
+  typingCaveState.passiveTimer = 0;
+  typingCaveState.busy = false;
+  typingCaveState.gameOver = false;
+  typingCaveState.seenIds.clear();
+  typingCaveState.roundToken += 1;
+
+  typingUi.screen.classList.remove("hidden");
+  typingUi.input.value = "";
+  typingUi.input.disabled = true;
+  typingUi.submit.disabled = true;
+  typingUi.retry.classList.add("hidden");
+  setTypingMessage(getLanguage() === "zh" ? "正在准备单词挑战……" : "Preparing word challenge…");
+  updateTypingCaveVisuals();
+
+  await ensureTypingCaveWords();
+  if (!world.typingCaveOpen) return;
+  chooseTypingWord();
+  renderTypingQuestion();
+  typingUi.input.disabled = false;
+  typingUi.submit.disabled = false;
+  typingUi.input.focus();
+  setTypingMessage(getLanguage() === "zh"
+    ? "输入英文单词并按 Enter。答错会让怪物前进一步。"
+    : "Type the word and press Enter. A wrong answer moves the monster one step closer.");
+}
+
+function closeTypingCave() {
+  if (!world.typingCaveOpen) return;
+  world.typingCaveOpen = false;
+  typingCaveState.roundToken += 1;
+  keys.clear();
+  touch.left = false;
+  touch.right = false;
+  typingUi.screen.classList.add("hidden");
+  typingUi.input.disabled = false;
+  typingUi.input.value = "";
+  updateLocation();
+}
+
+function advanceTypingMonster(reason) {
+  if (!world.typingCaveOpen || typingCaveState.busy || typingCaveState.gameOver) return;
+  typingCaveState.approachSteps += 1;
+  typingCaveState.monsterLeft = Math.max(27, typingCaveState.monsterLeft - 7.5);
+  typingCaveState.passiveTimer = 0;
+  renderTypingQuestion();
+
+  const isChinese = getLanguage() === "zh";
+  if (typingCaveState.monsterLeft <= 32) {
+    typingCaveState.gameOver = true;
+    typingCaveState.busy = true;
+    typingUi.input.disabled = true;
+    typingUi.submit.disabled = true;
+    typingUi.retry.classList.remove("hidden");
+    setTypingMessage(
+      isChinese
+        ? "怪物追上你了！再试一次，趁它靠近前答对单词。"
+        : "The monster caught up! Try again and answer before it reaches you.",
+      "danger"
+    );
+    return;
+  }
+
+  setTypingMessage(
+    reason === "wrong"
+      ? (isChinese ? "答案不正确！怪物前进一步，并揭示了一个字母。" : "Not quite! The monster moves one step closer and reveals a letter.")
+      : (isChinese ? "怪物正在靠近……又揭示了一个字母！" : "The monster creeps closer… another letter is revealed!"),
+    reason === "wrong" ? "warning" : "danger"
+  );
+  typingUi.input.focus();
+}
+
+function submitTypingAnswer() {
+  if (!world.typingCaveOpen || typingCaveState.busy || typingCaveState.gameOver || !typingCaveState.currentWord) return;
+  const typed = typingUi.input.value.trim().toLowerCase().replace(/\s+/g, " ");
+  if (!typed) {
+    setTypingMessage(getLanguage() === "zh" ? "先输入一个英文答案。" : "Type an answer first.", "warning");
+    typingUi.input.focus();
+    return;
+  }
+
+  const correctAnswer = String(typingCaveState.currentWord.answer).trim().toLowerCase();
+  if (typed !== correctAnswer) {
+    typingUi.input.value = "";
+    advanceTypingMonster("wrong");
+    return;
+  }
+
+  typingCaveState.busy = true;
+  const token = ++typingCaveState.roundToken;
+  const word = typingCaveState.currentWord;
+  const isChinese = getLanguage() === "zh";
+  typingUi.input.disabled = true;
+  typingUi.submit.disabled = true;
+  setTypingMessage(isChinese ? "答对了！怪物被击退，你获得了经验和金币。" : "Correct! The monster is pushed back. You earned XP and coins.", "success");
+
+  world.xp += 10;
+  world.coins += 5;
+  world.power += 1;
+  syncHUD();
+  saveWorldState();
+  void saveServerProgress({
+    xpDelta: 10,
+    coinDelta: 5,
+    englishPowerDelta: 1,
+    englishSkillCode: "VOCABULARY",
+    sourceType: "QUESTION",
+    sourceId: null,
+    description: "Typing Cavern word: " + word.answer
+  });
+
+  window.setTimeout(() => {
+    if (!world.typingCaveOpen || token !== typingCaveState.roundToken) return;
+    typingCaveState.monsterLeft = 88;
+    typingCaveState.approachSteps = 0;
+    typingCaveState.passiveTimer = 0;
+    typingCaveState.busy = false;
+    typingUi.input.value = "";
+    typingUi.input.disabled = false;
+    typingUi.submit.disabled = false;
+    chooseTypingWord();
+    renderTypingQuestion();
+    setTypingMessage(isChinese ? "下一题！趁怪物靠近前输入正确单词。" : "Next word! Answer before the monster gets close.");
+    typingUi.input.focus();
+  }, 900);
+}
+
+function retryTypingCave() {
+  typingCaveState.monsterLeft = 88;
+  typingCaveState.approachSteps = 0;
+  typingCaveState.passiveTimer = 0;
+  typingCaveState.busy = false;
+  typingCaveState.gameOver = false;
+  typingCaveState.roundToken += 1;
+  typingUi.input.value = "";
+  typingUi.input.disabled = false;
+  typingUi.submit.disabled = false;
+  typingUi.retry.classList.add("hidden");
+  renderTypingQuestion();
+  setTypingMessage(getLanguage() === "zh" ? "再试一次！怪物会慢慢靠近。" : "Try again! The monster will slowly approach.");
+  typingUi.input.focus();
 }
 
 function renderDestinationSelection() {
@@ -625,6 +923,7 @@ function refreshWorldLanguage() {
     }
   }
   if (world.travelMenu) renderDestinationSelection();
+  if (world.typingCaveOpen) renderTypingQuestion();
 }
 
 onLanguageChange(refreshWorldLanguage);
@@ -697,6 +996,16 @@ function startBattle(enemy) {
 
 function update(dt) {
   world.time += dt;
+
+  if (world.typingCaveOpen) {
+    if (!typingCaveState.busy && !typingCaveState.gameOver) {
+      typingCaveState.passiveTimer += dt;
+      if (typingCaveState.passiveTimer >= 8) {
+        advanceTypingMonster("time");
+      }
+    }
+    return;
+  }
 
   if (!world.interacting && !world.travelMenu && !settingsIsOpen()) {
     const left = keys.has("arrowleft") || keys.has("a") || touch.left;
@@ -880,6 +1189,7 @@ function drawLandmarks() {
     if (l.type === "gate") drawGate(x, world.groundY);
     if (l.type === "sign") drawSign(x, world.groundY, l.text);
     if (l.type === "cave") drawCaveEntrance(x, world.groundY, Math.abs(l.x - world.player.x) < 125);
+    if (l.type === "typingCave") drawTypingCaveEntrance(x, world.groundY, Math.abs(l.x - world.player.x) < 135);
   }
 }
 
@@ -936,6 +1246,79 @@ function drawCaveEntrance(x, ground, nearby) {
     ctx.font = getLanguage() === "zh" ? "bold 11px sans-serif" : "bold 10px 'Courier New', monospace";
     ctx.fillText(t("cave.enterPrompt"), x, ground - 223);
   }
+  ctx.restore();
+}
+
+function drawTypingCaveEntrance(x, ground, nearby) {
+  ctx.save();
+
+  const glow = ctx.createRadialGradient(x, ground - 82, 3, x, ground - 82, 150);
+  glow.addColorStop(0, "rgba(155, 91, 226, .34)");
+  glow.addColorStop(.55, "rgba(92, 58, 150, .16)");
+  glow.addColorStop(1, "rgba(18, 16, 31, 0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(x - 155, ground - 232, 310, 245);
+
+  // Purple-gray stone arch to distinguish this cave from the blue Echo Cave.
+  ctx.fillStyle = "#282536";
+  ctx.beginPath();
+  ctx.moveTo(x - 101, ground);
+  ctx.lineTo(x - 94, ground - 98);
+  ctx.lineTo(x - 70, ground - 164);
+  ctx.lineTo(x - 22, ground - 196);
+  ctx.lineTo(x + 35, ground - 190);
+  ctx.lineTo(x + 82, ground - 149);
+  ctx.lineTo(x + 102, ground - 76);
+  ctx.lineTo(x + 102, ground);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = "#545064";
+  ctx.fillRect(x - 92, ground - 92, 22, 92);
+  ctx.fillRect(x + 70, ground - 92, 22, 92);
+  ctx.fillStyle = "#756b86";
+  ctx.fillRect(x - 85, ground - 91, 5, 83);
+  ctx.fillRect(x + 80, ground - 91, 5, 83);
+
+  ctx.beginPath();
+  ctx.moveTo(x - 62, ground);
+  ctx.lineTo(x - 60, ground - 91);
+  ctx.quadraticCurveTo(x - 56, ground - 145, x, ground - 151);
+  ctx.quadraticCurveTo(x + 55, ground - 145, x + 61, ground - 91);
+  ctx.lineTo(x + 62, ground);
+  ctx.closePath();
+  ctx.fillStyle = "#05060b";
+  ctx.fill();
+
+  // A few dim crystal pixels make this entrance feel like a separate challenge area.
+  ctx.fillStyle = "#bc9cff";
+  ctx.globalAlpha = .85;
+  ctx.fillRect(x - 38, ground - 117, 4, 10);
+  ctx.fillRect(x + 30, ground - 132, 4, 10);
+  ctx.fillRect(x + 7, ground - 94, 3, 7);
+  ctx.globalAlpha = 1;
+
+  ctx.fillStyle = "#171621";
+  ctx.fillRect(x - 91, ground - 6, 182, 10);
+  ctx.fillStyle = "#87729d";
+  ctx.fillRect(x - 79, ground - 4, 158, 3);
+
+  ctx.textAlign = "center";
+  ctx.font = getLanguage() === "zh" ? "bold 13px sans-serif" : "bold 12px 'Courier New', monospace";
+  ctx.fillStyle = "#eadcff";
+  ctx.fillText(getLanguage() === "zh" ? "打字洞穴" : "WORD CAVERN", x, ground - 211);
+
+  if (nearby) {
+    ctx.fillStyle = "rgba(10, 8, 17, .94)";
+    ctx.fillRect(x - 119, ground - 246, 238, 23);
+    ctx.strokeStyle = "#a88cd1";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x - 119, ground - 246, 238, 23);
+    ctx.fillStyle = "#f3eaff";
+    ctx.font = getLanguage() === "zh" ? "bold 11px sans-serif" : "bold 10px 'Courier New', monospace";
+    ctx.fillText(getLanguage() === "zh" ? "按 E / 互动开始打字挑战" : "PRESS E TO START TYPING CHALLENGE", x, ground - 231);
+  }
+
   ctx.restore();
 }
 
