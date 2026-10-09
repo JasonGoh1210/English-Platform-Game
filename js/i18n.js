@@ -279,7 +279,7 @@ export function getLanguage() {
   }
 }
 
-export function t(key, values = {})
+export function t(key, values = {}) {
   const language = getLanguage();
   let value = messages[language]?.[key] ?? messages.en[key] ?? key;
   for (const [name, replacement] of Object.entries(values)) {
