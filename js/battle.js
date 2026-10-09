@@ -701,10 +701,10 @@ async function init() {
   monsterArt.style.imageRendering = "pixelated";
   ui.enemyFigure.appendChild(monsterArt);
   if (ui.playerSprite) {
-    ui.playerSprite.src = "/FYP/images/player_walk_frames/png_frames/Player_Stand.png";
+    ui.playerSprite.src = "/FYP/images/player_walk_frames/png_frames/Player_Stand.png?v=20261010-characterfix2";
     ui.playerSprite.onerror = () => {
       ui.playerSprite.onerror = null;
-      ui.playerSprite.src = "/FYP/assets/player/dark-adventurer-exact.png";
+      ui.playerSprite.src = "/FYP/images/player_walk_frames/png_frames/player_walk_right_1.png?v=20261010-characterfix2";
     };
   }
 
