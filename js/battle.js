@@ -18,6 +18,11 @@ const enemies = {
     id: "guardian-01", name: "Grammar Guardian", nameZh: "语法守卫", type: "guardian", difficulty: "MEDIUM",
     questionTypes: ["TRUE_FALSE", "SENTENCE_BUILDER"],
     hp: 100, damage: 12, xp: 30, coins: 15, role: "ANCIENT GUARDIAN", roleKey: "battle.ancientGuardian"
+  },
+  "cave-wraith-01": {
+    id: "cave-wraith-01", name: "Cave Wraith", nameZh: "洞穴幽魂", type: "wraith", difficulty: "MEDIUM",
+    questionTypes: ["TRUE_FALSE", "SENTENCE_BUILDER"],
+    hp: 110, damage: 14, xp: 45, coins: 20, role: "CAVE SPIRIT", roleKey: "battle.caveSpirit"
   }
 };
 
@@ -686,7 +691,8 @@ async function init() {
   if (ui.enemyDifficulty) ui.enemyDifficulty.textContent = t("battle." + String(state.enemy.difficulty).toLowerCase());
   ui.enemyFigure.textContent =
     state.enemy.type === "slime" ? "🟢" :
-    state.enemy.type === "bat" ? "🦇" : "🛡️";
+    state.enemy.type === "bat" ? "🦇" :
+    state.enemy.type === "wraith" ? "👻" : "🛡️";
   if (ui.playerSprite) ui.playerSprite.src = "/FYP/assets/player/dark-adventurer-exact.png";
 
   bindBattleEvents();
