@@ -10,7 +10,9 @@
     "timeLimit": 5,
     "xp": 10,
     "coins": 5,
-    "englishPower": 1
+    "englishPower": 1,
+    "questionZh": "“Huge”的意思是“非常大”。",
+    "explanationZh": "Huge 的意思是非常大。"
   },
   {
     "id": "dw-v-002",
@@ -23,7 +25,9 @@
     "timeLimit": 5,
     "xp": 10,
     "coins": 5,
-    "englishPower": 1
+    "englishPower": 1,
+    "questionZh": "“Fast”的意思是“慢”。",
+    "explanationZh": "Fast（快）和 slow（慢）的意思相反。"
   },
   {
     "id": "dw-v-003",
@@ -36,7 +40,9 @@
     "timeLimit": 5,
     "xp": 10,
     "coins": 5,
-    "englishPower": 1
+    "englishPower": 1,
+    "questionZh": "“Assist”的意思是“帮助”。",
+    "explanationZh": "Assist 的意思是帮助。"
   },
   {
     "id": "dw-v-004",
@@ -49,7 +55,9 @@
     "timeLimit": 7,
     "xp": 15,
     "coins": 8,
-    "englishPower": 2
+    "englishPower": 2,
+    "questionZh": "“Accurate”的意思是“正确且没有错误”。",
+    "explanationZh": "Accurate 的意思是准确、正确。"
   },
   {
     "id": "dw-v-005",
@@ -62,7 +70,9 @@
     "timeLimit": 7,
     "xp": 15,
     "coins": 8,
-    "englishPower": 2
+    "englishPower": 2,
+    "questionZh": "“Brief”的意思是“非常长且详细”。",
+    "explanationZh": "Brief 的意思是简短的。"
   },
   {
     "id": "dw-v-006",
@@ -75,7 +85,9 @@
     "timeLimit": 10,
     "xp": 20,
     "coins": 10,
-    "englishPower": 3
+    "englishPower": 3,
+    "questionZh": "“Reliable”形容值得信任、运行可靠的事物。",
+    "explanationZh": "Reliable 的意思是可靠、值得信赖。"
   },
   {
     "id": "dw-v-007",
@@ -88,7 +100,9 @@
     "timeLimit": 10,
     "xp": 20,
     "coins": 10,
-    "englishPower": 3
+    "englishPower": 3,
+    "questionZh": "“Complex”可以形容由许多部分或想法组成的事物。",
+    "explanationZh": "Complex 的意思是复杂的。"
   },
   {
     "id": "dw-v-008",
@@ -101,7 +115,9 @@
     "timeLimit": 7,
     "xp": 15,
     "coins": 8,
-    "englishPower": 2
+    "englishPower": 2,
+    "questionZh": "数据库用于储存和整理数据。",
+    "explanationZh": "数据库可以储存和整理数据，方便日后检索和管理。"
   },
   {
     "id": "dw-v-009",
@@ -114,7 +130,9 @@
     "timeLimit": 10,
     "xp": 20,
     "coins": 10,
-    "englishPower": 3
+    "englishPower": 3,
+    "questionZh": "“He go to class every day”这句话的语法正确吗？",
+    "explanationZh": "正确的句子是“He goes to class every day.”（他每天去上课。）"
   },
   {
     "id": "dw-o-001",
@@ -122,13 +140,20 @@
     "skill": "vocabulary",
     "difficulty": "EASY",
     "question": "Which word does not belong?",
-    "words": ["Laptop", "Keyboard", "Mouse", "Banana"],
+    "words": [
+      "Laptop",
+      "Keyboard",
+      "Mouse",
+      "Banana"
+    ],
     "answer": "Banana",
     "prompt": "Three are computer-related words.",
     "timeLimit": 5,
     "xp": 10,
     "coins": 5,
-    "englishPower": 1
+    "englishPower": 1,
+    "questionZh": "哪一个单词不属于同一类？",
+    "promptZh": "其中三个单词与电脑有关。"
   },
   {
     "id": "dw-o-002",
@@ -136,13 +161,20 @@
     "skill": "vocabulary",
     "difficulty": "EASY",
     "question": "Which word does not belong?",
-    "words": ["Happy", "Joyful", "Cheerful", "Angry"],
+    "words": [
+      "Happy",
+      "Joyful",
+      "Cheerful",
+      "Angry"
+    ],
     "answer": "Angry",
     "prompt": "Three words have a positive meaning.",
     "timeLimit": 5,
     "xp": 10,
     "coins": 5,
-    "englishPower": 1
+    "englishPower": 1,
+    "questionZh": "哪一个单词不属于同一类？",
+    "promptZh": "其中三个单词都有正面、积极的意思。"
   },
   {
     "id": "dw-o-003",
@@ -150,13 +182,20 @@
     "skill": "vocabulary",
     "difficulty": "MEDIUM",
     "question": "Which word does not belong?",
-    "words": ["Debug", "Compile", "Deploy", "Delicious"],
+    "words": [
+      "Debug",
+      "Compile",
+      "Deploy",
+      "Delicious"
+    ],
     "answer": "Delicious",
     "prompt": "Three words are commonly used in software development.",
     "timeLimit": 7,
     "xp": 15,
     "coins": 8,
-    "englishPower": 2
+    "englishPower": 2,
+    "questionZh": "哪一个单词不属于同一类？",
+    "promptZh": "其中三个词常用于软件开发。"
   },
   {
     "id": "dw-o-004",
@@ -164,13 +203,20 @@
     "skill": "itEnglish",
     "difficulty": "MEDIUM",
     "question": "Which word does not belong?",
-    "words": ["Server", "Database", "Router", "Sandwich"],
+    "words": [
+      "Server",
+      "Database",
+      "Router",
+      "Sandwich"
+    ],
     "answer": "Sandwich",
     "prompt": "Three words are technology-related.",
     "timeLimit": 7,
     "xp": 15,
     "coins": 8,
-    "englishPower": 2
+    "englishPower": 2,
+    "questionZh": "哪一个单词不属于同一类？",
+    "promptZh": "其中三个词都与科技有关。"
   },
   {
     "id": "dw-o-005",
@@ -178,13 +224,20 @@
     "skill": "itEnglish",
     "difficulty": "HARD",
     "question": "Which word does not belong?",
-    "words": ["Latency", "Bandwidth", "Throughput", "Chocolate"],
+    "words": [
+      "Latency",
+      "Bandwidth",
+      "Throughput",
+      "Chocolate"
+    ],
     "answer": "Chocolate",
     "prompt": "Three words are used when discussing network performance.",
     "timeLimit": 10,
     "xp": 20,
     "coins": 10,
-    "englishPower": 3
+    "englishPower": 3,
+    "questionZh": "哪一个单词不属于同一类？",
+    "promptZh": "其中三个词用于描述网络性能。"
   },
   {
     "id": "dw-s-001",
@@ -192,13 +245,27 @@
     "skill": "sentenceConstruction",
     "difficulty": "EASY",
     "question": "Build the correct sentence.",
-    "words": ["I", "study", "IT", "every", "day"],
-    "answerOrder": ["I", "study", "IT", "every", "day"],
+    "words": [
+      "I",
+      "study",
+      "IT",
+      "every",
+      "day"
+    ],
+    "answerOrder": [
+      "I",
+      "study",
+      "IT",
+      "every",
+      "day"
+    ],
     "prompt": "Arrange all words into a natural sentence.",
     "timeLimit": 8,
     "xp": 10,
     "coins": 5,
-    "englishPower": 1
+    "englishPower": 1,
+    "questionZh": "把单词排列成正确的句子。",
+    "promptZh": "把所有单词排列成自然、通顺的句子。"
   },
   {
     "id": "dw-s-002",
@@ -206,13 +273,29 @@
     "skill": "grammar",
     "difficulty": "EASY",
     "question": "Build the correct sentence.",
-    "words": ["She", "is", "working", "on", "a", "project"],
-    "answerOrder": ["She", "is", "working", "on", "a", "project"],
+    "words": [
+      "She",
+      "is",
+      "working",
+      "on",
+      "a",
+      "project"
+    ],
+    "answerOrder": [
+      "She",
+      "is",
+      "working",
+      "on",
+      "a",
+      "project"
+    ],
     "prompt": "Use the present continuous form correctly.",
     "timeLimit": 8,
     "xp": 10,
     "coins": 5,
-    "englishPower": 1
+    "englishPower": 1,
+    "questionZh": "把单词排列成正确的句子。",
+    "promptZh": "请正确使用现在进行时。"
   },
   {
     "id": "dw-s-003",
@@ -220,13 +303,27 @@
     "skill": "grammar",
     "difficulty": "MEDIUM",
     "question": "Build the correct sentence.",
-    "words": ["We", "have", "completed", "the", "assignment"],
-    "answerOrder": ["We", "have", "completed", "the", "assignment"],
+    "words": [
+      "We",
+      "have",
+      "completed",
+      "the",
+      "assignment"
+    ],
+    "answerOrder": [
+      "We",
+      "have",
+      "completed",
+      "the",
+      "assignment"
+    ],
     "prompt": "Use the present perfect structure.",
     "timeLimit": 10,
     "xp": 15,
     "coins": 8,
-    "englishPower": 2
+    "englishPower": 2,
+    "questionZh": "把单词排列成正确的句子。",
+    "promptZh": "请使用现在完成时结构。"
   },
   {
     "id": "dw-s-004",
@@ -234,13 +331,29 @@
     "skill": "itEnglish",
     "difficulty": "MEDIUM",
     "question": "Build the correct sentence.",
-    "words": ["The", "server", "stores", "the", "user", "data"],
-    "answerOrder": ["The", "server", "stores", "the", "user", "data"],
+    "words": [
+      "The",
+      "server",
+      "stores",
+      "the",
+      "user",
+      "data"
+    ],
+    "answerOrder": [
+      "The",
+      "server",
+      "stores",
+      "the",
+      "user",
+      "data"
+    ],
     "prompt": "Build a clear IT sentence.",
     "timeLimit": 10,
     "xp": 15,
     "coins": 8,
-    "englishPower": 2
+    "englishPower": 2,
+    "questionZh": "把单词排列成正确的句子。",
+    "promptZh": "组成一句清楚的 IT 相关句子。"
   },
   {
     "id": "dw-s-005",
@@ -248,12 +361,30 @@
     "skill": "itEnglish",
     "difficulty": "HARD",
     "question": "Build the correct sentence.",
-    "words": ["The", "application", "needs", "a", "secure", "database", "connection"],
-    "answerOrder": ["The", "application", "needs", "a", "secure", "database", "connection"],
+    "words": [
+      "The",
+      "application",
+      "needs",
+      "a",
+      "secure",
+      "database",
+      "connection"
+    ],
+    "answerOrder": [
+      "The",
+      "application",
+      "needs",
+      "a",
+      "secure",
+      "database",
+      "connection"
+    ],
     "prompt": "Arrange the words into a professional IT sentence.",
     "timeLimit": 12,
     "xp": 20,
     "coins": 10,
-    "englishPower": 3
+    "englishPower": 3,
+    "questionZh": "把单词排列成正确的句子。",
+    "promptZh": "把单词排列成专业、通顺的 IT 句子。"
   }
 ]
