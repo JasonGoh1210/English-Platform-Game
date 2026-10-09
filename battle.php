@@ -9,7 +9,7 @@ session_start();
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#101b24">
   <title>English Power Quest · Battle</title>
-  <link rel="stylesheet" href="/FYP/css/style.css">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-characterfix2">
 </head>
 <body class="battle-page">
   <main class="battle-screen">
