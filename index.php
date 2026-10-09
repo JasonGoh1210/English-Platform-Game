@@ -10,7 +10,7 @@ session_start();
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-typingcave4">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-typingcave5">
 </head>
 <body>
   <div class="game-shell pixel-world-ui">
@@ -182,7 +182,13 @@ session_start();
           <div class="typing-cave-lose-icon" aria-hidden="true">☠</div>
           <p class="typing-cave-lose-kicker">TYPING CAVERN · FAILED</p>
           <h2 id="typingCaveLoseTitle">YOU LOSE</h2>
-          <p id="typingCaveLoseMessage">The monster caught you. Try again!</p>
+          <p id="typingCaveLoseMessage">The monster caught you. Review the word, then try again.</p>
+          <div class="typing-cave-lose-review" aria-live="polite">
+            <p class="typing-cave-review-attempt" id="typingCaveLoseAttempt">Your answer:</p>
+            <p class="typing-cave-review-correct" id="typingCaveLoseCorrect">Correct answer:</p>
+            <p class="typing-cave-review-explanation" id="typingCaveLoseExplanation">Spelling explanation:</p>
+            <p class="typing-cave-review-meaning" id="typingCaveLoseMeaning">Definition:</p>
+          </div>
           <div class="typing-cave-lose-actions">
             <button type="button" id="typingCaveLoseRetry">TRY AGAIN</button>
             <button type="button" id="typingCaveLoseExit">BACK TO MAP</button>
@@ -222,6 +228,6 @@ session_start();
     </div>
   </div>
 
-  <script type="module" src="/FYP/js/rpg.js?v=20261010-typingcave6"></script>
+  <script type="module" src="/FYP/js/rpg.js?v=20261010-typingcave7"></script>
 </body>
 </html>
