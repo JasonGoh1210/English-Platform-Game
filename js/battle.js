@@ -75,7 +75,8 @@ const state = {
   mode: "MENU",
   focusUsed: false,
   turnLocked: false,
-  resultType: null
+  resultType: null,
+  battleMessageTranslation: null
 };
 
 function getEnemy() {
@@ -139,6 +140,11 @@ function localEnemyName(enemy = state.enemy) {
   return getLanguage() === "zh" ? enemy.nameZh + "（" + enemy.name + "）" : enemy.name;
 }
 
+function setBattleMessage(key, values = {}) {
+  state.battleMessageTranslation = { key, values };
+  ui.battleMessage.textContent = t(key, values);
+}
+
 function localizeBattleStaticText() {
   if (!state.enemy) return;
   ui.enemyName.textContent = localEnemyName();
@@ -171,6 +177,12 @@ function localizeBattleStaticText() {
 
 onLanguageChange(() => {
   localizeBattleStaticText();
+  if (state.battleMessageTranslation) {
+    ui.battleMessage.textContent = t(
+      state.battleMessageTranslation.key,
+      state.battleMessageTranslation.values
+    );
+  }
   if (state.resultType) renderStoredResult();
 });
 
@@ -298,7 +310,7 @@ function startQuestion() {
 
   const q = state.currentQuestion;
   ui.questionType.textContent = formatType(q.type);
-  ui.questionDifficulty.textContent = q.difficulty;
+  ui.questionDifficulty.textContent = t("battle." + String(q.difficulty).toLowerCase());
   ui.questionText.textContent = q.question;
   ui.questionTranslation.textContent = q.questionZh || "";
   ui.questionTranslation.classList.toggle("hidden", getLanguage() !== "zh" || !q.questionZh);
@@ -338,9 +350,7 @@ function resolve(value, button, timedOut) {
   if (button) button.classList.add(correct ? "correct" : "wrong");
 
   if (!correct) {
-    ui.battleMessage.textContent = timedOut
-      ? t("battle.timeUp")
-      : t("battle.wrong");
+    setBattleMessage(timedOut ? "battle.timeUp" : "battle.wrong");
 
     window.setTimeout(enemyTurn, 700);
     return;
@@ -378,9 +388,7 @@ function resolve(value, button, timedOut) {
   playAttackAnimation();
   updateHp();
 
-  ui.battleMessage.textContent = usedFocus
-    ? t("battle.focusHit", { damage })
-    : t("battle.directHit", { damage });
+  setBattleMessage(usedFocus ? "battle.focusHit" : "battle.directHit", { damage });
 
   if (state.enemyHp <= 0) {
     window.setTimeout(finishVictory, 800);
@@ -397,7 +405,7 @@ function enemyTurn() {
   playEnemyAttackAnimation();
   state.playerHp = Math.max(0, state.playerHp - state.enemy.damage);
   updateHp();
-  ui.battleMessage.textContent = t("battle.enemyAttack", {
+  setBattleMessage("battle.enemyAttack", {
     enemy: localEnemyName(),
     damage: state.enemy.damage
   });
@@ -419,12 +427,12 @@ function useSkill() {
   if (state.completed || state.locked) return;
 
   if (state.focusUsed) {
-    ui.battleMessage.textContent = t("battle.focusAlready");
+    setBattleMessage("battle.focusAlready");
     return;
   }
 
   state.focusUsed = true;
-  ui.battleMessage.textContent = t("battle.focusActive");
+  setBattleMessage("battle.focusActive");
 
   // If SKILL is selected before the first FIGHT, start the continuous
   // question flow. During combat, leave the current question/timer alone.
@@ -441,12 +449,12 @@ function useItem() {
   const currentCoins = Number(save.coins || 0);
 
   if (state.playerHp >= state.playerMaxHp) {
-    ui.battleMessage.textContent = t("battle.hpFull");
+    setBattleMessage("battle.hpFull");
     return;
   }
 
   if (currentCoins < 5) {
-    ui.battleMessage.textContent = t("battle.notEnoughCoins");
+    setBattleMessage("battle.notEnoughCoins");
     return;
   }
 
@@ -463,7 +471,7 @@ function useItem() {
   });
 
   updateHp();
-  ui.battleMessage.textContent = t("battle.healed");
+  setBattleMessage("battle.healed");
 
   // Do not force another command selection. If the player used the item
   // from the initial menu, continue straight into the question flow.
@@ -613,7 +621,7 @@ function bindBattleEvents() {
     event.preventDefault();
     if (state.completed) return;
     showQuestionPanel();
-    ui.battleMessage.textContent = t("battle.menuFight");
+    setBattleMessage("battle.menuFight");
     startQuestion();
   });
 
@@ -663,7 +671,7 @@ function bindBattleEvents() {
 
 async function init() {
   document.body.classList.add("battle-js-ready");
-  ui.battleMessage.textContent = t("battle.loading");
+  setBattleMessage("battle.loading");
   state.enemy = getEnemy();
   state.enemyHp = state.enemy.hp;
   state.focusUsed = false;
@@ -684,10 +692,10 @@ async function init() {
     const response = await fetch("/FYP/data/questions.json", { cache: "no-store" });
     if (!response.ok) throw new Error("Question data unavailable");
     state.questions = await response.json();
-    ui.battleMessage.textContent = t("battle.enemyAppeared", { enemy: localEnemyName() });
+    setBattleMessage("battle.enemyAppeared", { enemy: localEnemyName() });
     showBattleMenu();
   } catch (error) {
-    ui.battleMessage.textContent = t("battle.battleError", { error: error.message });
+    setBattleMessage("battle.battleError", { error: error.message });
     console.error("English Power Quest battle error:", error);
   }
 }
@@ -695,14 +703,14 @@ async function init() {
 window.addEventListener("unhandledrejection", (event) => {
   if (ui.battleMessage) {
     const reason = event.reason instanceof Error ? event.reason.message : String(event.reason);
-    ui.battleMessage.textContent = t("battle.genericError", { error: reason });
+    setBattleMessage("battle.genericError", { error: reason });
   }
   console.error("English Power Quest unhandled rejection:", event.reason);
 });
 
 window.addEventListener("error", (event) => {
   if (ui.battleMessage && event.error) {
-    ui.battleMessage.textContent = t("battle.genericError", { error: event.error.message || "Unknown error" });
+    setBattleMessage("battle.genericError", { error: event.error.message || "Unknown error" });
   }
 });
 
