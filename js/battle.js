@@ -1,21 +1,23 @@
+import { t, getLanguage, onLanguageChange } from "./i18n.js";
+
 const BATTLE_KEY = "englishPowerQuest.battle";
 const WORLD_SAVE_KEY = "englishPowerQuest.world.v2";
 
 const enemies = {
   "slime-01": {
-    id: "slime-01", name: "Word Slime", type: "slime", difficulty: "EASY",
+    id: "slime-01", name: "Word Slime", nameZh: "单词史莱姆", type: "slime", difficulty: "EASY",
     questionTypes: ["TRUE_FALSE", "ODD_WORD_OUT"],
-    hp: 60, damage: 10, xp: 20, coins: 10, role: "WORD CREATURE"
+    hp: 60, damage: 10, xp: 20, coins: 10, role: "WORD CREATURE", roleKey: "battle.wordCreature"
   },
   "bat-01": {
-    id: "bat-01", name: "Confusion Bat", type: "bat", difficulty: "EASY",
+    id: "bat-01", name: "Confusion Bat", nameZh: "迷惑蝙蝠", type: "bat", difficulty: "EASY",
     questionTypes: ["TRUE_FALSE", "ODD_WORD_OUT"],
-    hp: 70, damage: 10, xp: 25, coins: 12, role: "FOREST ENEMY"
+    hp: 70, damage: 10, xp: 25, coins: 12, role: "FOREST ENEMY", roleKey: "battle.forestEnemy"
   },
   "guardian-01": {
-    id: "guardian-01", name: "Grammar Guardian", type: "guardian", difficulty: "MEDIUM",
+    id: "guardian-01", name: "Grammar Guardian", nameZh: "语法守卫", type: "guardian", difficulty: "MEDIUM",
     questionTypes: ["TRUE_FALSE", "SENTENCE_BUILDER"],
-    hp: 100, damage: 12, xp: 30, coins: 15, role: "ANCIENT GUARDIAN"
+    hp: 100, damage: 12, xp: 30, coins: 15, role: "ANCIENT GUARDIAN", roleKey: "battle.ancientGuardian"
   }
 };
 
@@ -43,6 +45,7 @@ const ui = {
   questionDifficulty: document.getElementById("questionDifficulty"),
   timerText: document.getElementById("timerText"),
   questionText: document.getElementById("questionText"),
+  questionTranslation: document.getElementById("questionTranslation"),
   questionPrompt: document.getElementById("questionPrompt"),
   answerArea: document.getElementById("answerArea"),
   activeSkillButton: document.getElementById("activeSkillButton"),
@@ -71,7 +74,8 @@ const state = {
   completed: false,
   mode: "MENU",
   focusUsed: false,
-  turnLocked: false
+  turnLocked: false,
+  resultType: null
 };
 
 function getEnemy() {
@@ -124,11 +128,51 @@ function questionSkillCode(question) {
 }
 
 function formatType(type) {
-  return type === "TRUE_FALSE" ? "TRUE / FALSE"
-    : type === "ODD_WORD_OUT" ? "ODD WORD OUT"
-    : type === "SENTENCE_BUILDER" ? "SENTENCE BUILDER"
-    : type;
+  if (type === "TRUE_FALSE") return t("battle.trueFalse");
+  if (type === "ODD_WORD_OUT") return t("battle.oddOneOut");
+  if (type === "SENTENCE_BUILDER") return t("battle.sentenceBuilder");
+  return type;
 }
+
+function localEnemyName(enemy = state.enemy) {
+  if (!enemy) return "";
+  return getLanguage() === "zh" ? enemy.nameZh + "（" + enemy.name + "）" : enemy.name;
+}
+
+function localizeBattleStaticText() {
+  if (!state.enemy) return;
+  ui.enemyName.textContent = localEnemyName();
+  ui.enemyLabel.textContent = localEnemyName().toUpperCase();
+  ui.enemyRole.textContent = t(state.enemy.roleKey);
+  if (ui.enemyDifficulty) ui.enemyDifficulty.textContent = t("battle." + String(state.enemy.difficulty).toLowerCase());
+
+  if (state.currentQuestion) {
+    ui.questionType.textContent = formatType(state.currentQuestion.type);
+    ui.questionDifficulty.textContent = t("battle." + String(state.currentQuestion.difficulty || state.enemy.difficulty).toLowerCase());
+    const translatedQuestion = state.currentQuestion.questionZh || "";
+    ui.questionTranslation.textContent = translatedQuestion;
+    ui.questionTranslation.classList.toggle("hidden", getLanguage() !== "zh" || !translatedQuestion);
+    ui.questionPrompt.textContent = getLanguage() === "zh"
+      ? (state.currentQuestion.promptZh || (state.currentQuestion.type === "TRUE_FALSE" ? t("battle.answerPrompt") : state.currentQuestion.prompt || ""))
+      : (state.currentQuestion.prompt || t("battle.answerPrompt"));
+
+    ui.answerArea.querySelectorAll("[data-answer-value]").forEach(button => {
+      if (state.currentQuestion.type !== "TRUE_FALSE") return;
+      button.textContent = getLanguage() === "zh"
+        ? (button.dataset.answerValue === "true" ? t("battle.true") : t("battle.false"))
+        : (button.dataset.answerValue === "true" ? "TRUE" : "FALSE");
+    });
+  }
+  if (state.mode === "MENU") {
+    ui.commandPrompt.textContent = t("battle.whatDo");
+    ui.menuSubtext.textContent = t("battle.chooseAction");
+  }
+}
+
+onLanguageChange(() => {
+  localizeBattleStaticText();
+  if (state.resultType) renderStoredResult();
+});
 
 function normalizeSentence(words) {
   return (Array.isArray(words) ? words : [])
@@ -146,7 +190,7 @@ function isCorrect(question, value) {
   return false;
 }
 
-function showMenu(prompt = "What will you do?", subtext = "Choose an action.") {
+function showMenu(prompt = t("battle.whatDo"), subtext = t("battle.chooseAction")) {
   state.mode = "MENU";
   state.locked = false;
   window.clearInterval(state.timerId);
@@ -221,7 +265,7 @@ function renderChoices(question) {
     const submit = document.createElement("button");
     submit.className = "battle-submit";
     submit.type = "button";
-    submit.textContent = "BUILD & ATTACK";
+    submit.textContent = t("battle.buildAttack");
     submit.addEventListener("click", () => resolve(state.selectedWords.slice(), submit, false));
 
     ui.answerArea.append(selected, bank, submit);
@@ -229,7 +273,10 @@ function renderChoices(question) {
   }
 
   const choices = question.type === "TRUE_FALSE"
-    ? [{ label: "TRUE", value: true }, { label: "FALSE", value: false }]
+    ? [
+        { label: getLanguage() === "zh" ? t("battle.true") : "TRUE", value: true },
+        { label: getLanguage() === "zh" ? t("battle.false") : "FALSE", value: false }
+      ]
     : (question.words || []).map(word => ({ label: word, value: word }));
 
   choices.forEach(choice => {
@@ -237,6 +284,7 @@ function renderChoices(question) {
     button.className = "battle-answer-button";
     button.type = "button";
     button.textContent = choice.label;
+    button.dataset.answerValue = String(choice.value);
     button.addEventListener("click", () => resolve(choice.value, button, false));
     ui.answerArea.appendChild(button);
   });
@@ -252,7 +300,11 @@ function startQuestion() {
   ui.questionType.textContent = formatType(q.type);
   ui.questionDifficulty.textContent = q.difficulty;
   ui.questionText.textContent = q.question;
-  ui.questionPrompt.textContent = q.prompt || "Answer correctly to attack.";
+  ui.questionTranslation.textContent = q.questionZh || "";
+  ui.questionTranslation.classList.toggle("hidden", getLanguage() !== "zh" || !q.questionZh);
+  ui.questionPrompt.textContent = getLanguage() === "zh"
+    ? (q.promptZh || (q.type === "TRUE_FALSE" ? t("battle.answerPrompt") : q.prompt || ""))
+    : (q.prompt || t("battle.answerPrompt"));
   renderChoices(q);
 
   let remaining = Number(q.timeLimit || 5);
@@ -287,8 +339,8 @@ function resolve(value, button, timedOut) {
 
   if (!correct) {
     ui.battleMessage.textContent = timedOut
-      ? "Time's up! The enemy attacks."
-      : "Wrong answer! The enemy attacks.";
+      ? t("battle.timeUp")
+      : t("battle.wrong");
 
     window.setTimeout(enemyTurn, 700);
     return;
@@ -327,8 +379,8 @@ function resolve(value, button, timedOut) {
   updateHp();
 
   ui.battleMessage.textContent = usedFocus
-    ? "Knowledge Focus! Direct hit for " + damage + " damage."
-    : "Direct hit! English Power deals " + damage + " damage.";
+    ? t("battle.focusHit", { damage })
+    : t("battle.directHit", { damage });
 
   if (state.enemyHp <= 0) {
     window.setTimeout(finishVictory, 800);
@@ -345,7 +397,10 @@ function enemyTurn() {
   playEnemyAttackAnimation();
   state.playerHp = Math.max(0, state.playerHp - state.enemy.damage);
   updateHp();
-  ui.battleMessage.textContent = state.enemy.name + " attacks for " + state.enemy.damage + " damage.";
+  ui.battleMessage.textContent = t("battle.enemyAttack", {
+    enemy: localEnemyName(),
+    damage: state.enemy.damage
+  });
 
   if (state.playerHp <= 0) {
     window.setTimeout(finishDefeat, 800);
@@ -357,19 +412,19 @@ function enemyTurn() {
 }
 
 function showBattleMenu() {
-  showMenu("What will you do?", "Choose your next action.");
+  showMenu(t("battle.whatDo"), t("battle.chooseAction"));
 }
 
 function useSkill() {
   if (state.completed || state.locked) return;
 
   if (state.focusUsed) {
-    ui.battleMessage.textContent = "Knowledge Focus is already active for your next correct answer.";
+    ui.battleMessage.textContent = t("battle.focusAlready");
     return;
   }
 
   state.focusUsed = true;
-  ui.battleMessage.textContent = "Knowledge Focus activated! Your next correct answer deals +50% damage.";
+  ui.battleMessage.textContent = t("battle.focusActive");
 
   // If SKILL is selected before the first FIGHT, start the continuous
   // question flow. During combat, leave the current question/timer alone.
@@ -386,12 +441,12 @@ function useItem() {
   const currentCoins = Number(save.coins || 0);
 
   if (state.playerHp >= state.playerMaxHp) {
-    ui.battleMessage.textContent = "ITEM unavailable — your HP is already full.";
+    ui.battleMessage.textContent = t("battle.hpFull");
     return;
   }
 
   if (currentCoins < 5) {
-    ui.battleMessage.textContent = "Not enough Coins for a Healing Herb (cost: 5).";
+    ui.battleMessage.textContent = t("battle.notEnoughCoins");
     return;
   }
 
@@ -408,7 +463,7 @@ function useItem() {
   });
 
   updateHp();
-  ui.battleMessage.textContent = "Healing Herb restored up to 20 HP for 5 Coins.";
+  ui.battleMessage.textContent = t("battle.healed");
 
   // Do not force another command selection. If the player used the item
   // from the initial menu, continue straight into the question flow.
@@ -459,13 +514,14 @@ function updateHp() {
 }
 
 function showResult(victory, title, text, rewards) {
-  ui.resultKicker.textContent = victory ? "VICTORY" : "DEFEAT";
+  state.resultType = victory ? "VICTORY" : "DEFEAT";
+  ui.resultKicker.textContent = victory ? t("battle.victory") : t("battle.defeat");
   ui.resultTitle.textContent = title;
   ui.resultText.textContent = text;
   ui.resultRewards.innerHTML = rewards.map(([label, value]) =>
     "<div><span>" + label + "</span><b>" + value + "</b></div>"
   ).join("");
-  ui.resultButton.textContent = victory ? "Return to Map" : "Retry Battle";
+  ui.resultButton.textContent = victory ? t("battle.returnMap") : t("battle.retry");
   ui.battleResult.classList.remove("hidden");
   ui.resultButton.onclick = () => {
     if (victory) {
@@ -476,6 +532,25 @@ function showResult(victory, title, text, rewards) {
       window.location.reload();
     }
   };
+}
+
+function renderStoredResult() {
+  if (!state.resultType) return;
+  if (state.resultType === "VICTORY") {
+    showResult(
+      true,
+      t("battle.victoryTitle", { enemy: localEnemyName() }),
+      t("battle.victoryText"),
+      [[t("battle.rewardXp"), "+" + state.enemy.xp], [t("battle.rewardCoins"), "+" + state.enemy.coins]]
+    );
+  } else {
+    showResult(
+      false,
+      t("battle.tryAgain"),
+      t("battle.defeatText"),
+      [[t("battle.rewardStatus"), t("battle.rewardRetry")], [t("battle.rewardPower"), String(getSave().power || 0)], [t("battle.rewardHp"), "0"]]
+    );
+  }
 }
 
 function finishVictory() {
@@ -510,9 +585,9 @@ function finishVictory() {
 
   showResult(
     true,
-    state.enemy.name + " defeated!",
-    "The road is safe again. Your knowledge made you stronger.",
-    [["XP", "+" + state.enemy.xp], ["Coins", "+" + state.enemy.coins]]
+    t("battle.victoryTitle", { enemy: localEnemyName() }),
+    t("battle.victoryText"),
+    [[t("battle.rewardXp"), "+" + state.enemy.xp], [t("battle.rewardCoins"), "+" + state.enemy.coins]]
   );
 }
 
@@ -523,9 +598,9 @@ function finishDefeat() {
 
   showResult(
     false,
-    "Try Again",
-    "Your journey is not over. Your learning progress is safe.",
-    [["STATUS", "RETRY"], ["POWER", String(getSave().power || 0)], ["HP", "0"]]
+    t("battle.tryAgain"),
+    t("battle.defeatText"),
+    [[t("battle.rewardStatus"), t("battle.rewardRetry")], [t("battle.rewardPower"), String(getSave().power || 0)], [t("battle.rewardHp"), "0"]]
   );
 }
 
@@ -538,7 +613,7 @@ function bindBattleEvents() {
     event.preventDefault();
     if (state.completed) return;
     showQuestionPanel();
-    ui.battleMessage.textContent = "FIGHT selected! Keep answering to defeat the enemy.";
+    ui.battleMessage.textContent = t("battle.menuFight");
     startQuestion();
   });
 
@@ -588,15 +663,15 @@ function bindBattleEvents() {
 
 async function init() {
   document.body.classList.add("battle-js-ready");
-  ui.battleMessage.textContent = "Loading battle...";
+  ui.battleMessage.textContent = t("battle.loading");
   state.enemy = getEnemy();
   state.enemyHp = state.enemy.hp;
   state.focusUsed = false;
 
-  ui.enemyName.textContent = state.enemy.name;
-  ui.enemyLabel.textContent = state.enemy.name.toUpperCase();
-  ui.enemyRole.textContent = state.enemy.role;
-  if (ui.enemyDifficulty) ui.enemyDifficulty.textContent = state.enemy.difficulty;
+  ui.enemyName.textContent = localEnemyName();
+  ui.enemyLabel.textContent = localEnemyName().toUpperCase();
+  ui.enemyRole.textContent = t(state.enemy.roleKey);
+  if (ui.enemyDifficulty) ui.enemyDifficulty.textContent = t("battle." + String(state.enemy.difficulty).toLowerCase());
   ui.enemyFigure.textContent =
     state.enemy.type === "slime" ? "🟢" :
     state.enemy.type === "bat" ? "🦇" : "🛡️";
@@ -609,10 +684,10 @@ async function init() {
     const response = await fetch("/FYP/data/questions.json", { cache: "no-store" });
     if (!response.ok) throw new Error("Question data unavailable");
     state.questions = await response.json();
-    ui.battleMessage.textContent = "A wild " + state.enemy.name + " appeared!";
+    ui.battleMessage.textContent = t("battle.enemyAppeared", { enemy: localEnemyName() });
     showBattleMenu();
   } catch (error) {
-    ui.battleMessage.textContent = "Battle setup error: " + error.message;
+    ui.battleMessage.textContent = t("battle.battleError", { error: error.message });
     console.error("English Power Quest battle error:", error);
   }
 }
@@ -620,14 +695,14 @@ async function init() {
 window.addEventListener("unhandledrejection", (event) => {
   if (ui.battleMessage) {
     const reason = event.reason instanceof Error ? event.reason.message : String(event.reason);
-    ui.battleMessage.textContent = "Battle error: " + reason;
+    ui.battleMessage.textContent = t("battle.genericError", { error: reason });
   }
   console.error("English Power Quest unhandled rejection:", event.reason);
 });
 
 window.addEventListener("error", (event) => {
   if (ui.battleMessage && event.error) {
-    ui.battleMessage.textContent = "Battle error: " + (event.error.message || "Unknown error");
+    ui.battleMessage.textContent = t("battle.genericError", { error: event.error.message || "Unknown error" });
   }
 });
 
