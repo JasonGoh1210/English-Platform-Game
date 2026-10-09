@@ -30,6 +30,7 @@ const typingUi = {
   title: document.getElementById("typingCaveTitle"),
   instructions: document.getElementById("typingCaveInstructions"),
   questionLabel: document.getElementById("typingCaveQuestionLabel"),
+  stageLabel: document.getElementById("typingCaveStageLabel"),
   question: document.getElementById("typingCaveQuestion"),
   translation: document.getElementById("typingCaveTranslation"),
   hintLabel: document.getElementById("typingCaveHintLabel"),
@@ -48,14 +49,25 @@ const typingUi = {
   loseTitle: document.getElementById("typingCaveLoseTitle"),
   loseMessage: document.getElementById("typingCaveLoseMessage"),
   loseRetry: document.getElementById("typingCaveLoseRetry"),
-  loseExit: document.getElementById("typingCaveLoseExit")
+  loseExit: document.getElementById("typingCaveLoseExit"),
+  winOverlay: document.getElementById("typingCaveWinOverlay"),
+  winTitle: document.getElementById("typingCaveWinTitle"),
+  winMessage: document.getElementById("typingCaveWinMessage"),
+  winReplay: document.getElementById("typingCaveWinReplay"),
+  winExit: document.getElementById("typingCaveWinExit")
 };
+
+const TYPING_CAVE_TOTAL_LEVELS = 3;
+const TYPING_CAVE_START_POSITION = 84;
+const TYPING_CAVE_RIGHT_LIMIT = 94;
+const TYPING_CAVE_STEP = 7.5;
 
 const typingCaveState = {
   words: [],
   currentWord: null,
   seenIds: new Set(),
-  monsterLeft: 88,
+  completedLevels: 0,
+  monsterLeft: TYPING_CAVE_START_POSITION,
   approachSteps: 0,
   passiveTimer: 0,
   busy: false,
@@ -408,6 +420,8 @@ typingUi.exit.addEventListener("click", closeTypingCave);
 typingUi.retry.addEventListener("click", retryTypingCave);
 typingUi.loseRetry.addEventListener("click", retryTypingCave);
 typingUi.loseExit.addEventListener("click", closeTypingCave);
+typingUi.winReplay.addEventListener("click", retryTypingCave);
+typingUi.winExit.addEventListener("click", closeTypingCave);
 typingUi.form.addEventListener("submit", (event) => {
   event.preventDefault();
   submitTypingAnswer();
@@ -631,6 +645,9 @@ function renderTypingQuestion() {
 
   typingUi.kicker.textContent = isChinese ? "回声之外 · 英语打字挑战" : "BEYOND THE ECHO · TYPING CHALLENGE";
   typingUi.title.textContent = isChinese ? "字谜洞穴" : "Word Cavern";
+  typingUi.stageLabel.textContent = isChinese
+    ? `第 ${Math.min(typingCaveState.completedLevels + 1, TYPING_CAVE_TOTAL_LEVELS)} / ${TYPING_CAVE_TOTAL_LEVELS} 关`
+    : `LEVEL ${Math.min(typingCaveState.completedLevels + 1, TYPING_CAVE_TOTAL_LEVELS)} / ${TYPING_CAVE_TOTAL_LEVELS}`;
   typingUi.instructions.textContent = isChinese
     ? "根据上方解释输入正确的英文单词。怪物会慢慢靠近！"
     : "Type the English word that matches the definition. The monster is getting closer!";
@@ -663,7 +680,7 @@ function renderTypingQuestion() {
 
 function updateTypingCaveVisuals() {
   typingUi.monster.style.left = typingCaveState.monsterLeft + "%";
-  const threat = Math.max(0, Math.min(100, (88 - typingCaveState.monsterLeft) / 58 * 100));
+  const threat = Math.max(0, Math.min(100, (TYPING_CAVE_START_POSITION - typingCaveState.monsterLeft) / (TYPING_CAVE_START_POSITION - 32) * 100));
   typingUi.threatBar.style.width = threat + "%";
 }
 
@@ -681,7 +698,8 @@ async function openTypingCave() {
   touch.left = false;
   touch.right = false;
 
-  typingCaveState.monsterLeft = 88;
+  typingCaveState.completedLevels = 0;
+  typingCaveState.monsterLeft = TYPING_CAVE_START_POSITION;
   typingCaveState.approachSteps = 0;
   typingCaveState.passiveTimer = 0;
   typingCaveState.busy = false;
@@ -696,6 +714,7 @@ async function openTypingCave() {
   typingUi.submit.disabled = true;
   typingUi.retry.classList.add("hidden");
   typingUi.loseOverlay.classList.add("hidden");
+  typingUi.winOverlay.classList.add("hidden");
   setTypingMessage(getLanguage() === "zh" ? "正在准备单词挑战……" : "Preparing word challenge…");
   updateTypingCaveVisuals();
 
@@ -727,7 +746,7 @@ function closeTypingCave() {
 function advanceTypingMonster(reason) {
   if (!world.typingCaveOpen || typingCaveState.busy || typingCaveState.gameOver) return;
   typingCaveState.approachSteps += 1;
-  typingCaveState.monsterLeft = Math.max(27, typingCaveState.monsterLeft - 7.5);
+  typingCaveState.monsterLeft = Math.max(27, typingCaveState.monsterLeft - TYPING_CAVE_STEP);
   typingCaveState.passiveTimer = 0;
   renderTypingQuestion();
 
@@ -845,9 +864,23 @@ function submitTypingAnswer() {
   const token = ++typingCaveState.roundToken;
   const word = typingCaveState.currentWord;
   const isChinese = getLanguage() === "zh";
+  typingCaveState.completedLevels += 1;
+  typingCaveState.monsterLeft = Math.min(
+    TYPING_CAVE_RIGHT_LIMIT,
+    typingCaveState.monsterLeft + TYPING_CAVE_STEP
+  );
+  typingCaveState.approachSteps = Math.max(0, typingCaveState.approachSteps - 1);
+  typingCaveState.passiveTimer = 0;
+  renderTypingQuestion();
+
   typingUi.input.disabled = true;
   typingUi.submit.disabled = true;
-  setTypingMessage(isChinese ? "答对了！怪物被击退，你获得了经验和金币。" : "Correct! The monster is pushed back. You earned XP and coins.", "success");
+  setTypingMessage(
+    isChinese
+      ? `答对了！怪物后退一步！第 ${typingCaveState.completedLevels} / ${TYPING_CAVE_TOTAL_LEVELS} 关完成。`
+      : `Correct! The monster steps back! Level ${typingCaveState.completedLevels} / ${TYPING_CAVE_TOTAL_LEVELS} complete.`,
+    "success"
+  );
 
   world.xp += 10;
   world.coins += 5;
@@ -866,29 +899,48 @@ function submitTypingAnswer() {
 
   window.setTimeout(() => {
     if (!world.typingCaveOpen || token !== typingCaveState.roundToken) return;
-    typingCaveState.monsterLeft = 88;
-    typingCaveState.approachSteps = 0;
     typingCaveState.passiveTimer = 0;
-    typingCaveState.busy = false;
     clearTypingSpellingFeedback();
     typingUi.input.value = "";
+
+    if (typingCaveState.completedLevels >= TYPING_CAVE_TOTAL_LEVELS) {
+      typingCaveState.gameOver = true;
+      typingCaveState.busy = true;
+      typingUi.winTitle.textContent = isChinese ? "挑战成功！" : "CAVE CLEARED!";
+      typingUi.winMessage.textContent = isChinese
+        ? "三关全部完成！你成功把怪物击退，获得了全部奖励。"
+        : "You completed all three levels and pushed the monster away. All rewards have been earned!";
+      typingUi.winReplay.textContent = isChinese ? "再玩一次" : "PLAY AGAIN";
+      typingUi.winExit.textContent = isChinese ? "返回地图" : "BACK TO MAP";
+      typingUi.winOverlay.classList.remove("hidden");
+      typingUi.winReplay.focus();
+      return;
+    }
+
+    typingCaveState.busy = false;
     typingUi.input.disabled = false;
     typingUi.submit.disabled = false;
     chooseTypingWord();
     renderTypingQuestion();
-    setTypingMessage(isChinese ? "下一题！趁怪物靠近前输入正确单词。" : "Next word! Answer before the monster gets close.");
+    setTypingMessage(
+      isChinese
+        ? `下一关！还剩 ${TYPING_CAVE_TOTAL_LEVELS - typingCaveState.completedLevels} 关，继续把怪物击退！`
+        : `Next level! ${TYPING_CAVE_TOTAL_LEVELS - typingCaveState.completedLevels} level(s) remaining. Keep pushing the monster back!`
+    );
     typingUi.input.focus();
   }, 900);
 }
 
 function retryTypingCave() {
-  typingCaveState.monsterLeft = 88;
+  typingCaveState.completedLevels = 0;
+  typingCaveState.monsterLeft = TYPING_CAVE_START_POSITION;
   typingCaveState.approachSteps = 0;
   typingCaveState.passiveTimer = 0;
   typingCaveState.busy = false;
   typingCaveState.gameOver = false;
   typingCaveState.roundToken += 1;
   typingUi.loseOverlay.classList.add("hidden");
+  typingUi.winOverlay.classList.add("hidden");
   clearTypingSpellingFeedback();
   typingUi.input.value = "";
   typingUi.input.disabled = false;
