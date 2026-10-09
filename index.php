@@ -144,6 +144,6 @@ session_start();
     </div>
   </div>
 
-  <script type="module" src="/FYP/js/rpg.js?v=20261009-walk2"></script>
+  <script type="module" src="/FYP/js/rpg.js?v=20261009-walk3"></script>
 </body>
 </html>
