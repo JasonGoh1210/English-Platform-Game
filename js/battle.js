@@ -11,21 +11,31 @@ const ESCAPE_KEY = `englishPowerQuest.escape.v1.player.${AUTH_PLAYER_ID}`;
 const enemies = {
   "slime-01": {
     id: "slime-01", name: "Word Slime", nameZh: "单词史莱姆", type: "slime", difficulty: "EASY",
+    spritePath: "/FYP/assets/enemies/monster/Shrim.png?v=20261010-enemyart1",
     questionTypes: ["TRUE_FALSE", "ODD_WORD_OUT"],
     hp: 60, damage: 10, xp: 20, coins: 10, role: "WORD CREATURE", roleKey: "battle.wordCreature"
   },
   "bat-01": {
     id: "bat-01", name: "Confusion Bat", nameZh: "迷惑蝙蝠", type: "bat", difficulty: "EASY",
+    spritePath: "/FYP/assets/enemies/monster/Monster.png?v=20261010-enemyart1",
     questionTypes: ["TRUE_FALSE", "ODD_WORD_OUT"],
     hp: 70, damage: 10, xp: 25, coins: 12, role: "FOREST ENEMY", roleKey: "battle.forestEnemy"
   },
+  "road-guardian-01": {
+    id: "road-guardian-01", name: "Road Guardian", nameZh: "道路守卫", type: "guardian", difficulty: "MEDIUM",
+    spritePath: "/FYP/assets/enemies/monster/Monster.png?v=20261010-enemyart1",
+    questionTypes: ["TRUE_FALSE", "SENTENCE_BUILDER"],
+    hp: 85, damage: 11, xp: 28, coins: 14, role: "ROAD GUARDIAN", roleKey: "battle.ancientGuardian"
+  },
   "guardian-01": {
     id: "guardian-01", name: "Grammar Guardian", nameZh: "语法守卫", type: "guardian", difficulty: "MEDIUM",
+    spritePath: "/FYP/assets/enemies/monster/Monster.png?v=20261010-enemyart1",
     questionTypes: ["TRUE_FALSE", "SENTENCE_BUILDER"],
     hp: 100, damage: 12, xp: 30, coins: 15, role: "ANCIENT GUARDIAN", roleKey: "battle.ancientGuardian"
   },
   "cave-wraith-01": {
     id: "cave-wraith-01", name: "Cave Wraith", nameZh: "洞穴幽魂", type: "wraith", difficulty: "MEDIUM",
+    spritePath: "/FYP/assets/enemies/monster/Monster.png?v=20261010-enemyart1",
     questionTypes: ["TRUE_FALSE", "SENTENCE_BUILDER"],
     hp: 110, damage: 14, xp: 45, coins: 20, role: "CAVE SPIRIT", roleKey: "battle.caveSpirit"
   }
@@ -694,16 +704,21 @@ async function init() {
   ui.enemyLabel.textContent = localEnemyName().toUpperCase();
   ui.enemyRole.textContent = t(state.enemy.roleKey);
   if (ui.enemyDifficulty) ui.enemyDifficulty.textContent = t("battle." + String(state.enemy.difficulty).toLowerCase());
-  // Use the supplied image assets for the battle scene.
+  // Use art matched to the actual enemy. Slime encounters must not show
+  // the winged purple monster; other enemies use the available fantasy sprite.
   ui.enemyFigure.textContent = "";
   const monsterArt = document.createElement("img");
-  monsterArt.src = "/FYP/assets/enemies/monster/Monster.png?v=20261010-assetpaths1";
   monsterArt.alt = state.enemy.name;
   monsterArt.draggable = false;
   monsterArt.style.width = "100%";
   monsterArt.style.height = "100%";
   monsterArt.style.objectFit = "contain";
   monsterArt.style.imageRendering = "pixelated";
+  monsterArt.onerror = () => {
+    monsterArt.onerror = null;
+    ui.enemyFigure.textContent = state.enemy.type === "slime" ? "🟢" : (state.enemy.type === "bat" ? "🦇" : "👾");
+  };
+  monsterArt.src = state.enemy.spritePath || "/FYP/assets/enemies/monster/Monster.png?v=20261010-enemyart1";
   ui.enemyFigure.appendChild(monsterArt);
   if (ui.playerSprite) {
     // Register the fallback before assigning src, so even an immediate load
