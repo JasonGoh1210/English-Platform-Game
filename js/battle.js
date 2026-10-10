@@ -692,7 +692,7 @@ async function init() {
   // Use the supplied image assets for the battle scene.
   ui.enemyFigure.textContent = "";
   const monsterArt = document.createElement("img");
-  monsterArt.src = "/FYP/assets/enemies/monster/Monster.png";
+  monsterArt.src = "/FYP/assets/enemies/monster/Monster.png?v=20261010-assetpaths1";
   monsterArt.alt = state.enemy.name;
   monsterArt.draggable = false;
   monsterArt.style.width = "100%";
