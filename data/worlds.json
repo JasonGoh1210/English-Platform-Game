@@ -1,26 +1,34 @@
 [
   {
-    "id": "Dreamwood",
-    "name": "Dreamwood",
-    "description": "A magical forest of words and discovery.",
+    "id": "maple",
+    "name": "Maple Town",
+    "description": "A peaceful village with cottages, the village elder and the first word quest.",
     "order": 1,
     "requiredLevel": 1,
     "status": "UNLOCKED"
   },
   {
-    "id": "Skyreach",
-    "name": "Skyreach",
-    "description": "A floating world focused on grammar and sentence building.",
+    "id": "forest",
+    "name": "Whispering Forest",
+    "description": "A standalone enchanted woodland with a ranger hut, lantern bridge, fireflies and a merchant.",
     "order": 2,
-    "requiredLevel": 3,
-    "status": "LOCKED"
+    "requiredLevel": 1,
+    "status": "UNLOCKED"
   },
   {
-    "id": "Cyberia",
-    "name": "Cyberia",
-    "description": "A technology realm focused on IT English.",
+    "id": "camp",
+    "name": "Old Camp Road",
+    "description": "A separate sunset wilderness with a campfire, pine trail, lookout and camp guide.",
     "order": 3,
-    "requiredLevel": 5,
-    "status": "LOCKED"
+    "requiredLevel": 1,
+    "status": "UNLOCKED"
+  },
+  {
+    "id": "ruins",
+    "name": "Ancient Ruins",
+    "description": "A separate ancient map with a stone gate, system keeper, Cave of Echoes and Typing Cavern.",
+    "order": 4,
+    "requiredLevel": 1,
+    "status": "UNLOCKED"
   }
 ]
