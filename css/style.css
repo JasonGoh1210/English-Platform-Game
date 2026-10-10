@@ -4224,3 +4224,49 @@ button { font: inherit; }
     transition: none !important;
   }
 }
+
+
+/* Account identity controls for authenticated game pages. */
+.game-logout-form {
+  position: fixed;
+  z-index: 25;
+  top: 14px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(42vw, 360px);
+  padding: 6px 7px 6px 12px;
+  border: 1px solid rgba(217, 197, 244, .28);
+  border-radius: 999px;
+  color: #eee7f8;
+  background: rgba(13, 20, 31, .85);
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  backdrop-filter: blur(10px);
+}
+.game-account-name {
+  overflow: hidden;
+  color: #e2d4f8;
+  font-size: .72rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.game-logout-button {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border: 1px solid rgba(211, 172, 231, .35);
+  border-radius: 999px;
+  color: #f8eefe;
+  background: rgba(94, 56, 107, .44);
+  font: inherit;
+  font-size: .68rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.game-logout-button:hover { background: rgba(125, 72, 143, .62); }
+@media (max-width: 760px) {
+  .game-logout-form { top: 8px; right: 8px; gap: 4px; max-width: 52vw; padding: 4px 5px 4px 8px; }
+  .game-account-name { max-width: 16vw; font-size: .62rem; }
+  .game-logout-button { padding: 5px 7px; font-size: .6rem; }
+}
