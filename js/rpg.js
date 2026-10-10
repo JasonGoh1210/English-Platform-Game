@@ -1,4 +1,4 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261010-storyarc1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261010-storyarc2";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
