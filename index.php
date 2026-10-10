@@ -81,7 +81,7 @@ $epqCsrfToken = (string)$_SESSION['csrf_token'];
         <div class="storyboard-portrait-wrap" id="storyboardPortraitWrap">
           <div class="storyboard-portrait-aura" aria-hidden="true"></div>
           <img id="storyIntroPortraitImage" alt="Story character portrait">
-          <div class="storyboard-portrait-caption" id="storyboardSpeaker">ALEX LIN</div>
+          <div class="storyboard-portrait-caption" id="storyboardSpeaker"><?= epq_h($epqDisplayName) ?></div>
         </div>
 
         <div class="story-intro-content">
@@ -306,7 +306,7 @@ $epqCsrfToken = (string)$_SESSION['csrf_token'];
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261010-authstory1").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261010-charname1").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");
