@@ -141,6 +141,6 @@ $epqStorageId = $epqIsGuest ? 'guest' : (string)$epqPlayerId;
       'isGuest' => $epqIsGuest
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   </script>
-  <script type="module" src="/FYP/js/battle.js?v=20261010-guestmode1"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261010-monsterart2"></script>
 </body>
 </html>
