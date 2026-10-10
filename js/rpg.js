@@ -1444,14 +1444,17 @@ function getWorldSceneForX() {
 function drawWorldBackdrop(w, h, scene) {
   const backgroundImage = worldBackgrounds[scene];
   if (backgroundImage && backgroundImage.complete && backgroundImage.naturalWidth > 0) {
-    // Crop off the very bottom of the illustration so the image's path/terrain
-    // aligns with the gameplay platform drawn at world.groundY.
-    const sourceHeights = { maple: 565, forest: 565, camp: 560, ruins: 560 };
-    ctx.drawImage(
-      backgroundImage,
-      0, 0, backgroundImage.naturalWidth, Math.min(sourceHeights[scene] || 560, backgroundImage.naturalHeight),
-      -world.cameraX, 0, world.width, world.groundY + 6
-    );
+    // Keep the illustration's aspect ratio: it fills the viewport with only a
+    // small parallax shift. Align its painted path with the gameplay ground.
+    const floorRatios = { maple: 0.76, forest: 0.78, camp: 0.76, ruins: 0.70 };
+    const maxCamera = Math.max(0, world.width - w);
+    const parallaxTravel = Math.max(0, maxCamera * 0.16);
+    const progress = maxCamera > 0 ? clamp(world.cameraX / maxCamera, 0, 1) : 0;
+    const drawWidth = w + parallaxTravel;
+    const drawHeight = drawWidth * backgroundImage.naturalHeight / backgroundImage.naturalWidth;
+    const drawX = -progress * parallaxTravel;
+    const drawY = world.groundY - drawHeight * (floorRatios[scene] || 0.75);
+    ctx.drawImage(backgroundImage, drawX, drawY, drawWidth, drawHeight);
     return;
   }
 
