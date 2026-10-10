@@ -10,7 +10,7 @@ session_start();
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-typingcave5">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-storyarc1">
 </head>
 <body>
   <div class="game-shell pixel-world-ui">
@@ -54,6 +54,26 @@ session_start();
     </div>
 
     <div class="location-pill pixel-location" id="locationText">MAPLE TOWN</div>
+
+    <section class="story-intro-overlay hidden" id="storyIntroOverlay" role="dialog" aria-modal="true" aria-labelledby="storyIntroTitle" aria-describedby="storyIntroBody">
+      <div class="story-intro-stars" aria-hidden="true"></div>
+      <div class="story-intro-content">
+        <div class="story-intro-brand">ENGLISH POWER QUEST</div>
+        <p class="story-intro-kicker" id="storyIntroKicker">ENGLISH POWER QUEST · PROLOGUE</p>
+        <div class="story-intro-meta">
+          <span id="storyIntroCounter">PROLOGUE · 1 / 3</span>
+          <span> ALEX LIN · AETHERIA </span>
+        </div>
+        <h1 id="storyIntroTitle">The Student at the Bottom</h1>
+        <p id="storyIntroBody"></p>
+        <div class="story-intro-progress-track"><div id="storyIntroProgress"></div></div>
+        <div class="story-intro-actions">
+          <button type="button" class="story-intro-skip" id="storyIntroSkip">SKIP PROLOGUE</button>
+          <button type="button" class="story-intro-next" id="storyIntroNext">CONTINUE <span aria-hidden="true">→</span></button>
+        </div>
+        <p class="story-intro-hint">ENTER · CONTINUE &nbsp; / &nbsp; ESC · SKIP</p>
+      </div>
+    </section>
 
     <div class="dialogue hidden" id="dialogue">
       <div class="dialogue-portrait">🧓</div>
@@ -228,6 +248,6 @@ session_start();
     </div>
   </div>
 
-  <script type="module" src="/FYP/js/rpg.js?v=20261010-imgworld3"></script>
+  <script type="module" src="/FYP/js/rpg.js?v=20261010-storyarc1"></script>
 </body>
 </html>
