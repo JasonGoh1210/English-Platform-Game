@@ -131,6 +131,7 @@ function saveWorldState(overrides = {}) {
   };
   world.realmPositions = realmPositions;
   localStorage.setItem(WORLD_SAVE_KEY, JSON.stringify({
+    storyVersion: 1,
     currentRealmId: world.currentRealmId, realmPositions, playerX,
     portalX: destination.portalX, insideCave, caveReturnX: world.caveReturnX,
     questStep: world.questStep, coins: world.coins, xp: world.xp, power: world.power, level: world.level,
@@ -186,13 +187,32 @@ function loadWorldState() {
       const position = hasLocalPosition ? Number(savedPosition.playerX) : migratedX;
       world.player.x = clamp(position, 70, world.width - 90);
     }
-    world.questStep = Number(saved.questStep) || 0;
+    const needsStoryMigration = Number(saved.storyVersion) < 1;
+    world.questStep = needsStoryMigration ? 0 : (Number(saved.questStep) || 0);
     world.coins = Number(saved.coins) || 0;
     world.xp = Number(saved.xp) || 0;
     world.power = Number(saved.power) || 0;
     world.level = Number(saved.level) || 1;
+
+    if (needsStoryMigration) {
+      // The previous quest steps were only a short prototype, not the new
+      // four-world narrative. Keep earned stats but restart the main story at home.
+      const home = destinations.find(item => item.id === "maple") || destinations[0];
+      world.currentRealmId = home.id;
+      world.width = home.width;
+      world.portalX = home.portalX;
+      world.player.x = home.spawnX;
+      world.insideCave = false;
+      world.caveReturnX = 0;
+      world.realmPositions = {
+        ...storedPositions,
+        [home.id]: { playerX: home.spawnX, insideCave: false, caveReturnX: 0 }
+      };
+    }
+
     const defeated = new Set(Array.isArray(saved.defeatedEnemyIds) ? saved.defeatedEnemyIds : []);
     enemies.forEach(enemy => { enemy.defeated = defeated.has(enemy.id); });
+    if (needsStoryMigration) saveWorldState();
   } catch (error) {
     console.warn("Unable to restore map progress.", error);
   }
