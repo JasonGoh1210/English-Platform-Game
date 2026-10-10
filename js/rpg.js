@@ -122,7 +122,10 @@ function loadWorldState() {
 
     if (!knownRealm) {
       const oldPortalX = Number(saved.portalX);
-      if (Number.isFinite(oldPortalX) && Math.abs(migratedX - oldPortalX) < 180) {
+      // Only the pre-realm version used a single portal at x≈5500. In the
+      // immediately previous build each destination had its own global x, so
+      // classify those saves by the player's old map section first.
+      if (Number.isFinite(oldPortalX) && oldPortalX >= 5000 && migratedX >= 4800 && Math.abs(migratedX - oldPortalX) < 180) {
         realmId = "maple"; migratedX = 440;
       } else if (saved.insideCave || migratedX >= 3400) {
         realmId = "ruins"; migratedX = migratedX >= 3400 ? migratedX - 3400 : 900;
