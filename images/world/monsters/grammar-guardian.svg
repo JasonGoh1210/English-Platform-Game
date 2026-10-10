@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
   <defs>
     <linearGradient id="armor" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d4c7a0"/><stop offset=".45" stop-color="#8c9ba0"/><stop offset="1" stop-color="#45566a"/></linearGradient>
     <linearGradient id="teal" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#b8fff2"/><stop offset=".5" stop-color="#55d9dd"/><stop offset="1" stop-color="#276e9b"/></linearGradient>
