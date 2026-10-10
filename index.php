@@ -276,6 +276,35 @@ session_start();
     </div>
   </div>
 
-  <script type="module" src="/FYP/js/rpg.js?v=20261010-blackfix2"></script>
+  <script>
+    (() => {
+      const canvas = document.getElementById("gameCanvas");
+      const fallbackBackground = "/FYP/images/world/maple-town.webp?v=20261010-blackfix3";
+      if (canvas) {
+        canvas.style.backgroundColor = "#14212a";
+        canvas.style.backgroundImage = 'url("' + fallbackBackground + '")';
+        canvas.style.backgroundPosition = "center bottom";
+        canvas.style.backgroundRepeat = "no-repeat";
+        canvas.style.backgroundSize = "cover";
+      }
+
+      import("/FYP/js/rpg.js?v=20261010-blackfix3").catch((error) => {
+        console.error("[English Power Quest] Game script failed to initialize:", error);
+        const notice = document.createElement("div");
+        notice.setAttribute("role", "alert");
+        notice.style.cssText = "position:fixed;z-index:99999;left:50%;top:50%;transform:translate(-50%,-50%);width:min(760px,calc(100vw - 32px));padding:22px 24px;border:2px solid #d6b56f;border-radius:12px;background:#101923;color:#fff;font:16px/1.55 system-ui,sans-serif;box-shadow:0 20px 70px rgba(0,0,0,.55);white-space:pre-wrap;";
+        const title = document.createElement("strong");
+        title.textContent = "English Power Quest 启动失败";
+        title.style.cssText = "display:block;margin-bottom:10px;color:#ffd991;font-size:20px;";
+        const detail = document.createElement("div");
+        detail.textContent = (error && error.message) ? error.message : String(error);
+        const help = document.createElement("p");
+        help.textContent = "请把这段错误文字截图发给 ChatGPT；目前先显示背景，修复后地图角色和互动会恢复。";
+        help.style.cssText = "margin:12px 0 0;color:#c7d3df;font-size:14px;";
+        notice.append(title, detail, help);
+        document.querySelector(".game-shell")?.appendChild(notice);
+      });
+    })();
+  </script>
 </body>
 </html>
