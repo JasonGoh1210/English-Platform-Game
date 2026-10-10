@@ -25,7 +25,7 @@ try {
     $powerSource = in_array($requestedSource, $allowedPower, true) ? $requestedSource : 'QUESTION';
 
     $db = epq_db();
-    $playerId = epq_demo_player_id($db);
+    $playerId = epq_current_player_id($db);
     $db->begin_transaction();
 
     $lock = $db->prepare(
