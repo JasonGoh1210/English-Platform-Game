@@ -88,6 +88,25 @@ const world = {
   currentDialogueNpcId: null, currentDialogueIndex: 0, insideCave: false, typingCaveOpen: false, battle: null
 };
 
+const worldBackgrounds = {
+  maple: new Image(),
+  forest: new Image(),
+  camp: new Image(),
+  ruins: new Image()
+};
+const worldBackgroundPaths = {
+  maple: "/FYP/images/maple-town.webp?v=20261010-bgart1",
+  forest: "/FYP/images/whispering-forest.webp?v=20261010-bgart1",
+  camp: "/FYP/images/old-camp-road.webp?v=20261010-bgart1",
+  ruins: "/FYP/images/ancient-ruins.webp?v=20261010-bgart1"
+};
+Object.entries(worldBackgrounds).forEach(([realmId, image]) => {
+  image.decoding = "async";
+  image.onload = () => console.info("[English Power Quest] World background ready:", realmId);
+  image.onerror = () => console.warn("[English Power Quest] World background missing; using procedural fallback:", realmId);
+  image.src = worldBackgroundPaths[realmId];
+});
+
 const WORLD_SAVE_KEY = "englishPowerQuest.world.v2";
 const BATTLE_KEY = "englishPowerQuest.battle";
 const ESCAPE_KEY = "englishPowerQuest.escape.v1";
@@ -430,15 +449,15 @@ const landmarks = [
   { realmId: "ruins", x: 630, type: "tower" },
   { realmId: "ruins", x: 930, type: "ruins" },
   { realmId: "ruins", x: 1250, type: "gate" },
-  { realmId: "ruins", x: 1510, type: "cave" },
-  { realmId: "ruins", x: 1825, type: "typingCave" }
+  { realmId: "ruins", x: 1680, type: "cave" },
+  { realmId: "ruins", x: 1940, type: "typingCave" }
 ];
 
 const destinations = [
   { id: "maple", name: "Maple Town", nameKey: "destination.maple.name", category: "SAFE HAVEN", categoryKey: "destination.safe", description: "A peaceful village where your adventure and first words begin.", descriptionKey: "destination.maple.description", scene: "maple", width: 1800, spawnX: 440, portalX: 220 },
   { id: "forest", name: "Whispering Forest", nameKey: "destination.forest.name", category: "VOCABULARY TRAIL", categoryKey: "destination.vocab", description: "A standalone enchanted forest with lantern paths and hidden words.", descriptionKey: "destination.forest.description", scene: "forest", width: 2100, spawnX: 440, portalX: 220 },
   { id: "camp", name: "Old Camp Road", nameKey: "destination.camp.name", category: "SURVIVAL ROUTE", categoryKey: "destination.survival", description: "A separate sunset wilderness with a campfire, pine trees and a guide.", descriptionKey: "destination.camp.description", scene: "camp", width: 1950, spawnX: 440, portalX: 220 },
-  { id: "ruins", name: "Ancient Ruins", nameKey: "destination.ruins.name", category: "ANCIENT CHALLENGE", categoryKey: "destination.challenge", description: "A separate ancient realm with stone towers, a sealed gate and two caves.", descriptionKey: "destination.ruins.description", scene: "ruins", width: 2200, spawnX: 440, portalX: 220 }
+  { id: "ruins", name: "Ancient Ruins", nameKey: "destination.ruins.name", category: "ANCIENT CHALLENGE", categoryKey: "destination.challenge", description: "A separate ancient realm with stone towers, a sealed gate and two caves.", descriptionKey: "destination.ruins.description", scene: "ruins", width: 2200, spawnX: 440, portalX: 1510 }
 ];
 
 const enemies = [
@@ -1423,6 +1442,22 @@ function getWorldSceneForX() {
 }
 
 function drawWorldBackdrop(w, h, scene) {
+  const backgroundImage = worldBackgrounds[scene];
+  if (backgroundImage && backgroundImage.complete && backgroundImage.naturalWidth > 0) {
+    // Keep the illustration's aspect ratio: it fills the viewport with only a
+    // small parallax shift. Align its painted path with the gameplay ground.
+    const floorRatios = { maple: 0.76, forest: 0.78, camp: 0.76, ruins: 0.70 };
+    const maxCamera = Math.max(0, world.width - w);
+    const parallaxTravel = Math.max(0, maxCamera * 0.16);
+    const progress = maxCamera > 0 ? clamp(world.cameraX / maxCamera, 0, 1) : 0;
+    const drawWidth = w + parallaxTravel;
+    const drawHeight = drawWidth * backgroundImage.naturalHeight / backgroundImage.naturalWidth;
+    const drawX = -progress * parallaxTravel;
+    const drawY = world.groundY - drawHeight * (floorRatios[scene] || 0.75);
+    ctx.drawImage(backgroundImage, drawX, drawY, drawWidth, drawHeight);
+    return;
+  }
+
   const palette = {
     maple: { top: "#397ca1", middle: "#83c2cb", bottom: "#e6d9a7", far: "#7d9c79", hill: "#416c4b", trees1: "#244d3b", trees2: "#183c31", light: "#fff0bd" },
     forest: { top: "#183342", middle: "#37656b", bottom: "#b1b58a", far: "#526b68", hill: "#34564a", trees1: "#1c433a", trees2: "#10372f", light: "#9ee7ba" },
@@ -1593,6 +1628,15 @@ function drawLandmarks() {
     if (l.realmId !== world.currentRealmId) continue;
     const x = worldToScreen(l.x);
     if (x < -220 || x > window.innerWidth + 220) continue;
+    const hasPaintedBackground = Boolean(
+      worldBackgrounds[world.currentRealmId]?.complete &&
+      worldBackgrounds[world.currentRealmId]?.naturalWidth > 0
+    );
+    if (hasPaintedBackground && ["house", "bridge", "camp", "tower", "ruins", "gate"].includes(l.type)) {
+      // Those structures are painted into the selected full-world background.
+      // Keep their interaction logic/data, but do not draw duplicate foreground copies.
+      continue;
+    }
     if (l.type === "house") drawHouse(x, world.groundY, l.variant);
     if (l.type === "bridge") drawBridge(x, world.groundY);
     if (l.type === "camp") drawCamp(x, world.groundY);
