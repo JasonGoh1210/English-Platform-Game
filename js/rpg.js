@@ -320,6 +320,22 @@ loadImageFromCandidates(
   }
 );
 
+const mapEnemyArtPaths = {
+  "bat-01": "/FYP/images/world/monsters/confusion-bat.svg?v=20261010-monsterart1",
+  "road-guardian-01": "/FYP/images/world/monsters/road-guardian.svg?v=20261010-monsterart1",
+  "guardian-01": "/FYP/images/world/monsters/grammar-guardian.svg?v=20261010-monsterart1",
+  "cave-wraith-01": "/FYP/images/world/monsters/cave-wraith.svg?v=20261010-monsterart1"
+};
+const mapEnemyArtById = {};
+for (const [enemyId, imagePath] of Object.entries(mapEnemyArtPaths)) {
+  const image = new Image();
+  image.decoding = "async";
+  image.onload = () => console.info("[English Power Quest] Loaded unique enemy art:", enemyId);
+  image.onerror = () => console.warn("[English Power Quest] Could not load unique enemy art:", enemyId, imagePath);
+  image.src = imagePath;
+  mapEnemyArtById[enemyId] = image;
+}
+
 const playerWalkFrames = {
   right: Array.from({ length: 6 }, () => new Image()),
   left: Array.from({ length: 6 }, () => new Image())
@@ -3360,15 +3376,25 @@ function drawEnemies() {
     if (Boolean(enemy.caveOnly) !== world.insideCave) continue;
     const x = worldToScreen(enemy.x);
     if (x < -100 || x > window.innerWidth + 100) continue;
-    const activeSprite = enemy.caveOnly
-      ? (monsterSpriteReady ? monsterSprite : null)
-      : (shrimSpriteReady ? shrimSprite : (monsterSpriteReady ? monsterSprite : null));
+    const dedicatedSprite = mapEnemyArtById[enemy.id];
+    const dedicatedReady = Boolean(dedicatedSprite && dedicatedSprite.complete && dedicatedSprite.naturalWidth > 0);
+    // Use a distinct image for every non-slime creature; never reuse the Slime art
+    // as a silent fallback for the Bat or Guardians.
+    const activeSprite = dedicatedReady
+      ? dedicatedSprite
+      : enemy.type === "slime"
+        ? (shrimSpriteReady ? shrimSprite : null)
+        : (enemy.caveOnly && monsterSpriteReady ? monsterSprite : null);
 
     if (activeSprite) {
-      // Fit the image within a consistent box without stretching it.
-      // Outdoor encounters use SHrim; the cave Wraith keeps the original sprite.
-      const maxWidth = enemy.caveOnly ? 156 : 178;
-      const maxHeight = enemy.caveOnly ? 220 : 164;
+      const dimensionsByEnemy = {
+        "slime-01": [104, 96],
+        "bat-01": [145, 132],
+        "road-guardian-01": [164, 172],
+        "guardian-01": [168, 176],
+        "cave-wraith-01": [154, 174]
+      };
+      const [maxWidth, maxHeight] = dimensionsByEnemy[enemy.id] || [154, 158];
       const naturalWidth = activeSprite.naturalWidth || maxWidth;
       const naturalHeight = activeSprite.naturalHeight || maxHeight;
       const scale = Math.min(maxWidth / naturalWidth, maxHeight / naturalHeight);
