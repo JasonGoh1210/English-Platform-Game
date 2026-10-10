@@ -10,7 +10,7 @@ session_start();
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-mangastory1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-mangastory2">
 </head>
 <body>
   <div class="game-shell pixel-world-ui">
@@ -276,6 +276,6 @@ session_start();
     </div>
   </div>
 
-  <script type="module" src="/FYP/js/rpg.js?v=20261010-mangastory1"></script>
+  <script type="module" src="/FYP/js/rpg.js?v=20261010-mangastory2"></script>
 </body>
 </html>
