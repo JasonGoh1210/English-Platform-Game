@@ -4,7 +4,7 @@ require_once __DIR__ . '/bootstrap.php';
 
 try {
     $db = epq_db();
-    $playerId = epq_demo_player_id($db);
+    $playerId = epq_current_player_id($db);
 
     $stmt = $db->prepare(
         "SELECT p.player_id, p.display_name, p.level_no, p.xp_total, p.coins_total,
