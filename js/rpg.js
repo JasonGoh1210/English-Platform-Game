@@ -441,7 +441,9 @@ const npcs = [
 
 const landmarks = [
   { x: 380, type: "sign", text: "MAPLE TOWN →" },
-  { x: 980, type: "house" },
+  { x: 760, type: "house", variant: "cottage" },
+  { x: 980, type: "house", variant: "elder" },
+  { x: 1215, type: "house", variant: "shop" },
   { x: 1450, type: "bridge" },
   { x: 2050, type: "camp" },
   { x: 2780, type: "tower" },
@@ -1533,7 +1535,7 @@ function drawLandmarks() {
   for (const l of landmarks) {
     const x = worldToScreen(l.x);
     if (x < -220 || x > window.innerWidth + 220) continue;
-    if (l.type === "house") drawHouse(x, world.groundY);
+    if (l.type === "house") drawHouse(x, world.groundY, l.variant);
     if (l.type === "bridge") drawBridge(x, world.groundY);
     if (l.type === "camp") drawCamp(x, world.groundY);
     if (l.type === "tower") drawTower(x, world.groundY);
@@ -1949,104 +1951,843 @@ function drawPortal() {
   ctx.restore();
 }
 
-function drawHouse(x, ground) {
-  ctx.fillStyle = "#a76b4f";
-  ctx.fillRect(x - 80, ground - 105, 160, 105);
-  ctx.fillStyle = "#70443d";
+function drawHouse(x, ground, variant = "cottage") {
+  const palettes = {
+    cottage: { wall: "#b77a56", wallLight: "#d79b6c", roof: "#643e4b", roofLight: "#925563", trim: "#e0bd83", door: "#49313a" },
+    elder: { wall: "#9e7450", wallLight: "#c69a69", roof: "#43564a", roofLight: "#71836a", trim: "#e1c992", door: "#3d3530" },
+    shop: { wall: "#c18a53", wallLight: "#e0b777", roof: "#51436a", roofLight: "#8170a0", trim: "#f0d69b", door: "#4a3440" }
+  };
+  const p = palettes[variant] || palettes.cottage;
+  ctx.save();
+
+  // Ground shadow and stone step.
+  ctx.fillStyle = "rgba(8, 13, 13, .28)";
   ctx.beginPath();
-  ctx.moveTo(x - 105, ground - 105);
-  ctx.lineTo(x, ground - 180);
-  ctx.lineTo(x + 105, ground - 105);
-  ctx.closePath();
+  ctx.ellipse(x + 2, ground + 4, 112, 14, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = "#4d3329";
-  ctx.fillRect(x - 18, ground - 55, 36, 55);
-  ctx.fillStyle = "#d9c889";
-  ctx.fillRect(x - 62, ground - 76, 34, 30);
-  ctx.fillRect(x + 28, ground - 76, 34, 30);
+  ctx.fillStyle = "#6d7060";
+  ctx.fillRect(x - 93, ground - 8, 186, 10);
+  ctx.fillStyle = "#a8a58b";
+  ctx.fillRect(x - 87, ground - 8, 42, 3);
+  ctx.fillRect(x + 35, ground - 8, 47, 3);
+
+  // Chimney and roof silhouette.
+  ctx.fillStyle = "#493640";
+  ctx.fillRect(x + 46, ground - 180, 24, 55);
+  ctx.fillStyle = "#a45f5a";
+  ctx.fillRect(x + 42, ground - 185, 32, 8);
+  ctx.fillStyle = "rgba(205, 200, 185, .22)";
+  for (let i = 0; i < 3; i++) {
+    const smokeY = ground - 194 - i * 13 - Math.sin(world.time * 1.4 + i) * 3;
+    ctx.fillRect(x + 54 + i * 3, smokeY, 5 + i * 2, 4);
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(x - 106, ground - 112);
+  ctx.lineTo(x - 78, ground - 147);
+  ctx.lineTo(x, ground - 201);
+  ctx.lineTo(x + 79, ground - 146);
+  ctx.lineTo(x + 107, ground - 112);
+  ctx.closePath();
+  const roofGradient = ctx.createLinearGradient(x - 100, ground - 190, x + 70, ground - 105);
+  roofGradient.addColorStop(0, p.roofLight);
+  roofGradient.addColorStop(.5, p.roof);
+  roofGradient.addColorStop(1, "#302a3b");
+  ctx.fillStyle = roofGradient;
+  ctx.fill();
+  ctx.strokeStyle = "#302733";
+  ctx.lineWidth = 5;
+  ctx.stroke();
+
+  // Roof tiles in offset rows for a hand-crafted pixel-art look.
+  for (let row = 0; row < 4; row++) {
+    const y = ground - 169 + row * 15;
+    const halfWidth = 19 + row * 19;
+    for (let col = -3; col <= 3; col++) {
+      const tileX = x + col * 27 + (row % 2) * 12;
+      if (Math.abs(tileX - x) > halfWidth + 20) continue;
+      ctx.fillStyle = (row + col) % 2 === 0 ? p.roofLight : p.roof;
+      ctx.fillRect(tileX - 11, y, 22, 5);
+      ctx.fillStyle = "rgba(17, 19, 29, .45)";
+      ctx.fillRect(tileX - 11, y + 5, 22, 2);
+    }
+  }
+  ctx.strokeStyle = "rgba(238, 204, 156, .55)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x - 78, ground - 145);
+  ctx.lineTo(x, ground - 198);
+  ctx.lineTo(x + 78, ground - 145);
+  ctx.stroke();
+
+  // Warm timber wall with plank seams and sturdy corner posts.
+  ctx.fillStyle = "#3b302b";
+  ctx.fillRect(x - 82, ground - 120, 164, 120);
+  const wallGradient = ctx.createLinearGradient(x - 80, ground - 117, x + 80, ground);
+  wallGradient.addColorStop(0, p.wallLight);
+  wallGradient.addColorStop(1, p.wall);
+  ctx.fillStyle = wallGradient;
+  ctx.fillRect(x - 76, ground - 114, 152, 110);
+  for (let row = 0; row < 6; row++) {
+    const y = ground - 101 + row * 17;
+    ctx.fillStyle = "rgba(64, 43, 39, .25)";
+    ctx.fillRect(x - 73, y, 146, 2);
+    ctx.fillStyle = "rgba(244, 202, 139, .24)";
+    ctx.fillRect(x - 70, y + 3, 139, 1);
+  }
+
+  // Timber framing and a stone foundation.
+  ctx.fillStyle = "#59403a";
+  ctx.fillRect(x - 76, ground - 115, 9, 112);
+  ctx.fillRect(x + 67, ground - 115, 9, 112);
+  ctx.fillRect(x - 78, ground - 76, 156, 7);
+  ctx.fillRect(x - 82, ground - 6, 164, 8);
+  ctx.fillStyle = "#887d6b";
+  for (let i = 0; i < 8; i++) {
+    const sx = x - 77 + i * 20;
+    ctx.fillRect(sx, ground - 5, 15, 5);
+    ctx.fillStyle = i % 2 ? "#b4a28a" : "#716c63";
+  }
+
+  // Window frames, warm interior light, cross bars and sills.
+  for (const wx of [x - 48, x + 28]) {
+    ctx.fillStyle = "#4a3435";
+    ctx.fillRect(wx - 2, ground - 91, 38, 39);
+    ctx.fillStyle = "#f7d88d";
+    ctx.fillRect(wx + 2, ground - 87, 30, 31);
+    const glass = ctx.createLinearGradient(wx, ground - 86, wx + 30, ground - 57);
+    glass.addColorStop(0, "#d9efc2");
+    glass.addColorStop(.5, "#f2d697");
+    glass.addColorStop(1, "#c87e57");
+    ctx.fillStyle = glass;
+    ctx.fillRect(wx + 4, ground - 85, 26, 27);
+    ctx.fillStyle = "#6d4b45";
+    ctx.fillRect(wx + 15, ground - 86, 4, 29);
+    ctx.fillRect(wx + 3, ground - 73, 28, 4);
+    ctx.fillStyle = "#f5d9a2";
+    ctx.fillRect(wx - 4, ground - 53, 42, 5);
+    ctx.fillStyle = "rgba(255, 211, 127, .17)";
+    ctx.fillRect(wx - 6, ground - 98, 45, 52);
+  }
+
+  // Offset front door with arch, panels, handle and lantern.
+  ctx.fillStyle = "#342830";
+  ctx.fillRect(x + 5, ground - 74, 44, 72);
+  ctx.fillStyle = p.door;
+  ctx.fillRect(x + 9, ground - 71, 36, 69);
+  ctx.fillStyle = "rgba(225, 183, 128, .22)";
+  ctx.fillRect(x + 14, ground - 64, 2, 54);
+  ctx.strokeStyle = "#c49a6e";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x + 15, ground - 61, 23, 22);
+  ctx.strokeRect(x + 15, ground - 34, 23, 22);
+  ctx.fillStyle = "#e8c26f";
+  ctx.beginPath();
+  ctx.arc(x + 37, ground - 35, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Variant-specific signboard.
+  if (variant === "shop") {
+    ctx.fillStyle = "#4a3442";
+    ctx.fillRect(x - 15, ground - 142, 76, 23);
+    ctx.strokeStyle = "#dfbd7c";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x - 15, ground - 142, 76, 23);
+    ctx.fillStyle = "#fff0c1";
+    ctx.font = "bold 10px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText(getLanguage() === "zh" ? "杂货铺" : "SUPPLIES", x + 23, ground - 127);
+  } else if (variant === "elder") {
+    ctx.fillStyle = "#3d4b3c";
+    ctx.fillRect(x - 28, ground - 141, 56, 12);
+    ctx.fillStyle = "#e7d29b";
+    ctx.fillRect(x - 25, ground - 138, 50, 3);
+  }
+
+  // Flower boxes and potted herbs finish the village facade.
+  for (const wx of [x - 48, x + 28]) {
+    ctx.fillStyle = "#684237";
+    ctx.fillRect(wx - 2, ground - 51, 38, 7);
+    for (let i = 0; i < 4; i++) {
+      const fx = wx + 3 + i * 9;
+      ctx.fillStyle = ["#d9838d", "#e7bf66", "#a7c17a", "#c58fd0"][i];
+      ctx.fillRect(fx, ground - 57 - (i % 2) * 3, 5, 5);
+      ctx.fillStyle = "#597b50";
+      ctx.fillRect(fx + 1, ground - 52, 3, 4);
+    }
+  }
+  ctx.fillStyle = "#77624b";
+  ctx.fillRect(x - 103, ground - 29, 15, 24);
+  ctx.fillStyle = "#9d815b";
+  ctx.fillRect(x - 106, ground - 31, 21, 5);
+  ctx.fillStyle = "#5e8a53";
+  ctx.fillRect(x - 100, ground - 39, 4, 11);
+  ctx.fillRect(x - 94, ground - 36, 4, 9);
+
+  ctx.restore();
 }
 
 function drawBridge(x, ground) {
-  ctx.fillStyle = "#694936";
-  for (let i = -100; i <= 100; i += 28) ctx.fillRect(x + i, ground - 18, 22, 80);
-  ctx.fillStyle = "#a6784d";
-  ctx.fillRect(x - 115, ground - 25, 230, 14);
+  ctx.save();
+  ctx.fillStyle = "rgba(6, 11, 15, .32)";
+  ctx.fillRect(x - 139, ground + 2, 278, 18);
+
+  // Stone abutments and timber supports.
+  for (const sx of [x - 111, x + 104]) {
+    ctx.fillStyle = "#55483e";
+    ctx.fillRect(sx - 11, ground - 23, 22, 91);
+    ctx.fillStyle = "#a17d58";
+    ctx.fillRect(sx - 7, ground - 22, 5, 81);
+    ctx.fillStyle = "#463d38";
+    ctx.fillRect(sx - 15, ground + 58, 30, 9);
+  }
+
+  // Heavy timber deck with individually shaded planks.
+  ctx.fillStyle = "#513c31";
+  ctx.fillRect(x - 137, ground - 28, 274, 24);
+  for (let i = 0; i < 12; i++) {
+    const px = x - 132 + i * 23;
+    ctx.fillStyle = i % 2 ? "#916749" : "#a97b51";
+    ctx.fillRect(px, ground - 25, 20, 15);
+    ctx.fillStyle = "#d1a16a";
+    ctx.fillRect(px + 2, ground - 24, 15, 2);
+    ctx.fillStyle = "#4c382f";
+    ctx.fillRect(px + 10, ground - 19, 2, 2);
+  }
+
+  // Curved handrails, rope and chunky posts.
+  ctx.strokeStyle = "#644837";
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.moveTo(x - 130, ground - 45);
+  ctx.quadraticCurveTo(x, ground - 75, x + 130, ground - 45);
+  ctx.stroke();
+  ctx.strokeStyle = "#c49a65";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x - 130, ground - 47);
+  ctx.quadraticCurveTo(x, ground - 77, x + 130, ground - 47);
+  ctx.stroke();
+  for (let i = 0; i < 9; i++) {
+    const px = x - 118 + i * 29.5;
+    const top = ground - 45 - Math.sin((i / 8) * Math.PI) * 29;
+    ctx.fillStyle = "#4e3a31";
+    ctx.fillRect(px - 4, top - 3, 8, 29);
+    ctx.fillStyle = "#c29764";
+    ctx.fillRect(px - 2, top, 3, 20);
+  }
+  ctx.restore();
 }
 
 function drawCamp(x, ground) {
-  ctx.fillStyle = "#72543d";
-  ctx.fillRect(x - 55, ground - 70, 110, 8);
-  ctx.fillStyle = "#c59b67";
+  ctx.save();
+  const fireGlow = ctx.createRadialGradient(x + 93, ground - 25, 3, x + 93, ground - 25, 84);
+  fireGlow.addColorStop(0, "rgba(255, 170, 72, .28)");
+  fireGlow.addColorStop(1, "rgba(255, 122, 48, 0)");
+  ctx.fillStyle = fireGlow;
+  ctx.fillRect(x + 2, ground - 110, 184, 120);
+
+  // Tent shadow and canvas body.
+  ctx.fillStyle = "rgba(8, 11, 12, .3)";
   ctx.beginPath();
-  ctx.moveTo(x - 65, ground - 62);
-  ctx.lineTo(x, ground - 132);
-  ctx.lineTo(x + 65, ground - 62);
+  ctx.ellipse(x, ground + 1, 89, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#604735";
+  ctx.fillRect(x - 75, ground - 67, 150, 9);
+  ctx.beginPath();
+  ctx.moveTo(x - 78, ground - 65);
+  ctx.lineTo(x - 8, ground - 144);
+  ctx.lineTo(x + 77, ground - 65);
+  ctx.closePath();
+  const canvas = ctx.createLinearGradient(x - 50, ground - 120, x + 65, ground - 56);
+  canvas.addColorStop(0, "#d7b985");
+  canvas.addColorStop(.5, "#ae8759");
+  canvas.addColorStop(1, "#795943");
+  ctx.fillStyle = canvas;
+  ctx.fill();
+  ctx.strokeStyle = "#533f32";
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.fillStyle = "#302931";
+  ctx.beginPath();
+  ctx.moveTo(x - 24, ground - 65);
+  ctx.lineTo(x - 8, ground - 120);
+  ctx.lineTo(x + 29, ground - 65);
   ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = "#f4a84e";
+  ctx.strokeStyle = "#e1c99d";
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.arc(x + 95, ground - 18, 14 + Math.sin(world.time * 7) * 3, 0, Math.PI * 2);
+  ctx.moveTo(x - 8, ground - 140);
+  ctx.lineTo(x - 8, ground - 68);
+  ctx.stroke();
+  ctx.fillStyle = "#d7c18e";
+  ctx.fillRect(x - 60, ground - 62, 18, 4);
+  ctx.fillRect(x + 47, ground - 62, 17, 4);
+
+  // Campfire with layered flame and surrounding stones.
+  ctx.fillStyle = "#5c4738";
+  ctx.fillRect(x + 66, ground - 18, 60, 9);
+  ctx.save();
+  ctx.translate(x + 94, ground - 19);
+  ctx.rotate(.35);
+  ctx.fillStyle = "#6c4934";
+  ctx.fillRect(-24, -3, 48, 7);
+  ctx.rotate(-.7);
+  ctx.fillStyle = "#9b6940";
+  ctx.fillRect(-24, -3, 48, 7);
+  ctx.restore();
+  const flame = 1 + Math.sin(world.time * 9) * .12;
+  ctx.fillStyle = "#d45f31";
+  ctx.beginPath();
+  ctx.moveTo(x + 94, ground - 15);
+  ctx.quadraticCurveTo(x + 64, ground - 34 * flame, x + 91, ground - 58 * flame);
+  ctx.quadraticCurveTo(x + 88, ground - 37, x + 113, ground - 19);
+  ctx.closePath();
   ctx.fill();
+  ctx.fillStyle = "#ffbe55";
+  ctx.beginPath();
+  ctx.moveTo(x + 94, ground - 16);
+  ctx.quadraticCurveTo(x + 79, ground - 31 * flame, x + 97, ground - 44 * flame);
+  ctx.quadraticCurveTo(x + 94, ground - 29, x + 104, ground - 18);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#d4c5a2";
+  for (let i = 0; i < 5; i++) {
+    ctx.fillRect(x + 62 + i * 16, ground - 8 + (i % 2) * 3, 7, 5);
+  }
+
+  // Crate and rolled bedroll.
+  ctx.fillStyle = "#5a4030";
+  ctx.fillRect(x - 107, ground - 42, 26, 34);
+  ctx.fillStyle = "#a9794e";
+  ctx.fillRect(x - 104, ground - 39, 20, 28);
+  ctx.fillStyle = "#5a4030";
+  ctx.fillRect(x - 96, ground - 39, 3, 28);
+  ctx.fillRect(x - 104, ground - 27, 20, 3);
+  ctx.fillStyle = "#81917c";
+  ctx.fillRect(x - 132, ground - 20, 26, 11);
+  ctx.fillStyle = "#b6bda0";
+  ctx.fillRect(x - 129, ground - 19, 19, 3);
+  ctx.restore();
 }
 
 function drawTower(x, ground) {
-  ctx.fillStyle = "#70746e";
-  ctx.fillRect(x - 45, ground - 160, 90, 160);
-  ctx.fillStyle = "#3f4a48";
-  ctx.fillRect(x - 55, ground - 178, 110, 20);
-  ctx.fillStyle = "#a5b0a0";
-  ctx.fillRect(x - 16, ground - 132, 32, 34);
+  ctx.save();
+  ctx.fillStyle = "rgba(7, 10, 13, .28)";
+  ctx.beginPath();
+  ctx.ellipse(x, ground + 2, 71, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tower body with shaded sides and block courses.
+  ctx.fillStyle = "#343f43";
+  ctx.fillRect(x - 53, ground - 174, 106, 174);
+  ctx.fillStyle = "#747d79";
+  ctx.fillRect(x - 45, ground - 165, 80, 160);
+  ctx.fillStyle = "#4b5759";
+  ctx.fillRect(x + 21, ground - 165, 14, 160);
+  ctx.fillStyle = "#a0a49a";
+  ctx.fillRect(x - 44, ground - 163, 5, 153);
+  for (let row = 0; row < 9; row++) {
+    const y = ground - 151 + row * 17;
+    ctx.fillStyle = "rgba(40, 50, 52, .48)";
+    ctx.fillRect(x - 44, y, 80, 2);
+    for (let col = 0; col < 3; col++) {
+      const bx = x - 39 + col * 28 + (row % 2) * 9;
+      ctx.fillStyle = "rgba(189, 191, 174, .32)";
+      ctx.fillRect(bx, y + 3, 17, 2);
+    }
+  }
+
+  // Battlements and roof cap.
+  ctx.fillStyle = "#303b40";
+  ctx.fillRect(x - 61, ground - 188, 122, 22);
+  for (let i = 0; i < 5; i++) {
+    ctx.fillStyle = i % 2 ? "#68736f" : "#89908a";
+    ctx.fillRect(x - 55 + i * 25, ground - 201, 17, 16);
+  }
+  ctx.fillStyle = "#bdc7bb";
+  ctx.fillRect(x - 48, ground - 185, 95, 3);
+
+  // Narrow glowing window, lintel, and hanging ivy.
+  ctx.fillStyle = "#222d34";
+  ctx.fillRect(x - 17, ground - 132, 35, 46);
+  const windowGlow = ctx.createLinearGradient(x - 12, ground - 128, x + 12, ground - 86);
+  windowGlow.addColorStop(0, "#cae6b8");
+  windowGlow.addColorStop(1, "#dca86d");
+  ctx.fillStyle = windowGlow;
+  ctx.fillRect(x - 12, ground - 127, 25, 36);
+  ctx.fillStyle = "#3b464b";
+  ctx.fillRect(x - 3, ground - 127, 5, 36);
+  ctx.fillRect(x - 12, ground - 110, 25, 4);
+  ctx.fillStyle = "#42654a";
+  ctx.fillRect(x - 51, ground - 120, 4, 39);
+  ctx.fillRect(x - 47, ground - 91, 7, 4);
+  ctx.fillRect(x + 38, ground - 70, 5, 44);
+
+  // Door and steps.
+  ctx.fillStyle = "#30383b";
+  ctx.fillRect(x - 20, ground - 62, 42, 64);
+  ctx.fillStyle = "#473f37";
+  ctx.fillRect(x - 15, ground - 57, 31, 58);
+  ctx.fillStyle = "#bca16e";
+  ctx.fillRect(x + 7, ground - 31, 3, 4);
+  ctx.fillStyle = "#777c74";
+  ctx.fillRect(x - 29, ground - 6, 60, 7);
+  ctx.restore();
 }
 
 function drawRuins(x, ground) {
-  ctx.strokeStyle = "#73766b";
-  ctx.lineWidth = 18;
+  ctx.save();
+  const glow = ctx.createRadialGradient(x, ground - 86, 3, x, ground - 86, 125);
+  glow.addColorStop(0, "rgba(101, 203, 190, .17)");
+  glow.addColorStop(1, "rgba(101, 203, 190, 0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(x - 135, ground - 216, 270, 230);
+
+  // Broken arch made from individual ancient stone blocks.
+  const stones = [
+    [x - 102, ground - 20, 27, 26], [x - 100, ground - 49, 24, 28],
+    [x - 98, ground - 80, 22, 28], [x - 93, ground - 111, 22, 28],
+    [x - 80, ground - 140, 29, 26], [x - 52, ground - 159, 28, 22],
+    [x - 21, ground - 171, 36, 21], [x + 16, ground - 168, 31, 22],
+    [x + 47, ground - 151, 29, 23], [x + 73, ground - 127, 24, 27],
+    [x + 85, ground - 97, 20, 26], [x + 91, ground - 68, 24, 28],
+    [x + 94, ground - 39, 27, 36]
+  ];
+  stones.forEach((stone, i) => {
+    ctx.fillStyle = i % 3 === 0 ? "#586568" : (i % 3 === 1 ? "#737a74" : "#626e70");
+    ctx.fillRect(stone[0], stone[1], stone[2], stone[3]);
+    ctx.fillStyle = "rgba(204, 208, 188, .34)";
+    ctx.fillRect(stone[0] + 3, stone[1] + 3, stone[2] - 8, 3);
+    ctx.fillStyle = "rgba(22, 31, 35, .42)";
+    ctx.fillRect(stone[0], stone[1] + stone[3] - 4, stone[2], 4);
+  });
+
+  // Dark empty arch opening and a faint rune seal.
+  ctx.fillStyle = "#172025";
   ctx.beginPath();
-  ctx.moveTo(x - 90, ground);
-  ctx.lineTo(x - 90, ground - 140);
-  ctx.lineTo(x, ground - 190);
-  ctx.lineTo(x + 90, ground - 140);
-  ctx.lineTo(x + 90, ground);
+  ctx.moveTo(x - 71, ground);
+  ctx.lineTo(x - 66, ground - 83);
+  ctx.quadraticCurveTo(x - 60, ground - 135, x, ground - 140);
+  ctx.quadraticCurveTo(x + 61, ground - 137, x + 67, ground - 83);
+  ctx.lineTo(x + 72, ground);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = "rgba(151, 232, 214, .72)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x, ground - 121);
+  ctx.lineTo(x + 9, ground - 105);
+  ctx.lineTo(x, ground - 89);
+  ctx.lineTo(x - 9, ground - 105);
+  ctx.closePath();
   ctx.stroke();
-  ctx.lineWidth = 1;
-  ctx.fillStyle = "#b9b4a0";
-  ctx.fillRect(x - 16, ground - 75, 32, 75);
+  ctx.fillStyle = "#d3f5d6";
+  ctx.fillRect(x - 2, ground - 108, 4, 6);
+
+  // Broken masonry and moss at the foot of the ruin.
+  ctx.fillStyle = "#495858";
+  ctx.fillRect(x - 125, ground - 7, 35, 8);
+  ctx.fillRect(x + 88, ground - 9, 42, 10);
+  ctx.fillStyle = "#79936a";
+  ctx.fillRect(x - 107, ground - 13, 21, 4);
+  ctx.fillRect(x + 103, ground - 15, 19, 4);
+  ctx.restore();
 }
 
 function drawGate(x, ground) {
-  ctx.fillStyle = "#4b5452";
-  ctx.fillRect(x - 115, ground - 145, 35, 145);
-  ctx.fillRect(x + 80, ground - 145, 35, 145);
-  ctx.fillRect(x - 115, ground - 155, 230, 20);
-  ctx.fillStyle = world.questStep >= 2 ? "#82bd7e" : "#9c4d4d";
-  ctx.fillRect(x - 68, ground - 125, 136, 125);
+  ctx.save();
+  const unlocked = world.questStep >= 2;
+  const light = ctx.createRadialGradient(x, ground - 74, 4, x, ground - 74, 150);
+  light.addColorStop(0, unlocked ? "rgba(111, 222, 150, .26)" : "rgba(204, 74, 90, .19)");
+  light.addColorStop(1, "rgba(20, 22, 24, 0)");
+  ctx.fillStyle = light;
+  ctx.fillRect(x - 155, ground - 190, 310, 200);
+
+  // Pillars, carved blocks, caps, and gold trim.
+  for (const side of [-1, 1]) {
+    const px = x + side * 91;
+    ctx.fillStyle = "#2f3d40";
+    ctx.fillRect(px - 24, ground - 157, 48, 157);
+    ctx.fillStyle = "#667775";
+    ctx.fillRect(px - 17, ground - 149, 31, 143);
+    ctx.fillStyle = "#9b9e88";
+    ctx.fillRect(px - 15, ground - 145, 4, 135);
+    for (let row = 0; row < 6; row++) {
+      ctx.fillStyle = "rgba(34, 45, 45, .5)";
+      ctx.fillRect(px - 17, ground - 126 + row * 22, 31, 2);
+    }
+    ctx.fillStyle = "#323d3e";
+    ctx.fillRect(px - 30, ground - 165, 60, 12);
+    ctx.fillStyle = "#c5a86f";
+    ctx.fillRect(px - 26, ground - 162, 52, 3);
+    ctx.fillStyle = "#4c5a58";
+    ctx.fillRect(px - 28, ground - 7, 56, 9);
+  }
+  ctx.fillStyle = "#303b3d";
+  ctx.fillRect(x - 119, ground - 176, 238, 24);
+  ctx.fillStyle = "#a99465";
+  ctx.fillRect(x - 111, ground - 171, 222, 3);
+  ctx.fillStyle = "#4c5855";
+  ctx.fillRect(x - 107, ground - 151, 214, 10);
+
+  // Locked/unlocked gate panel and bars.
+  ctx.fillStyle = "#101b20";
+  ctx.fillRect(x - 67, ground - 128, 134, 128);
+  const gateGradient = ctx.createLinearGradient(x - 60, ground - 120, x + 60, ground);
+  gateGradient.addColorStop(0, unlocked ? "#477d58" : "#6f3543");
+  gateGradient.addColorStop(1, unlocked ? "#244a3b" : "#392b39");
+  ctx.fillStyle = gateGradient;
+  ctx.fillRect(x - 60, ground - 121, 120, 117);
+  ctx.fillStyle = "#222f34";
+  for (let i = -2; i <= 2; i++) {
+    ctx.fillRect(x + i * 24 - 3, ground - 118, 6, 112);
+  }
+  ctx.fillStyle = unlocked ? "#bff2c5" : "#ee9a9f";
+  ctx.fillRect(x - 53, ground - 110, 106, 3);
+  ctx.fillRect(x - 53, ground - 10, 106, 3);
+  ctx.fillStyle = "#d9bd7b";
+  for (const bx of [x - 92, x + 89]) {
+    ctx.fillRect(bx, ground - 139, 4, 4);
+    ctx.fillRect(bx, ground - 105, 4, 4);
+  }
+  ctx.fillStyle = unlocked ? "#c4e7b0" : "#efb3b3";
+  ctx.beginPath();
+  ctx.arc(x, ground - 65, 9 + Math.sin(world.time * 3) * 1.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#283638";
+  ctx.beginPath();
+  ctx.arc(x, ground - 65, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 }
 
 function drawSign(x, ground, text) {
-  ctx.fillStyle = "#5d4532";
-  ctx.fillRect(x - 5, ground - 85, 10, 85);
-  ctx.fillStyle = "#c99d62";
-  ctx.fillRect(x - 70, ground - 115, 140, 42);
-  ctx.fillStyle = "#26362d";
+  ctx.save();
+  // Shadow, braced posts and an angled wooden town sign.
+  ctx.fillStyle = "rgba(0, 0, 0, .22)";
+  ctx.fillRect(x - 70, ground - 60, 142, 7);
+  ctx.fillStyle = "#503a2b";
+  ctx.fillRect(x - 43, ground - 102, 9, 102);
+  ctx.fillRect(x + 34, ground - 94, 7, 94);
+  ctx.fillStyle = "#95653e";
+  ctx.fillRect(x - 39, ground - 99, 3, 97);
+  ctx.fillRect(x + 36, ground - 91, 3, 90);
+
+  ctx.fillStyle = "#3c2f2a";
+  ctx.fillRect(x - 86, ground - 131, 174, 42);
+  ctx.fillStyle = "#b7844e";
+  ctx.fillRect(x - 82, ground - 127, 166, 34);
+  ctx.fillStyle = "#e0bd7c";
+  ctx.fillRect(x - 78, ground - 123, 158, 3);
+  ctx.fillRect(x - 78, ground - 98, 158, 2);
+  ctx.fillStyle = "#80553a";
+  ctx.fillRect(x - 70, ground - 119, 142, 21);
+  ctx.fillStyle = "#f6df9d";
   ctx.font = "bold 12px system-ui";
   ctx.textAlign = "center";
-  ctx.fillText(getLanguage() === "zh" ? "枫叶镇 →" : text, x, ground - 89);
+  ctx.fillText(getLanguage() === "zh" ? "枫叶镇 →" : text, x, ground - 105);
+
+  // Carved arrow and metal nail heads.
+  ctx.fillStyle = "#fff0bf";
+  ctx.beginPath();
+  ctx.moveTo(x + 57, ground - 117);
+  ctx.lineTo(x + 69, ground - 109);
+  ctx.lineTo(x + 57, ground - 101);
+  ctx.lineTo(x + 61, ground - 109);
+  ctx.closePath();
+  ctx.fill();
+  for (const nx of [x - 73, x + 73]) {
+    ctx.fillStyle = "#483932";
+    ctx.fillRect(nx, ground - 114, 4, 4);
+    ctx.fillStyle = "#e4c685";
+    ctx.fillRect(nx + 1, ground - 113, 2, 2);
+  }
+  ctx.restore();
 }
+
+
 
 function drawNPCs() {
   for (const npc of npcs) {
     const x = worldToScreen(npc.x);
-    if (x < -100 || x > window.innerWidth + 100) continue;
-    const bob = Math.sin(world.time * 3 + npc.x) * 2;
-    drawCharacter(x, world.groundY + bob, npc.color, "#d8c7a4", false);
-    if (Math.abs(npc.x - world.player.x) < 105) {
-      ctx.fillStyle = "#f3c75f";
-      ctx.font = "bold 12px system-ui";
+    if (x < -120 || x > window.innerWidth + 120) continue;
+    const bob = Math.sin(world.time * 2.4 + npc.x) * 1.3;
+    drawStyledNPC(x, world.groundY + bob, npc);
+
+    const nearby = Math.abs(npc.x - world.player.x) < 105;
+    if (nearby) {
+      const glow = .72 + Math.sin(world.time * 5) * .18;
+      ctx.save();
+      ctx.globalAlpha = glow;
+      ctx.fillStyle = "rgba(13, 20, 26, .9)";
+      ctx.fillRect(x - 14, world.groundY - 141, 28, 25);
+      ctx.strokeStyle = "#f0cc78";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x - 14, world.groundY - 141, 28, 25);
+      ctx.fillStyle = "#ffe6a0";
+      ctx.font = "bold 14px system-ui";
       ctx.textAlign = "center";
-      ctx.fillText("E", x, world.groundY - 84);
+      ctx.fillText("E", x, world.groundY - 123);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = "rgba(16, 22, 23, .78)";
+      ctx.beginPath();
+      ctx.moveTo(x, world.groundY - 126);
+      ctx.lineTo(x + 5, world.groundY - 121);
+      ctx.lineTo(x, world.groundY - 116);
+      ctx.lineTo(x - 5, world.groundY - 121);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#f1d17f";
+      ctx.fillRect(x - 1, world.groundY - 122, 2, 2);
     }
   }
 }
+
+function drawStyledNPC(x, ground, npc) {
+  ctx.save();
+  ctx.translate(Math.round(x), Math.round(ground));
+
+  // Ground shadow and feet.
+  ctx.fillStyle = "rgba(5, 9, 12, .3)";
+  ctx.beginPath();
+  ctx.ellipse(0, 3, 28, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const isElder = npc.id === "elder";
+  const isMerchant = npc.id === "mira";
+  const isKeeper = npc.id === "kai";
+  const robe = isElder ? "#85734c" : isMerchant ? "#9d533e" : "#3f7186";
+  const robeLight = isElder ? "#c2a36a" : isMerchant ? "#d28a53" : "#75bac9";
+  const robeDark = isElder ? "#504736" : isMerchant ? "#5c3540" : "#263d58";
+  const hair = isElder ? "#c4c2a7" : isMerchant ? "#6b352d" : "#243440";
+  const skin = isElder ? "#d5b28d" : isMerchant ? "#e2b28c" : "#d9b89b";
+
+  // Back cloak, with a role-specific silhouette.
+  ctx.fillStyle = "#242b30";
+  ctx.beginPath();
+  ctx.moveTo(-12, -74);
+  ctx.lineTo(-22, -60);
+  ctx.lineTo(-24, -31);
+  ctx.lineTo(-32, -11);
+  ctx.lineTo(-19, -14);
+  ctx.lineTo(-7, -8);
+  ctx.lineTo(18, -10);
+  ctx.lineTo(25, -36);
+  ctx.lineTo(17, -62);
+  ctx.lineTo(10, -74);
+  ctx.closePath();
+  ctx.fill();
+
+  // Boots and legs are drawn behind the tunic.
+  ctx.fillStyle = "#22252d";
+  ctx.fillRect(-14, -25, 10, 21);
+  ctx.fillRect(5, -25, 10, 21);
+  ctx.fillStyle = "#4c4c4a";
+  ctx.fillRect(-17, -7, 15, 5);
+  ctx.fillRect(4, -7, 17, 5);
+  ctx.fillStyle = "#b09a72";
+  ctx.fillRect(-13, -23, 2, 12);
+  ctx.fillRect(8, -23, 2, 12);
+
+  // Main coat/robe with shaded side and bright seam.
+  ctx.fillStyle = robeDark;
+  ctx.beginPath();
+  ctx.moveTo(-13, -72);
+  ctx.lineTo(11, -73);
+  ctx.lineTo(17, -58);
+  ctx.lineTo(19, -28);
+  ctx.lineTo(13, -17);
+  ctx.lineTo(-17, -17);
+  ctx.lineTo(-21, -31);
+  ctx.lineTo(-17, -58);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = robe;
+  ctx.beginPath();
+  ctx.moveTo(-11, -69);
+  ctx.lineTo(7, -69);
+  ctx.lineTo(12, -56);
+  ctx.lineTo(9, -24);
+  ctx.lineTo(-12, -23);
+  ctx.lineTo(-16, -34);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = robeLight;
+  ctx.fillRect(-11, -65, 3, 36);
+  ctx.fillRect(7, -58, 3, 25);
+  ctx.fillStyle = "rgba(11, 17, 22, .4)";
+  ctx.fillRect(-7, -54, 4, 22);
+  ctx.fillRect(1, -51, 3, 18);
+
+  // Belt, buckle and stitched hem.
+  ctx.fillStyle = "#2b292a";
+  ctx.fillRect(-15, -35, 29, 5);
+  ctx.fillStyle = "#d8bb7a";
+  ctx.fillRect(-2, -36, 6, 7);
+  ctx.fillStyle = "#716048";
+  ctx.fillRect(0, -34, 2, 3);
+  for (let stitch = -10; stitch <= 10; stitch += 5) {
+    ctx.fillStyle = robeLight;
+    ctx.fillRect(stitch, -20, 2, 2);
+  }
+
+  // Arms, sleeves and hands.
+  ctx.fillStyle = robeDark;
+  ctx.beginPath();
+  ctx.moveTo(-14, -67);
+  ctx.lineTo(-25, -62);
+  ctx.lineTo(-22, -45);
+  ctx.lineTo(-14, -42);
+  ctx.lineTo(-9, -49);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = robe;
+  ctx.fillRect(-23, -60, 7, 13);
+  ctx.fillStyle = skin;
+  ctx.fillRect(-22, -47, 7, 8);
+  ctx.fillStyle = robeDark;
+  ctx.beginPath();
+  ctx.moveTo(10, -67);
+  ctx.lineTo(19, -60);
+  ctx.lineTo(17, -45);
+  ctx.lineTo(11, -43);
+  ctx.lineTo(6, -50);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = robeLight;
+  ctx.fillRect(12, -58, 5, 11);
+  ctx.fillStyle = skin;
+  ctx.fillRect(11, -46, 7, 8);
+
+  // Neck and face, facing toward the player/right.
+  ctx.fillStyle = skin;
+  ctx.fillRect(-5, -81, 11, 13);
+  ctx.fillStyle = "#22242d";
+  ctx.fillRect(-14, -95, 29, 20);
+  ctx.fillStyle = skin;
+  ctx.beginPath();
+  ctx.moveTo(-11, -94);
+  ctx.lineTo(6, -94);
+  ctx.lineTo(13, -86);
+  ctx.lineTo(9, -76);
+  ctx.lineTo(1, -72);
+  ctx.lineTo(-9, -77);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "rgba(255, 231, 195, .7)";
+  ctx.fillRect(1, -90, 7, 2);
+  ctx.fillStyle = "#4a3030";
+  ctx.fillRect(9, -85, 3, 2);
+  ctx.fillStyle = "#191f25";
+  ctx.fillRect(5, -87, 3, 4);
+  ctx.fillStyle = "#fff0bf";
+  ctx.fillRect(6, -87, 1, 1);
+
+  // Hair/hood silhouette and face-framing locks.
+  ctx.fillStyle = hair;
+  ctx.beginPath();
+  ctx.moveTo(-15, -91);
+  ctx.lineTo(-14, -102);
+  ctx.lineTo(-7, -108);
+  ctx.lineTo(4, -108);
+  ctx.lineTo(14, -101);
+  ctx.lineTo(16, -91);
+  ctx.lineTo(10, -91);
+  ctx.lineTo(8, -97);
+  ctx.lineTo(4, -91);
+  ctx.lineTo(-2, -98);
+  ctx.lineTo(-6, -91);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = robeLight;
+  ctx.fillRect(-7, -103, 9, 2);
+  ctx.fillStyle = "#141b23";
+  ctx.fillRect(-12, -96, 5, 8);
+  ctx.fillRect(8, -96, 4, 7);
+
+  // Unique class details make the three NPCs readable at a glance.
+  if (isElder) {
+    // Elder Rowan: pale beard, layered shawl and a walking staff.
+    ctx.fillStyle = "#d1cdb3";
+    ctx.beginPath();
+    ctx.moveTo(-6, -78);
+    ctx.lineTo(5, -79);
+    ctx.lineTo(4, -68);
+    ctx.lineTo(-1, -62);
+    ctx.lineTo(-7, -70);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#ece3c7";
+    ctx.fillRect(-5, -76, 8, 3);
+    ctx.fillStyle = "#d1b67c";
+    ctx.fillRect(-24, -79, 4, 78);
+    ctx.fillStyle = "#826441";
+    ctx.fillRect(-27, -80, 10, 4);
+    ctx.fillStyle = "#e6d29b";
+    ctx.fillRect(-15, -63, 10, 4);
+    ctx.fillRect(3, -62, 10, 4);
+  } else if (isMerchant) {
+    // Mira: merchant cap, shoulder pack, bright sash and coin pouch.
+    ctx.fillStyle = "#6c4a36";
+    ctx.beginPath();
+    ctx.moveTo(-18, -100);
+    ctx.lineTo(-10, -112);
+    ctx.lineTo(8, -111);
+    ctx.lineTo(18, -100);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#d3a45c";
+    ctx.fillRect(-15, -100, 31, 4);
+    ctx.fillStyle = "#b8784b";
+    ctx.fillRect(-26, -67, 12, 18);
+    ctx.fillStyle = "#e8c787";
+    ctx.fillRect(-24, -65, 8, 3);
+    ctx.fillStyle = "#e7c06e";
+    ctx.fillRect(8, -42, 8, 8);
+    ctx.fillStyle = "#6a4534";
+    ctx.fillRect(-2, -66, 18, 4);
+  } else if (isKeeper) {
+    // Kai: teal hood, cyan rune trim and a floating holographic book.
+    ctx.fillStyle = "#263848";
+    ctx.beginPath();
+    ctx.moveTo(-17, -93);
+    ctx.lineTo(-12, -111);
+    ctx.lineTo(3, -115);
+    ctx.lineTo(17, -103);
+    ctx.lineTo(15, -88);
+    ctx.lineTo(8, -95);
+    ctx.lineTo(0, -100);
+    ctx.lineTo(-7, -93);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#9ce8de";
+    ctx.fillRect(-13, -72, 3, 35);
+    ctx.fillRect(8, -72, 3, 35);
+    ctx.fillRect(-4, -54, 8, 3);
+    ctx.fillStyle = "rgba(79, 227, 220, .17)";
+    ctx.fillRect(19, -58, 22, 28);
+    ctx.strokeStyle = "#83eee5";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(22, -56, 17, 23);
+    ctx.fillStyle = "#d1fff2";
+    ctx.fillRect(29, -51, 3, 13);
+    ctx.fillRect(25, -47, 11, 3);
+  }
+
+  // Edge highlights and collar details.
+  ctx.fillStyle = "#1e242c";
+  ctx.fillRect(-15, -73, 7, 5);
+  ctx.fillStyle = robeLight;
+  ctx.fillRect(-12, -69, 3, 11);
+  ctx.fillRect(4, -68, 3, 9);
+  ctx.fillStyle = "#d5bd82";
+  ctx.fillRect(0, -43, 4, 4);
+  ctx.restore();
+}
+
 
 function drawEnemies() {
   for (const enemy of enemies) {
