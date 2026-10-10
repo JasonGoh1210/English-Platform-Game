@@ -10,25 +10,26 @@ function epq_json(array $payload, int $status = 200): never {
     exit;
 }
 
-function epq_demo_player_id(mysqli $db): int {
-    $result = $db->query(
-        "SELECT p.player_id
-         FROM players p
-         INNER JOIN users u ON u.user_id = p.user_id
-         WHERE u.username = 'demo'
-         LIMIT 1"
-    );
-
-    if (!$result) throw new RuntimeException('Unable to query demo player.');
-    $row = $result->fetch_assoc();
-
-    if (!$row) {
-        throw new RuntimeException(
-            'Demo player not found. Import database/english_power_quest_schema.sql then database/demo_seed.sql.'
-        );
+function epq_current_player_id(mysqli $db): int {
+    if (empty($_SESSION['user_id'])) {
+        epq_json(['ok' => false, 'error' => 'Please log in first.'], 401);
     }
 
-    return (int)$row['player_id'];
+    $userId = (int)$_SESSION['user_id'];
+    $stmt = $db->prepare("SELECT player_id FROM players WHERE user_id = ? LIMIT 1");
+    if (!$stmt) throw new RuntimeException('Unable to prepare current-player query.');
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+
+    if (!$row) {
+        unset($_SESSION['user_id'], $_SESSION['player_id']);
+        epq_json(['ok' => false, 'error' => 'Player profile not found. Please register or log in again.'], 401);
+    }
+
+    $playerId = (int)$row['player_id'];
+    $_SESSION['player_id'] = $playerId;
+    return $playerId;
 }
 
 function epq_body(): array {
