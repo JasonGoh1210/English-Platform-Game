@@ -110,10 +110,10 @@ const worldBackgrounds = {
   ruins: new Image()
 };
 const worldBackgroundPaths = {
-  maple: "/FYP/images/world/backgrounds/maple-town.webp?v=20261010-bgart3",
-  forest: "/FYP/images/world/backgrounds/whispering-forest.webp?v=20261010-bgart3",
-  camp: "/FYP/images/world/backgrounds/old-camp-road.webp?v=20261010-bgart3",
-  ruins: "/FYP/images/world/backgrounds/ancient-ruins.webp?v=20261010-bgart3"
+  maple: "/FYP/images/world/maple-town.webp?v=20261010-blackfix1",
+  forest: "/FYP/images/world/whispering-forest.webp?v=20261010-blackfix1",
+  camp: "/FYP/images/world/old-camp-road.webp?v=20261010-blackfix1",
+  ruins: "/FYP/images/world/ancient-ruins.webp?v=20261010-blackfix1"
 };
 Object.entries(worldBackgrounds).forEach(([realmId, image]) => {
   image.decoding = "async";
@@ -3467,12 +3467,39 @@ async function loadQuestions() {
   }
 }
 
+function drawFatalFrameError(error) {
+  console.error("[English Power Quest] Frame rendering failed:", error);
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  try {
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = "#111923";
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = "#ffd2a8";
+    ctx.font = "bold 22px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText("The game encountered a drawing error.", w / 2, h / 2 - 28);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "14px system-ui";
+    ctx.fillText(String(error && error.message ? error.message : error).slice(0, 140), w / 2, h / 2 + 4);
+    ctx.fillStyle = "#b7c6d6";
+    ctx.font = "13px system-ui";
+    ctx.fillText("Open the browser Console (F12) for details.", w / 2, h / 2 + 32);
+  } catch (fallbackError) {
+    console.error("[English Power Quest] Could not draw the error message:", fallbackError);
+  }
+}
+
 function loop(now) {
   if (!lastTime) lastTime = now;
   const dt = Math.min(.033, (now - lastTime) / 1000);
   lastTime = now;
-  update(dt);
-  draw();
+  try {
+    update(dt);
+    draw();
+  } catch (error) {
+    drawFatalFrameError(error);
+  }
   requestAnimationFrame(loop);
 }
 
@@ -3483,5 +3510,9 @@ updateQuest();
 syncHUD();
 openStoryIntroIfNew();
 
-Promise.all([loadServerPlayer(), loadQuestions()])
-  .finally(() => requestAnimationFrame(loop));
+// Start the renderer immediately; API or question requests must never hold the
+// canvas black while waiting for the network. Their own fallback handlers remain active.
+requestAnimationFrame(loop);
+void Promise.all([loadServerPlayer(), loadQuestions()]).catch(error => {
+  console.warn("[English Power Quest] Startup data could not be loaded:", error);
+});
