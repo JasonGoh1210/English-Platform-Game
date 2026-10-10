@@ -3535,3 +3535,154 @@ button { font: inherit; }
   .typing-cave-lose-review { max-height: 28vh; padding: 9px 10px; }
   .typing-cave-lose-review p { font-size: .72rem; }
 }
+
+
+/* Story-driven prologue and campus-to-Aetheria narrative. */
+.story-intro-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 140;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  padding: clamp(16px, 4vw, 48px);
+  color: #f7f1ff;
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(89, 82, 157, .32), transparent 48%),
+    linear-gradient(145deg, rgba(8, 13, 24, .98), rgba(18, 23, 39, .985) 52%, rgba(8, 15, 23, .99));
+}
+.story-intro-stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .45;
+  background-image:
+    radial-gradient(circle at 13% 18%, #e8d4ff 0 1px, transparent 2px),
+    radial-gradient(circle at 76% 24%, #a7ddfa 0 1px, transparent 2px),
+    radial-gradient(circle at 84% 72%, #f2d49e 0 1px, transparent 2px),
+    radial-gradient(circle at 24% 76%, #d6c4ff 0 1px, transparent 2px),
+    radial-gradient(circle at 48% 10%, #ffffff 0 1px, transparent 2px);
+  background-size: 193px 151px, 177px 211px, 231px 181px, 167px 237px, 257px 197px;
+}
+.story-intro-content {
+  position: relative;
+  width: min(760px, 100%);
+  padding: clamp(24px, 5vw, 52px);
+  border: 1px solid rgba(183, 163, 230, .65);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(46, 48, 74, .91), rgba(20, 29, 43, .96)),
+    #172331;
+  box-shadow: 0 24px 90px rgba(0,0,0,.45), inset 0 1px rgba(255,255,255,.08);
+  animation: storyIntroRise 360ms ease-out both;
+}
+.story-intro-brand {
+  margin-bottom: 24px;
+  color: #c7b9f7;
+  font-size: .68rem;
+  font-weight: 950;
+  letter-spacing: .2em;
+}
+.story-intro-kicker {
+  margin: 0 0 12px;
+  color: #edcd8a;
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .14em;
+}
+.story-intro-meta {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #a9becf;
+  font-size: .63rem;
+  font-weight: 800;
+  letter-spacing: .09em;
+}
+.story-intro-content h1 {
+  margin: 14px 0 16px;
+  color: #fff8e8;
+  font-size: clamp(1.65rem, 4vw, 2.7rem);
+  font-weight: 950;
+  line-height: 1.1;
+  letter-spacing: -.025em;
+  text-wrap: balance;
+}
+.story-intro-content > p:not(.story-intro-kicker):not(.story-intro-hint) {
+  min-height: 160px;
+  margin: 0;
+  color: #d6deea;
+  font-size: clamp(.95rem, 2vw, 1.08rem);
+  line-height: 1.85;
+  white-space: pre-line;
+}
+.story-intro-progress-track {
+  height: 5px;
+  margin: 24px 0 19px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255,255,255,.1);
+}
+.story-intro-progress-track div {
+  width: 33.33%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #85d9d1, #b59bed, #efcf8d);
+  box-shadow: 0 0 13px rgba(177,155,237,.35);
+  transition: width 220ms ease;
+}
+.story-intro-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.story-intro-skip,
+.story-intro-next {
+  min-height: 45px;
+  padding: 11px 17px;
+  border: 1px solid rgba(180,168,219,.55);
+  border-radius: 10px;
+  color: #d2d2e6;
+  background: rgba(255,255,255,.045);
+  font-size: .76rem;
+  font-weight: 900;
+  letter-spacing: .06em;
+  cursor: pointer;
+}
+.story-intro-next {
+  min-width: 200px;
+  border-color: #d4c2f3;
+  color: #211b35;
+  background: linear-gradient(135deg, #e9d9fc, #b4a1e5);
+  box-shadow: 0 7px 20px rgba(122,93,180,.2);
+}
+.story-intro-next span { margin-left: 13px; font-size: 1.1rem; }
+.story-intro-skip:hover,
+.story-intro-next:hover { filter: brightness(1.08); }
+.story-intro-hint {
+  margin: 18px 0 0;
+  color: rgba(205,210,231,.55);
+  font-size: .57rem;
+  letter-spacing: .16em;
+  text-align: center;
+}
+@keyframes storyIntroRise {
+  from { opacity: 0; transform: translateY(12px) scale(.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.typing-cave-win-panel > p:not(.typing-cave-win-kicker) {
+  max-height: 44vh;
+  overflow-y: auto;
+  white-space: pre-line;
+}
+@media (max-width: 600px) {
+  .story-intro-overlay { padding: 12px; }
+  .story-intro-content { padding: 21px 18px; border-radius: 14px; }
+  .story-intro-brand { margin-bottom: 19px; }
+  .story-intro-content > p:not(.story-intro-kicker):not(.story-intro-hint) { min-height: 0; font-size: .91rem; line-height: 1.72; }
+  .story-intro-meta { font-size: .54rem; }
+  .story-intro-actions { align-items: stretch; flex-direction: column-reverse; }
+  .story-intro-next,.story-intro-skip { width: 100%; }
+}
