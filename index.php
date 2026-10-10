@@ -279,7 +279,7 @@ session_start();
   <script>
     (() => {
       const canvas = document.getElementById("gameCanvas");
-      const fallbackBackground = "/FYP/images/world/maple-town.webp?v=20261010-blackfix3";
+      const fallbackBackground = "/FYP/images/world/maple-town.webp?v=20261010-startupfix1";
       if (canvas) {
         canvas.style.backgroundColor = "#14212a";
         canvas.style.backgroundImage = 'url("' + fallbackBackground + '")';
@@ -288,7 +288,7 @@ session_start();
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261010-blackfix3").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261010-startupfix1").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");
