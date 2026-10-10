@@ -711,6 +711,8 @@ function splitStoryParagraph(paragraph, maxFrames = 3) {
 }
 
 function storyPortraitSource(characterId) {
+  const portraitAliases = { elder: "rowan" };
+  characterId = portraitAliases[characterId] || characterId;
   if (characterId === "alex") {
     return {
       src: "/FYP/images/player_walk_frames/png_frames/Player_Stand.png?v=20261010-mangastory1",
