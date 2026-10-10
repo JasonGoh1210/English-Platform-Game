@@ -187,7 +187,7 @@ function loadWorldState() {
       const position = hasLocalPosition ? Number(savedPosition.playerX) : migratedX;
       world.player.x = clamp(position, 70, world.width - 90);
     }
-    const needsStoryMigration = Number(saved.storyVersion) < 1;
+    const needsStoryMigration = (Number(saved.storyVersion) || 0) < 1;
     world.questStep = needsStoryMigration ? 0 : (Number(saved.questStep) || 0);
     world.coins = Number(saved.coins) || 0;
     world.xp = Number(saved.xp) || 0;
