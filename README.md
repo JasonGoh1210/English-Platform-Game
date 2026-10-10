@@ -11,11 +11,13 @@ A mobile-friendly fantasy RPG prototype that teaches English through exploration
 - Separate PHP battle page with continuous English questions
 - True/False, Odd Word Out and Sentence Builder question types
 - Battle rewards, HP, Coins, XP and English Power
+- Sign up, login and logout with PHP sessions; passwords are stored with `password_hash`
+- Each new account receives a player profile and starts with the opening story; story completion is saved to MySQL
+- Returning users who have completed the opening story go straight to the map
 - LocalStorage still stores map position, defeated map enemies and quest-step flags
-- PHP endpoints can read the demo player and write balance/ledger changes to MySQL
-- MySQL schema includes accounts, player stats, quests, enemies/bosses, combat logs, mastery, inventory and reward ledgers
+- MySQL stores account/player records and opening-story completion; some gameplay progress remains browser-local
 
-> This is still a prototype. Login is not implemented; the current PHP API resolves the hard-coded `demo` player. The browser also sends reward deltas to the API, so reward validation is not yet server-authoritative. Do not deploy this version as a public multi-user game.
+> This is still a prototype. Some game APIs/reward flows may still rely on client-supplied values and LocalStorage, so not all progress is server-authoritative. Do not deploy this version as a public multi-user game without a full security and data-persistence audit.
 
 ## Run locally with XAMPP
 
@@ -31,14 +33,14 @@ For a **new, empty local database**, import in this order using phpMyAdmin:
 
 1. `database/english_power_quest_schema.sql`
 2. `database/demo_seed.sql`
+3. `database/migrations/002_auth_story_progress.sql` (adds the opening-story completion flag)
 
 Check `config/db.php` for the local MySQL credentials.
 
-If you already imported the older schema, **do not import the full schema again**. Back up your database first, then review and run `database/migrations/001_question_codes_and_difficulty_fk.sql` once. That migration is for the old schema only; it will fail if you already added the column or constraint.
+If you already imported the database schema, back up the database first. Run `database/migrations/002_auth_story_progress.sql` once if the `players.story_intro_seen` column does not exist. Do not run the same migration more than once. The older `001_question_codes_and_difficulty_fk.sql` migration is only for databases that predate that change; review the schema before applying it.
 
 ## Known gaps before a final FYP release
 
-- Add login/logout and use the authenticated PHP session instead of the hard-coded demo player.
 - Replace client-supplied reward deltas with server-side answer validation.
 - Import `data/questions.json` and `data/enemies.json` into MySQL (or establish one authoritative runtime source).
 - Persist answer attempts, accuracy, mastery, combat sessions and quest claims in the database.
