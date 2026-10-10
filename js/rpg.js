@@ -463,7 +463,8 @@ const destinations = [
     description: "A peaceful village where your adventure and first words begin.",
     descriptionKey: "destination.maple.description",
     scene: "maple",
-    spawnX: 650
+    spawnX: 650,
+    portalX: 550
   },
   {
     id: "forest",
@@ -474,7 +475,8 @@ const destinations = [
     description: "Follow the lantern-lit path and uncover the language hidden in the woods.",
     descriptionKey: "destination.forest.description",
     scene: "forest",
-    spawnX: 1400
+    spawnX: 1570,
+    portalX: 1675
   },
   {
     id: "camp",
@@ -485,7 +487,8 @@ const destinations = [
     description: "Rest by the old camp before travelling deeper into the forgotten road.",
     descriptionKey: "destination.camp.description",
     scene: "camp",
-    spawnX: 2650
+    spawnX: 2650,
+    portalX: 2540
   },
   {
     id: "ruins",
@@ -496,7 +499,8 @@ const destinations = [
     description: "Explore the silent stone ruins and the secrets of the old network builders.",
     descriptionKey: "destination.ruins.description",
     scene: "ruins",
-    spawnX: 4100
+    spawnX: 4100,
+    portalX: 4160
   }
 ];
 
@@ -679,8 +683,8 @@ function settingsIsOpen() {
 function interact() {
   if (world.interacting || world.battle || world.travelMenu || settingsIsOpen()) return;
 
-  // Check the portal first so it remains usable even beside an NPC.
-  if (!world.insideCave && Math.abs(world.portalX - world.player.x) < 112) {
+  // Every region has a permanent portal at its own fixed coordinate.
+  if (!world.insideCave && nearestWorldPortal(112)) {
     openDestinationMenu();
     return;
   }
@@ -1170,6 +1174,19 @@ function retryTypingCave() {
   typingUi.input.focus();
 }
 
+function nearestWorldPortal(maxDistance = Infinity) {
+  let nearest = null;
+  let nearestDistance = maxDistance;
+  for (const destination of destinations) {
+    const distance = Math.abs(destination.portalX - world.player.x);
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearest = destination;
+    }
+  }
+  return nearest;
+}
+
 function renderDestinationSelection() {
   const destination = destinations[world.selectedDestinationIndex] || destinations[0];
   ui.destinationCategory.textContent = t(destination.categoryKey);
@@ -1224,8 +1241,8 @@ function travelToSelectedDestination() {
   world.player.walkFrame = 0;
   world.player.walkTimer = 0;
 
-  // Keep a usable return gate near the arrival point in each destination.
-  world.portalX = Math.min(world.width - 180, destination.spawnX + 145);
+  // Save the fixed portal anchor for compatibility with existing save files.
+  world.portalX = destination.portalX;
   world.cameraX = clamp(
     world.player.x - window.innerWidth * 0.5,
     0,
@@ -1432,13 +1449,11 @@ function draw() {
     return;
   }
 
-  drawSky(w, h);
-  drawFarMountains(w, h);
-  drawForestLayer(w, h, 0.16, "#193b34", 155, 300);
-  drawForestLayer(w, h, 0.30, "#23483a", 200, 340);
-  drawGround(w, h);
+  const scene = getWorldSceneForX(world.player.x);
+  drawWorldBackdrop(w, h, scene);
+  drawGround(w, h, scene);
   drawLandmarks();
-  drawPortal();
+  drawWorldPortals();
   drawNPCs();
   drawEnemies();
   drawPlayer();
@@ -1447,6 +1462,90 @@ function draw() {
 
 function worldToScreen(x, parallax = 1) {
   return x - world.cameraX * parallax;
+}
+
+function getWorldSceneForX(worldX) {
+  if (worldX < 1250) return "maple";
+  if (worldX < 2350) return "forest";
+  if (worldX < 3400) return "camp";
+  return "ruins";
+}
+
+function drawWorldBackdrop(w, h, scene) {
+  const palette = {
+    maple: { top: "#397ca1", middle: "#83c2cb", bottom: "#e6d9a7", far: "#7d9c79", hill: "#416c4b", trees1: "#244d3b", trees2: "#183c31", light: "#fff0bd" },
+    forest: { top: "#183342", middle: "#37656b", bottom: "#b1b58a", far: "#526b68", hill: "#34564a", trees1: "#1c433a", trees2: "#10372f", light: "#9ee7ba" },
+    camp: { top: "#422f4a", middle: "#ba755e", bottom: "#e7bd7b", far: "#79645d", hill: "#625b43", trees1: "#4a4a3b", trees2: "#273a34", light: "#ffcb75" },
+    ruins: { top: "#171c36", middle: "#4e5477", bottom: "#a18f98", far: "#6b6d7b", hill: "#41444f", trees1: "#303e3d", trees2: "#1d3330", light: "#c4a6ff" }
+  }[scene] || null;
+  const p = palette || { top:"#397ca1",middle:"#83c2cb",bottom:"#e6d9a7",far:"#7d9c79",hill:"#416c4b",trees1:"#244d3b",trees2:"#183c31",light:"#fff0bd" };
+
+  const sky = ctx.createLinearGradient(0,0,0,h);
+  sky.addColorStop(0,p.top); sky.addColorStop(.58,p.middle); sky.addColorStop(1,p.bottom);
+  ctx.fillStyle=sky; ctx.fillRect(0,0,w,h);
+
+  const sunX = w*.82, sunY = h*(scene==="camp"?.24:.16);
+  const glow=ctx.createRadialGradient(sunX,sunY,2,sunX,sunY,145);
+  glow.addColorStop(0, scene==="ruins"?"rgba(196,166,255,.27)":scene==="camp"?"rgba(255,196,117,.32)":"rgba(255,244,200,.25)");
+  glow.addColorStop(1,"rgba(255,255,255,0)");
+  ctx.fillStyle=glow; ctx.fillRect(sunX-150,sunY-150,300,300);
+  ctx.fillStyle=p.light; ctx.beginPath(); ctx.arc(sunX,sunY,scene==="ruins"?24:29,0,Math.PI*2); ctx.fill();
+
+  // Distant ridges give each world its own silhouette and horizon.
+  ctx.fillStyle=p.far; ctx.beginPath(); ctx.moveTo(0,h*.58);
+  for(let x=0;x<=w+100;x+=85){
+    const wave=scene==="ruins" ? Math.sin(x*.021)*35+Math.cos(x*.009)*14 :
+      scene==="camp" ? Math.sin(x*.014)*22+Math.cos(x*.006)*16 : Math.sin(x*.013)*34;
+    ctx.lineTo(x,h*.49+wave);
+  }
+  ctx.lineTo(w,world.groundY); ctx.lineTo(0,world.groundY); ctx.closePath(); ctx.fill();
+  ctx.fillStyle=p.hill; ctx.beginPath(); ctx.moveTo(0,h*.70);
+  for(let x=0;x<=w+80;x+=72) ctx.lineTo(x,h*.65+Math.cos(x*.015)*19);
+  ctx.lineTo(w,world.groundY); ctx.lineTo(0,world.groundY); ctx.closePath(); ctx.fill();
+
+  if(scene==="maple" || scene==="forest"){
+    drawForestLayer(w,h,.13,p.trees1,scene==="maple"?165:205,scene==="maple"?270:350);
+    drawForestLayer(w,h,.25,p.trees2,scene==="maple"?185:225,scene==="maple"?295:375);
+    // Fireflies in the whispering woods.
+    if(scene==="forest"){
+      for(let i=0;i<22;i++){
+        const fx=(i*131-world.cameraX*.16+w*2)%w;
+        const fy=110+((i*47)%Math.max(100,world.groundY-150));
+        ctx.globalAlpha=.35+(Math.sin(world.time*2+i)+1)*.25;
+        ctx.fillStyle=p.light; ctx.fillRect(fx,fy,3,3);
+      }
+      ctx.globalAlpha=1;
+    }
+  } else if(scene==="camp"){
+    // Pine silhouettes and drifting ember pixels under a sunset sky.
+    for(let i=-1;i<Math.ceil(w/155)+2;i++){
+      const x=i*155+60, base=world.groundY-5, ht=95+Math.abs(i*37%80);
+      ctx.fillStyle=i%2?p.trees1:p.trees2;
+      ctx.fillRect(x-4,base-ht*.35,8,ht*.35);
+      for(let tier=0;tier<4;tier++){
+        const y=base-ht+tier*ht*.2, half=19+tier*8;
+        ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-half,y+ht*.29);ctx.lineTo(x+half,y+ht*.29);ctx.closePath();ctx.fill();
+      }
+    }
+    for(let i=0;i<12;i++){
+      const ex=(i*143+world.time*(7+i%4))%w, ey=world.groundY-70-((i*43+world.time*11)%210);
+      ctx.fillStyle=p.light;ctx.globalAlpha=.42;ctx.fillRect(ex,ey,2,3);
+    }
+    ctx.globalAlpha=1;
+  } else {
+    // Ruined towers and rune-lit monoliths frame the ancient realm.
+    for(let i=0;i<Math.ceil(w/185)+2;i++){
+      const x=i*185-(world.cameraX*.12%185)+60, base=world.groundY-3, ht=84+Math.abs(i*43%85);
+      ctx.fillStyle=i%2?"#343b4b":"#3d414d";
+      ctx.fillRect(x-7,base-ht,14,ht);ctx.fillRect(x-17,base-ht+20,34,8);ctx.fillRect(x-22,base-ht+42,44,7);
+      ctx.fillStyle="rgba(196,166,255,.55)";ctx.fillRect(x-1,base-ht+7,3,Math.max(20,ht-22));
+    }
+    for(let i=0;i<16;i++){
+      const gx=((i*113-world.cameraX*.18)%w+w)%w, gy=world.groundY-50-(i*37%185);
+      ctx.fillStyle=p.light;ctx.globalAlpha=.25+(Math.sin(world.time*1.7+i)+1)*.2;ctx.fillRect(gx,gy,3,3);
+    }
+    ctx.globalAlpha=1;
+  }
 }
 
 function drawSky(w, h) {
@@ -1514,22 +1613,29 @@ function drawForestLayer(w, h, parallax, color, minSize, maxSize) {
   }
 }
 
-function drawGround(w, h) {
-  ctx.fillStyle = "#263a2d";
-  ctx.fillRect(0, world.groundY, w, h - world.groundY);
-  ctx.fillStyle = "#66784b";
-  ctx.fillRect(0, world.groundY - 8, w, 8);
-  const tile = 80;
-  const start = Math.floor(world.cameraX / tile) - 1;
-  const end = start + Math.ceil(w / tile) + 2;
-  for (let i = start; i < end; i++) {
-    const x = i * tile - world.cameraX;
-    ctx.fillStyle = i % 2 === 0 ? "#34462f" : "#30412c";
-    ctx.fillRect(x, world.groundY + 22, tile - 2, 55);
-    ctx.fillStyle = "#536442";
-    ctx.fillRect(x + 10, world.groundY + 17, 22, 5);
+function drawGround(w, h, scene = "maple") {
+  const p = {
+    maple:{soil:"#263a2d",top:"#81945a",a:"#344a33",b:"#30442f",seam:"#566844",detail:"#97a776"},
+    forest:{soil:"#1c3430",top:"#597b55",a:"#28443c",b:"#243c36",seam:"#42624b",detail:"#83b07c"},
+    camp:{soil:"#38322d",top:"#b18a56",a:"#4a3f35",b:"#41382f",seam:"#6f5b42",detail:"#d0a86a"},
+    ruins:{soil:"#272b37",top:"#77748c",a:"#343744",b:"#2e313d",seam:"#4b4f60",detail:"#8c86ad"}
+  }[scene] || {soil:"#263a2d",top:"#81945a",a:"#344a33",b:"#30442f",seam:"#566844",detail:"#97a776"};
+  ctx.fillStyle=p.soil;ctx.fillRect(0,world.groundY,w,h-world.groundY);
+  ctx.fillStyle=p.top;ctx.fillRect(0,world.groundY-8,w,8);
+  ctx.fillStyle="rgba(10,13,12,.24)";ctx.fillRect(0,world.groundY-2,w,4);
+  const tile=80,start=Math.floor(world.cameraX/tile)-1,end=start+Math.ceil(w/tile)+2;
+  for(let i=start;i<end;i++){
+    const x=i*tile-world.cameraX;
+    ctx.fillStyle=i%2===0?p.a:p.b;ctx.fillRect(x,world.groundY+22,tile-2,55);
+    ctx.fillStyle=p.seam;ctx.fillRect(x+10,world.groundY+17,22,5);
+    ctx.fillStyle=p.detail;
+    if(scene==="maple"||scene==="forest"){ctx.fillRect(x+44,world.groundY+36,4,2);ctx.fillRect(x+53,world.groundY+45,2,3);}
+    else if(scene==="camp"){ctx.fillRect(x+48,world.groundY+41,9,2);ctx.fillRect(x+18,world.groundY+59,5,2);}
+    else{ctx.fillRect(x+46,world.groundY+35,3,9);ctx.fillRect(x+49,world.groundY+35,5,2);}
   }
 }
+
+
 
 function drawLandmarks() {
   for (const l of landmarks) {
@@ -1862,92 +1968,57 @@ function drawCaveForeground(w, h) {
   }
 }
 
-function drawPortal() {
-  const x = worldToScreen(world.portalX);
-  const ground = world.groundY;
-  if (x < -150 || x > window.innerWidth + 150) return;
+function drawWorldPortals() {
+  for (const destination of destinations) drawPortal(destination);
+}
 
-  const nearby = Math.abs(world.portalX - world.player.x) < 145;
-  const pulse = 1 + Math.sin(world.time * 3.4) * 0.06;
-
+function drawPortal(destination) {
+  const worldX=destination.portalX, x=worldToScreen(worldX), ground=world.groundY;
+  if(x < -160 || x > window.innerWidth+160) return;
+  const nearby=Math.abs(worldX-world.player.x)<145;
+  const pulse=1+Math.sin(world.time*3.4+worldX)*.045;
+  const p={
+    maple:{glow:"rgba(120,239,197,.35)",core:"#83e2bd",mid:"#399e9a",deep:"#1d4a66",trim:"#e2cf91"},
+    forest:{glow:"rgba(110,238,157,.34)",core:"#9af3ab",mid:"#36996e",deep:"#123e3b",trim:"#c5e29c"},
+    camp:{glow:"rgba(255,182,93,.36)",core:"#ffe0a0",mid:"#d17b45",deep:"#663d45",trim:"#f2c674"},
+    ruins:{glow:"rgba(182,146,255,.38)",core:"#e4d3ff",mid:"#9071d5",deep:"#302b5f",trim:"#d3bdff"}
+  }[destination.scene];
   ctx.save();
+  const glow=ctx.createRadialGradient(x,ground-77,3,x,ground-77,90*pulse);
+  glow.addColorStop(0,p.glow);glow.addColorStop(.5,"rgba(45,112,124,.10)");glow.addColorStop(1,"rgba(17,30,40,0)");
+  ctx.fillStyle=glow;ctx.fillRect(x-104,ground-188,208,205);
 
-  const glow = ctx.createRadialGradient(x, ground - 92, 4, x, ground - 92, 116 * pulse);
-  glow.addColorStop(0, "rgba(104, 238, 218, 0.46)");
-  glow.addColorStop(0.42, "rgba(65, 177, 181, 0.20)");
-  glow.addColorStop(1, "rgba(35, 105, 124, 0)");
-  ctx.fillStyle = glow;
-  ctx.fillRect(x - 125, ground - 225, 250, 245);
-
-  // Stone frame, assembled from chunky blocks to match the pixel-art map.
-  ctx.fillStyle = "#293b42";
-  ctx.fillRect(x - 67, ground - 145, 22, 145);
-  ctx.fillRect(x + 45, ground - 145, 22, 145);
-  ctx.fillRect(x - 61, ground - 162, 26, 18);
-  ctx.fillRect(x + 35, ground - 162, 26, 18);
-  ctx.fillRect(x - 46, ground - 178, 25, 18);
-  ctx.fillRect(x + 21, ground - 178, 25, 18);
-  ctx.fillRect(x - 25, ground - 190, 50, 16);
-
-  ctx.fillStyle = "#829398";
-  ctx.fillRect(x - 63, ground - 141, 5, 136);
-  ctx.fillRect(x + 58, ground - 141, 5, 136);
-  ctx.fillRect(x - 55, ground - 158, 11, 4);
-  ctx.fillRect(x + 44, ground - 158, 11, 4);
-  ctx.fillRect(x - 39, ground - 174, 10, 4);
-  ctx.fillRect(x + 29, ground - 174, 10, 4);
-  ctx.fillRect(x - 17, ground - 186, 34, 4);
-
-  // The portal itself breathes with animated teal and blue light.
-  ctx.beginPath();
-  ctx.moveTo(x - 39, ground);
-  ctx.lineTo(x - 39, ground - 111);
-  ctx.quadraticCurveTo(x - 39, ground - 153, x, ground - 153);
-  ctx.quadraticCurveTo(x + 39, ground - 153, x + 39, ground - 111);
-  ctx.lineTo(x + 39, ground);
-  ctx.closePath();
-  ctx.fillStyle = "#071319";
-  ctx.fill();
-
-  const portalLight = ctx.createLinearGradient(x - 34, ground - 130, x + 35, ground - 8);
-  portalLight.addColorStop(0, "rgba(96, 255, 223, 0.92)");
-  portalLight.addColorStop(0.48, "rgba(37, 152, 179, 0.76)");
-  portalLight.addColorStop(1, "rgba(27, 70, 112, 0.92)");
-  ctx.fillStyle = portalLight;
-  ctx.fill();
-
-  ctx.globalAlpha = 0.55 + Math.sin(world.time * 5) * 0.12;
-  ctx.fillStyle = "#c1fff0";
-  for (let i = 0; i < 8; i++) {
-    const particleY = ground - 20 - ((world.time * 42 + i * 23) % 116);
-    const particleX = x + Math.sin(world.time * 2.7 + i * 2.1) * (12 + (i % 3) * 6);
-    ctx.fillRect(Math.round(particleX), Math.round(particleY), 3 + (i % 2), 5);
+  // Compact fixed gate with chipped stone edges and realm colour.
+  ctx.fillStyle="#273139";
+  ctx.fillRect(x-48,ground-126,15,126);ctx.fillRect(x+33,ground-126,15,126);
+  ctx.fillRect(x-56,ground-135,24,10);ctx.fillRect(x+31,ground-135,24,10);
+  ctx.fillRect(x-39,ground-148,21,14);ctx.fillRect(x+18,ground-148,21,14);ctx.fillRect(x-17,ground-157,34,11);
+  ctx.fillStyle="#71818a";ctx.fillRect(x-45,ground-122,4,113);ctx.fillRect(x+39,ground-122,4,113);
+  ctx.fillStyle=p.trim;ctx.fillRect(x-37,ground-151,5,4);ctx.fillRect(x+31,ground-151,5,4);ctx.fillRect(x-9,ground-154,18,3);
+  ctx.beginPath();ctx.moveTo(x-29,ground);ctx.lineTo(x-29,ground-95);
+  ctx.quadraticCurveTo(x-29,ground-135,x,ground-135);ctx.quadraticCurveTo(x+29,ground-135,x+29,ground-95);
+  ctx.lineTo(x+29,ground);ctx.closePath();ctx.fillStyle="#071018";ctx.fill();
+  const light=ctx.createLinearGradient(x-26,ground-125,x+26,ground-5);
+  light.addColorStop(0,p.core);light.addColorStop(.52,p.mid);light.addColorStop(1,p.deep);
+  ctx.globalAlpha=.82+Math.sin(world.time*4.6+worldX)*.1;ctx.fillStyle=light;ctx.fill();ctx.globalAlpha=1;
+  ctx.fillStyle=p.core;ctx.globalAlpha=.72;
+  for(let i=0;i<5;i++){
+    const py=ground-16-((world.time*28+i*27+worldX*.1)%101);
+    const px=x+Math.sin(world.time*2.1+i*1.8+worldX)*(8+(i%3)*4);
+    ctx.fillRect(Math.round(px),Math.round(py),3,4+(i%2)*2);
   }
-  ctx.globalAlpha = 1;
-
-  ctx.fillStyle = "#111e24";
-  ctx.fillRect(x - 77, ground - 7, 154, 10);
-  ctx.fillStyle = "#c5a76a";
-  ctx.fillRect(x - 68, ground - 5, 136, 4);
-
-  ctx.textAlign = "center";
-  ctx.font = "bold 13px 'Courier New', monospace";
-  ctx.fillStyle = "#091317";
-  ctx.fillText(t("portal.name"), x + 2, ground - 215 + 2);
-  ctx.fillStyle = "#f4dc91";
-  ctx.fillText(t("portal.name"), x, ground - 215);
-
-  if (nearby) {
-    ctx.fillStyle = "rgba(7, 16, 20, 0.9)";
-    ctx.fillRect(x - 91, ground - 248, 182, 22);
-    ctx.strokeStyle = "#cfb16d";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x - 91, ground - 248, 182, 22);
-    ctx.font = getLanguage() === "zh" ? "bold 11px sans-serif" : "bold 10px 'Courier New', monospace";
-    ctx.fillStyle = "#fff3c6";
-    ctx.fillText(t("portal.interact"), x, ground - 233);
+  ctx.globalAlpha=1;
+  ctx.fillStyle="#121d24";ctx.fillRect(x-67,ground-6,134,9);
+  ctx.fillStyle=p.trim;ctx.fillRect(x-57,ground-4,114,3);
+  ctx.textAlign="center";ctx.font=getLanguage()==="zh"?"bold 11px sans-serif":"bold 10px 'Courier New', monospace";
+  ctx.fillStyle="#0b1118";ctx.fillText(getLanguage()==="zh"?t(destination.nameKey):"WORLD GATE",x+1,ground-177);
+  ctx.fillStyle=p.trim;ctx.fillText(getLanguage()==="zh"?t(destination.nameKey):"WORLD GATE",x,ground-178);
+  if(nearby){
+    ctx.fillStyle="rgba(7,12,18,.94)";ctx.fillRect(x-90,ground-211,180,21);
+    ctx.strokeStyle=p.trim;ctx.lineWidth=2;ctx.strokeRect(x-90,ground-211,180,21);
+    ctx.fillStyle="#fff6dc";ctx.font=getLanguage()==="zh"?"bold 11px sans-serif":"bold 9px 'Courier New', monospace";
+    ctx.fillText(t("portal.interact"),x,ground-197);
   }
-
   ctx.restore();
 }
 
