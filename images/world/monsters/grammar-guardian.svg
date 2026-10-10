@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="armor" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d4c7a0"/><stop offset=".45" stop-color="#8c9ba0"/><stop offset="1" stop-color="#45566a"/></linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#b8fff2"/><stop offset=".5" stop-color="#55d9dd"/><stop offset="1" stop-color="#276e9b"/></linearGradient>
+    <filter id="runeGlow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <ellipse cx="100" cy="182" rx="65" ry="9" fill="#060d1b" opacity=".4"/>
+  <g stroke="#202a3e" stroke-width="5" stroke-linejoin="round">
+    <path d="M59 69 40 82 30 117 43 136 63 125Z" fill="#53657d"/>
+    <path d="M141 69 160 82 170 117 157 136 137 125Z" fill="#41556f"/>
+    <path d="M65 69 75 49 100 37 125 49 135 69 144 112 127 153 73 153 56 112Z" fill="url(#armor)"/>
+    <path d="M73 57 82 43 100 49 118 43 127 57 121 80 79 80Z" fill="#61768b"/>
+    <path d="M79 83 100 72 121 83 116 124 100 138 84 124Z" fill="#233b5c"/>
+    <path d="M75 136 67 172 91 177 99 151M125 136 133 172 109 177 101 151" fill="#596a7d"/>
+    <path d="M66 170 61 180 93 182 92 175M134 170 139 180 107 182 108 175" fill="#d0bd87"/>
+    <path d="M78 98 96 91 97 120 84 128Z" fill="#466889"/>
+    <path d="M122 98 104 91 103 120 116 128Z" fill="#344f72"/>
+    <path d="M74 74 90 81 86 91 72 88M126 74 110 81 114 91 128 88" fill="#d4c7a0"/>
+  </g>
+  <g filter="url(#runeGlow)">
+    <path d="M81 101 94 94 97 102 88 110 82 108Z" fill="url(#teal)"/>
+    <path d="M119 101 106 94 103 102 112 110 118 108Z" fill="url(#teal)"/>
+    <path d="M100 112 109 125 100 137 91 125Z" fill="#72fff0"/>
+    <path d="M100 119 104 125 100 131 96 125Z" fill="#f9fff1"/>
+  </g>
+  <path d="M82 51 100 26 118 51 109 61 91 61Z" fill="#d7c28a" stroke="#202a3e" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M91 47 100 34 109 47" fill="none" stroke="#fff0bc" stroke-width="4"/>
+  <g stroke="#24344b" stroke-width="4" stroke-linejoin="round">
+    <path d="M147 94 167 86 184 104 180 143 158 151 145 133Z" fill="#8b9aac"/>
+    <path d="M156 104 174 99 175 133 159 139Z" fill="#283d5b"/>
+    <path d="M160 111 171 106 171 127 160 132Z" fill="#d8ca9f"/>
+  </g>
+  <g stroke="#27334a" stroke-width="4" stroke-linejoin="round">
+    <path d="M40 95 21 89 12 103 19 139 39 148 49 133Z" fill="#60748a"/>
+    <path d="M22 106 39 101 42 132 27 137Z" fill="#8cbfca"/>
+  </g>
+  <g fill="#b8fff2"><rect x="49" y="71" width="4" height="7"/><rect x="147" y="71" width="4" height="7"/><rect x="97" y="64" width="6" height="5"/></g>
+</svg>
