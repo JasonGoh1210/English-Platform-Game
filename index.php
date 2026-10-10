@@ -228,6 +228,6 @@ session_start();
     </div>
   </div>
 
-  <script type="module" src="/FYP/js/rpg.js?v=20261010-imgworld2"></script>
+  <script type="module" src="/FYP/js/rpg.js?v=20261010-imgworld3"></script>
 </body>
 </html>
