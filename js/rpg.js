@@ -3503,16 +3503,26 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 
-loadWorldState();
-recenterCamera();
-restoreEscapeState();
-updateQuest();
-syncHUD();
-openStoryIntroIfNew();
 
-// Start the renderer immediately; API or question requests must never hold the
-// canvas black while waiting for the network. Their own fallback handlers remain active.
+function runStartupStep(name, task) {
+  try {
+    task();
+  } catch (error) {
+    console.error("[English Power Quest] Startup step failed: " + name, error);
+  }
+}
+
+// Start rendering BEFORE setup tasks. If saved-state/story setup fails, the
+// canvas still renders (or shows the drawing error), rather than staying blank.
 requestAnimationFrame(loop);
+
+runStartupStep("loadWorldState", loadWorldState);
+runStartupStep("recenterCamera", recenterCamera);
+runStartupStep("restoreEscapeState", restoreEscapeState);
+runStartupStep("updateQuest", updateQuest);
+runStartupStep("syncHUD", syncHUD);
+runStartupStep("openStoryIntroIfNew", openStoryIntroIfNew);
+
 void Promise.all([loadServerPlayer(), loadQuestions()]).catch(error => {
-  console.warn("[English Power Quest] Startup data could not be loaded:", error);
+  console.warn("[English Power Quest] Startup data could not be loaded.", error);
 });
