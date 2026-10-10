@@ -23,7 +23,14 @@ function epq_h(string $value): string {
     return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+function epq_is_guest(): bool {
+    return !empty($_SESSION['guest_mode']) && !empty($_SESSION['guest_id']);
+}
+
 function epq_require_login_page(): void {
+    if (epq_is_guest()) {
+        return;
+    }
     if (empty($_SESSION['user_id']) || empty($_SESSION['player_id'])) {
         header('Location: /FYP/login.php');
         exit;
@@ -31,7 +38,7 @@ function epq_require_login_page(): void {
 }
 
 function epq_redirect_if_logged_in(): void {
-    if (!empty($_SESSION['user_id']) && !empty($_SESSION['player_id'])) {
+    if (epq_is_guest() || (!empty($_SESSION['user_id']) && !empty($_SESSION['player_id']))) {
         header('Location: /FYP/index.php');
         exit;
     }
@@ -45,6 +52,7 @@ function epq_csrf_is_valid(?string $token): bool {
 
 function epq_authenticate_session(array $row, bool $showStory): void {
     session_regenerate_id(true);
+    unset($_SESSION['guest_mode'], $_SESSION['guest_id']);
     $_SESSION['user_id'] = (int)$row['user_id'];
     $_SESSION['player_id'] = (int)$row['player_id'];
     $_SESSION['username'] = (string)$row['username'];
