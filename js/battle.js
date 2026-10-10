@@ -147,7 +147,8 @@ function updateSave(patch) {
   const updated = { ...getSave(), ...patch };
   localStorage.setItem(WORLD_SAVE_KEY, JSON.stringify(updated));
   // Keep the battle outcome in MySQL before returning to the map.
-  pendingBattleSave = saveBattleState(updated);
+  // Serialize saves: a slower older request must not overwrite a newer battle result.
+  pendingBattleSave = pendingBattleSave.catch(() => {}).then(() => saveBattleState(updated));
 }
 
 async function saveProgressServer(payload) {

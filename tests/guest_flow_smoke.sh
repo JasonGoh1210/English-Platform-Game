@@ -68,4 +68,38 @@ check=$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s english_power_quest \
 test "$check" = "password:smoke@example.com:$player_id:20:1"
 tokens=$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s english_power_quest -e "SELECT COUNT(*) FROM guest_login_tokens WHERE user_id=$user_id")
 test "$tokens" = 0
-echo "PASS: guest signup, story, world, reward, cookie recovery and upgrade retain same player ID"
+# Upgraded player can no longer use the old anonymous bearer cookie.
+blocked=$(curl -sS -o /dev/null -w '%{http_code}' -H "Cookie: epq_guest_resume=$token" "$base/index.php")
+test "$blocked" = 302
+
+state_after_upgrade=$(curl -fsS -b "$cookies" "$base/api/game_state.php")
+printf '%s' "$state_after_upgrade" | jq -e '.state.currentRealmId == "forest" and .state.questStep == 2'
+
+# A legitimate shop purchase must *deduct* coins, never silently clamp it to 0.
+shop=$(curl -fsS -b "$cookies" -H 'Content-Type: application/json' \
+  -d "{\"csrfToken\":\"$csrf\",\"coinDelta\":-5,\"sourceType\":\"SHOP_PURCHASE\"}" \
+  "$base/api/save_progress.php")
+printf '%s' "$shop" | jq -e '.ok == true'
+test "$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s english_power_quest -e "SELECT coins_total FROM players WHERE player_id=$player_id")" = 5
+
+# Unauthorized state changes without CSRF are blocked.
+no_csrf=$(curl -sS -o /dev/null -w '%{http_code}' -b "$cookies" -H 'Content-Type: application/json' \
+  -d '{"state":{"currentRealmId":"ruins"}}' "$base/api/game_state.php")
+test "$no_csrf" = 403
+
+# Logout, then password-login to the SAME converted account.
+new_map=$(curl -fsS -b "$cookies" -c "$cookies" "$base/index.php")
+csrf=$(printf '%s' "$new_map" | grep -oP 'name="csrf_token" value="\K[a-f0-9]{64}' | head -n1)
+logout_status=$(curl -sS -o /dev/null -w '%{http_code}' -b "$cookies" -c "$cookies" \
+  --data-urlencode "csrf_token=$csrf" "$base/logout.php")
+test "$logout_status" = 302
+new_login=$(curl -fsS -c "$cookies" -b "$cookies" "$base/login.php")
+csrf=$(printf '%s' "$new_login" | grep -oP 'name="csrf_token" value="\K[a-f0-9]{64}' | head -n1)
+curl -fsS -D /tmp/epq_login_headers.txt -o /tmp/epq_login_post.html -b "$cookies" -c "$cookies" \
+  --data-urlencode "csrf_token=$csrf" --data-urlencode 'username=smoke_hero' \
+  --data-urlencode 'password=Passw0rd-Test!' "$base/login.php"
+grep -q 'Location: /FYP/index.php' /tmp/epq_login_headers.txt
+logged_in=$(curl -fsS -b "$cookies" "$base/api/player.php")
+printf '%s' "$logged_in" | jq -e --argjson pid "$player_id" '.ok == true and .player.playerId == $pid and .player.xp == 20 and .player.coins == 5'
+
+echo "PASS: guest, story, map, XP, CSRF, browser recovery, account upgrade and password login"
