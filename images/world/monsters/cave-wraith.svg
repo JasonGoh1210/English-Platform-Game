@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="shroud" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b9a0ff" stop-opacity=".95"/><stop offset=".45" stop-color="#6c54c7" stop-opacity=".9"/><stop offset="1" stop-color="#25204f" stop-opacity=".98"/></linearGradient>
+    <radialGradient id="core"><stop stop-color="#c5ffff"/><stop offset=".35" stop-color="#64e9ff"/><stop offset="1" stop-color="#786aff" stop-opacity=".05"/></radialGradient>
+    <filter id="spiritGlow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <ellipse cx="100" cy="183" rx="54" ry="8" fill="#070c20" opacity=".33"/>
+  <g fill="#7d64d2" opacity=".55">
+    <path d="M47 112Q19 96 35 72Q20 54 44 43Q45 66 61 68Z"/>
+    <path d="M153 112Q181 96 165 72Q180 54 156 43Q155 66 139 68Z"/>
+  </g>
+  <g stroke="#201c49" stroke-width="5" stroke-linejoin="round">
+    <path d="M77 49 88 35 100 30 112 35 123 49 134 82 127 128 148 148 135 155 117 143 101 164 88 148 66 158 54 149 74 126 66 81Z" fill="url(#shroud)"/>
+    <path d="M79 73 59 88 52 120 69 125 81 105M121 73 141 88 148 120 131 125 119 105" fill="#5d48a9"/>
+    <path d="M78 55 89 44 100 49 111 44 122 55 117 83 83 83Z" fill="#32265f"/>
+    <path d="M76 126 71 147 87 143 98 158 108 143 126 149 120 127" fill="#392b78"/>
+    <path d="M83 147 75 169 89 164 98 178 108 163 121 171 115 148" fill="#51409a"/>
+  </g>
+  <g filter="url(#spiritGlow)">
+    <path d="M78 80 95 74 92 88 79 92Z" fill="#83ffff"/>
+    <path d="M122 80 105 74 108 88 121 92Z" fill="#83ffff"/>
+    <circle cx="85" cy="84" r="3" fill="#ffffff"/><circle cx="115" cy="84" r="3" fill="#ffffff"/>
+    <path d="M92 105 100 117 108 105 104 126 96 126Z" fill="#5ff3ff"/>
+    <circle cx="100" cy="122" r="19" fill="url(#core)" opacity=".65"/>
+  </g>
+  <path d="M84 100 91 103 85 110M116 100 109 103 115 110" fill="none" stroke="#d8d0ff" stroke-width="3"/>
+  <g fill="#7ef7ff">
+    <rect x="41" y="58" width="4" height="9"/><rect x="153" y="64" width="5" height="5"/><rect x="54" y="145" width="4" height="4"/><rect x="144" y="139" width="3" height="3"/>
+  </g>
+</svg>
