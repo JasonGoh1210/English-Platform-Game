@@ -77,7 +77,7 @@ printf '%s' "$state_after_upgrade" | jq -e '.state.currentRealmId == "forest" an
 
 # Account conversion regenerates the PHP session and CSRF token.
 upgraded_page=$(curl -fsS -b "$cookies" -c "$cookies" "$base/index.php")
-csrf=$(printf '%s' "$upgraded_page" | grep -oP 'name="csrf_token" value="\\K[a-f0-9]{64}' | head -n1)
+csrf=$(printf '%s' "$upgraded_page" | grep -oP 'name="csrf_token" value="\K[a-f0-9]{64}' | head -n1)
 
 # A legitimate shop purchase must *deduct* coins, never silently clamp it to 0.
 shop=$(curl -fsS -b "$cookies" -H 'Content-Type: application/json' \
