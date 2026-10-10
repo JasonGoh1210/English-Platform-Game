@@ -8,8 +8,7 @@ try {
     }
 
     $body = epq_body();
-    if (empty($_SESSION['csrf_token']) || !is_string($body['csrfToken'] ?? null)
-        || !hash_equals((string)$_SESSION['csrf_token'], $body['csrfToken'])) {
+    if (!epq_csrf_is_valid($body['csrfToken'] ?? null)) {
         epq_json(['ok' => false, 'error' => 'Invalid request token.'], 403);
     }
 

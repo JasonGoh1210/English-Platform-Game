@@ -8,6 +8,21 @@ const AUTH_PLAYER_ID = String(AUTH_CONTEXT.storageId || AUTH_CONTEXT.playerId ||
 const BATTLE_KEY = `englishPowerQuest.battle.player.${AUTH_PLAYER_ID}`;
 const WORLD_SAVE_KEY = `englishPowerQuest.world.v2.player.${AUTH_PLAYER_ID}`;
 const ESCAPE_KEY = `englishPowerQuest.escape.v1.player.${AUTH_PLAYER_ID}`;
+let pendingBattleSave = Promise.resolve();
+async function saveBattleState(state) {
+  try {
+    const response = await fetch("/FYP/api/game_state.php", {
+      method: "POST",
+      credentials: "same-origin",
+      keepalive: true,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ csrfToken: AUTH_CONTEXT.csrfToken || "", state })
+    });
+    if (!response.ok) throw new Error("MySQL battle state save failed");
+  } catch (error) {
+    console.warn("[English Power Quest] Battle map state remains cached locally.", error);
+  }
+}
 
 const enemies = {
   "slime-01": {
@@ -123,16 +138,18 @@ function getSave() {
 }
 
 function updateSave(patch) {
-  localStorage.setItem(WORLD_SAVE_KEY, JSON.stringify({ ...getSave(), ...patch }));
+  const updated = { ...getSave(), ...patch };
+  localStorage.setItem(WORLD_SAVE_KEY, JSON.stringify(updated));
+  // Keep the battle outcome in MySQL before returning to the map.
+  pendingBattleSave = saveBattleState(updated);
 }
 
 async function saveProgressServer(payload) {
-  if (IS_GUEST) return false;
   try {
     const response = await fetch("/FYP/api/save_progress.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ ...payload, csrfToken: AUTH_CONTEXT.csrfToken || "" })
     });
     if (!response.ok) return false;
     const data = await response.json();
@@ -506,10 +523,11 @@ function useItem() {
     startQuestion();
   }
 }
-function returnToMapAfterBattle() {
+async function returnToMapAfterBattle() {
   window.clearInterval(state.timerId);
   sessionStorage.setItem(ESCAPE_KEY, state.enemy.id);
   sessionStorage.removeItem(BATTLE_KEY);
+  await pendingBattleSave;
   window.location.href = "/FYP/index.php";
 }
 
@@ -561,7 +579,7 @@ function showResult(victory, title, text, rewards) {
     if (victory) {
       sessionStorage.removeItem(BATTLE_KEY);
       sessionStorage.removeItem(ESCAPE_KEY);
-      window.location.href = "/FYP/index.php";
+      void pendingBattleSave.then(() => { window.location.href = "/FYP/index.php"; });
     } else {
       window.location.reload();
     }

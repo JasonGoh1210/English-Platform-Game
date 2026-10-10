@@ -175,6 +175,99 @@ let storyCompletionCallback = null;
 const BATTLE_KEY = `englishPowerQuest.battle.player.${AUTH_PLAYER_ID}`;
 const ESCAPE_KEY = `englishPowerQuest.escape.v1.player.${AUTH_PLAYER_ID}`;
 
+// MySQL is the durable save; localStorage is only a fast per-player cache.
+let dbSaveReady = false;
+let saveDelayHandle = null;
+let pendingSaveData = null;
+let saveChain = Promise.resolve();
+let lastPeriodicX = world.player.x;
+
+function gameSaveRequest(state, keepalive = false) {
+  return fetch("/FYP/api/game_state.php", {
+    method: "POST",
+    credentials: "same-origin",
+    keepalive,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ csrfToken: AUTH_CONTEXT.csrfToken || "", state })
+  }).then(async response => {
+    const result = await response.json().catch(() => null);
+    if (!response.ok || !result?.ok) throw new Error(result?.error || "Unable to save world");
+    return result;
+  });
+}
+
+function flushGameSave() {
+  if (!dbSaveReady || !pendingSaveData) return saveChain;
+  clearTimeout(saveDelayHandle);
+  const snapshot = pendingSaveData;
+  pendingSaveData = null;
+  saveChain = saveChain.catch(() => {}).then(() => gameSaveRequest(snapshot)).catch(error => {
+    console.warn("[English Power Quest] MySQL world save failed; local cache retained.", error);
+  });
+  return saveChain;
+}
+
+function queueGameSave(snapshot) {
+  if (!dbSaveReady) return;
+  pendingSaveData = snapshot;
+  clearTimeout(saveDelayHandle);
+  saveDelayHandle = setTimeout(flushGameSave, 700);
+}
+
+async function loadServerGame() {
+  try {
+    const response = await fetch("/FYP/api/game_state.php", { credentials: "same-origin", cache: "no-store" });
+    const result = await response.json();
+    if (!response.ok || !result?.ok) throw new Error(result?.error || "Game state unavailable");
+    if (result.state && typeof result.state === "object") {
+      const cached = (() => {
+        try { return JSON.parse(localStorage.getItem(WORLD_SAVE_KEY) || "null") || {}; }
+        catch { return {}; }
+      })();
+      localStorage.setItem(WORLD_SAVE_KEY, JSON.stringify({ ...cached, ...result.state }));
+      loadWorldState();
+      recenterCamera();
+      updateQuest();
+      syncHUD();
+    }
+    dbSaveReady = true;
+    // Import an existing personal browser save into MySQL on first use.
+    const local = localStorage.getItem(WORLD_SAVE_KEY);
+    if (local && !result.state) {
+      queueGameSave(JSON.parse(local));
+      void flushGameSave();
+    }
+    return true;
+  } catch (error) {
+    console.warn("[English Power Quest] Unable to restore MySQL world save; keeping browser cache.", error);
+    dbSaveReady = true;
+    return false;
+  }
+}
+
+window.addEventListener("pagehide", () => {
+  if (!dbSaveReady) return;
+  const snapshot = (() => {
+    try { return JSON.parse(localStorage.getItem(WORLD_SAVE_KEY) || "null"); }
+    catch { return null; }
+  })();
+  if (snapshot) {
+    const body = new Blob(
+      [JSON.stringify({ csrfToken: AUTH_CONTEXT.csrfToken || "", state: snapshot })],
+      { type: "application/json" }
+    );
+    // sendBeacon is designed for saves during navigation or browser close.
+    if (navigator.sendBeacon) navigator.sendBeacon("/FYP/api/game_state.php", body);
+    else void gameSaveRequest(snapshot, true).catch(() => {});
+  }
+});
+setInterval(() => {
+  if (world.storyIntroOpen || world.typingCaveOpen || world.travelMenu) return;
+  if (Math.abs(world.player.x - lastPeriodicX) < 16) return;
+  lastPeriodicX = world.player.x;
+  saveWorldState();
+}, 5000);
+
 function saveWorldState(overrides = {}) {
   const destination = destinations.find(item => item.id === world.currentRealmId) || destinations[0];
   const playerX = overrides.playerX !== undefined ? Number(overrides.playerX) : world.player.x;
@@ -184,14 +277,16 @@ function saveWorldState(overrides = {}) {
     [world.currentRealmId]: { playerX, insideCave, caveReturnX: world.caveReturnX }
   };
   world.realmPositions = realmPositions;
-  localStorage.setItem(WORLD_SAVE_KEY, JSON.stringify({
+  const savedState = {
     storyVersion: 1,
     currentRealmId: world.currentRealmId, realmPositions, playerX,
     portalX: destination.portalX, insideCave, caveReturnX: world.caveReturnX,
     questStep: world.questStep, coins: world.coins, xp: world.xp, power: world.power, level: world.level,
     defeatedEnemyIds: enemies.filter(enemy => enemy.defeated).map(enemy => enemy.id),
     ...overrides
-  }));
+  };
+  localStorage.setItem(WORLD_SAVE_KEY, JSON.stringify(savedState));
+  queueGameSave(savedState);
 }
 
 function loadWorldState() {
@@ -1034,7 +1129,7 @@ function openStoryIntroIfNew() {
   catch (error) { console.warn("Story intro preference is unavailable.", error); }
   // The server flag makes the account's first story play even if this browser
   // previously watched a story under a different account.
-  if (seen && !AUTH_CONTEXT.showStoryIntro) return;
+  if (!AUTH_CONTEXT.showStoryIntro) return;
   beginStoryboard(buildIntroStoryboard(), "intro");
 }
 
@@ -1057,7 +1152,7 @@ function finishStoryIntro() {
     try { localStorage.setItem(STORY_INTRO_SEEN_KEY, "1"); }
     catch (error) { console.warn("Story intro preference could not be saved.", error); }
     AUTH_CONTEXT.showStoryIntro = false;
-    if (!IS_GUEST) {
+    {
       void fetch("/FYP/api/story_progress.php", {
         method: "POST",
         credentials: "same-origin",
@@ -1784,12 +1879,11 @@ function syncHUD() {
 }
 
 async function saveServerProgress(payload) {
-  if (IS_GUEST) return false;
   try {
     const response = await fetch("/FYP/api/save_progress.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ ...payload, csrfToken: AUTH_CONTEXT.csrfToken || "" })
     });
     const data = await response.json().catch(() => null);
     if (!response.ok || !data?.ok) {
@@ -1804,7 +1898,6 @@ async function saveServerProgress(payload) {
 }
 
 async function loadServerPlayer() {
-  if (IS_GUEST) return false;
   try {
     const response = await fetch("/FYP/api/player.php", { cache: "no-store" });
     if (!response.ok) return false;
@@ -3634,6 +3727,9 @@ runStartupStep("updateQuest", updateQuest);
 runStartupStep("syncHUD", syncHUD);
 runStartupStep("openStoryIntroIfNew", openStoryIntroIfNew);
 
-void Promise.all([loadServerPlayer(), loadQuestions()]).catch(error => {
+void (async () => {
+  await loadServerGame();
+  await Promise.all([loadServerPlayer(), loadQuestions()]);
+})().catch(error => {
   console.warn("[English Power Quest] Startup data could not be loaded.", error);
 });

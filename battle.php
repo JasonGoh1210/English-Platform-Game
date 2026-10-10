@@ -4,8 +4,8 @@ require_once __DIR__ . '/includes/auth.php';
 epq_require_login_page();
 
 $epqIsGuest = epq_is_guest();
-$epqPlayerId = $epqIsGuest ? 0 : (int)($_SESSION['player_id'] ?? 0);
-$epqStorageId = $epqIsGuest ? 'guest' : (string)$epqPlayerId;
+$epqPlayerId = (int)($_SESSION['player_id'] ?? 0);
+$epqStorageId = (string)$epqPlayerId;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -138,9 +138,10 @@ $epqStorageId = $epqIsGuest ? 'guest' : (string)$epqPlayerId;
     window.EPQ_AUTH = <?= json_encode([
       'playerId' => $epqPlayerId,
       'storageId' => $epqStorageId,
-      'isGuest' => $epqIsGuest
+      'isGuest' => $epqIsGuest,
+      'csrfToken' => (string)$_SESSION['csrf_token']
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   </script>
-  <script type="module" src="/FYP/js/battle.js?v=20261010-monsterart2"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261010-guestdb1"></script>
 </body>
 </html>

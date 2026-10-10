@@ -4,13 +4,13 @@ require_once __DIR__ . '/includes/auth.php';
 epq_require_login_page();
 
 $epqIsGuest = epq_is_guest();
-$epqPlayerId = $epqIsGuest ? 0 : (int)($_SESSION['player_id'] ?? 0);
-// Guest progress uses a dedicated localStorage namespace that survives a new guest session on this browser.
-$epqStorageId = $epqIsGuest ? 'guest' : (string)$epqPlayerId;
+$epqPlayerId = (int)($_SESSION['player_id'] ?? 0);
+// Guests and registered players use the same permanent MySQL-backed player ID.
+$epqStorageId = (string)$epqPlayerId;
 $epqDisplayName = $epqIsGuest
     ? (string)($_SESSION['display_name'] ?? 'Guest Adventurer')
     : (string)($_SESSION['display_name'] ?? $_SESSION['username'] ?? 'Adventurer');
-$epqShowStoryIntro = !$epqIsGuest && !empty($_SESSION['show_story_intro']);
+$epqShowStoryIntro = !empty($_SESSION['show_story_intro']);
 $epqCsrfToken = (string)$_SESSION['csrf_token'];
 ?>
 <!DOCTYPE html>
@@ -134,6 +134,9 @@ $epqCsrfToken = (string)$_SESSION['csrf_token'];
     <form class="game-logout-form" method="post" action="/FYP/logout.php">
       <input type="hidden" name="csrf_token" value="<?= epq_h($epqCsrfToken) ?>">
       <span class="game-account-name"><?= epq_h($epqDisplayName) ?></span>
+      <?php if ($epqIsGuest): ?>
+        <a class="game-logout-button" href="/FYP/register.php" style="text-decoration:none;">升级账号</a>
+      <?php endif; ?>
       <button type="submit" class="game-logout-button"><?= $epqIsGuest ? '↩ 退出游客模式' : '↪ 退出登录' ?></button>
     </form>
     <button type="button" class="settings-open-button" id="settingsOpenButton" data-i18n="settings.button">⚙ SETTINGS</button>
@@ -313,7 +316,7 @@ $epqCsrfToken = (string)$_SESSION['csrf_token'];
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261010-monsterart2").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261010-guestdb1").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");
