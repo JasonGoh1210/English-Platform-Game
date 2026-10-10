@@ -4270,3 +4270,41 @@ button { font: inherit; }
   .game-account-name { max-width: 16vw; font-size: .62rem; }
   .game-logout-button { padding: 5px 7px; font-size: .6rem; }
 }
+
+
+/* Keep the battle monster art clear of its HP card. The image can look larger
+   than its box, so lift and scale the artwork without moving the HP layout. */
+.battle-monster .monster-sprite {
+  overflow: visible;
+  isolation: isolate;
+}
+.battle-monster .monster-sprite img {
+  display: block;
+  width: 88% !important;
+  height: 88% !important;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  transform: translateY(-14px);
+  transform-origin: center bottom;
+}
+.battle-monster .hp-card {
+  position: relative;
+  z-index: 12;
+  margin-top: 16px;
+}
+.battle-monster .monster-name-box {
+  position: relative;
+  z-index: 11;
+}
+@media (max-width: 760px) {
+  .battle-monster .monster-sprite img {
+    width: 92% !important;
+    height: 92% !important;
+    transform: translateY(-8px);
+  }
+  .battle-monster .hp-card {
+    margin-top: 12px;
+  }
+}
