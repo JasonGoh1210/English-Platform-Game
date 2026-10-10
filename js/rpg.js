@@ -321,10 +321,10 @@ loadImageFromCandidates(
 );
 
 const mapEnemyArtPaths = {
-  "bat-01": "/FYP/images/world/monsters/confusion-bat.svg?v=20261010-monsterart1",
-  "road-guardian-01": "/FYP/images/world/monsters/road-guardian.svg?v=20261010-monsterart1",
-  "guardian-01": "/FYP/images/world/monsters/grammar-guardian.svg?v=20261010-monsterart1",
-  "cave-wraith-01": "/FYP/images/world/monsters/cave-wraith.svg?v=20261010-monsterart1"
+  "bat-01": "/FYP/images/world/monsters/confusion-bat.svg?v=20261010-monsterart2",
+  "road-guardian-01": "/FYP/images/world/monsters/road-guardian.svg?v=20261010-monsterart2",
+  "guardian-01": "/FYP/images/world/monsters/grammar-guardian.svg?v=20261010-monsterart2",
+  "cave-wraith-01": "/FYP/images/world/monsters/cave-wraith.svg?v=20261010-monsterart2"
 };
 const mapEnemyArtById = {};
 for (const [enemyId, imagePath] of Object.entries(mapEnemyArtPaths)) {
