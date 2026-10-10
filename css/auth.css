@@ -222,3 +222,79 @@ body.auth-page {
   .auth-panel { padding-right: 19px; padding-left: 19px; }
   .auth-form input { height: 44px; }
 }
+
+
+/* Guest mode entry: visually secondary to account login, but clearly actionable. */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 12px;
+  color: #778195;
+  font-size: .72rem;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(185, 180, 212, .18);
+}
+.auth-guest-form { margin: 0; }
+.auth-guest-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 66px;
+  padding: 12px 14px;
+  border: 1px solid rgba(180, 195, 215, .25);
+  border-radius: 10px;
+  color: #edf0f8;
+  background: linear-gradient(110deg, rgba(38, 48, 65, .86), rgba(25, 33, 48, .88));
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  transition: border-color .16s, background .16s, transform .16s;
+}
+.auth-guest-button:hover {
+  border-color: rgba(210, 192, 245, .62);
+  background: linear-gradient(110deg, rgba(49, 58, 78, .96), rgba(31, 40, 58, .96));
+  transform: translateY(-1px);
+}
+.auth-guest-button:focus-visible {
+  outline: 2px solid #c8a8f1;
+  outline-offset: 3px;
+}
+.auth-guest-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(200, 168, 241, .42);
+  border-radius: 10px;
+  color: #d9c5f8;
+  background: rgba(144, 113, 190, .12);
+  font-size: 1.35rem;
+}
+.auth-guest-button > span:nth-child(2) {
+  display: grid;
+  flex: 1;
+  gap: 4px;
+}
+.auth-guest-button strong {
+  font-size: .87rem;
+  font-weight: 800;
+}
+.auth-guest-button small {
+  color: #9ca6ba;
+  font-size: .68rem;
+  line-height: 1.4;
+}
+.auth-guest-arrow {
+  color: #c9b2ec;
+  font-size: 1.15rem;
+  transition: transform .16s;
+}
+.auth-guest-button:hover .auth-guest-arrow { transform: translateX(3px); }
