@@ -10,7 +10,7 @@ epq_require_login_page();
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#101b24">
   <title>English Power Quest · Battle</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-characterfix2">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-assetpaths1">
 </head>
 <body class="battle-page">
   <main class="battle-screen">
@@ -42,7 +42,7 @@ epq_require_login_page();
 
       <div class="battle-player player-side">
         <div class="player-shadow"></div>
-        <img class="battle-player-art" id="battlePlayerSprite" src="/FYP/images/player_walk_frames/png_frames/Player_Stand.png?v=20261010-characterfix2" alt="Player character">
+        <img class="battle-player-art" id="battlePlayerSprite" src="/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-assetpaths1" alt="Player character">
         <div class="player-name-box">
           <strong data-i18n="battle.you">YOU</strong>
           <span data-i18n="battle.adventurer">LANGUAGE ADVENTURER</span>
@@ -129,6 +129,6 @@ epq_require_login_page();
     </section>
   </div>
 
-  <script type="module" src="/FYP/js/battle.js?v=20261010-characterfix2"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261010-assetpaths1"></script>
 </body>
 </html>
