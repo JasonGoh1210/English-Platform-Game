@@ -1,7 +1,12 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261010-battlekeys1";
 
-const BATTLE_KEY = "englishPowerQuest.battle";
-const WORLD_SAVE_KEY = "englishPowerQuest.world.v2";
+// Use the same per-player storage namespace as the map. If these keys differ,
+// the battle page cannot find the enemy that the map just stored and redirects back.
+const AUTH_CONTEXT = window.EPQ_AUTH || {};
+const AUTH_PLAYER_ID = String(AUTH_CONTEXT.playerId || "guest");
+const BATTLE_KEY = `englishPowerQuest.battle.player.${AUTH_PLAYER_ID}`;
+const WORLD_SAVE_KEY = `englishPowerQuest.world.v2.player.${AUTH_PLAYER_ID}`;
+const ESCAPE_KEY = `englishPowerQuest.escape.v1.player.${AUTH_PLAYER_ID}`;
 
 const enemies = {
   "slime-01": {
@@ -491,7 +496,7 @@ function useItem() {
 }
 function returnToMapAfterBattle() {
   window.clearInterval(state.timerId);
-  sessionStorage.setItem("englishPowerQuest.escape.v1", state.enemy.id);
+  sessionStorage.setItem(ESCAPE_KEY, state.enemy.id);
   sessionStorage.removeItem(BATTLE_KEY);
   window.location.href = "/FYP/index.php";
 }
@@ -543,7 +548,7 @@ function showResult(victory, title, text, rewards) {
   ui.resultButton.onclick = () => {
     if (victory) {
       sessionStorage.removeItem(BATTLE_KEY);
-      sessionStorage.removeItem("englishPowerQuest.escape.v1");
+      sessionStorage.removeItem(ESCAPE_KEY);
       window.location.href = "/FYP/index.php";
     } else {
       window.location.reload();
