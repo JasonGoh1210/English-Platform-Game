@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
   <defs>
     <linearGradient id="shroud" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b9a0ff" stop-opacity=".95"/><stop offset=".45" stop-color="#6c54c7" stop-opacity=".9"/><stop offset="1" stop-color="#25204f" stop-opacity=".98"/></linearGradient>
     <radialGradient id="core"><stop stop-color="#c5ffff"/><stop offset=".35" stop-color="#64e9ff"/><stop offset="1" stop-color="#786aff" stop-opacity=".05"/></radialGradient>
