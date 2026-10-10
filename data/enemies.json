@@ -31,7 +31,7 @@
     "rewardXP": 25,
     "rewardCoins": 12,
     "rewardSkillPoints": 0,
-    "spritePath": "/FYP/images/world/monsters/confusion-bug.svg?v=20261010-monsterart1"
+    "spritePath": "/FYP/images/world/monsters/confusion-bug.svg?v=20261010-monsterart2"
   },
   {
     "id": "forest-bat",
@@ -48,7 +48,7 @@
     "rewardXP": 30,
     "rewardCoins": 15,
     "rewardSkillPoints": 0,
-    "spritePath": "/FYP/images/world/monsters/confusion-bat.svg?v=20261010-monsterart1"
+    "spritePath": "/FYP/images/world/monsters/confusion-bat.svg?v=20261010-monsterart2"
   },
   {
     "id": "grammar-guardian",
@@ -65,7 +65,7 @@
     "rewardXP": 30,
     "rewardCoins": 15,
     "rewardSkillPoints": 1,
-    "spritePath": "/FYP/images/world/monsters/grammar-guardian.svg?v=20261010-monsterart1"
+    "spritePath": "/FYP/images/world/monsters/grammar-guardian.svg?v=20261010-monsterart2"
   },
   {
     "id": "forest-wyrm",
@@ -100,7 +100,7 @@
         "damage": 18
       }
     ],
-    "spritePath": "/FYP/images/world/monsters/forest-wyrm.svg?v=20261010-monsterart1"
+    "spritePath": "/FYP/images/world/monsters/forest-wyrm.svg?v=20261010-monsterart2"
   },
   {
     "id": "forest-guardian",
@@ -142,6 +142,6 @@
         "damage": 22
       }
     ],
-    "spritePath": "/FYP/images/world/monsters/forest-guardian.svg?v=20261010-monsterart1"
+    "spritePath": "/FYP/images/world/monsters/forest-guardian.svg?v=20261010-monsterart2"
   }
 ]
