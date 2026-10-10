@@ -1,0 +1,224 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap');
+
+:root {
+  color-scheme: dark;
+  --auth-ink: #f4f2fb;
+  --auth-muted: #aaaec0;
+  --auth-line: rgba(211, 195, 245, .2);
+  --auth-gold: #e6ca8b;
+  --auth-lilac: #c8a8f1;
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; margin: 0; }
+body.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: clamp(14px, 3vw, 38px);
+  color: var(--auth-ink);
+  background:
+    radial-gradient(ellipse at 15% 10%, rgba(99, 89, 156, .22), transparent 42%),
+    radial-gradient(ellipse at 85% 90%, rgba(37, 116, 121, .16), transparent 40%),
+    #0b1018;
+  font-family: Inter, "Noto Sans SC", system-ui, sans-serif;
+}
+.auth-layout {
+  width: min(1120px, 100%);
+  min-height: min(690px, calc(100vh - 48px));
+  display: grid;
+  grid-template-columns: minmax(0, 1.02fr) minmax(390px, .88fr);
+  overflow: hidden;
+  border: 1px solid rgba(215, 192, 248, .25);
+  border-radius: 24px;
+  background: #111722;
+  box-shadow: 0 28px 100px rgba(0,0,0,.52), 0 0 65px rgba(136, 97, 184, .08);
+}
+.auth-layout-register { min-height: min(790px, calc(100vh - 36px)); }
+.auth-art {
+  position: relative;
+  isolation: isolate;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(24px, 4vw, 50px);
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(9, 16, 24, .28), rgba(9, 15, 23, .4) 42%, rgba(8, 12, 21, .94)),
+    url("/FYP/images/world/ancient-ruins.webp?v=20261010-authstory1") center / cover no-repeat,
+    linear-gradient(145deg, #314c6a, #141c2d 65%, #171426);
+}
+.auth-art::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(125deg, rgba(51, 116, 125, .18), transparent 45%, rgba(167, 109, 215, .2));
+}
+.auth-art-glow {
+  position: absolute;
+  z-index: -1;
+  width: 340px;
+  height: 340px;
+  right: -100px;
+  top: 19%;
+  border-radius: 50%;
+  background: rgba(132, 112, 224, .22);
+  filter: blur(70px);
+}
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: .78rem;
+  font-weight: 900;
+  letter-spacing: .14em;
+}
+.auth-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(230, 202, 139, .8);
+  border-radius: 11px;
+  color: var(--auth-gold);
+  background: rgba(17, 21, 36, .55);
+  font-size: 1.1rem;
+}
+.auth-art-copy { max-width: 480px; margin: 60px 0 45px; }
+.auth-kicker {
+  margin: 0 0 11px;
+  color: var(--auth-gold);
+  font-size: .66rem;
+  font-weight: 900;
+  letter-spacing: .19em;
+}
+.auth-art-copy h1 {
+  margin: 0;
+  font-size: clamp(2.3rem, 4.3vw, 4.1rem);
+  letter-spacing: -.045em;
+  line-height: 1.12;
+  text-shadow: 0 4px 28px rgba(0,0,0,.3);
+}
+.auth-art-copy h1 em { color: #d4b6f3; font-style: normal; }
+.auth-art-copy > p:last-child {
+  max-width: 36ch;
+  margin: 19px 0 0;
+  color: #d1d4e0;
+  font-size: .96rem;
+  line-height: 1.8;
+}
+.auth-world-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.auth-world-tags span {
+  padding: 7px 10px;
+  border: 1px solid rgba(228, 211, 250, .3);
+  border-radius: 999px;
+  color: #e8dcf7;
+  background: rgba(14, 20, 31, .38);
+  font-size: .58rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+.auth-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 66px clamp(24px, 4vw, 54px) 34px;
+  background:
+    radial-gradient(ellipse at 80% 0%, rgba(106, 83, 153, .15), transparent 44%),
+    linear-gradient(145deg, #151b29, #0e141f);
+}
+.auth-back {
+  position: absolute;
+  top: 25px;
+  right: 28px;
+  color: #d6c0f1;
+  font-size: .75rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.auth-back span { padding-left: 4px; }
+.auth-panel-inner { width: min(390px, 100%); margin: auto; }
+.auth-panel h2 { margin: 0; font-size: clamp(1.8rem, 3vw, 2.45rem); letter-spacing: -.04em; }
+.auth-subtitle { margin: 9px 0 28px; color: var(--auth-muted); font-size: .88rem; line-height: 1.65; }
+.auth-alert {
+  margin: 0 0 18px;
+  padding: 11px 13px;
+  border: 1px solid rgba(255, 128, 153, .42);
+  border-radius: 10px;
+  color: #ffd6de;
+  background: rgba(135, 47, 67, .22);
+  font-size: .82rem;
+  line-height: 1.55;
+}
+.auth-form { display: grid; gap: 9px; }
+.auth-form label { margin-top: 6px; color: #d7d8e4; font-size: .78rem; font-weight: 750; }
+.auth-form input {
+  width: 100%;
+  height: 47px;
+  padding: 0 13px;
+  border: 1px solid rgba(185, 180, 212, .26);
+  border-radius: 9px;
+  outline: none;
+  color: #fff;
+  background: #0c121d;
+  font: inherit;
+  font-size: .91rem;
+  transition: border-color .15s, box-shadow .15s;
+}
+.auth-form input:focus {
+  border-color: #bca0eb;
+  box-shadow: 0 0 0 3px rgba(184, 148, 234, .12);
+}
+.auth-form input::placeholder { color: #747d91; }
+.auth-optional { padding-left: 6px; color: #8e95a8; font-size: .68rem; font-weight: 500; }
+.auth-submit {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  min-height: 49px;
+  margin-top: 16px;
+  padding: 0 17px;
+  border: 1px solid #e5d1ff;
+  border-radius: 10px;
+  color: #251a35;
+  background: linear-gradient(115deg, #ead8fb, #b99ae4);
+  box-shadow: 0 7px 24px rgba(142, 101, 185, .18);
+  cursor: pointer;
+  font: inherit;
+  font-size: .91rem;
+  font-weight: 900;
+}
+.auth-submit:hover { filter: brightness(1.07); transform: translateY(-1px); }
+.auth-submit span { font-size: 1.2rem; }
+.auth-footnote { margin: 22px 0 0; color: #b9bdcd; font-size: .81rem; text-align: center; }
+.auth-footnote a { color: #d7bbfa; font-weight: 800; text-decoration: none; }
+.auth-footnote a:hover, .auth-back:hover { text-decoration: underline; }
+.auth-smallprint { margin: 18px 0 0; color: #81899c; font-size: .7rem; line-height: 1.6; text-align: center; }
+@media (max-width: 820px) {
+  body.auth-page { padding: 12px; }
+  .auth-layout, .auth-layout-register {
+    width: min(520px, 100%);
+    min-height: auto;
+    grid-template-columns: 1fr;
+    border-radius: 18px;
+  }
+  .auth-art { min-height: 195px; padding: 22px 24px 18px; }
+  .auth-brand { font-size: .65rem; }
+  .auth-art-copy { margin: 28px 0 24px; }
+  .auth-art-copy h1 { font-size: clamp(1.9rem, 8vw, 2.8rem); }
+  .auth-art-copy > p:last-child { margin-top: 10px; font-size: .8rem; }
+  .auth-world-tags { display: none; }
+  .auth-panel { padding: 62px 24px 28px; }
+  .auth-back { top: 22px; right: 24px; }
+  .auth-layout-register .auth-art { min-height: 160px; }
+  .auth-layout-register .auth-art-copy { margin: 18px 0 12px; }
+  .auth-layout-register .auth-art-copy > p:last-child { display: none; }
+  .auth-layout-register .auth-panel { padding-top: 58px; }
+}
+@media (max-width: 420px) {
+  .auth-panel { padding-right: 19px; padding-left: 19px; }
+  .auth-form input { height: 44px; }
+}
