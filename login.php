@@ -5,17 +5,22 @@ epq_redirect_if_logged_in();
 
 $error = '';
 $username = '';
+$guestName = trim((string)($_POST['guest_name'] ?? ''));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['guest_mode'] ?? '') === '1') {
     $csrf = (string)($_POST['csrf_token'] ?? '');
     if (!epq_csrf_is_valid($csrf)) {
         $error = '页面已过期，请刷新后再试。';
+    } elseif ($guestName === '') {
+        $error = '请先为你的角色取一个名字。';
+    } elseif (preg_match("/^[\\p{L}\\p{N} _.'-]{2,24}$/u", $guestName) !== 1) {
+        $error = '角色名字需要 2–24 个字符，只能使用文字、数字、空格、点、连字符或下划线。';
     } else {
         session_regenerate_id(true);
         unset($_SESSION['user_id'], $_SESSION['player_id'], $_SESSION['username']);
         $_SESSION['guest_mode'] = true;
         $_SESSION['guest_id'] = 'guest_' . bin2hex(random_bytes(12));
-        $_SESSION['display_name'] = 'Guest Adventurer';
+        $_SESSION['display_name'] = $guestName;
         $_SESSION['show_story_intro'] = false;
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         header('Location: /FYP/index.php');
@@ -106,9 +111,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['guest_mode'] ?? ''
         <form class="auth-guest-form" method="post" action="/FYP/login.php">
           <input type="hidden" name="csrf_token" value="<?= epq_h((string)$_SESSION['csrf_token']) ?>">
           <input type="hidden" name="guest_mode" value="1">
+          <label class="auth-guest-name-label" for="guestName">角色名字 / Character Name</label>
+          <input
+            class="auth-guest-name-input"
+            id="guestName"
+            name="guest_name"
+            type="text"
+            maxlength="24"
+            minlength="2"
+            value="<?= epq_h($guestName) ?>"
+            placeholder="例如：Kenny、星夜旅人"
+            autocomplete="nickname"
+            aria-describedby="guestNameHint"
+            required
+          >
+          <small class="auth-guest-name-hint" id="guestNameHint">2–24 个字符 · 不需要注册账号 · 名字会显示在游戏角色栏</small>
           <button class="auth-guest-button" type="submit">
             <span class="auth-guest-icon" aria-hidden="true">◇</span>
-            <span><strong>以游客身份游玩</strong><small>无需注册 · 进度只保存在此浏览器</small></span>
+            <span><strong>以游客身份游玩</strong><small>使用你填写的角色名字开始冒险</small></span>
             <span class="auth-guest-arrow" aria-hidden="true">→</span>
           </button>
         </form>
