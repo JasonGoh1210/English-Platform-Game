@@ -692,7 +692,7 @@ async function init() {
   // Use the supplied image assets for the battle scene.
   ui.enemyFigure.textContent = "";
   const monsterArt = document.createElement("img");
-  monsterArt.src = "/FYP/images/player_walk_frames/monster/Monster.png";
+  monsterArt.src = "/FYP/assets/enemies/monster/Monster.png";
   monsterArt.alt = state.enemy.name;
   monsterArt.draggable = false;
   monsterArt.style.width = "100%";
@@ -705,9 +705,9 @@ async function init() {
     // failure cannot leave a broken-image placeholder in the battle scene.
     ui.playerSprite.onerror = () => {
       ui.playerSprite.onerror = null;
-      ui.playerSprite.src = "/FYP/images/player_walk_frames/png_frames/player_walk_right_1.png?v=20261010-characterfix2";
+      ui.playerSprite.src = "/FYP/assets/player/png_frames/player_walk_right_1.png?v=20261010-assetpaths1";
     };
-    ui.playerSprite.src = "/FYP/images/player_walk_frames/png_frames/Player_Stand.png?v=20261010-characterfix2";
+    ui.playerSprite.src = "/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-assetpaths1";
   }
 
   bindBattleEvents();
