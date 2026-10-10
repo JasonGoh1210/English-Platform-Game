@@ -12,7 +12,7 @@ $epqPlayerId = (int)$_SESSION['player_id'];
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#101b24">
   <title>English Power Quest · Battle</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-assetpaths1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-hpclear1">
 </head>
 <body class="battle-page">
   <main class="battle-screen">
