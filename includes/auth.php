@@ -4,6 +4,8 @@ declare(strict_types=1);
 if (session_status() !== PHP_SESSION_ACTIVE) {
     $isHttps = !empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off';
     session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
         'httponly' => true,
         'secure' => $isHttps,
         'samesite' => 'Lax'
