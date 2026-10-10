@@ -1,11 +1,12 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/includes/auth.php';
-epq_redirect_if_logged_in();
+if (!epq_is_guest()) epq_redirect_if_logged_in();
+$isGuestUpgrade = epq_is_guest();
 
 $error = '';
 $username = '';
-$displayName = '';
+$displayName = $isGuestUpgrade ? (string)($_SESSION['display_name'] ?? '') : '';
 $email = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -31,6 +32,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         try {
             $db = epq_db();
+            if ($isGuestUpgrade) {
+                // Upgrade the *existing* account: same user_id and player_id, no lost quests/XP.
+                $guestUserId = (int)$_SESSION['user_id'];
+                $guestPlayerId = (int)$_SESSION['player_id'];
+                $db->begin_transaction();
+                $locked = $db->prepare(
+                    "SELECT user_id FROM users WHERE user_id = ? AND account_type = 'guest' FOR UPDATE"
+                );
+                $locked->bind_param('i', $guestUserId);
+                $locked->execute();
+                if (!$locked->get_result()->fetch_assoc()) {
+                    throw new RuntimeException('Guest account already upgraded or missing.');
+                }
+                $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+                $emailValue = $email === '' ? null : $email;
+                $upgrade = $db->prepare(
+                    "UPDATE users SET username = ?, password_hash = ?, email = ?, account_type = 'password'
+                     WHERE user_id = ? AND account_type = 'guest'"
+                );
+                $upgrade->bind_param('sssi', $username, $passwordHash, $emailValue, $guestUserId);
+                if (!$upgrade->execute()) throw new RuntimeException('Unable to upgrade guest account: ' . $upgrade->error);
+                $profile = $db->prepare('UPDATE players SET display_name = ? WHERE player_id = ? AND user_id = ?');
+                $profile->bind_param('sii', $displayName, $guestPlayerId, $guestUserId);
+                if (!$profile->execute()) throw new RuntimeException('Unable to keep guest profile.');
+                $intro = $db->prepare('SELECT story_intro_seen FROM players WHERE player_id = ?');
+                $intro->bind_param('i', $guestPlayerId);
+                $intro->execute();
+                $storyRow = $intro->get_result()->fetch_assoc();
+                epq_guest_revoke_tokens($db, $guestUserId);
+                $db->commit();
+                epq_clear_guest_cookie();
+                epq_authenticate_session([
+                    'user_id' => $guestUserId,
+                    'player_id' => $guestPlayerId,
+                    'username' => $username,
+                    'display_name' => $displayName
+                ], (int)($storyRow['story_intro_seen'] ?? 0) !== 1);
+                header('Location: /FYP/index.php');
+                exit;
+            }
+
             $worldResult = $db->query("SELECT world_id FROM worlds WHERE is_active = 1 ORDER BY world_order ASC LIMIT 1");
             $worldRow = $worldResult ? $worldResult->fetch_assoc() : null;
             if (!$worldRow) {
@@ -130,11 +172,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </section>
 
     <section class="auth-panel">
-      <a class="auth-back" href="/FYP/login.php">已有账号？登录 <span>↗</span></a>
+      <a class="auth-back" href="<?= $isGuestUpgrade ? '/FYP/index.php' : '/FYP/login.php' ?>"><?= $isGuestUpgrade ? '返回游戏' : '已有账号？登录' ?> <span>↗</span></a>
       <div class="auth-panel-inner">
         <p class="auth-kicker">CREATE YOUR HERO</p>
-        <h2>创建账号</h2>
-        <p class="auth-subtitle">资料只用于建立你的游戏角色与保存进度。</p>
+        <h2><?= $isGuestUpgrade ? '升级游客账号' : '创建账号' ?></h2>
+        <p class="auth-subtitle"><?= $isGuestUpgrade ? '保留当前角色的等级、剧情、金币和冒险进度，并设置永久登录密码。' : '资料只用于建立你的游戏角色与保存进度。' ?></p>
 
         <?php if ($error !== ''): ?>
           <div class="auth-alert" role="alert"><?= epq_h($error) ?></div>
@@ -152,7 +194,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <input id="password" name="password" type="password" autocomplete="new-password" minlength="8" required>
           <label for="confirm_password">确认密码</label>
           <input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" minlength="8" required>
-          <button class="auth-submit" type="submit">创建角色并开始 Story <span>→</span></button>
+          <button class="auth-submit" type="submit"><?= $isGuestUpgrade ? '升级并保留存档' : '创建角色并开始 Story' ?> <span>→</span></button>
         </form>
         <p class="auth-smallprint">密码会使用 PHP password_hash 安全哈希储存，不会以明文写入数据库。</p>
       </div>

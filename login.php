@@ -16,15 +16,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['guest_mode'] ?? ''
     } elseif (preg_match("/^[\\p{L}\\p{N} _.'-]{2,24}$/u", $guestName) !== 1) {
         $error = '角色名字需要 2–24 个字符，只能使用文字、数字、空格、点、连字符或下划线。';
     } else {
-        session_regenerate_id(true);
-        unset($_SESSION['user_id'], $_SESSION['player_id'], $_SESSION['username']);
-        $_SESSION['guest_mode'] = true;
-        $_SESSION['guest_id'] = 'guest_' . bin2hex(random_bytes(12));
-        $_SESSION['display_name'] = $guestName;
-        $_SESSION['show_story_intro'] = false;
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-        header('Location: /FYP/index.php');
-        exit;
+        try {
+            $db = epq_db();
+            $guestPlayer = epq_create_guest_player($db, $guestName);
+            epq_guest_start_session($guestPlayer);
+            header('Location: /FYP/index.php');
+            exit;
+        } catch (Throwable $e) {
+            error_log('[English Power Quest guest registration] ' . $e->getMessage());
+            $error = '无法创建游客存档。请先运行 database/migrations/003_persistent_guests.sql，并确认数据库已经导入基础数据。';
+        }
     }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = strtolower(trim((string)($_POST['username'] ?? '')));
@@ -125,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['guest_mode'] ?? ''
             aria-describedby="guestNameHint"
             required
           >
-          <small class="auth-guest-name-hint" id="guestNameHint">2–24 个字符 · 不需要注册账号 · 名字会显示在游戏角色栏</small>
+          <small class="auth-guest-name-hint" id="guestNameHint">2–24 个字符 · 自动创建 MySQL 游客存档 · 此浏览器 30 天内可继续</small>
           <button class="auth-guest-button" type="submit">
             <span class="auth-guest-icon" aria-hidden="true">◇</span>
             <span><strong>以游客身份游玩</strong><small>使用你填写的角色名字开始冒险</small></span>

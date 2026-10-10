@@ -19,6 +19,8 @@ CREATE TABLE users (
     username VARCHAR(50) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NULL,
     email VARCHAR(120) NULL UNIQUE,
+    account_type ENUM('password', 'guest', 'google') NOT NULL DEFAULT 'password',
+    google_sub VARCHAR(255) NULL UNIQUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -53,6 +55,25 @@ CREATE TABLE players (
         FOREIGN KEY (user_id) REFERENCES users(user_id),
     CONSTRAINT fk_players_world
         FOREIGN KEY (current_world_id) REFERENCES worlds(world_id)
+);
+
+-- Durable anonymous browser credentials (hashed, never plaintext in MySQL).
+CREATE TABLE guest_login_tokens (
+    token_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_guest_token_user (user_id),
+    INDEX idx_guest_token_expiry (expires_at),
+    CONSTRAINT fk_guest_token_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- Small map/story state snapshot. XP/coins remain authoritative in players.
+CREATE TABLE player_game_saves (
+    player_id BIGINT UNSIGNED PRIMARY KEY,
+    save_json JSON NOT NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_game_save_player FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE
 );
 
 -- ============================================================

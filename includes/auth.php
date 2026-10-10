@@ -14,6 +14,7 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 }
 
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/guest.php';
 
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -24,7 +25,8 @@ function epq_h(string $value): string {
 }
 
 function epq_is_guest(): bool {
-    return !empty($_SESSION['guest_mode']) && !empty($_SESSION['guest_id']);
+    return !empty($_SESSION['guest_mode']) && !empty($_SESSION['guest_id'])
+        && !empty($_SESSION['user_id']) && !empty($_SESSION['player_id']);
 }
 
 function epq_require_login_page(): void {
@@ -60,3 +62,6 @@ function epq_authenticate_session(array $row, bool $showStory): void {
     $_SESSION['show_story_intro'] = $showStory;
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
+
+// Recover an anonymous player from the browser's HttpOnly 30-day cookie.
+epq_guest_try_resume();

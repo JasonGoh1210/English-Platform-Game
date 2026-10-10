@@ -10,6 +10,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// Explicit logout revokes persistent guest recovery; simply closing the browser does not.
+if (epq_is_guest()) {
+    try { epq_guest_revoke_tokens(epq_db(), (int)$_SESSION['user_id']); }
+    catch (Throwable $e) { error_log('[English Power Quest logout] ' . $e->getMessage()); }
+}
+epq_clear_guest_cookie();
 $_SESSION = [];
 if (ini_get('session.use_cookies')) {
     $params = session_get_cookie_params();
