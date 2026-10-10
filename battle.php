@@ -2,6 +2,8 @@
 declare(strict_types=1);
 require_once __DIR__ . '/includes/auth.php';
 epq_require_login_page();
+
+$epqPlayerId = (int)$_SESSION['player_id'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -129,6 +131,12 @@ epq_require_login_page();
     </section>
   </div>
 
-  <script type="module" src="/FYP/js/battle.js?v=20261010-assetpaths1"></script>
+  <script>
+    // Keep battle-page storage scoped to the same logged-in player as the map.
+    window.EPQ_AUTH = <?= json_encode([
+      'playerId' => $epqPlayerId
+    ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+  </script>
+  <script type="module" src="/FYP/js/battle.js?v=20261010-battlekeys1"></script>
 </body>
 </html>
