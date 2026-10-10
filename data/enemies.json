@@ -6,11 +6,15 @@
     "hp": 60,
     "damage": 10,
     "difficulty": "EASY",
-    "questionTypes": ["TRUE_FALSE", "ODD_WORD_OUT"],
+    "questionTypes": [
+      "TRUE_FALSE",
+      "ODD_WORD_OUT"
+    ],
     "visual": "🟢",
     "rewardXP": 20,
     "rewardCoins": 10,
-    "rewardSkillPoints": 0
+    "rewardSkillPoints": 0,
+    "spritePath": "/FYP/assets/enemies/monster/Shrim.png?v=20261010-enemyart1"
   },
   {
     "id": "confusion-bug",
@@ -19,11 +23,15 @@
     "hp": 70,
     "damage": 10,
     "difficulty": "EASY",
-    "questionTypes": ["TRUE_FALSE", "ODD_WORD_OUT"],
+    "questionTypes": [
+      "TRUE_FALSE",
+      "ODD_WORD_OUT"
+    ],
     "visual": "🪲",
     "rewardXP": 25,
     "rewardCoins": 12,
-    "rewardSkillPoints": 0
+    "rewardSkillPoints": 0,
+    "spritePath": "/FYP/images/world/monsters/confusion-bug.svg?v=20261010-monsterart1"
   },
   {
     "id": "forest-bat",
@@ -32,11 +40,15 @@
     "hp": 80,
     "damage": 11,
     "difficulty": "MEDIUM",
-    "questionTypes": ["ODD_WORD_OUT", "SENTENCE_BUILDER"],
+    "questionTypes": [
+      "ODD_WORD_OUT",
+      "SENTENCE_BUILDER"
+    ],
     "visual": "🦇",
     "rewardXP": 30,
     "rewardCoins": 15,
-    "rewardSkillPoints": 0
+    "rewardSkillPoints": 0,
+    "spritePath": "/FYP/images/world/monsters/confusion-bat.svg?v=20261010-monsterart1"
   },
   {
     "id": "grammar-guardian",
@@ -45,11 +57,15 @@
     "hp": 100,
     "damage": 12,
     "difficulty": "MEDIUM",
-    "questionTypes": ["TRUE_FALSE", "SENTENCE_BUILDER"],
+    "questionTypes": [
+      "TRUE_FALSE",
+      "SENTENCE_BUILDER"
+    ],
     "visual": "🛡️",
     "rewardXP": 30,
     "rewardCoins": 15,
-    "rewardSkillPoints": 1
+    "rewardSkillPoints": 1,
+    "spritePath": "/FYP/images/world/monsters/grammar-guardian.svg?v=20261010-monsterart1"
   },
   {
     "id": "forest-wyrm",
@@ -58,16 +74,33 @@
     "hp": 150,
     "damage": 15,
     "difficulty": "MEDIUM",
-    "questionTypes": ["ODD_WORD_OUT", "SENTENCE_BUILDER", "TRUE_FALSE"],
+    "questionTypes": [
+      "ODD_WORD_OUT",
+      "SENTENCE_BUILDER",
+      "TRUE_FALSE"
+    ],
     "visual": "🐉",
     "rewardXP": 50,
     "rewardCoins": 30,
     "rewardSkillPoints": 1,
     "isBoss": true,
     "phases": [
-      { "number": 1, "name": "Awakening", "hpThresholdPercent": 1, "difficulty": "MEDIUM", "damage": 15 },
-      { "number": 2, "name": "Wild Growth", "hpThresholdPercent": 0.5, "difficulty": "HARD", "damage": 18 }
-    ]
+      {
+        "number": 1,
+        "name": "Awakening",
+        "hpThresholdPercent": 1,
+        "difficulty": "MEDIUM",
+        "damage": 15
+      },
+      {
+        "number": 2,
+        "name": "Wild Growth",
+        "hpThresholdPercent": 0.5,
+        "difficulty": "HARD",
+        "damage": 18
+      }
+    ],
+    "spritePath": "/FYP/images/world/monsters/forest-wyrm.svg?v=20261010-monsterart1"
   },
   {
     "id": "forest-guardian",
@@ -76,16 +109,39 @@
     "hp": 220,
     "damage": 18,
     "difficulty": "HARD",
-    "questionTypes": ["TRUE_FALSE", "ODD_WORD_OUT", "SENTENCE_BUILDER"],
+    "questionTypes": [
+      "TRUE_FALSE",
+      "ODD_WORD_OUT",
+      "SENTENCE_BUILDER"
+    ],
     "visual": "🗿",
     "rewardXP": 100,
     "rewardCoins": 100,
     "rewardSkillPoints": 2,
     "isBoss": true,
     "phases": [
-      { "number": 1, "name": "Ancient Roots", "hpThresholdPercent": 1, "difficulty": "MEDIUM", "damage": 18 },
-      { "number": 2, "name": "Awakened Power", "hpThresholdPercent": 0.66, "difficulty": "HARD", "damage": 20 },
-      { "number": 3, "name": "Final Trial", "hpThresholdPercent": 0.33, "difficulty": "HARD", "damage": 22 }
-    ]
+      {
+        "number": 1,
+        "name": "Ancient Roots",
+        "hpThresholdPercent": 1,
+        "difficulty": "MEDIUM",
+        "damage": 18
+      },
+      {
+        "number": 2,
+        "name": "Awakened Power",
+        "hpThresholdPercent": 0.66,
+        "difficulty": "HARD",
+        "damage": 20
+      },
+      {
+        "number": 3,
+        "name": "Final Trial",
+        "hpThresholdPercent": 0.33,
+        "difficulty": "HARD",
+        "damage": 22
+      }
+    ],
+    "spritePath": "/FYP/images/world/monsters/forest-guardian.svg?v=20261010-monsterart1"
   }
 ]
