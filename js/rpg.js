@@ -1014,15 +1014,16 @@ function interact() {
     world.currentDialogueIndex = world.questStep % npc.dialogueKeys.length;
 
     const storyBeats = {
-      elder: { step: 0, dialogueKey: "npc.elder.story", nextStep: 1, xp: 25, coins: 0, power: 1, skill: "VOCABULARY", label: "The First Words" },
-      mira:  { step: 1, dialogueKey: "npc.mira.story",  nextStep: 2, xp: 30, coins: 5, power: 1, skill: "VOCABULARY", label: "Words in the Woods" },
-      tala:  { step: 2, dialogueKey: "npc.tala.story",  nextStep: 3, xp: 30, coins: 5, power: 1, skill: "VOCABULARY", label: "A Promise by Firelight" },
-      kai:   { step: 3, dialogueKey: "npc.kai.story",   nextStep: 4, xp: 40, coins: 10, power: 2, skill: "IT_ENGLISH", label: "The Language of the Lost" }
+      elder: { step: 0, dialogueKey: "npc.elder.story", nextStep: 1, xp: 25, coins: 0, power: 1, skill: "VOCABULARY", label: "The First Words", titleKey: "quest.first.title" },
+      mira:  { step: 1, dialogueKey: "npc.mira.story",  nextStep: 2, xp: 30, coins: 5, power: 1, skill: "VOCABULARY", label: "Words in the Woods", titleKey: "quest.forest.title" },
+      tala:  { step: 2, dialogueKey: "npc.tala.story",  nextStep: 3, xp: 30, coins: 5, power: 1, skill: "VOCABULARY", label: "A Promise by Firelight", titleKey: "quest.camp.title" },
+      kai:   { step: 3, dialogueKey: "npc.kai.story",   nextStep: 4, xp: 40, coins: 10, power: 2, skill: "IT_ENGLISH", label: "The Language of the Lost", titleKey: "quest.ruins.title" }
     };
     const beat = storyBeats[npc.id];
     let dialogueKey = npc.dialogueKeys[world.currentDialogueIndex];
+    const storyBeatTriggered = Boolean(beat && world.questStep === beat.step);
 
-    if (beat && world.questStep === beat.step) {
+    if (storyBeatTriggered) {
       dialogueKey = beat.dialogueKey;
       world.questStep = beat.nextStep;
       world.xp += beat.xp;
@@ -1042,6 +1043,11 @@ function interact() {
       });
     } else if (npc.id === "kai" && world.questStep >= 5) {
       dialogueKey = "npc.kai.after";
+    }
+
+    if (storyBeatTriggered) {
+      startChapterStoryboard(npc, beat, dialogueKey);
+      return;
     }
 
     world.currentDialogueKey = dialogueKey;
