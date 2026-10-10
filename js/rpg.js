@@ -824,20 +824,6 @@ function storyPortraitSource(characterId) {
   return { src: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg), kind: "illustration" };
 }
 
-function splitStoryParagraph(paragraph, maxFrames = 3) {
-  const parts = String(paragraph || "")
-    .match(/[^.!?。！？]+[.!?。！？]*/g)
-    ?.map(part => part.trim())
-    .filter(Boolean) || [String(paragraph || "")];
-  if (parts.length <= maxFrames) return parts;
-  const frames = [];
-  const perFrame = Math.ceil(parts.length / maxFrames);
-  for (let i = 0; i < parts.length; i += perFrame) {
-    frames.push(parts.slice(i, i + perFrame).join(" "));
-  }
-  return frames.slice(0, maxFrames);
-}
-
 function buildIntroStoryboard() {
   const sequence = [];
   for (let page = 1; page <= 3; page += 1) {
