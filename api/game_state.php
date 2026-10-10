@@ -69,14 +69,38 @@ try {
     }
     $state = epq_safe_map_state($body['state']);
     $save = json_encode($state, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    $realmOrders = ['maple' => 1, 'forest' => 2, 'camp' => 3, 'ruins' => 4];
+    $worldOrder = $realmOrders[$state['currentRealmId']];
+    $lookup = $db->prepare('SELECT world_id FROM worlds WHERE world_order = ? AND is_active = 1 LIMIT 1');
+    $lookup->bind_param('i', $worldOrder);
+    $lookup->execute();
+    $worldRow = $lookup->get_result()->fetch_assoc();
+    if (!$worldRow) throw new RuntimeException('Realm is missing from the worlds table. Apply migration 004.');
+    $worldId = (int)$worldRow['world_id'];
+
+    $db->begin_transaction();
     $stmt = $db->prepare(
         'INSERT INTO player_game_saves (player_id, save_json) VALUES (?, ?)
          ON DUPLICATE KEY UPDATE save_json = VALUES(save_json), updated_at = CURRENT_TIMESTAMP'
     );
     $stmt->bind_param('is', $playerId, $save);
     if (!$stmt->execute()) throw new RuntimeException('Failed to save game state.');
+    $playerUpdate = $db->prepare('UPDATE players SET current_world_id = ? WHERE player_id = ?');
+    $playerUpdate->bind_param('ii', $worldId, $playerId);
+    if (!$playerUpdate->execute()) throw new RuntimeException('Failed to update current world.');
+    $worldProgress = $db->prepare(
+        "INSERT INTO player_world_progress (player_id, world_id, status, unlocked_at)
+         VALUES (?, ?, 'UNLOCKED', CURRENT_TIMESTAMP)
+         ON DUPLICATE KEY UPDATE
+           status = IF(status = 'COMPLETED', 'COMPLETED', 'UNLOCKED'),
+           unlocked_at = COALESCE(unlocked_at, CURRENT_TIMESTAMP)"
+    );
+    $worldProgress->bind_param('ii', $playerId, $worldId);
+    if (!$worldProgress->execute()) throw new RuntimeException('Failed to update world progress.');
+    $db->commit();
     epq_json(['ok' => true, 'saved' => true]);
 } catch (Throwable $e) {
+    if (isset($db) && $db instanceof mysqli) $db->rollback();
     error_log('[English Power Quest game state] ' . $e->getMessage());
-    epq_json(['ok' => false, 'error' => 'Game save is unavailable. Apply migration 003.'], 500);
+    epq_json(['ok' => false, 'error' => 'Game save is unavailable. Apply migrations 003 and 004.'], 500);
 }

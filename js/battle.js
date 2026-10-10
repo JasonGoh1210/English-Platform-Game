@@ -9,6 +9,12 @@ const BATTLE_KEY = `englishPowerQuest.battle.player.${AUTH_PLAYER_ID}`;
 const WORLD_SAVE_KEY = `englishPowerQuest.world.v2.player.${AUTH_PLAYER_ID}`;
 const ESCAPE_KEY = `englishPowerQuest.escape.v1.player.${AUTH_PLAYER_ID}`;
 let pendingBattleSave = Promise.resolve();
+const pendingBattleRewards = [];
+function trackBattleReward(payload) {
+  const promise = saveProgressServer(payload);
+  pendingBattleRewards.push(promise);
+  return promise;
+}
 async function saveBattleState(state) {
   try {
     const response = await fetch("/FYP/api/game_state.php", {
@@ -418,7 +424,7 @@ function resolve(value, button, timedOut) {
     power: Number(saved.power || 0) + Number(q.englishPower || 1)
   });
 
-  void saveProgressServer({
+  void trackBattleReward({
     xpDelta: Number(q.xp || 10),
     coinDelta: Number(q.coins || 5),
     englishPowerDelta: Number(q.englishPower || 1),
@@ -503,7 +509,7 @@ function useItem() {
 
   state.playerHp = Math.min(state.playerMaxHp, state.playerHp + 20);
   updateSave({ coins: currentCoins - 5 });
-  void saveProgressServer({
+  void trackBattleReward({
     xpDelta: 0,
     coinDelta: -5,
     englishPowerDelta: 0,
@@ -527,7 +533,7 @@ async function returnToMapAfterBattle() {
   window.clearInterval(state.timerId);
   sessionStorage.setItem(ESCAPE_KEY, state.enemy.id);
   sessionStorage.removeItem(BATTLE_KEY);
-  await pendingBattleSave;
+  await Promise.allSettled([pendingBattleSave, ...pendingBattleRewards]);
   window.location.href = "/FYP/index.php";
 }
 
@@ -579,7 +585,7 @@ function showResult(victory, title, text, rewards) {
     if (victory) {
       sessionStorage.removeItem(BATTLE_KEY);
       sessionStorage.removeItem(ESCAPE_KEY);
-      void pendingBattleSave.then(() => { window.location.href = "/FYP/index.php"; });
+      void Promise.allSettled([pendingBattleSave, ...pendingBattleRewards]).then(() => { window.location.href = "/FYP/index.php"; });
     } else {
       window.location.reload();
     }
@@ -625,7 +631,7 @@ function finishVictory() {
 
   // Enemy victory grants XP and Coins. English Power is awarded for
   // learning activities (correct answers/learning quests), not kills.
-  void saveProgressServer({
+  void trackBattleReward({
     xpDelta: state.enemy.xp,
     coinDelta: state.enemy.coins,
     englishPowerDelta: 0,

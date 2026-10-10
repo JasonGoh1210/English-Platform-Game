@@ -1882,6 +1882,7 @@ async function saveServerProgress(payload) {
   try {
     const response = await fetch("/FYP/api/save_progress.php", {
       method: "POST",
+      keepalive: true,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...payload, csrfToken: AUTH_CONTEXT.csrfToken || "" })
     });

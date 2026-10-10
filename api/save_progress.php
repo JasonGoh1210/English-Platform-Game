@@ -10,7 +10,7 @@ try {
         epq_json(['ok' => false, 'error' => 'Invalid request token.'], 403);
     }
     $xp = max(0, (int)($body['xpDelta'] ?? 0));
-    $coins = max(0, (int)($body['coinDelta'] ?? 0));
+    $coins = max(-100000, min(100000, (int)($body['coinDelta'] ?? 0)));
     $power = max(0, (int)($body['englishPowerDelta'] ?? 0));
     $skillCode = strtoupper(trim((string)($body['englishSkillCode'] ?? 'VOCABULARY')));
     $sourceId = isset($body['sourceId']) ? (int)$body['sourceId'] : null;
@@ -23,6 +23,9 @@ try {
     // Validate each ledger's source independently. For example, SHOP_PURCHASE
     // is valid for the coin ledger but not for XP or English Power.
     $requestedSource = strtoupper(trim((string)($body['sourceType'] ?? 'QUESTION')));
+    if ($coins < 0 && $requestedSource !== 'SHOP_PURCHASE') {
+        epq_json(['ok' => false, 'error' => 'Negative coinDelta requires SHOP_PURCHASE source.'], 400);
+    }
     $xpSource = in_array($requestedSource, $allowedXp, true) ? $requestedSource : 'QUESTION';
     $coinSource = in_array($requestedSource, $allowedCoin, true) ? $requestedSource : 'QUESTION';
     $powerSource = in_array($requestedSource, $allowedPower, true) ? $requestedSource : 'QUESTION';

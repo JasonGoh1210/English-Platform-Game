@@ -883,7 +883,10 @@ VALUES
 INSERT INTO worlds
     (world_name, description, world_order, required_level, prerequisite_world_id)
 VALUES
-    ('Dreamwood', 'A magical forest focused on basic vocabulary and understanding.', 1, 1, NULL);
+    ('Maple Town', 'Starting village: vocabulary, characters and the opening story.', 1, 1, NULL),
+    ('Whispering Forest', 'Enchanted forest and language challenges.', 2, 1, NULL),
+    ('Old Camp Road', 'The sunset camp and the road guardians.', 3, 1, NULL),
+    ('Ancient Ruins', 'The ruins, Echo Cave and Typing Cavern.', 4, 1, NULL);
 
 INSERT INTO enemies
     (
