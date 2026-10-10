@@ -20,9 +20,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = '页面已过期，请刷新后再试。';
     } elseif (!preg_match('/^[a-z0-9_.-]{3,30}$/', $username)) {
         $error = '用户名需要 3–30 个字符，只能使用英文字母、数字、点、横线或下划线。';
-    } elseif ($displayName === '' || mb_strlen($displayName) > 50) {
+    } elseif ($displayName === '' || strlen($displayName) > 200) {
         $error = '请输入角色名称（最多 50 个字符）。';
-    } elseif ($email !== '' && (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 120)) {
+    } elseif ($email !== '' && (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 120)) {
         $error = '请输入有效的电子邮件地址，或把此栏留空。';
     } elseif (strlen($password) < 8) {
         $error = '密码至少需要 8 个字符。';
