@@ -45,7 +45,7 @@ body.auth-page {
   overflow: hidden;
   background:
     linear-gradient(180deg, rgba(9, 16, 24, .28), rgba(9, 15, 23, .4) 42%, rgba(8, 12, 21, .94)),
-    url("/FYP/images/world/ancient-ruins.webp?v=20261010-authstory1") center / cover no-repeat,
+    url("/FYP/assets/world/backgrounds/ancient-ruins.webp?v=20261010-assetpaths1") center / cover no-repeat,
     linear-gradient(145deg, #314c6a, #141c2d 65%, #171426);
 }
 .auth-art::before {
