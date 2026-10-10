@@ -81,38 +81,11 @@ const typingCaveState = {
 };
 
 const world = {
-  width: 5800,
-  groundY: 520,
-  waterY: 650,
-  player: {
-    x: 650,
-    y: 0,
-    vx: 0,
-    facing: 1,
-    speed: 250,
-    width: 34,
-    height: 58,
-    onGround: true,
-    bob: 0,
-    walkFrame: 0,
-    walkTimer: 0
-  },
-  cameraX: 0,
-  time: 0,
-  questStep: 0,
-  coins: 0,
-  xp: 0,
-  power: 0,
-  level: 1,
-  interacting: false,
-  travelMenu: false,
-  selectedDestinationIndex: 0,
-  portalX: 5500,
-  currentDialogueNpcId: null,
-  currentDialogueIndex: 0,
-  insideCave: false,
-  typingCaveOpen: false,
-  battle: null
+  currentRealmId: "maple", realmPositions: {}, width: 1800, groundY: 520, waterY: 650,
+  player: { x: 440, y: 0, vx: 0, facing: 1, speed: 250, width: 34, height: 58, onGround: true, bob: 0, walkFrame: 0, walkTimer: 0 },
+  cameraX: 0, time: 0, questStep: 0, coins: 0, xp: 0, power: 0, level: 1,
+  interacting: false, travelMenu: false, selectedDestinationIndex: 0, portalX: 220, caveReturnX: 0,
+  currentDialogueNpcId: null, currentDialogueIndex: 0, insideCave: false, typingCaveOpen: false, battle: null
 };
 
 const WORLD_SAVE_KEY = "englishPowerQuest.world.v2";
@@ -120,15 +93,18 @@ const BATTLE_KEY = "englishPowerQuest.battle";
 const ESCAPE_KEY = "englishPowerQuest.escape.v1";
 
 function saveWorldState(overrides = {}) {
+  const destination = destinations.find(item => item.id === world.currentRealmId) || destinations[0];
+  const playerX = overrides.playerX !== undefined ? Number(overrides.playerX) : world.player.x;
+  const insideCave = overrides.insideCave !== undefined ? Boolean(overrides.insideCave) : world.insideCave;
+  const realmPositions = {
+    ...world.realmPositions,
+    [world.currentRealmId]: { playerX, insideCave, caveReturnX: world.caveReturnX }
+  };
+  world.realmPositions = realmPositions;
   localStorage.setItem(WORLD_SAVE_KEY, JSON.stringify({
-    playerX: world.player.x,
-    portalX: world.portalX,
-    insideCave: world.insideCave,
-    questStep: world.questStep,
-    coins: world.coins,
-    xp: world.xp,
-    power: world.power,
-    level: world.level,
+    currentRealmId: world.currentRealmId, realmPositions, playerX,
+    portalX: destination.portalX, insideCave, caveReturnX: world.caveReturnX,
+    questStep: world.questStep, coins: world.coins, xp: world.xp, power: world.power, level: world.level,
     defeatedEnemyIds: enemies.filter(enemy => enemy.defeated).map(enemy => enemy.id),
     ...overrides
   }));
@@ -138,13 +114,46 @@ function loadWorldState() {
   try {
     const saved = JSON.parse(localStorage.getItem(WORLD_SAVE_KEY) || "null");
     if (!saved) return;
-    world.player.x = clamp(Number(saved.playerX) || world.player.x, 100, world.width - 120);
-    const savedPortalX = Number(saved.portalX);
-    // Migrate the old default portal away from the new typing-cave entrance.
-    world.portalX = savedPortalX === 4870
-      ? 5500
-      : clamp(savedPortalX || world.portalX, 160, world.width - 160);
-    world.insideCave = Boolean(saved.insideCave);
+    const knownRealm = destinations.find(item => item.id === saved.currentRealmId);
+    const storedPositions = saved.realmPositions && typeof saved.realmPositions === "object" ? saved.realmPositions : {};
+    let realmId = knownRealm ? knownRealm.id : "";
+    let migratedX = Number(saved.playerX);
+    if (!Number.isFinite(migratedX)) migratedX = 440;
+
+    if (!knownRealm) {
+      const oldPortalX = Number(saved.portalX);
+      if (Number.isFinite(oldPortalX) && Math.abs(migratedX - oldPortalX) < 180) {
+        realmId = "maple"; migratedX = 440;
+      } else if (saved.insideCave || migratedX >= 3400) {
+        realmId = "ruins"; migratedX = migratedX >= 3400 ? migratedX - 3400 : 900;
+      } else if (migratedX >= 2350) {
+        realmId = "camp"; migratedX -= 2350;
+      } else if (migratedX >= 1250) {
+        realmId = "forest"; migratedX -= 1250;
+      } else {
+        realmId = "maple";
+      }
+    }
+
+    const destination = destinations.find(item => item.id === realmId) || destinations[0];
+    world.currentRealmId = destination.id;
+    world.width = destination.width;
+    world.realmPositions = storedPositions;
+    world.portalX = destination.portalX;
+    const savedPosition = storedPositions[destination.id];
+    const hasLocalPosition = savedPosition && Number.isFinite(Number(savedPosition.playerX));
+    world.insideCave = hasLocalPosition && savedPosition.insideCave !== undefined
+      ? Boolean(savedPosition.insideCave) : Boolean(saved.insideCave);
+    world.caveReturnX = Number(savedPosition?.caveReturnX || saved.caveReturnX) || 0;
+
+    if (world.insideCave) {
+      const cave = landmarks.find(item => item.realmId === world.currentRealmId && item.type === "cave");
+      if (!world.caveReturnX && cave) world.caveReturnX = cave.x + 120;
+      world.player.x = 440;
+    } else {
+      const position = hasLocalPosition ? Number(savedPosition.playerX) : migratedX;
+      world.player.x = clamp(position, 70, world.width - 90);
+    }
     world.questStep = Number(saved.questStep) || 0;
     world.coins = Number(saved.coins) || 0;
     world.xp = Number(saved.xp) || 0;
@@ -153,9 +162,11 @@ function loadWorldState() {
     const defeated = new Set(Array.isArray(saved.defeatedEnemyIds) ? saved.defeatedEnemyIds : []);
     enemies.forEach(enemy => { enemy.defeated = defeated.has(enemy.id); });
   } catch (error) {
-    console.warn("Unable to restore map progress.");
+    console.warn("Unable to restore map progress.", error);
   }
 }
+
+
 
 const keys = new Set();
 const touch = { left: false, right: false };
@@ -392,124 +403,50 @@ function hasWalkFrame(direction, index) {
 }
 
 const npcs = [
-  {
-    id: "elder",
-    x: 1050,
-    name: "Elder Rowan",
-    title: "Village Elder",
-    titleKey: "npc.elder.title",
-    nameKey: "npc.elder.name",
-    dialogueKeys: ["npc.elder.1", "npc.elder.2", "npc.elder.3"],
-    color: "#c79b6d",
-    dialogue: [
-      "Welcome to Maple Town, traveller.",
-      "The old road beyond the forest has gone silent.",
-      "If you want to help, follow the lanterns and learn the words of the road."
-    ]
-  },
-  {
-    id: "mira",
-    x: 1770,
-    name: "Mira",
-    title: "Wandering Merchant",
-    titleKey: "npc.mira.title",
-    nameKey: "npc.mira.name",
-    dialogueKeys: ["npc.mira.1", "npc.mira.2", "npc.mira.3"],
-    color: "#c57f62",
-    dialogue: [
-      "You are heading into Whispering Forest, aren't you?",
-      "Remember: understanding a message can be more useful than a sharp sword.",
-      "I will wait here until you return."
-    ]
-  },
-  {
-    id: "kai",
-    x: 3550,
-    name: "Kai",
-    title: "System Keeper",
-    titleKey: "npc.kai.title",
-    nameKey: "npc.kai.name",
-    dialogueKeys: ["npc.kai.1", "npc.kai.2", "npc.kai.3"],
-    color: "#5f9db0",
-    dialogue: [
-      "These ruins belonged to the old network builders.",
-      "Their signs are written in technical English.",
-      "Bring me the right words and I can reopen the gate."
-    ]
-  }
+  { id: "elder", realmId: "maple", x: 880, name: "Elder Rowan", title: "Village Elder", titleKey: "npc.elder.title", nameKey: "npc.elder.name", dialogueKeys: ["npc.elder.1","npc.elder.2","npc.elder.3"], color: "#c79b6d", dialogue: ["Welcome to Maple Town, traveller.","The old road beyond the forest has gone silent.","If you want to help, follow the lanterns and learn the words of the road."] },
+  { id: "mira", realmId: "forest", x: 790, name: "Mira", title: "Wandering Merchant", titleKey: "npc.mira.title", nameKey: "npc.mira.name", dialogueKeys: ["npc.mira.1","npc.mira.2","npc.mira.3"], color: "#c57f62", dialogue: ["You are heading into Whispering Forest, aren't you?","Remember: understanding a message can be more useful than a sharp sword.","I will wait here until you return."] },
+  { id: "tala", realmId: "camp", x: 900, name: "Tala", title: "Camp Guide", titleKey: "npc.tala.title", nameKey: "npc.tala.name", dialogueKeys: ["npc.tala.1","npc.tala.2","npc.tala.3"], color: "#8c9d68", dialogue: ["The old road is safest when you read every sign.","Listen for the wind and watch the firelight; the trail changes after sunset.","Rest here, then carry what you have learned into the ruins."] },
+  { id: "kai", realmId: "ruins", x: 870, name: "Kai", title: "System Keeper", titleKey: "npc.kai.title", nameKey: "npc.kai.name", dialogueKeys: ["npc.kai.1","npc.kai.2","npc.kai.3"], color: "#5f9db0", dialogue: ["These ruins belonged to the old network builders.","Their signs are written in technical English.","Bring me the right words and I can reopen the gate."] }
 ];
 
 const landmarks = [
-  { x: 380, type: "sign", text: "MAPLE TOWN →" },
-  { x: 760, type: "house", variant: "cottage" },
-  { x: 980, type: "house", variant: "elder" },
-  { x: 1215, type: "house", variant: "shop" },
-  { x: 1450, type: "bridge" },
-  { x: 2050, type: "camp" },
-  { x: 2780, type: "tower" },
-  { x: 3450, type: "ruins" },
-  { x: 4380, type: "gate" },
-  { x: 4630, type: "cave" },
-  { x: 5050, type: "typingCave" }
+  { realmId: "maple", x: 360, type: "sign", text: "MAPLE TOWN →" },
+  { realmId: "maple", x: 600, type: "house", variant: "cottage" },
+  { realmId: "maple", x: 835, type: "house", variant: "elder" },
+  { realmId: "maple", x: 1080, type: "house", variant: "shop" },
+  { realmId: "maple", x: 1430, type: "bridge" },
+  { realmId: "forest", x: 350, type: "sign", text: "WHISPERING FOREST →" },
+  { realmId: "forest", x: 620, type: "house", variant: "cottage" },
+  { realmId: "forest", x: 990, type: "bridge" },
+  { realmId: "forest", x: 1510, type: "tower" },
+  { realmId: "camp", x: 355, type: "sign", text: "OLD CAMP ROAD →" },
+  { realmId: "camp", x: 680, type: "camp" },
+  { realmId: "camp", x: 1190, type: "bridge" },
+  { realmId: "camp", x: 1580, type: "tower" },
+  { realmId: "ruins", x: 340, type: "sign", text: "ANCIENT RUINS →" },
+  { realmId: "ruins", x: 630, type: "tower" },
+  { realmId: "ruins", x: 930, type: "ruins" },
+  { realmId: "ruins", x: 1250, type: "gate" },
+  { realmId: "ruins", x: 1510, type: "cave" },
+  { realmId: "ruins", x: 1825, type: "typingCave" }
 ];
 
 const destinations = [
-  {
-    id: "maple",
-    name: "Maple Town",
-    nameKey: "destination.maple.name",
-    category: "SAFE HAVEN",
-    categoryKey: "destination.safe",
-    description: "A peaceful village where your adventure and first words begin.",
-    descriptionKey: "destination.maple.description",
-    scene: "maple",
-    spawnX: 650,
-    portalX: 550
-  },
-  {
-    id: "forest",
-    name: "Whispering Forest",
-    nameKey: "destination.forest.name",
-    category: "VOCABULARY TRAIL",
-    categoryKey: "destination.vocab",
-    description: "Follow the lantern-lit path and uncover the language hidden in the woods.",
-    descriptionKey: "destination.forest.description",
-    scene: "forest",
-    spawnX: 1570,
-    portalX: 1675
-  },
-  {
-    id: "camp",
-    name: "Old Camp Road",
-    nameKey: "destination.camp.name",
-    category: "SURVIVAL ROUTE",
-    categoryKey: "destination.survival",
-    description: "Rest by the old camp before travelling deeper into the forgotten road.",
-    descriptionKey: "destination.camp.description",
-    scene: "camp",
-    spawnX: 2650,
-    portalX: 2540
-  },
-  {
-    id: "ruins",
-    name: "Ancient Ruins",
-    nameKey: "destination.ruins.name",
-    category: "ANCIENT CHALLENGE",
-    categoryKey: "destination.challenge",
-    description: "Explore the silent stone ruins and the secrets of the old network builders.",
-    descriptionKey: "destination.ruins.description",
-    scene: "ruins",
-    spawnX: 4100,
-    portalX: 4160
-  }
+  { id: "maple", name: "Maple Town", nameKey: "destination.maple.name", category: "SAFE HAVEN", categoryKey: "destination.safe", description: "A peaceful village where your adventure and first words begin.", descriptionKey: "destination.maple.description", scene: "maple", width: 1800, spawnX: 440, portalX: 220 },
+  { id: "forest", name: "Whispering Forest", nameKey: "destination.forest.name", category: "VOCABULARY TRAIL", categoryKey: "destination.vocab", description: "A standalone enchanted forest with lantern paths and hidden words.", descriptionKey: "destination.forest.description", scene: "forest", width: 2100, spawnX: 440, portalX: 220 },
+  { id: "camp", name: "Old Camp Road", nameKey: "destination.camp.name", category: "SURVIVAL ROUTE", categoryKey: "destination.survival", description: "A separate sunset wilderness with a campfire, pine trees and a guide.", descriptionKey: "destination.camp.description", scene: "camp", width: 1950, spawnX: 440, portalX: 220 },
+  { id: "ruins", name: "Ancient Ruins", nameKey: "destination.ruins.name", category: "ANCIENT CHALLENGE", categoryKey: "destination.challenge", description: "A separate ancient realm with stone towers, a sealed gate and two caves.", descriptionKey: "destination.ruins.description", scene: "ruins", width: 2200, spawnX: 440, portalX: 220 }
 ];
 
 const enemies = [
-  { id: "slime-01", x: 2300, type: "slime", name: "Word Slime", difficulty: "EASY", hp: 60, damage: 10, xp: 20, coins: 10, defeated: false },
-  { id: "bat-01", x: 3020, type: "bat", name: "Confusion Bat", difficulty: "EASY", hp: 70, damage: 10, xp: 25, coins: 12, defeated: false },
-  { id: "guardian-01", x: 3990, type: "guardian", name: "Grammar Guardian", difficulty: "MEDIUM", hp: 100, damage: 12, xp: 30, coins: 15, defeated: false },
-  { id: "cave-wraith-01", x: 4780, type: "wraith", name: "Cave Wraith", difficulty: "MEDIUM", hp: 110, damage: 14, xp: 45, coins: 20, defeated: false, caveOnly: true }
+  { id: "slime-01", realmId: "maple", x: 1435, type: "slime", name: "Word Slime", difficulty: "EASY", hp: 60, damage: 10, xp: 20, coins: 10, defeated: false },
+  { id: "bat-01", realmId: "forest", x: 1290, type: "bat", name: "Confusion Bat", difficulty: "EASY", hp: 70, damage: 10, xp: 25, coins: 12, defeated: false },
+  { id: "road-guardian-01", realmId: "camp", x: 1370, type: "guardian", name: "Road Guardian", difficulty: "MEDIUM", hp: 85, damage: 11, xp: 28, coins: 14, defeated: false },
+  { id: "guardian-01", realmId: "ruins", x: 1150, type: "guardian", name: "Grammar Guardian", difficulty: "MEDIUM", hp: 100, damage: 12, xp: 30, coins: 15, defeated: false },
+  { id: "cave-wraith-01", realmId: "ruins", x: 810, type: "wraith", name: "Cave Wraith", difficulty: "MEDIUM", hp: 110, damage: 14, xp: 45, coins: 20, defeated: false, caveOnly: true }
 ];
+
+
 
 function restoreEscapeState() {
   try {
@@ -640,6 +577,7 @@ function nearestNPC() {
   let best = null;
   let dist = Infinity;
   for (const npc of npcs) {
+    if (npc.realmId !== world.currentRealmId) continue;
     const d = Math.abs(npc.x - world.player.x);
     if (d < dist) {
       dist = d;
@@ -655,6 +593,7 @@ function nearestEnemy() {
   const escapedId = getEscapedEnemyId();
 
   for (const enemy of enemies) {
+    if (enemy.realmId !== world.currentRealmId) continue;
     if (enemy.defeated) continue;
     if (Boolean(enemy.caveOnly) !== world.insideCave) continue;
 
@@ -690,7 +629,7 @@ function interact() {
   }
 
   if (!world.insideCave) {
-    const typingCave = landmarks.find(item => item.type === "typingCave");
+    const typingCave = landmarks.find(item => item.realmId === world.currentRealmId && item.type === "typingCave");
     if (typingCave && Math.abs(typingCave.x - world.player.x) < 118) {
       openTypingCave();
       return;
@@ -698,13 +637,11 @@ function interact() {
   }
 
   if (world.insideCave) {
-    if (Math.abs(4325 - world.player.x) < 112) {
-      leaveCave();
-    }
+    if (Math.abs(260 - world.player.x) < 112) leaveCave();
     return;
   }
 
-  const cave = landmarks.find(item => item.type === "cave");
+  const cave = landmarks.find(item => item.realmId === world.currentRealmId && item.type === "cave");
   if (cave && Math.abs(cave.x - world.player.x) < 105) {
     enterCave();
     return;
@@ -740,7 +677,7 @@ function interact() {
     return;
   }
 
-  const sign = landmarks.find(l => l.type === "sign" && Math.abs(l.x - world.player.x) < 85);
+  const sign = landmarks.find(l => l.realmId === world.currentRealmId && l.type === "sign" && Math.abs(l.x - world.player.x) < 85);
   if (sign) {
     world.interacting = true;
     world.currentDialogueNpcId = "sign";
@@ -759,12 +696,15 @@ function recenterCamera() {
 }
 
 function enterCave() {
+  const cave = landmarks.find(item => item.realmId === world.currentRealmId && item.type === "cave");
+  if (!cave) return;
+  world.caveReturnX = cave.x + 120;
   world.insideCave = true;
   // Cave monsters respawn when the player enters the cave again.
   enemies.forEach(enemy => {
-    if (enemy.caveOnly) enemy.defeated = false;
+    if (enemy.realmId === world.currentRealmId && enemy.caveOnly) enemy.defeated = false;
   });
-  world.player.x = 4480;
+  world.player.x = 440;
   world.player.vx = 0;
   world.player.facing = 1;
   world.player.walkFrame = 0;
@@ -781,7 +721,8 @@ function enterCave() {
 
 function leaveCave() {
   world.insideCave = false;
-  world.player.x = 4660;
+  const cave = landmarks.find(item => item.realmId === world.currentRealmId && item.type === "cave");
+  world.player.x = clamp(world.caveReturnX || (cave ? cave.x + 120 : 440), 70, world.width - 90);
   world.player.vx = 0;
   world.player.facing = -1;
   world.player.walkFrame = 0;
@@ -1175,16 +1116,9 @@ function retryTypingCave() {
 }
 
 function nearestWorldPortal(maxDistance = Infinity) {
-  let nearest = null;
-  let nearestDistance = maxDistance;
-  for (const destination of destinations) {
-    const distance = Math.abs(destination.portalX - world.player.x);
-    if (distance < nearestDistance) {
-      nearestDistance = distance;
-      nearest = destination;
-    }
-  }
-  return nearest;
+  const destination = destinations.find(item => item.id === world.currentRealmId);
+  if (!destination) return null;
+  return Math.abs(destination.portalX - world.player.x) < maxDistance ? destination : null;
 }
 
 function renderDestinationSelection() {
@@ -1235,14 +1169,34 @@ function closeDestinationMenu() {
 function travelToSelectedDestination() {
   const destination = destinations[world.selectedDestinationIndex] || destinations[0];
 
-  world.player.x = destination.spawnX;
+  world.realmPositions[world.currentRealmId] = {
+    playerX: world.player.x,
+    insideCave: false,
+    caveReturnX: world.caveReturnX
+  };
+  world.currentRealmId = destination.id;
+  world.width = destination.width;
+  world.portalX = destination.portalX;
+  world.insideCave = false;
+  world.caveReturnX = 0;
+  const rememberedPosition = world.realmPositions[destination.id];
+  world.player.x = clamp(
+    rememberedPosition && Number.isFinite(Number(rememberedPosition.playerX))
+      ? Number(rememberedPosition.playerX)
+      : destination.spawnX,
+    70,
+    world.width - 90
+  );
   world.player.vx = 0;
   world.player.facing = 1;
   world.player.walkFrame = 0;
   world.player.walkTimer = 0;
 
-  // Save the fixed portal anchor for compatibility with existing save files.
+  // Portal position is fixed by this realm and is never moved to follow the player.
   world.portalX = destination.portalX;
+  world.interacting = false;
+  world.currentDialogueNpcId = null;
+  updateLocation();
   world.cameraX = clamp(
     world.player.x - window.innerWidth * 0.5,
     0,
@@ -1268,11 +1222,10 @@ function updateQuest() {
 }
 
 function updateLocation() {
-  ui.location.textContent = world.insideCave ? t("location.cave") :
-    world.player.x < 1250 ? t("location.maple") :
-    world.player.x < 2300 ? t("location.forest") :
-    world.player.x < 3400 ? t("location.camp") :
-    t("location.ruins");
+  const locationKeys = {
+    maple: "location.maple", forest: "location.forest", camp: "location.camp", ruins: "location.ruins"
+  };
+  ui.location.textContent = world.insideCave ? t("location.cave") : t(locationKeys[world.currentRealmId] || locationKeys.maple);
 }
 
 function refreshWorldLanguage() {
@@ -1387,9 +1340,7 @@ function update(dt) {
     if (direction !== 0) world.player.facing = direction;
 
     world.player.x += world.player.vx * dt;
-    world.player.x = world.insideCave
-      ? clamp(world.player.x, 4260, world.width - 120)
-      : clamp(world.player.x, 100, world.width - 120);
+    world.player.x = clamp(world.player.x, 70, world.width - 90);
 
     if (Math.abs(world.player.vx) > 1) {
       world.player.walkTimer += dt;
@@ -1412,7 +1363,7 @@ function update(dt) {
   const targetCamera = clamp(world.player.x - window.innerWidth * 0.5, 0, world.width - window.innerWidth);
   world.cameraX += (targetCamera - world.cameraX) * Math.min(1, dt * 6);
 
-  if (world.player.x > 1000 && world.questStep === 1) {
+  if (world.currentRealmId === "forest" && world.player.x > 1000 && world.questStep === 1) {
     world.questStep = 2;
     world.xp += 50;
     world.power += 2;
@@ -1449,7 +1400,7 @@ function draw() {
     return;
   }
 
-  const scene = getWorldSceneForX(world.player.x);
+  const scene = world.currentRealmId;
   drawWorldBackdrop(w, h, scene);
   drawGround(w, h, scene);
   drawLandmarks();
@@ -1464,11 +1415,8 @@ function worldToScreen(x, parallax = 1) {
   return x - world.cameraX * parallax;
 }
 
-function getWorldSceneForX(worldX) {
-  if (worldX < 1250) return "maple";
-  if (worldX < 2350) return "forest";
-  if (worldX < 3400) return "camp";
-  return "ruins";
+function getWorldSceneForX() {
+  return world.currentRealmId;
 }
 
 function drawWorldBackdrop(w, h, scene) {
@@ -1639,6 +1587,7 @@ function drawGround(w, h, scene = "maple") {
 
 function drawLandmarks() {
   for (const l of landmarks) {
+    if (l.realmId !== world.currentRealmId) continue;
     const x = worldToScreen(l.x);
     if (x < -220 || x > window.innerWidth + 220) continue;
     if (l.type === "house") drawHouse(x, world.groundY, l.variant);
@@ -1868,10 +1817,11 @@ function drawCaveScene(w, h) {
 }
 
 function drawCaveExit() {
-  const x = worldToScreen(4325);
+  const exitWorldX = 260;
+  const x = worldToScreen(exitWorldX);
   const ground = world.groundY;
   if (x < -140 || x > window.innerWidth + 140) return;
-  const nearby = Math.abs(world.player.x - 4325) < 125;
+  const nearby = Math.abs(world.player.x - exitWorldX) < 125;
   ctx.save();
   ctx.fillStyle = "rgba(153, 215, 230, .12)";
   ctx.beginPath();
@@ -1917,7 +1867,7 @@ function drawCaveExit() {
 }
 
 function drawCaveDetails() {
-  const positions = [4590, 4670, 4920, 5050];
+  const positions = [400, 560, 760, 1010, 1190];
   for (let i = 0; i < positions.length; i++) {
     const x = worldToScreen(positions[i]);
     if (x < -80 || x > window.innerWidth + 80) continue;
@@ -1969,7 +1919,8 @@ function drawCaveForeground(w, h) {
 }
 
 function drawWorldPortals() {
-  for (const destination of destinations) drawPortal(destination);
+  const destination = destinations.find(item => item.id === world.currentRealmId);
+  if (destination) drawPortal(destination);
 }
 
 function drawPortal(destination) {
@@ -2582,6 +2533,7 @@ function drawSign(x, ground, text) {
 
 function drawNPCs() {
   for (const npc of npcs) {
+    if (npc.realmId !== world.currentRealmId) continue;
     const x = worldToScreen(npc.x);
     if (x < -120 || x > window.innerWidth + 120) continue;
     const bob = Math.sin(world.time * 2.4 + npc.x) * 1.3;
@@ -2862,6 +2814,7 @@ function drawStyledNPC(x, ground, npc) {
 
 function drawEnemies() {
   for (const enemy of enemies) {
+    if (enemy.realmId !== world.currentRealmId) continue;
     if (enemy.defeated) continue;
     if (Boolean(enemy.caveOnly) !== world.insideCave) continue;
     const x = worldToScreen(enemy.x);
