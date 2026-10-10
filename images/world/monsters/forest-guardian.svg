@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" viewBox="0 0 220 220">
+ <defs><linearGradient id="bark" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a98a56"/><stop offset=".5" stop-color="#5b7148"/><stop offset="1" stop-color="#263e35"/></linearGradient><filter id="leafGlow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+ <ellipse cx="110" cy="202" rx="77" ry="10" fill="#061b17" opacity=".38"/>
+ <g fill="#315f45" stroke="#203e31" stroke-width="4" stroke-linejoin="round">
+  <path d="M63 66 43 39 68 44 80 18 100 40 115 14 131 40 159 28 151 57 174 65 156 86 66 90Z"/>
+  <path d="M66 70 48 60 42 77 61 93M154 68 176 58 181 78 159 96" fill="#487c50"/>
+ </g>
+ <g stroke="#1c3028" stroke-width="6" stroke-linejoin="round">
+  <path d="M77 67 98 55 125 60 145 79 158 119 145 165 126 183 92 183 72 161 60 119Z" fill="url(#bark)"/>
+  <path d="M79 80 91 65 103 79 97 109 82 115Z" fill="#7b9a5d"/>
+  <path d="M133 81 145 94 139 115 124 109Z" fill="#415f42"/>
+  <path d="M75 116 49 104 32 128 43 150 69 145M145 117 171 104 188 128 177 150 151 145" fill="#5e7c4e"/>
+  <path d="M88 162 77 192 100 199 112 174M127 164 139 192 162 194 152 170" fill="#465e3c"/>
+  <path d="M82 65 74 47 91 54M140 69 154 48 159 68" fill="#9cb66a"/>
+ </g>
+ <g fill="#e0e8a1"><rect x="91" y="91" width="16" height="7"/><rect x="122" y="91" width="16" height="7"/></g>
+ <g filter="url(#leafGlow)"><rect x="96" y="91" width="8" height="7" fill="#aaffc6"/><rect x="127" y="91" width="8" height="7" fill="#aaffc6"/><path d="M103 116 111 123 119 116 116 133 108 133Z" fill="#83ffc5"/></g>
+ <path d="M83 137 98 142 108 138 118 142 133 137" fill="none" stroke="#263b2b" stroke-width="5"/>
+ <g fill="#91bd65"><rect x="64" y="94" width="6" height="4"/><rect x="150" y="102" width="6" height="4"/><rect x="85" y="154" width="5" height="5"/><rect x="141" y="151" width="5" height="5"/></g>
+ <g fill="#f1ca72"><rect x="49" y="132" width="4" height="4"/><rect x="170" y="130" width="4" height="4"/></g>
+</svg>
