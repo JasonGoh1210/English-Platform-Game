@@ -8,7 +8,7 @@ $epqPlayerId = $epqIsGuest ? 0 : (int)($_SESSION['player_id'] ?? 0);
 // Guest progress uses a dedicated localStorage namespace that survives a new guest session on this browser.
 $epqStorageId = $epqIsGuest ? 'guest' : (string)$epqPlayerId;
 $epqDisplayName = $epqIsGuest
-    ? 'Guest Adventurer'
+    ? (string)($_SESSION['display_name'] ?? 'Guest Adventurer')
     : (string)($_SESSION['display_name'] ?? $_SESSION['username'] ?? 'Adventurer');
 $epqShowStoryIntro = !$epqIsGuest && !empty($_SESSION['show_story_intro']);
 $epqCsrfToken = (string)$_SESSION['csrf_token'];
