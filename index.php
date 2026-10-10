@@ -220,7 +220,7 @@ $epqCsrfToken = (string)$_SESSION['csrf_token'];
           <img src="/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-assetpaths1" alt="Player character">
         </div>
         <div class="typing-cave-monster" id="typingCaveMonster">
-          <img src="/FYP/assets/enemies/monster/Monster.png?v=20261010-assetpaths1" alt="Approaching monster">
+          <img src="/FYP/images/world/monsters/cave-wraith.svg?v=20261010-monsterart1" alt="Approaching monster">
         </div>
         <div class="typing-cave-threat">
           <span id="typingCaveThreatLabel">MONSTER APPROACH</span>
@@ -313,7 +313,7 @@ $epqCsrfToken = (string)$_SESSION['csrf_token'];
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261010-guestmode1").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261010-monsterart2").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");
