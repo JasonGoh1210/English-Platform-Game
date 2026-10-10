@@ -3,9 +3,15 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/auth.php';
 epq_require_login_page();
 
-$epqPlayerId = (int)$_SESSION['player_id'];
-$epqDisplayName = (string)($_SESSION['display_name'] ?? $_SESSION['username'] ?? 'Adventurer');
-$epqShowStoryIntro = !empty($_SESSION['show_story_intro']);
+$epqIsGuest = epq_is_guest();
+$epqPlayerId = $epqIsGuest ? 0 : (int)($_SESSION['player_id'] ?? 0);
+$epqStorageId = $epqIsGuest
+    ? (string)$_SESSION['guest_id']
+    : (string)$epqPlayerId;
+$epqDisplayName = $epqIsGuest
+    ? 'Guest Adventurer'
+    : (string)($_SESSION['display_name'] ?? $_SESSION['username'] ?? 'Adventurer');
+$epqShowStoryIntro = !$epqIsGuest && !empty($_SESSION['show_story_intro']);
 $epqCsrfToken = (string)$_SESSION['csrf_token'];
 ?>
 <!DOCTYPE html>
@@ -16,7 +22,7 @@ $epqCsrfToken = (string)$_SESSION['csrf_token'];
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-authstory1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-guestmode1">
 </head>
 <body>
   <div class="game-shell pixel-world-ui">
@@ -129,7 +135,7 @@ $epqCsrfToken = (string)$_SESSION['csrf_token'];
     <form class="game-logout-form" method="post" action="/FYP/logout.php">
       <input type="hidden" name="csrf_token" value="<?= epq_h($epqCsrfToken) ?>">
       <span class="game-account-name"><?= epq_h($epqDisplayName) ?></span>
-      <button type="submit" class="game-logout-button">↪ 退出登录</button>
+      <button type="submit" class="game-logout-button"><?= $epqIsGuest ? '↩ 退出游客模式' : '↪ 退出登录' ?></button>
     </form>
     <button type="button" class="settings-open-button" id="settingsOpenButton" data-i18n="settings.button">⚙ SETTINGS</button>
 
@@ -290,6 +296,8 @@ $epqCsrfToken = (string)$_SESSION['csrf_token'];
   <script>
     window.EPQ_AUTH = <?= json_encode([
       'playerId' => $epqPlayerId,
+      'storageId' => $epqStorageId,
+      'isGuest' => $epqIsGuest,
       'displayName' => $epqDisplayName,
       'showStoryIntro' => $epqShowStoryIntro,
       'csrfToken' => $epqCsrfToken
@@ -306,7 +314,7 @@ $epqCsrfToken = (string)$_SESSION['csrf_token'];
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261010-assetpaths1").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261010-guestmode1").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");
