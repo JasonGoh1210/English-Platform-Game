@@ -779,7 +779,7 @@ function storyPortraitSource(characterId) {
   characterId = portraitAliases[characterId] || characterId;
   if (characterId === "alex") {
     return {
-      src: "/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-mangastory1",
+      src: "/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-assetpaths1",
       kind: "pixel"
     };
   }
