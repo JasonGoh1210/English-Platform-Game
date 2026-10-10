@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['guest_mode'] ?? ''
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101521">
   <title>登录 · English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/auth.css?v=20261010-authstory1">
+  <link rel="stylesheet" href="/FYP/css/auth.css?v=20261010-guestmode1">
 </head>
 <body class="auth-page">
   <main class="auth-layout">
