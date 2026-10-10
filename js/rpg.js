@@ -113,11 +113,13 @@ const worldBackgrounds = {
 
 // Try the currently organized backgrounds folder first, then the root world folder.
 // This supports both the repository layout and the user's previous local file placement.
+// Players may keep their own backgrounds in images/world. The tracked
+// assets/world/backgrounds files remain the reliable fallback for everyone.
 const worldBackgroundPaths = {
-  maple: ["/FYP/assets/world/backgrounds/maple-town.webp?v=20261010-assetpaths1"],
-  forest: ["/FYP/assets/world/backgrounds/whispering-forest.webp?v=20261010-assetpaths1"],
-  camp: ["/FYP/assets/world/backgrounds/old-camp-road.webp?v=20261010-assetpaths1"],
-  ruins: ["/FYP/assets/world/backgrounds/ancient-ruins.webp?v=20261010-assetpaths1"]
+  maple: ["/FYP/images/world/maple-town.webp?v=20261010-realmnames1", "/FYP/assets/world/backgrounds/maple-town.webp?v=20261010-realmnames1"],
+  forest: ["/FYP/images/world/whispering-forest.webp?v=20261010-realmnames1", "/FYP/assets/world/backgrounds/whispering-forest.webp?v=20261010-realmnames1"],
+  camp: ["/FYP/images/world/old-camp-road.webp?v=20261010-realmnames1", "/FYP/assets/world/backgrounds/old-camp-road.webp?v=20261010-realmnames1"],
+  ruins: ["/FYP/images/world/ancient-ruins.webp?v=20261010-realmnames1", "/FYP/assets/world/backgrounds/ancient-ruins.webp?v=20261010-realmnames1"]
 };
 
 const worldBackgroundLoadedPaths = {};
@@ -648,20 +650,20 @@ const npcs = [
 ];
 
 const landmarks = [
-  { realmId: "maple", x: 360, type: "sign", text: "MAPLE TOWN →" },
+  { realmId: "maple", x: 360, type: "sign" },
   { realmId: "maple", x: 600, type: "house", variant: "cottage" },
   { realmId: "maple", x: 835, type: "house", variant: "elder" },
   { realmId: "maple", x: 1080, type: "house", variant: "shop" },
   { realmId: "maple", x: 1430, type: "bridge" },
-  { realmId: "forest", x: 350, type: "sign", text: "WHISPERING FOREST →" },
+  { realmId: "forest", x: 350, type: "sign" },
   { realmId: "forest", x: 620, type: "house", variant: "cottage" },
   { realmId: "forest", x: 990, type: "bridge" },
   { realmId: "forest", x: 1510, type: "tower" },
-  { realmId: "camp", x: 355, type: "sign", text: "OLD CAMP ROAD →" },
+  { realmId: "camp", x: 355, type: "sign" },
   { realmId: "camp", x: 680, type: "camp" },
   { realmId: "camp", x: 1190, type: "bridge" },
   { realmId: "camp", x: 1580, type: "tower" },
-  { realmId: "ruins", x: 340, type: "sign", text: "ANCIENT RUINS →" },
+  { realmId: "ruins", x: 340, type: "sign" },
   { realmId: "ruins", x: 630, type: "tower" },
   { realmId: "ruins", x: 930, type: "ruins" },
   { realmId: "ruins", x: 1250, type: "gate" },
@@ -675,6 +677,17 @@ const destinations = [
   { id: "camp", name: "Old Camp Road", nameKey: "destination.camp.name", category: "SURVIVAL ROUTE", categoryKey: "destination.survival", description: "A separate sunset wilderness with a campfire, pine trees and a guide.", descriptionKey: "destination.camp.description", scene: "camp", width: 1950, spawnX: 440, portalX: 220 },
   { id: "ruins", name: "Ancient Ruins", nameKey: "destination.ruins.name", category: "ANCIENT CHALLENGE", categoryKey: "destination.challenge", description: "A separate ancient realm with stone towers, a sealed gate and two caves.", descriptionKey: "destination.ruins.description", scene: "ruins", width: 2200, spawnX: 440, portalX: 1510 }
 ];
+
+// Single source of truth for localized names across HUD, wooden signposts,
+// fixed world gates, travel menu and dialogue. No sign label is hard-coded.
+function getLocalizedRealmName(realmId = world.currentRealmId) {
+  const destination = destinations.find(item => item.id === realmId) || destinations[0];
+  return t(destination.nameKey);
+}
+
+function getRealmSignDialogueKey(realmId = world.currentRealmId) {
+  return `npc.sign.${destinations.some(item => item.id === realmId) ? realmId : "maple"}.text`;
+}
 
 const enemies = [
   { id: "slime-01", realmId: "maple", x: 1435, type: "slime", name: "Word Slime", difficulty: "EASY", hp: 60, damage: 10, xp: 20, coins: 10, defeated: false },
@@ -1261,9 +1274,9 @@ function interact() {
   if (sign) {
     world.interacting = true;
     world.currentDialogueNpcId = "sign";
-    world.currentDialogueKey = "npc.sign.text";
-    ui.dialogueName.textContent = t("npc.sign.name");
-    ui.dialogueText.textContent = t("npc.sign.text");
+    world.currentDialogueKey = getRealmSignDialogueKey();
+    ui.dialogueName.textContent = t("npc.sign.name") + " · " + getLocalizedRealmName();
+    ui.dialogueText.textContent = t(world.currentDialogueKey);
     ui.dialogue.classList.remove("hidden");
   }
 }
@@ -1840,10 +1853,7 @@ function updateQuest() {
 
 
 function updateLocation() {
-  const locationKeys = {
-    maple: "location.maple", forest: "location.forest", camp: "location.camp", ruins: "location.ruins"
-  };
-  ui.location.textContent = world.insideCave ? t("location.cave") : t(locationKeys[world.currentRealmId] || locationKeys.maple);
+  ui.location.textContent = world.insideCave ? t("location.cave") : getLocalizedRealmName();
 }
 
 function refreshWorldLanguage() {
@@ -1852,8 +1862,8 @@ function refreshWorldLanguage() {
   if (world.storyIntroOpen) renderStoryIntro();
   if (world.currentDialogueNpcId) {
     if (world.currentDialogueNpcId === "sign") {
-      ui.dialogueName.textContent = t("npc.sign.name");
-      ui.dialogueText.textContent = t(world.currentDialogueKey || "npc.sign.text");
+      ui.dialogueName.textContent = t("npc.sign.name") + " · " + getLocalizedRealmName();
+      ui.dialogueText.textContent = t(getRealmSignDialogueKey());
     } else if (world.currentDialogueNpcId === "caveEntry") {
       ui.dialogueName.textContent = t("cave.title");
       ui.dialogueText.textContent = t("cave.entered");
@@ -2225,7 +2235,7 @@ function drawLandmarks() {
     if (l.type === "tower") drawTower(x, world.groundY);
     if (l.type === "ruins") drawRuins(x, world.groundY);
     if (l.type === "gate") drawGate(x, world.groundY);
-    if (l.type === "sign") drawSign(x, world.groundY, l.text);
+    if (l.type === "sign") drawSign(x, world.groundY, l.realmId);
     if (l.type === "cave") drawCaveEntrance(x, world.groundY, Math.abs(l.x - world.player.x) < 125);
     if (l.type === "typingCave") drawTypingCaveEntrance(x, world.groundY, Math.abs(l.x - world.player.x) < 135);
   }
@@ -2590,9 +2600,11 @@ function drawPortal(destination) {
   ctx.globalAlpha=1;
   ctx.fillStyle="#121d24";ctx.fillRect(x-67,ground-6,134,9);
   ctx.fillStyle=p.trim;ctx.fillRect(x-57,ground-4,114,3);
-  ctx.textAlign="center";ctx.font=getLanguage()==="zh"?"bold 11px sans-serif":"bold 10px 'Courier New', monospace";
-  ctx.fillStyle="#0b1118";ctx.fillText(getLanguage()==="zh"?t(destination.nameKey):"WORLD GATE",x+1,ground-177);
-  ctx.fillStyle=p.trim;ctx.fillText(getLanguage()==="zh"?t(destination.nameKey):"WORLD GATE",x,ground-178);
+  // Every portal announces its *own* realm, in both English and Chinese.
+  const gateName = getLocalizedRealmName(destination.id);
+  ctx.textAlign="center";ctx.font=getLanguage()==="zh"?"bold 11px sans-serif":"bold 9px 'Courier New', monospace";
+  ctx.fillStyle="#0b1118";ctx.fillText(gateName,x+1,ground-177,128);
+  ctx.fillStyle=p.trim;ctx.fillText(gateName,x,ground-178,128);
   if(nearby){
     ctx.fillStyle="rgba(7,12,18,.94)";ctx.fillRect(x-90,ground-211,180,21);
     ctx.strokeStyle=p.trim;ctx.lineWidth=2;ctx.strokeRect(x-90,ground-211,180,21);
@@ -3114,7 +3126,7 @@ function drawGate(x, ground) {
   ctx.restore();
 }
 
-function drawSign(x, ground, text) {
+function drawSign(x, ground, realmId) {
   ctx.save();
   // Shadow, braced posts and an angled wooden town sign.
   ctx.fillStyle = "rgba(0, 0, 0, .22)";
@@ -3135,10 +3147,12 @@ function drawSign(x, ground, text) {
   ctx.fillRect(x - 78, ground - 98, 158, 2);
   ctx.fillStyle = "#80553a";
   ctx.fillRect(x - 70, ground - 119, 142, 21);
+  const signName = getLocalizedRealmName(realmId);
   ctx.fillStyle = "#f6df9d";
-  ctx.font = "bold 12px system-ui";
+  ctx.font = getLanguage() === "zh" ? "bold 12px system-ui" : "bold 11px 'Courier New', monospace";
   ctx.textAlign = "center";
-  ctx.fillText(getLanguage() === "zh" ? "枫叶镇 →" : text, x, ground - 105);
+  // Keep the name within the sign; the separate carved arrow lives at the right.
+  ctx.fillText(signName, x - 12, ground - 105, 126);
 
   // Carved arrow and metal nail heads.
   ctx.fillStyle = "#fff0bf";

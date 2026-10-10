@@ -316,7 +316,7 @@ $epqCsrfToken = (string)$_SESSION['csrf_token'];
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261010-guestdb1").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261010-realmnames1").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");
