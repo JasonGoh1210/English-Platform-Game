@@ -10,7 +10,7 @@ session_start();
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-storyarc1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-mangastory1">
 </head>
 <body>
   <div class="game-shell pixel-world-ui">
@@ -56,22 +56,50 @@ session_start();
     <div class="location-pill pixel-location" id="locationText">MAPLE TOWN</div>
 
     <section class="story-intro-overlay hidden" id="storyIntroOverlay" role="dialog" aria-modal="true" aria-labelledby="storyIntroTitle" aria-describedby="storyIntroBody">
-      <div class="story-intro-stars" aria-hidden="true"></div>
-      <div class="story-intro-content">
-        <div class="story-intro-brand">ENGLISH POWER QUEST</div>
-        <p class="story-intro-kicker" id="storyIntroKicker">ENGLISH POWER QUEST · PROLOGUE</p>
-        <div class="story-intro-meta">
-          <span id="storyIntroCounter">PROLOGUE · 1 / 3</span>
-          <span> ALEX LIN · AETHERIA </span>
+      <div class="storyboard-screen" id="storyboardCanvas" data-scene="prologue" data-camera="wide" data-effect="magic">
+        <div class="storyboard-scene" id="storyboardSceneArt" aria-hidden="true"></div>
+        <div class="storyboard-scene-vignette" aria-hidden="true"></div>
+        <div class="storyboard-halftone" aria-hidden="true"></div>
+        <div class="storyboard-speed-lines" aria-hidden="true"></div>
+        <div class="storyboard-flash" aria-hidden="true"></div>
+
+        <div class="storyboard-orbit-runes" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
         </div>
-        <h1 id="storyIntroTitle">The Student at the Bottom</h1>
-        <p id="storyIntroBody"></p>
-        <div class="story-intro-progress-track"><div id="storyIntroProgress"></div></div>
-        <div class="story-intro-actions">
-          <button type="button" class="story-intro-skip" id="storyIntroSkip">SKIP PROLOGUE</button>
-          <button type="button" class="story-intro-next" id="storyIntroNext">CONTINUE <span aria-hidden="true">→</span></button>
+
+        <div class="storyboard-brandline">
+          <span class="story-intro-brand">ENGLISH POWER QUEST</span>
+          <span id="storyboardFrameTag">PROLOGUE · PANEL 01</span>
         </div>
-        <p class="story-intro-hint">ENTER · CONTINUE &nbsp; / &nbsp; ESC · SKIP</p>
+
+        <div class="storyboard-portrait-wrap" id="storyboardPortraitWrap">
+          <div class="storyboard-portrait-aura" aria-hidden="true"></div>
+          <img id="storyIntroPortraitImage" alt="Story character portrait">
+          <div class="storyboard-portrait-caption" id="storyboardSpeaker">ALEX LIN</div>
+        </div>
+
+        <div class="story-intro-content">
+          <div class="storyboard-kicker-row">
+            <p class="story-intro-kicker" id="storyIntroKicker">ENGLISH POWER QUEST · PROLOGUE</p>
+            <div class="story-intro-meta">
+              <span id="storyIntroCounter">PROLOGUE · 1 / 8</span>
+              <span id="storyboardLocation">AETHERIA</span>
+            </div>
+          </div>
+          <div class="storyboard-caption-rule"><span></span><b>◆</b><span></span></div>
+          <h1 id="storyIntroTitle">The Student at the Bottom</h1>
+          <p id="storyIntroBody"></p>
+          <div class="story-intro-progress-track"><div id="storyIntroProgress"></div></div>
+        </div>
+
+        <div class="storyboard-sfx" id="storyboardSfx" aria-hidden="true">WHOOSH!</div>
+        <div class="storyboard-bottom-bar" aria-hidden="true"><span></span><span></span><span></span></div>
+      </div>
+
+      <div class="storyboard-controls">
+        <button type="button" class="story-intro-skip" id="storyIntroSkip">SKIP SCENE</button>
+        <div class="story-intro-hint">ENTER · NEXT PANEL &nbsp; / &nbsp; ESC · SKIP SCENE</div>
+        <button type="button" class="story-intro-next" id="storyIntroNext">CONTINUE <span aria-hidden="true">→</span></button>
       </div>
     </section>
 
@@ -248,6 +276,6 @@ session_start();
     </div>
   </div>
 
-  <script type="module" src="/FYP/js/rpg.js?v=20261010-storyarc2"></script>
+  <script type="module" src="/FYP/js/rpg.js?v=20261010-mangastory1"></script>
 </body>
 </html>
