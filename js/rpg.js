@@ -16,6 +16,13 @@ const ui = {
   dialogueText: document.getElementById("dialogueText"),
   dialogueButton: document.getElementById("dialogueButton"),
   storyIntroOverlay: document.getElementById("storyIntroOverlay"),
+  storyIntroCanvas: document.getElementById("storyboardCanvas"),
+  storyIntroSceneArt: document.getElementById("storyboardSceneArt"),
+  storyIntroPortraitImage: document.getElementById("storyIntroPortraitImage"),
+  storyboardSpeaker: document.getElementById("storyboardSpeaker"),
+  storyboardFrameTag: document.getElementById("storyboardFrameTag"),
+  storyboardLocation: document.getElementById("storyboardLocation"),
+  storyboardSfx: document.getElementById("storyboardSfx"),
   storyIntroKicker: document.getElementById("storyIntroKicker"),
   storyIntroCounter: document.getElementById("storyIntroCounter"),
   storyIntroTitle: document.getElementById("storyIntroTitle"),
@@ -116,8 +123,11 @@ Object.entries(worldBackgrounds).forEach(([realmId, image]) => {
 });
 
 const WORLD_SAVE_KEY = "englishPowerQuest.world.v2";
-const STORY_INTRO_SEEN_KEY = "englishPowerQuest.storyIntro.seen.v1";
+const STORY_INTRO_SEEN_KEY = "englishPowerQuest.storyIntro.seen.v2";
 let storyIntroPage = 0;
+let storyMode = "intro";
+let storySequence = [];
+let storyCompletionCallback = null;
 const BATTLE_KEY = "englishPowerQuest.battle";
 const ESCAPE_KEY = "englishPowerQuest.escape.v1";
 
@@ -685,17 +695,245 @@ function settingsIsOpen() {
   return !document.getElementById("settingsScreen")?.classList.contains("hidden");
 }
 
+function splitStoryParagraph(paragraph, maxFrames = 3) {
+  const parts = String(paragraph || "")
+    .match(/[^.!?。！？]+[.!?。！？]*/g)
+    ?.map(part => part.trim())
+    .filter(Boolean) || [String(paragraph || "")];
+  if (parts.length <= maxFrames) return parts;
+
+  const frames = [];
+  const perFrame = Math.ceil(parts.length / maxFrames);
+  for (let i = 0; i < parts.length; i += perFrame) {
+    frames.push(parts.slice(i, i + perFrame).join(" "));
+  }
+  return frames.slice(0, maxFrames);
+}
+
+function storyPortraitSource(characterId) {
+  if (characterId === "alex") {
+    return {
+      src: "/FYP/images/player_walk_frames/png_frames/Player_Stand.png?v=20261010-mangastory1",
+      kind: "pixel"
+    };
+  }
+
+  const portraits = {
+    rowan: `<g stroke-linejoin="round" stroke-linecap="round">
+      <path d="M46 348 L58 242 Q69 198 103 184 L193 184 Q232 205 245 348Z" fill="#513b36" stroke="#191a27" stroke-width="9"/>
+      <path d="M72 233 L100 199 L120 260 L103 345 L63 345Z" fill="#ac8657" stroke="#e0be7b" stroke-width="4"/>
+      <path d="M204 229 L180 197 L158 263 L184 344 L236 345Z" fill="#7c6046" stroke="#e0be7b" stroke-width="4"/>
+      <path d="M114 179 L115 154 L180 154 L182 197 L148 218Z" fill="#b88867" stroke="#6a493e" stroke-width="5"/>
+      <path d="M89 107 Q83 48 139 43 Q201 43 207 111 L196 166 Q171 198 143 193 Q105 182 94 150Z" fill="#e5c29a" stroke="#704f43" stroke-width="7"/>
+      <path d="M86 113 Q75 62 112 33 Q149 8 189 39 Q220 60 207 117 L193 91 L180 64 L163 86 L141 65 L117 93 L105 128Z" fill="#d8d6c5" stroke="#56576b" stroke-width="8"/>
+      <path d="M111 130 Q115 155 139 164 L157 164 Q181 153 185 129 Q174 145 160 139 L148 150 L137 139 Q124 146 111 130Z" fill="#f1ead8" stroke="#8a857e" stroke-width="5"/>
+      <path d="M111 114 L130 114 M165 114 L185 113" stroke="#5b4538" stroke-width="7"/>
+      <ellipse cx="125" cy="118" rx="5" ry="7" fill="#2d2d36"/><ellipse cx="173" cy="117" rx="5" ry="7" fill="#2d2d36"/>
+      <path d="M142 120 L137 137 L148 139" fill="none" stroke="#9c7053" stroke-width="4"/>
+      <path d="M116 169 L143 183 L176 165" fill="none" stroke="#fff0d9" stroke-width="8"/>
+      <path d="M39 348 L29 104 Q27 77 48 72" fill="none" stroke="#8b6844" stroke-width="9"/>
+      <path d="M28 80 Q18 59 43 51 Q57 65 42 82Z" fill="#f4ca72" stroke="#be8c44" stroke-width="5"/>
+    </g>`,
+    mira: `<g stroke-linejoin="round" stroke-linecap="round">
+      <path d="M53 348 L65 242 Q78 195 112 184 L183 184 Q221 201 235 348Z" fill="#3d594f" stroke="#172c35" stroke-width="9"/>
+      <path d="M77 233 L106 199 L123 257 L102 346 L62 346Z" fill="#6d967d" stroke="#b6d9aa" stroke-width="4"/>
+      <path d="M205 233 L180 199 L160 260 L186 346 L234 346Z" fill="#284e49" stroke="#a5c7a4" stroke-width="4"/>
+      <path d="M121 171 L120 147 L177 147 L180 190 L149 206Z" fill="#e3b391" stroke="#8b574a" stroke-width="5"/>
+      <path d="M93 97 Q92 45 145 42 Q202 46 202 105 L190 158 Q168 186 143 180 Q104 173 95 141Z" fill="#e8b794" stroke="#70413d" stroke-width="7"/>
+      <path d="M85 109 Q70 62 112 35 Q156 4 193 43 L204 107 L186 89 L172 67 L150 82 L128 66 L105 100Z" fill="#79483e" stroke="#372b35" stroke-width="8"/>
+      <path d="M62 88 L97 39 Q133 6 190 27 L238 76 L220 91 L102 75Z" fill="#526e4d" stroke="#1e393b" stroke-width="9"/>
+      <path d="M107 78 L201 67 L216 83 L101 96Z" fill="#b4cb83" stroke="#354e3d" stroke-width="5"/>
+      <path d="M185 28 Q211 3 229 30 L209 58Z" fill="#e8d9a0" stroke="#71815c" stroke-width="4"/>
+      <ellipse cx="122" cy="114" rx="7" ry="9" fill="#245b54"/><ellipse cx="170" cy="113" rx="7" ry="9" fill="#245b54"/>
+      <path d="M113 102 L132 99 M162 99 L182 102" stroke="#623b37" stroke-width="6"/>
+      <path d="M144 117 L137 135 L149 138" fill="none" stroke="#ab775e" stroke-width="4"/>
+      <path d="M132 153 Q149 164 166 151" fill="none" stroke="#a14f4c" stroke-width="4"/>
+      <path d="M67 251 L94 211 L113 240 L101 277 L80 284Z" fill="#c28f54" stroke="#72523d" stroke-width="5"/>
+      <path d="M206 244 L222 217 L238 231 L236 273 L215 285Z" fill="#8da875" stroke="#375249" stroke-width="5"/>
+    </g>`,
+    tala: `<g stroke-linejoin="round" stroke-linecap="round">
+      <path d="M46 348 L57 240 Q72 196 105 185 L190 185 Q230 205 245 348Z" fill="#4b6042" stroke="#182a2b" stroke-width="9"/>
+      <path d="M67 231 L101 197 L123 259 L102 346 L58 346Z" fill="#849969" stroke="#cfca90" stroke-width="4"/>
+      <path d="M208 235 L182 197 L160 258 L185 346 L241 346Z" fill="#314a3d" stroke="#9aab77" stroke-width="4"/>
+      <path d="M118 174 L117 146 L178 146 L182 193 L147 209Z" fill="#dfb18b" stroke="#815b4b" stroke-width="5"/>
+      <path d="M92 96 Q89 45 145 43 Q201 45 205 101 L191 158 Q167 186 140 178 Q105 171 96 143Z" fill="#e4b28a" stroke="#6f473c" stroke-width="7"/>
+      <path d="M84 111 Q69 69 101 41 L130 30 L190 48 L213 93 L196 115 L182 80 L162 101 L143 77 L118 101 L105 133Z" fill="#4e342e" stroke="#241f2b" stroke-width="8"/>
+      <path d="M75 170 L198 155 L218 188 L89 206Z" fill="#983f3c" stroke="#3c2530" stroke-width="8"/>
+      <path d="M92 167 L194 157 L200 174 L97 188Z" fill="#d77654" stroke="#60303a" stroke-width="4"/>
+      <ellipse cx="122" cy="115" rx="7" ry="9" fill="#3f5a48"/><ellipse cx="173" cy="114" rx="7" ry="9" fill="#3f5a48"/>
+      <path d="M111 102 L132 99 M162 99 L184 101" stroke="#57342e" stroke-width="6"/>
+      <path d="M145 117 L139 135 L151 138" fill="none" stroke="#a86d55" stroke-width="4"/>
+      <path d="M132 153 Q149 164 169 149" fill="none" stroke="#9f4942" stroke-width="4"/>
+      <path d="M39 248 L55 240 L56 346 L40 346Z" fill="#70513a" stroke="#302a26" stroke-width="5"/>
+      <path d="M30 229 L64 229 L71 265 L24 265Z" fill="#f7c765" stroke="#5b4430" stroke-width="6"/>
+      <path d="M39 237 L56 237 L56 256 L39 256Z" fill="#ffe9a6"/>
+      <path d="M68 220 Q45 185 67 165" stroke="#ffcc70" stroke-width="4" fill="none"/>
+    </g>`,
+    kai: `<g stroke-linejoin="round" stroke-linecap="round">
+      <path d="M46 348 L55 242 Q72 201 105 185 L194 185 Q230 209 245 348Z" fill="#263d59" stroke="#121b31" stroke-width="9"/>
+      <path d="M70 237 L101 199 L122 257 L104 346 L60 346Z" fill="#356a83" stroke="#83d8e5" stroke-width="4"/>
+      <path d="M206 234 L182 198 L160 260 L187 346 L241 346Z" fill="#142b47" stroke="#4d8cb2" stroke-width="4"/>
+      <path d="M119 173 L117 144 L178 144 L181 195 L148 208Z" fill="#d6b29c" stroke="#725966" stroke-width="5"/>
+      <path d="M90 103 Q89 47 145 39 Q203 47 202 104 L191 157 Q171 181 142 177 Q104 171 94 143Z" fill="#e2c8bb" stroke="#6c6a86" stroke-width="7"/>
+      <path d="M82 117 Q71 63 107 37 L143 22 L191 42 L214 93 L199 127 L186 88 L164 101 L144 72 L124 97 L106 124Z" fill="#8ba9ce" stroke="#344e73" stroke-width="8"/>
+      <path d="M110 110 L132 106 M161 106 L183 109" stroke="#596fa7" stroke-width="6"/>
+      <ellipse cx="121" cy="118" rx="7" ry="10" fill="#286eae"/><ellipse cx="172" cy="117" rx="7" ry="10" fill="#286eae"/>
+      <ellipse cx="123" cy="120" rx="3" ry="5" fill="#e3f8ff"/><ellipse cx="174" cy="119" rx="3" ry="5" fill="#e3f8ff"/>
+      <path d="M145 120 L138 138 L150 139" fill="none" stroke="#a97e76" stroke-width="4"/>
+      <path d="M128 152 Q149 161 170 150" fill="none" stroke="#7f5660" stroke-width="4"/>
+      <path d="M79 202 L109 185 L138 212 L122 266 L90 250Z" fill="#182b45" stroke="#83d8e5" stroke-width="4"/>
+      <path d="M158 205 L185 187 L216 216 L203 263 L171 249Z" fill="#13243e" stroke="#83d8e5" stroke-width="4"/>
+      <path d="M191 261 L228 248 L246 283 L214 314 L185 295Z" fill="#272b4a" stroke="#c4b1ff" stroke-width="4"/>
+      <path d="M205 278 L218 267 L231 281 L219 297Z" fill="#71e5ee"/>
+    </g>`,
+    book: `<g stroke-linejoin="round" stroke-linecap="round">
+      <path d="M46 113 L144 50 L252 97 L156 168Z" fill="#0e1c3d" stroke="#d9cbff" stroke-width="8"/>
+      <path d="M46 113 L45 252 L154 314 L156 168Z" fill="#132955" stroke="#6be9ff" stroke-width="7"/>
+      <path d="M156 168 L252 97 L254 232 L154 314Z" fill="#1e3975" stroke="#6be9ff" stroke-width="7"/>
+      <path d="M63 131 L143 82 L140 147 L64 199Z" fill="#223e78" stroke="#f1d683" stroke-width="4"/>
+      <path d="M174 177 L234 131 L235 210 L175 252Z" fill="#2b4b8f" stroke="#f1d683" stroke-width="4"/>
+      <path d="M150 91 L174 130 L155 173 L133 137Z" fill="#b1faff" stroke="#68e7ff" stroke-width="5"/>
+      <path d="M155 120 L179 151 L155 184 L131 151Z" fill="#e9ffff" stroke="#67ecff" stroke-width="5"/>
+      <path d="M155 25 L164 57 M226 49 L206 74 M84 58 L109 81 M274 155 L247 159 M84 235 L112 223" stroke="#6be9ff" stroke-width="6"/>
+      <circle cx="155" cy="155" r="113" fill="none" stroke="#70f2ff" stroke-width="3" stroke-dasharray="7 12"/>
+    </g>`,
+    shadow: `<g stroke-linejoin="round" stroke-linecap="round">
+      <path d="M35 349 Q39 248 76 207 L55 131 L91 106 L102 48 L139 80 L176 49 L191 106 L224 128 L212 205 Q252 242 265 349Z" fill="#141226" stroke="#3e246e" stroke-width="10"/>
+      <path d="M61 210 L78 158 L111 187 L143 157 L183 186 L219 152 L232 223 L200 320 L97 328Z" fill="#242044" stroke="#6a3a9e" stroke-width="7"/>
+      <path d="M91 148 L122 132 L143 148 L165 131 L201 148 L181 176 L143 187 L107 176Z" fill="#6e42a5"/>
+      <path d="M105 154 L131 148 L125 165Z M157 149 L188 154 L168 166Z" fill="#b9f3ff"/>
+      <path d="M112 213 L138 223 L126 256 L109 247Z M158 223 L182 210 L188 246 L169 258Z" fill="#4c2a83"/>
+      <path d="M127 275 L145 287 L163 276 L155 302 L139 306Z" fill="#bd5dff"/>
+      <path d="M81 221 L60 261 M209 221 L237 259" stroke="#a66bff" stroke-width="6"/>
+    </g>`
+  };
+  const art = portraits[characterId] || portraits.book;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="360" viewBox="0 0 300 360">
+    <defs>
+      <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e5fbff"/><stop offset=".45" stop-color="#77deff"/><stop offset="1" stop-color="#8f5bff"/></linearGradient>
+      <radialGradient id="halo"><stop stop-color="#65dfff" stop-opacity=".34"/><stop offset="1" stop-color="#65dfff" stop-opacity="0"/></radialGradient>
+      <linearGradient id="coat" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#50688f"/><stop offset="1" stop-color="#171c32"/></linearGradient>
+    </defs>
+    <ellipse cx="150" cy="185" rx="135" ry="170" fill="url(#halo)"/>
+    <path d="M150 8 L163 28 L185 20 L185 45 L213 41 L204 65 L232 77 L210 95" fill="none" stroke="url(#glow)" stroke-width="3" opacity=".55"/>
+    <path d="M43 298 L22 321 L68 315 M255 294 L279 320 L234 313" fill="none" stroke="#74dcff" stroke-width="3" opacity=".45"/>
+    ${art}
+  </svg>`;
+  return { src: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg), kind: "illustration" };
+}
+
+function splitStoryParagraph(paragraph, maxFrames = 3) {
+  const parts = String(paragraph || "")
+    .match(/[^.!?。！？]+[.!?。！？]*/g)
+    ?.map(part => part.trim())
+    .filter(Boolean) || [String(paragraph || "")];
+  if (parts.length <= maxFrames) return parts;
+  const frames = [];
+  const perFrame = Math.ceil(parts.length / maxFrames);
+  for (let i = 0; i < parts.length; i += perFrame) {
+    frames.push(parts.slice(i, i + perFrame).join(" "));
+  }
+  return frames.slice(0, maxFrames);
+}
+
+function buildIntroStoryboard() {
+  const sequence = [];
+  for (let page = 1; page <= 3; page += 1) {
+    const body = t(`story.intro.page${page}.body`);
+    const frames = splitStoryParagraph(body, 3);
+    frames.forEach((frame, frameIndex) => {
+      const firstPage = page === 1;
+      const scene = page < 3 ? "prologue" : "maple";
+      sequence.push({
+        titleKey: `story.intro.page${page}.title`,
+        body: frame,
+        character: page === 3 && frameIndex === frames.length - 1 ? "book" : "alex",
+        speaker: page === 3 && frameIndex === frames.length - 1
+          ? (getLanguage() === "zh" ? "系统之书" : "THE SYSTEM BOOK")
+          : "ALEX LIN",
+        scene,
+        location: page === 1 ? "CAMPUS · 11:47 PM" : page === 2 ? "CAMPUS · THE LAST WORD" : "AETHERIA · MAPLE TOWN",
+        camera: frameIndex === 0 ? "close" : frameIndex === 1 ? "pan" : "wide",
+        effect: page === 2 ? "impact" : page === 3 ? "magic" : "tension",
+        sfx: page === 2 ? (getLanguage() === "zh" ? "轰——！" : "THOOM!") : page === 3 ? "SHIIING!" : ""
+      });
+    });
+  }
+  return sequence;
+}
+
+function beginStoryboard(sequence, mode = "chapter", callback = null) {
+  world.storyIntroOpen = true;
+  storyMode = mode;
+  storySequence = sequence;
+  storyIntroPage = 0;
+  storyCompletionCallback = callback;
+  keys.clear();
+  touch.left = false;
+  touch.right = false;
+  ui.dialogue.classList.add("hidden");
+  renderStoryIntro();
+  ui.storyIntroOverlay.classList.remove("hidden");
+}
+
+function startChapterStoryboard(npc, beat, dialogueKey) {
+  const fullText = t(dialogueKey);
+  const frames = splitStoryParagraph(fullText, 3);
+  const titleKey = beat.titleKey || npc.titleKey;
+  const story = frames.map((body, index) => ({
+    titleKey,
+    body,
+    character: npc.id,
+    speaker: t(npc.nameKey) + " · " + t(npc.titleKey),
+    scene: npc.realmId,
+    location: t(({ maple: "location.maple", forest: "location.forest", camp: "location.camp", ruins: "location.ruins" })[npc.realmId]),
+    camera: index === 0 ? "close" : index === frames.length - 1 ? "wide" : "pan",
+    effect: npc.id === "kai" && index === frames.length - 1 ? "magic" : index === 0 ? "tension" : "impact",
+    sfx: index === 0 ? "" : npc.id === "kai" ? "SHIIING!" : "WHUMP!"
+  }));
+  beginStoryboard(story, "chapter");
+}
+
 function renderStoryIntro() {
+  if (!storySequence.length) return;
+  const slide = storySequence[storyIntroPage] || storySequence[0];
   const pageNumber = storyIntroPage + 1;
-  ui.storyIntroKicker.textContent = t("story.intro.kicker");
+  const total = storySequence.length;
+  const isIntro = storyMode === "intro";
+  const isLast = pageNumber === total;
+  const portrait = storyPortraitSource(slide.character || "alex");
+
+  ui.storyIntroKicker.textContent = isIntro
+    ? t("story.intro.kicker")
+    : (getLanguage() === "zh" ? "主线剧情 · 动态分镜" : "MAIN STORY · CINEMATIC");
   ui.storyIntroCounter.textContent = getLanguage() === "zh"
-    ? `序章 · ${pageNumber} / 3`
-    : `PROLOGUE · ${pageNumber} / 3`;
-  ui.storyIntroTitle.textContent = t(`story.intro.page${pageNumber}.title`);
-  ui.storyIntroBody.textContent = t(`story.intro.page${pageNumber}.body`);
-  ui.storyIntroProgress.style.width = `${(pageNumber / 3) * 100}%`;
-  ui.storyIntroNext.textContent = t(pageNumber === 3 ? "story.intro.start" : "story.intro.next");
-  ui.storyIntroSkip.textContent = t("story.intro.skip");
+    ? `${isIntro ? "序章" : "剧情"} · 分镜 ${pageNumber} / ${total}`
+    : `${isIntro ? "PROLOGUE" : "STORY"} · PANEL ${String(pageNumber).padStart(2, "0")} / ${total}`;
+  ui.storyIntroTitle.textContent = t(slide.titleKey);
+  ui.storyIntroBody.textContent = slide.body;
+  ui.storyIntroProgress.style.width = `${(pageNumber / total) * 100}%`;
+  ui.storyIntroNext.textContent = isIntro
+    ? t(isLast ? "story.intro.start" : "story.intro.next")
+    : (getLanguage() === "zh" ? (isLast ? "继续探索" : "下一格 →") : (isLast ? "RETURN TO EXPLORATION" : "NEXT PANEL →"));
+  ui.storyIntroSkip.textContent = getLanguage() === "zh" ? "跳过演出" : "SKIP SCENE";
+  ui.storyboardSpeaker.textContent = slide.speaker || "ALEX LIN";
+  ui.storyboardFrameTag.textContent = `${isIntro ? "PROLOGUE" : "CHAPTER"} · ${String(pageNumber).padStart(2, "0")}`;
+  ui.storyboardLocation.textContent = slide.location || t("location.maple");
+  ui.storyIntroPortraitImage.src = portrait.src;
+  ui.storyIntroPortraitImage.dataset.kind = portrait.kind;
+  ui.storyIntroPortraitImage.alt = slide.speaker || "Story character";
+  ui.storyIntroCanvas.dataset.scene = slide.scene || "prologue";
+  ui.storyIntroCanvas.dataset.camera = slide.camera || "wide";
+  ui.storyIntroCanvas.dataset.effect = slide.effect || "magic";
+  ui.storyIntroSceneArt.style.backgroundImage = slide.scene && slide.scene !== "prologue" && worldBackgroundPaths[slide.scene]
+    ? `url("${worldBackgroundPaths[slide.scene]}")`
+    : "none";
+  ui.storyboardSfx.textContent = slide.sfx || "";
+  ui.storyboardSfx.classList.toggle("hidden", !slide.sfx);
+  ui.storyIntroCanvas.classList.remove("storyboard-hit", "storyboard-flash-active", "storyboard-magic-active");
+  void ui.storyIntroCanvas.offsetWidth;
+  if (slide.effect === "impact") ui.storyIntroCanvas.classList.add("storyboard-hit");
+  if (slide.effect === "magic") ui.storyIntroCanvas.classList.add("storyboard-flash-active", "storyboard-magic-active");
 }
 
 function openStoryIntroIfNew() {
@@ -703,18 +941,12 @@ function openStoryIntroIfNew() {
   try { seen = localStorage.getItem(STORY_INTRO_SEEN_KEY) === "1"; }
   catch (error) { console.warn("Story intro preference is unavailable.", error); }
   if (seen) return;
-  world.storyIntroOpen = true;
-  storyIntroPage = 0;
-  keys.clear();
-  touch.left = false;
-  touch.right = false;
-  renderStoryIntro();
-  ui.storyIntroOverlay.classList.remove("hidden");
+  beginStoryboard(buildIntroStoryboard(), "intro");
 }
 
 function advanceStoryIntro() {
   if (!world.storyIntroOpen) return;
-  if (storyIntroPage < 2) {
+  if (storyIntroPage < storySequence.length - 1) {
     storyIntroPage += 1;
     renderStoryIntro();
   } else {
@@ -724,14 +956,27 @@ function advanceStoryIntro() {
 
 function finishStoryIntro() {
   if (!world.storyIntroOpen) return;
+  const finishedMode = storyMode;
   world.storyIntroOpen = false;
   ui.storyIntroOverlay.classList.add("hidden");
-  try { localStorage.setItem(STORY_INTRO_SEEN_KEY, "1"); }
-  catch (error) { console.warn("Story intro preference could not be saved.", error); }
+  if (finishedMode === "intro") {
+    try { localStorage.setItem(STORY_INTRO_SEEN_KEY, "1"); }
+    catch (error) { console.warn("Story intro preference could not be saved.", error); }
+  } else if (finishedMode === "chapter") {
+    world.interacting = false;
+    world.currentDialogueNpcId = null;
+    world.currentDialogueKey = null;
+    ui.dialogue.classList.add("hidden");
+  }
   keys.clear();
   touch.left = false;
   touch.right = false;
+  const callback = storyCompletionCallback;
+  storyCompletionCallback = null;
+  if (typeof callback === "function") callback();
 }
+
+
 
 function interact() {
   if (world.interacting || world.battle || world.travelMenu || settingsIsOpen()) return;
