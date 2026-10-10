@@ -36,7 +36,7 @@ const state = {
 
 const el = {};
 const DATA_FILES = {
-  enemies: "./data/enemies.json?v=20261010-monsterart1",
+  enemies: "./data/enemies.json?v=20261010-monsterart2",
   levels: "./data/levels.json",
   skills: "./data/skills.json",
   worlds: "./data/worlds.json"
