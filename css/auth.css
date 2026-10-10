@@ -241,6 +241,40 @@ body.auth-page {
   background: rgba(185, 180, 212, .18);
 }
 .auth-guest-form { margin: 0; }
+.auth-guest-name-label {
+  display: block;
+  margin: 0 0 7px;
+  color: #d7d8e4;
+  font-size: .78rem;
+  font-weight: 750;
+}
+.auth-guest-name-input {
+  display: block;
+  width: 100%;
+  height: 47px;
+  margin-bottom: 7px;
+  padding: 0 13px;
+  border: 1px solid rgba(185, 180, 212, .28);
+  border-radius: 9px;
+  outline: none;
+  color: #fff;
+  background: #0c121d;
+  font: inherit;
+  font-size: .91rem;
+  transition: border-color .15s, box-shadow .15s;
+}
+.auth-guest-name-input:focus {
+  border-color: #bca0eb;
+  box-shadow: 0 0 0 3px rgba(184, 148, 234, .12);
+}
+.auth-guest-name-input::placeholder { color: #747d91; }
+.auth-guest-name-hint {
+  display: block;
+  margin: 0 0 13px;
+  color: #8f9bb0;
+  font-size: .68rem;
+  line-height: 1.55;
+}
 .auth-guest-button {
   display: flex;
   align-items: center;
