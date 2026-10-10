@@ -18,25 +18,25 @@ const enemies = {
   },
   "bat-01": {
     id: "bat-01", name: "Confusion Bat", nameZh: "迷惑蝙蝠", type: "bat", difficulty: "EASY",
-    spritePath: "/FYP/images/world/monsters/confusion-bat.svg?v=20261010-monsterart1",
+    spritePath: "/FYP/images/world/monsters/confusion-bat.svg?v=20261010-monsterart2",
     questionTypes: ["TRUE_FALSE", "ODD_WORD_OUT"],
     hp: 70, damage: 10, xp: 25, coins: 12, role: "FOREST ENEMY", roleKey: "battle.forestEnemy"
   },
   "road-guardian-01": {
     id: "road-guardian-01", name: "Road Guardian", nameZh: "道路守卫", type: "guardian", difficulty: "MEDIUM",
-    spritePath: "/FYP/images/world/monsters/road-guardian.svg?v=20261010-monsterart1",
+    spritePath: "/FYP/images/world/monsters/road-guardian.svg?v=20261010-monsterart2",
     questionTypes: ["TRUE_FALSE", "SENTENCE_BUILDER"],
     hp: 85, damage: 11, xp: 28, coins: 14, role: "ROAD GUARDIAN", roleKey: "battle.ancientGuardian"
   },
   "guardian-01": {
     id: "guardian-01", name: "Grammar Guardian", nameZh: "语法守卫", type: "guardian", difficulty: "MEDIUM",
-    spritePath: "/FYP/images/world/monsters/grammar-guardian.svg?v=20261010-monsterart1",
+    spritePath: "/FYP/images/world/monsters/grammar-guardian.svg?v=20261010-monsterart2",
     questionTypes: ["TRUE_FALSE", "SENTENCE_BUILDER"],
     hp: 100, damage: 12, xp: 30, coins: 15, role: "ANCIENT GUARDIAN", roleKey: "battle.ancientGuardian"
   },
   "cave-wraith-01": {
     id: "cave-wraith-01", name: "Cave Wraith", nameZh: "洞穴幽魂", type: "wraith", difficulty: "MEDIUM",
-    spritePath: "/FYP/images/world/monsters/cave-wraith.svg?v=20261010-monsterart1",
+    spritePath: "/FYP/images/world/monsters/cave-wraith.svg?v=20261010-monsterart2",
     questionTypes: ["TRUE_FALSE", "SENTENCE_BUILDER"],
     hp: 110, damage: 14, xp: 45, coins: 20, role: "CAVE SPIRIT", roleKey: "battle.caveSpirit"
   }
