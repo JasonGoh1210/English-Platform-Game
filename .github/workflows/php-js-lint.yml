@@ -14,3 +14,39 @@ jobs:
         run: |
           node --check js/rpg.js
           node --check js/battle.js
+
+  mysql-guest-flow:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: testpassword
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -ptestpassword"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare database, including old-schema migration simulation
+        run: |
+          mysql -h 127.0.0.1 -uroot -ptestpassword < database/english_power_quest_schema.sql
+          mysql -h 127.0.0.1 -uroot -ptestpassword english_power_quest -e "
+            DROP TABLE guest_login_tokens;
+            DROP TABLE player_game_saves;
+            ALTER TABLE users DROP COLUMN google_sub, DROP COLUMN account_type;
+            DELETE FROM worlds WHERE world_order > 1;
+            UPDATE worlds SET world_name='Dreamwood' WHERE world_order=1;
+          "
+          mysql -h 127.0.0.1 -uroot -ptestpassword < database/migrations/003_persistent_guests.sql
+          mysql -h 127.0.0.1 -uroot -ptestpassword < database/migrations/004_four_worlds.sql
+      - name: Guest, Story, save and upgrade smoke test
+        env:
+          EPQ_DB_HOST: 127.0.0.1
+          EPQ_DB_USER: root
+          EPQ_DB_PASS: testpassword
+          EPQ_DB_NAME: english_power_quest
+        run: bash tests/guest_flow_smoke.sh

@@ -48,6 +48,8 @@ ORDER BY u.user_id DESC;
 6. Log out and log back in with the new username/password. Confirm the same profile returns.
 7. Explicit guest logout revokes persistent recovery. Logging out is *not* the same as merely closing the browser.
 
+GitHub Actions runs PHP/JavaScript syntax checks and a MySQL 8 guest-flow smoke test on pushes to main, including a simulated existing-schema migration.
+
 ## Security and limitations
 
 This is a browser-bound guest account. Anyone with access to the same browser session can use it; use HTTPS in production. A stolen raw bearer cookie could resume that guest until it expires or is revoked. Full account recovery requires upgrading to a password account. No email verification or Google sign-in exists yet.

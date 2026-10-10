@@ -11,7 +11,13 @@ function epq_db(): mysqli {
     if ($db instanceof mysqli) return $db;
 
     mysqli_report(MYSQLI_REPORT_OFF);
-    $db = new mysqli(EPQ_DB_HOST, EPQ_DB_USER, EPQ_DB_PASS, EPQ_DB_NAME);
+    // Environment overrides support deployed installations and isolated integration tests.
+    $host = getenv('EPQ_DB_HOST') ?: EPQ_DB_HOST;
+    $user = getenv('EPQ_DB_USER') ?: EPQ_DB_USER;
+    $envPassword = getenv('EPQ_DB_PASS');
+    $password = $envPassword === false ? EPQ_DB_PASS : $envPassword;
+    $name = getenv('EPQ_DB_NAME') ?: EPQ_DB_NAME;
+    $db = new mysqli($host, $user, $password, $name);
 
     if ($db->connect_errno) {
         throw new RuntimeException('MySQL connection failed: ' . $db->connect_error);
