@@ -1,4 +1,4 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261010-standaloneworlds1";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -2581,11 +2581,12 @@ function drawStyledNPC(x, ground, npc) {
 
   const isElder = npc.id === "elder";
   const isMerchant = npc.id === "mira";
+  const isGuide = npc.id === "tala";
   const isKeeper = npc.id === "kai";
-  const robe = isElder ? "#85734c" : isMerchant ? "#9d533e" : "#3f7186";
-  const robeLight = isElder ? "#c2a36a" : isMerchant ? "#d28a53" : "#75bac9";
-  const robeDark = isElder ? "#504736" : isMerchant ? "#5c3540" : "#263d58";
-  const hair = isElder ? "#c4c2a7" : isMerchant ? "#6b352d" : "#243440";
+  const robe = isElder ? "#85734c" : isMerchant ? "#9d533e" : isGuide ? "#64764e" : "#3f7186";
+  const robeLight = isElder ? "#c2a36a" : isMerchant ? "#d28a53" : isGuide ? "#a9bd74" : "#75bac9";
+  const robeDark = isElder ? "#504736" : isMerchant ? "#5c3540" : isGuide ? "#3c4d36" : "#263d58";
+  const hair = isElder ? "#c4c2a7" : isMerchant ? "#6b352d" : isGuide ? "#805044" : "#243440";
   const skin = isElder ? "#d5b28d" : isMerchant ? "#e2b28c" : "#d9b89b";
 
   // Back cloak, with a role-specific silhouette.
@@ -2772,6 +2773,27 @@ function drawStyledNPC(x, ground, npc) {
     ctx.fillRect(8, -42, 8, 8);
     ctx.fillStyle = "#6a4534";
     ctx.fillRect(-2, -66, 18, 4);
+  } else if (isGuide) {
+    // Tala: moss-green travel scarf, trail map and a warm lantern.
+    ctx.fillStyle = "#a6b975";
+    ctx.fillRect(-15, -71, 29, 5);
+    ctx.fillRect(-3, -67, 7, 17);
+    ctx.fillStyle = "#4d5e3b";
+    ctx.fillRect(-28, -67, 14, 20);
+    ctx.fillStyle = "#d4c18e";
+    ctx.fillRect(-26, -65, 10, 2);
+    ctx.fillRect(-26, -59, 10, 2);
+    ctx.fillRect(-26, -53, 10, 2);
+    ctx.fillStyle = "#47382b";
+    ctx.fillRect(15, -45, 5, 18);
+    ctx.fillStyle = "#f7c76b";
+    ctx.fillRect(12, -55, 12, 12);
+    ctx.fillStyle = "rgba(255, 205, 113, .24)";
+    ctx.beginPath();
+    ctx.arc(18, -49, 15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#ffebad";
+    ctx.fillRect(15, -52, 6, 6);
   } else if (isKeeper) {
     // Kai: teal hood, cyan rune trim and a floating holographic book.
     ctx.fillStyle = "#263848";
