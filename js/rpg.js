@@ -15,6 +15,14 @@ const ui = {
   dialogueName: document.getElementById("dialogueName"),
   dialogueText: document.getElementById("dialogueText"),
   dialogueButton: document.getElementById("dialogueButton"),
+  storyIntroOverlay: document.getElementById("storyIntroOverlay"),
+  storyIntroKicker: document.getElementById("storyIntroKicker"),
+  storyIntroCounter: document.getElementById("storyIntroCounter"),
+  storyIntroTitle: document.getElementById("storyIntroTitle"),
+  storyIntroBody: document.getElementById("storyIntroBody"),
+  storyIntroProgress: document.getElementById("storyIntroProgress"),
+  storyIntroNext: document.getElementById("storyIntroNext"),
+  storyIntroSkip: document.getElementById("storyIntroSkip"),
   destinationScreen: document.getElementById("destinationScreen"),
   destinationScene: document.getElementById("destinationScene"),
   destinationCategory: document.getElementById("destinationCategory"),
@@ -84,8 +92,8 @@ const world = {
   currentRealmId: "maple", realmPositions: {}, width: 1800, groundY: 520, waterY: 650,
   player: { x: 440, y: 0, vx: 0, facing: 1, speed: 250, width: 34, height: 58, onGround: true, bob: 0, walkFrame: 0, walkTimer: 0 },
   cameraX: 0, time: 0, questStep: 0, coins: 0, xp: 0, power: 0, level: 1,
-  interacting: false, travelMenu: false, selectedDestinationIndex: 0, portalX: 220, caveReturnX: 0,
-  currentDialogueNpcId: null, currentDialogueIndex: 0, insideCave: false, typingCaveOpen: false, battle: null
+  interacting: false, travelMenu: false, storyIntroOpen: false, selectedDestinationIndex: 0, portalX: 220, caveReturnX: 0,
+  currentDialogueNpcId: null, currentDialogueKey: null, currentDialogueIndex: 0, insideCave: false, typingCaveOpen: false, battle: null
 };
 
 const worldBackgrounds = {
@@ -108,6 +116,8 @@ Object.entries(worldBackgrounds).forEach(([realmId, image]) => {
 });
 
 const WORLD_SAVE_KEY = "englishPowerQuest.world.v2";
+const STORY_INTRO_SEEN_KEY = "englishPowerQuest.storyIntro.seen.v1";
+let storyIntroPage = 0;
 const BATTLE_KEY = "englishPowerQuest.battle";
 const ESCAPE_KEY = "englishPowerQuest.escape.v1";
 
@@ -508,6 +518,17 @@ resize();
 window.addEventListener("keydown", (e) => {
   const k = e.key.toLowerCase();
 
+  if (world.storyIntroOpen) {
+    if (k === "enter" || k === " ") {
+      e.preventDefault();
+      if (!e.repeat) advanceStoryIntro();
+    } else if (k === "escape") {
+      e.preventDefault();
+      if (!e.repeat) finishStoryIntro();
+    }
+    return;
+  }
+
   if (world.typingCaveOpen) {
     if (k === "escape") {
       e.preventDefault();
@@ -565,6 +586,8 @@ document.getElementById("destinationPrev").addEventListener("click", () => selec
 document.getElementById("destinationNext").addEventListener("click", () => selectDestination(1));
 document.getElementById("destinationBack").addEventListener("click", closeDestinationMenu);
 document.getElementById("destinationTravel").addEventListener("click", travelToSelectedDestination);
+ui.storyIntroNext.addEventListener("click", advanceStoryIntro);
+ui.storyIntroSkip.addEventListener("click", finishStoryIntro);
 
 typingUi.exit.addEventListener("click", closeTypingCave);
 typingUi.retry.addEventListener("click", retryTypingCave);
@@ -587,6 +610,7 @@ ui.dialogueButton.addEventListener("click", () => {
   if (world.interacting) {
     world.interacting = false;
     world.currentDialogueNpcId = null;
+    world.currentDialogueKey = null;
     ui.dialogue.classList.add("hidden");
   }
 });
@@ -641,6 +665,54 @@ function settingsIsOpen() {
   return !document.getElementById("settingsScreen")?.classList.contains("hidden");
 }
 
+function renderStoryIntro() {
+  const pageNumber = storyIntroPage + 1;
+  ui.storyIntroKicker.textContent = t("story.intro.kicker");
+  ui.storyIntroCounter.textContent = getLanguage() === "zh"
+    ? `序章 · ${pageNumber} / 3`
+    : `PROLOGUE · ${pageNumber} / 3`;
+  ui.storyIntroTitle.textContent = t(`story.intro.page${pageNumber}.title`);
+  ui.storyIntroBody.textContent = t(`story.intro.page${pageNumber}.body`);
+  ui.storyIntroProgress.style.width = `${(pageNumber / 3) * 100}%`;
+  ui.storyIntroNext.textContent = t(pageNumber === 3 ? "story.intro.start" : "story.intro.next");
+  ui.storyIntroSkip.textContent = t("story.intro.skip");
+}
+
+function openStoryIntroIfNew() {
+  let seen = false;
+  try { seen = localStorage.getItem(STORY_INTRO_SEEN_KEY) === "1"; }
+  catch (error) { console.warn("Story intro preference is unavailable.", error); }
+  if (seen) return;
+  world.storyIntroOpen = true;
+  storyIntroPage = 0;
+  keys.clear();
+  touch.left = false;
+  touch.right = false;
+  renderStoryIntro();
+  ui.storyIntroOverlay.classList.remove("hidden");
+}
+
+function advanceStoryIntro() {
+  if (!world.storyIntroOpen) return;
+  if (storyIntroPage < 2) {
+    storyIntroPage += 1;
+    renderStoryIntro();
+  } else {
+    finishStoryIntro();
+  }
+}
+
+function finishStoryIntro() {
+  if (!world.storyIntroOpen) return;
+  world.storyIntroOpen = false;
+  ui.storyIntroOverlay.classList.add("hidden");
+  try { localStorage.setItem(STORY_INTRO_SEEN_KEY, "1"); }
+  catch (error) { console.warn("Story intro preference could not be saved.", error); }
+  keys.clear();
+  touch.left = false;
+  touch.right = false;
+}
+
 function interact() {
   if (world.interacting || world.battle || world.travelMenu || settingsIsOpen()) return;
 
@@ -675,27 +747,42 @@ function interact() {
     world.interacting = true;
     world.currentDialogueNpcId = npc.id;
     world.currentDialogueIndex = world.questStep % npc.dialogueKeys.length;
-    ui.dialogueName.textContent = t(npc.nameKey) + " · " + t(npc.titleKey);
-    ui.dialogueText.textContent = t(npc.dialogueKeys[world.currentDialogueIndex]);
-    ui.dialogue.classList.remove("hidden");
 
-    if (npc.id === "elder" && world.questStep === 0) {
-      world.questStep = 1;
-      world.xp += 25;
-      world.power += 1;
+    const storyBeats = {
+      elder: { step: 0, dialogueKey: "npc.elder.story", nextStep: 1, xp: 25, coins: 0, power: 1, skill: "VOCABULARY", label: "The First Words" },
+      mira:  { step: 1, dialogueKey: "npc.mira.story",  nextStep: 2, xp: 30, coins: 5, power: 1, skill: "VOCABULARY", label: "Words in the Woods" },
+      tala:  { step: 2, dialogueKey: "npc.tala.story",  nextStep: 3, xp: 30, coins: 5, power: 1, skill: "COMMUNICATION", label: "A Promise by Firelight" },
+      kai:   { step: 3, dialogueKey: "npc.kai.story",   nextStep: 4, xp: 40, coins: 10, power: 2, skill: "IT_ENGLISH", label: "The Language of the Lost" }
+    };
+    const beat = storyBeats[npc.id];
+    let dialogueKey = npc.dialogueKeys[world.currentDialogueIndex];
+
+    if (beat && world.questStep === beat.step) {
+      dialogueKey = beat.dialogueKey;
+      world.questStep = beat.nextStep;
+      world.xp += beat.xp;
+      world.coins += beat.coins;
+      world.power += beat.power;
       updateQuest();
       syncHUD();
       saveWorldState();
       void saveServerProgress({
-        xpDelta: 25,
-        coinDelta: 0,
-        englishPowerDelta: 1,
-        englishSkillCode: "VOCABULARY",
+        xpDelta: beat.xp,
+        coinDelta: beat.coins,
+        englishPowerDelta: beat.power,
+        englishSkillCode: beat.skill,
         sourceType: "QUEST",
         sourceId: null,
-        description: "Completed quest: The First Words"
+        description: "Story chapter completed: " + beat.label
       });
+    } else if (npc.id === "kai" && world.questStep >= 5) {
+      dialogueKey = "npc.kai.after";
     }
+
+    world.currentDialogueKey = dialogueKey;
+    ui.dialogueName.textContent = t(npc.nameKey) + " · " + t(npc.titleKey);
+    ui.dialogueText.textContent = t(dialogueKey);
+    ui.dialogue.classList.remove("hidden");
     return;
   }
 
@@ -703,6 +790,7 @@ function interact() {
   if (sign) {
     world.interacting = true;
     world.currentDialogueNpcId = "sign";
+    world.currentDialogueKey = "npc.sign.text";
     ui.dialogueName.textContent = t("npc.sign.name");
     ui.dialogueText.textContent = t("npc.sign.text");
     ui.dialogue.classList.remove("hidden");
@@ -1092,10 +1180,33 @@ function submitTypingAnswer() {
     if (typingCaveState.completedLevels >= TYPING_CAVE_TOTAL_LEVELS) {
       typingCaveState.gameOver = true;
       typingCaveState.busy = true;
-      typingUi.winTitle.textContent = isChinese ? "挑战成功！" : "CAVE CLEARED!";
-      typingUi.winMessage.textContent = isChinese
-        ? "三关全部完成！你成功把怪物击退，获得了全部奖励。"
-        : "You completed all three levels and pushed the monster away. All rewards have been earned!";
+      const storyEnding = world.questStep === 4;
+      if (storyEnding) {
+        world.questStep = 5;
+        world.xp += 50;
+        world.coins += 25;
+        world.power += 2;
+        updateQuest();
+        syncHUD();
+        saveWorldState();
+        void saveServerProgress({
+          xpDelta: 50,
+          coinDelta: 25,
+          englishPowerDelta: 2,
+          englishSkillCode: "IT_ENGLISH",
+          sourceType: "QUEST",
+          sourceId: null,
+          description: "Story ending: The First Real Conversation"
+        });
+      }
+      typingUi.winTitle.textContent = storyEnding
+        ? t("story.ending.title")
+        : (isChinese ? "挑战成功！" : "CAVE CLEARED!");
+      typingUi.winMessage.textContent = storyEnding
+        ? t("story.ending.body")
+        : (isChinese
+          ? "三关全部完成！你成功把怪物击退，获得了全部奖励。"
+          : "You completed all three levels and pushed the monster away. All rewards have been earned!");
       typingUi.winReplay.textContent = isChinese ? "再玩一次" : "PLAY AGAIN";
       typingUi.winExit.textContent = isChinese ? "返回地图" : "BACK TO MAP";
       typingUi.winOverlay.classList.remove("hidden");
@@ -1231,17 +1342,21 @@ function travelToSelectedDestination() {
 }
 
 function updateQuest() {
-  if (world.questStep === 0) {
-    ui.questTitle.textContent = t("quest.first.title");
-    ui.questText.textContent = t("quest.first.text");
-  } else if (world.questStep === 1) {
-    ui.questTitle.textContent = t("quest.forest.title");
-    ui.questText.textContent = t("quest.forest.text");
-  } else {
-    ui.questTitle.textContent = t("quest.road.title");
-    ui.questText.textContent = t("quest.road.text");
-  }
+  const chapter = world.questStep >= 5
+    ? ["quest.ending.title", "quest.ending.text"]
+    : world.questStep === 4
+      ? ["quest.cave.title", "quest.cave.text"]
+      : world.questStep === 3
+        ? ["quest.ruins.title", "quest.ruins.text"]
+        : world.questStep === 2
+          ? ["quest.camp.title", "quest.camp.text"]
+          : world.questStep === 1
+            ? ["quest.forest.title", "quest.forest.text"]
+            : ["quest.first.title", "quest.first.text"];
+  ui.questTitle.textContent = t(chapter[0]);
+  ui.questText.textContent = t(chapter[1]);
 }
+
 
 function updateLocation() {
   const locationKeys = {
@@ -1253,10 +1368,11 @@ function updateLocation() {
 function refreshWorldLanguage() {
   updateQuest();
   updateLocation();
+  if (world.storyIntroOpen) renderStoryIntro();
   if (world.currentDialogueNpcId) {
     if (world.currentDialogueNpcId === "sign") {
       ui.dialogueName.textContent = t("npc.sign.name");
-      ui.dialogueText.textContent = t("npc.sign.text");
+      ui.dialogueText.textContent = t(world.currentDialogueKey || "npc.sign.text");
     } else if (world.currentDialogueNpcId === "caveEntry") {
       ui.dialogueName.textContent = t("cave.title");
       ui.dialogueText.textContent = t("cave.entered");
@@ -1264,7 +1380,7 @@ function refreshWorldLanguage() {
       const npc = npcs.find(item => item.id === world.currentDialogueNpcId);
       if (npc) {
         ui.dialogueName.textContent = t(npc.nameKey) + " · " + t(npc.titleKey);
-        ui.dialogueText.textContent = t(npc.dialogueKeys[world.currentDialogueIndex]);
+        ui.dialogueText.textContent = t(world.currentDialogueKey || npc.dialogueKeys[world.currentDialogueIndex]);
       }
     }
   }
@@ -1343,6 +1459,8 @@ function startBattle(enemy) {
 function update(dt) {
   world.time += dt;
 
+  if (world.storyIntroOpen) return;
+
   if (world.typingCaveOpen) {
     if (!typingCaveState.busy && !typingCaveState.gameOver) {
       typingCaveState.passiveTimer += dt;
@@ -1384,25 +1502,6 @@ function update(dt) {
 
   const targetCamera = clamp(world.player.x - window.innerWidth * 0.5, 0, world.width - window.innerWidth);
   world.cameraX += (targetCamera - world.cameraX) * Math.min(1, dt * 6);
-
-  if (world.currentRealmId === "forest" && world.player.x > 1000 && world.questStep === 1) {
-    world.questStep = 2;
-    world.xp += 50;
-    world.power += 2;
-    world.coins += 10;
-    updateQuest();
-    syncHUD();
-    saveWorldState();
-    void saveServerProgress({
-      xpDelta: 50,
-      coinDelta: 10,
-      englishPowerDelta: 2,
-      englishSkillCode: "IT_ENGLISH",
-      sourceType: "QUEST",
-      sourceId: null,
-      description: "Completed quest: Into Whispering Forest"
-    });
-  }
 
   updateLocation();
 }
@@ -3079,6 +3178,7 @@ recenterCamera();
 restoreEscapeState();
 updateQuest();
 syncHUD();
+openStoryIntroIfNew();
 
 Promise.all([loadServerPlayer(), loadQuestions()])
   .finally(() => requestAnimationFrame(loop));
