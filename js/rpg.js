@@ -894,6 +894,26 @@ function startChapterStoryboard(npc, beat, dialogueKey) {
   beginStoryboard(story, "chapter");
 }
 
+function startEndingStoryboard(callback) {
+  const frames = splitStoryParagraph(t("story.ending.body"), 3);
+  const sequence = frames.map((body, index) => ({
+    titleKey: "story.ending.title",
+    body,
+    character: index === 0 ? "kai" : "alex",
+    speaker: index === 0 ? t("npc.kai.name") : "ALEX LIN",
+    scene: index === 0 ? "ruins" : index === 1 ? "prologue" : "maple",
+    location: index === 0
+      ? t("location.ruins")
+      : index === 1
+        ? (getLanguage() === "zh" ? "清晨 · 校园" : "DAWN · CAMPUS")
+        : t("location.maple"),
+    camera: index === 0 ? "wide" : index === 1 ? "close" : "pan",
+    effect: index === 0 ? "magic" : index === 1 ? "impact" : "magic",
+    sfx: index === 0 ? "SHIIING!" : index === 1 ? (getLanguage() === "zh" ? "闪光！" : "FLASH!") : ""
+  }));
+  beginStoryboard(sequence, "ending", callback);
+}
+
 function renderStoryIntro() {
   if (!storySequence.length) return;
   const slide = storySequence[storyIntroPage] || storySequence[0];
@@ -1470,18 +1490,28 @@ function submitTypingAnswer() {
           description: "Story ending: The First Real Conversation"
         });
       }
-      typingUi.winTitle.textContent = storyEnding
-        ? t("story.ending.title")
-        : (isChinese ? "挑战成功！" : "CAVE CLEARED!");
-      typingUi.winMessage.textContent = storyEnding
-        ? t("story.ending.body")
-        : (isChinese
-          ? "三关全部完成！你成功把怪物击退，获得了全部奖励。"
-          : "You completed all three levels and pushed the monster away. All rewards have been earned!");
-      typingUi.winReplay.textContent = isChinese ? "再玩一次" : "PLAY AGAIN";
-      typingUi.winExit.textContent = isChinese ? "返回地图" : "BACK TO MAP";
-      typingUi.winOverlay.classList.remove("hidden");
-      typingUi.winReplay.focus();
+      const showTypingVictory = () => {
+        typingUi.winTitle.textContent = storyEnding
+          ? t("story.ending.title")
+          : (isChinese ? "挑战成功！" : "CAVE CLEARED!");
+        typingUi.winMessage.textContent = storyEnding
+          ? (isChinese
+            ? "你完成了全部三关，也走完了英语力量任务的主线旅程。带着学会的词语，回去开启新的生活吧。"
+            : "You completed all three levels and the main story. Take your new words back to campus and begin a new chapter.")
+          : (isChinese
+            ? "三关全部完成！你成功把怪物击退，获得了全部奖励。"
+            : "You completed all three levels and pushed the monster away. All rewards have been earned!");
+        typingUi.winReplay.textContent = isChinese ? "再玩一次" : "PLAY AGAIN";
+        typingUi.winExit.textContent = isChinese ? "返回地图" : "BACK TO MAP";
+        typingUi.winOverlay.classList.remove("hidden");
+        typingUi.winReplay.focus();
+      };
+
+      if (storyEnding) {
+        startEndingStoryboard(showTypingVictory);
+      } else {
+        showTypingVictory();
+      }
       return;
     }
 
