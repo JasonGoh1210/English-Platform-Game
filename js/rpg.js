@@ -150,7 +150,8 @@ Object.entries(worldBackgrounds).forEach(([realmId, image]) => {
 });
 
 const AUTH_CONTEXT = window.EPQ_AUTH || {};
-const AUTH_PLAYER_ID = String(AUTH_CONTEXT.playerId || "guest");
+const IS_GUEST = Boolean(AUTH_CONTEXT.isGuest);
+const AUTH_PLAYER_ID = String(AUTH_CONTEXT.storageId || AUTH_CONTEXT.playerId || "guest");
 const PLAYER_DISPLAY_NAME = String(
   AUTH_CONTEXT.displayName || ui.playerName?.textContent || "Adventurer"
 ).trim() || "Adventurer";
@@ -1040,14 +1041,16 @@ function finishStoryIntro() {
     try { localStorage.setItem(STORY_INTRO_SEEN_KEY, "1"); }
     catch (error) { console.warn("Story intro preference could not be saved.", error); }
     AUTH_CONTEXT.showStoryIntro = false;
-    void fetch("/FYP/api/story_progress.php", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ completed: true, csrfToken: AUTH_CONTEXT.csrfToken || "" })
-    }).then(response => response.json()).then(result => {
-      if (!result?.ok) console.warn("Opening story completion was not saved to the account.", result?.error || "Unknown error");
-    }).catch(error => console.warn("Opening story completion will remain local until the API is available.", error));
+    if (!IS_GUEST) {
+      void fetch("/FYP/api/story_progress.php", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed: true, csrfToken: AUTH_CONTEXT.csrfToken || "" })
+      }).then(response => response.json()).then(result => {
+        if (!result?.ok) console.warn("Opening story completion was not saved to the account.", result?.error || "Unknown error");
+      }).catch(error => console.warn("Opening story completion will remain local until the API is available.", error));
+    }
   } else if (finishedMode === "chapter") {
     world.interacting = false;
     world.currentDialogueNpcId = null;
@@ -1765,6 +1768,7 @@ function syncHUD() {
 }
 
 async function saveServerProgress(payload) {
+  if (IS_GUEST) return false;
   try {
     const response = await fetch("/FYP/api/save_progress.php", {
       method: "POST",
@@ -1784,6 +1788,7 @@ async function saveServerProgress(payload) {
 }
 
 async function loadServerPlayer() {
+  if (IS_GUEST) return false;
   try {
     const response = await fetch("/FYP/api/player.php", { cache: "no-store" });
     if (!response.ok) return false;
