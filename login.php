@@ -6,7 +6,22 @@ epq_redirect_if_logged_in();
 $error = '';
 $username = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['guest_mode'] ?? '') === '1') {
+    $csrf = (string)($_POST['csrf_token'] ?? '');
+    if (!epq_csrf_is_valid($csrf)) {
+        $error = '页面已过期，请刷新后再试。';
+    } else {
+        session_regenerate_id(true);
+        unset($_SESSION['user_id'], $_SESSION['player_id'], $_SESSION['username']);
+        $_SESSION['guest_mode'] = true;
+        $_SESSION['guest_id'] = 'guest_' . bin2hex(random_bytes(12));
+        $_SESSION['display_name'] = 'Guest Adventurer';
+        $_SESSION['show_story_intro'] = false;
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        header('Location: /FYP/index.php');
+        exit;
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = strtolower(trim((string)($_POST['username'] ?? '')));
     $password = (string)($_POST['password'] ?? '');
     $csrf = (string)($_POST['csrf_token'] ?? '');
@@ -85,6 +100,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <label for="password">密码</label>
           <input id="password" name="password" type="password" autocomplete="current-password" required>
           <button class="auth-submit" type="submit">登录游戏 <span>→</span></button>
+        </form>
+
+        <div class="auth-divider"><span>或</span></div>
+        <form class="auth-guest-form" method="post" action="/FYP/login.php">
+          <input type="hidden" name="csrf_token" value="<?= epq_h((string)$_SESSION['csrf_token']) ?>">
+          <input type="hidden" name="guest_mode" value="1">
+          <button class="auth-guest-button" type="submit">
+            <span class="auth-guest-icon" aria-hidden="true">◇</span>
+            <span><strong>以游客身份游玩</strong><small>无需注册 · 进度只保存在此浏览器</small></span>
+            <span class="auth-guest-arrow" aria-hidden="true">→</span>
+          </button>
         </form>
 
         <p class="auth-footnote">第一次来到这里？<a href="/FYP/register.php">创建账号</a>，开始你的序章 Story。</p>
