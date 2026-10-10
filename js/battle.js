@@ -3,7 +3,8 @@ import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261010-battlekey
 // Use the same per-player storage namespace as the map. If these keys differ,
 // the battle page cannot find the enemy that the map just stored and redirects back.
 const AUTH_CONTEXT = window.EPQ_AUTH || {};
-const AUTH_PLAYER_ID = String(AUTH_CONTEXT.playerId || "guest");
+const IS_GUEST = Boolean(AUTH_CONTEXT.isGuest);
+const AUTH_PLAYER_ID = String(AUTH_CONTEXT.storageId || AUTH_CONTEXT.playerId || "guest");
 const BATTLE_KEY = `englishPowerQuest.battle.player.${AUTH_PLAYER_ID}`;
 const WORLD_SAVE_KEY = `englishPowerQuest.world.v2.player.${AUTH_PLAYER_ID}`;
 const ESCAPE_KEY = `englishPowerQuest.escape.v1.player.${AUTH_PLAYER_ID}`;
@@ -126,6 +127,7 @@ function updateSave(patch) {
 }
 
 async function saveProgressServer(payload) {
+  if (IS_GUEST) return false;
   try {
     const response = await fetch("/FYP/api/save_progress.php", {
       method: "POST",
