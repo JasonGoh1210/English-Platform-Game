@@ -1,4 +1,4 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261010-storyarc2";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261010-authstory1";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -8,6 +8,7 @@ const ui = {
   xp: document.getElementById("xpText"),
   power: document.getElementById("powerText"),
   coins: document.getElementById("coinsText"),
+  playerName: document.querySelector(".pixel-player-name"),
   questTitle: document.getElementById("questTitle"),
   questText: document.getElementById("questText"),
   location: document.getElementById("locationText"),
@@ -122,14 +123,16 @@ Object.entries(worldBackgrounds).forEach(([realmId, image]) => {
   image.src = worldBackgroundPaths[realmId];
 });
 
-const WORLD_SAVE_KEY = "englishPowerQuest.world.v2";
-const STORY_INTRO_SEEN_KEY = "englishPowerQuest.storyIntro.seen.v2";
+const AUTH_CONTEXT = window.EPQ_AUTH || {};
+const AUTH_PLAYER_ID = String(AUTH_CONTEXT.playerId || "guest");
+const WORLD_SAVE_KEY = `englishPowerQuest.world.v2.player.${AUTH_PLAYER_ID}`;
+const STORY_INTRO_SEEN_KEY = `englishPowerQuest.storyIntro.seen.v2.player.${AUTH_PLAYER_ID}`;
 let storyIntroPage = 0;
 let storyMode = "intro";
 let storySequence = [];
 let storyCompletionCallback = null;
-const BATTLE_KEY = "englishPowerQuest.battle";
-const ESCAPE_KEY = "englishPowerQuest.escape.v1";
+const BATTLE_KEY = `englishPowerQuest.battle.player.${AUTH_PLAYER_ID}`;
+const ESCAPE_KEY = `englishPowerQuest.escape.v1.player.${AUTH_PLAYER_ID}`;
 
 function saveWorldState(overrides = {}) {
   const destination = destinations.find(item => item.id === world.currentRealmId) || destinations[0];
@@ -948,7 +951,9 @@ function openStoryIntroIfNew() {
   let seen = false;
   try { seen = localStorage.getItem(STORY_INTRO_SEEN_KEY) === "1"; }
   catch (error) { console.warn("Story intro preference is unavailable.", error); }
-  if (seen) return;
+  // The server flag makes the account's first story play even if this browser
+  // previously watched a story under a different account.
+  if (seen && !AUTH_CONTEXT.showStoryIntro) return;
   beginStoryboard(buildIntroStoryboard(), "intro");
 }
 
@@ -970,6 +975,15 @@ function finishStoryIntro() {
   if (finishedMode === "intro") {
     try { localStorage.setItem(STORY_INTRO_SEEN_KEY, "1"); }
     catch (error) { console.warn("Story intro preference could not be saved.", error); }
+    AUTH_CONTEXT.showStoryIntro = false;
+    void fetch("/FYP/api/story_progress.php", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ completed: true, csrfToken: AUTH_CONTEXT.csrfToken || "" })
+    }).then(response => response.json()).then(result => {
+      if (!result?.ok) console.warn("Opening story completion was not saved to the account.", result?.error || "Unknown error");
+    }).catch(error => console.warn("Opening story completion will remain local until the API is available.", error));
   } else if (finishedMode === "chapter") {
     world.interacting = false;
     world.currentDialogueNpcId = null;
@@ -1714,6 +1728,7 @@ async function loadServerPlayer() {
 
     // Once the DB API is available, use its progression balances as the
     // authoritative values instead of allowing localStorage to drift.
+    if (ui.playerName && data.player.displayName) ui.playerName.textContent = String(data.player.displayName);
     world.level = Number(data.player.level || 1);
     world.xp = Number(data.player.xp || 0);
     world.coins = Number(data.player.coins || 0);
