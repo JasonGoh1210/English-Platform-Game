@@ -1,4 +1,4 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261010-standaloneworlds1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261010-storyarc1";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -751,7 +751,7 @@ function interact() {
     const storyBeats = {
       elder: { step: 0, dialogueKey: "npc.elder.story", nextStep: 1, xp: 25, coins: 0, power: 1, skill: "VOCABULARY", label: "The First Words" },
       mira:  { step: 1, dialogueKey: "npc.mira.story",  nextStep: 2, xp: 30, coins: 5, power: 1, skill: "VOCABULARY", label: "Words in the Woods" },
-      tala:  { step: 2, dialogueKey: "npc.tala.story",  nextStep: 3, xp: 30, coins: 5, power: 1, skill: "COMMUNICATION", label: "A Promise by Firelight" },
+      tala:  { step: 2, dialogueKey: "npc.tala.story",  nextStep: 3, xp: 30, coins: 5, power: 1, skill: "VOCABULARY", label: "A Promise by Firelight" },
       kai:   { step: 3, dialogueKey: "npc.kai.story",   nextStep: 4, xp: 40, coins: 10, power: 2, skill: "IT_ENGLISH", label: "The Language of the Lost" }
     };
     const beat = storyBeats[npc.id];
