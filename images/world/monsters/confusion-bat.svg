@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="wing" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8b6cff"/><stop offset=".55" stop-color="#5538a1"/><stop offset="1" stop-color="#261f58"/></linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#b49aff"/><stop offset=".45" stop-color="#714ed1"/><stop offset="1" stop-color="#36276e"/></linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <ellipse cx="100" cy="178" rx="62" ry="10" fill="#070b1d" opacity=".34"/>
+  <g stroke="#191733" stroke-width="5" stroke-linejoin="round">
+    <path d="M87 83 23 38 10 53 18 91 4 105 39 132 58 116 76 145 97 116Z" fill="url(#wing)"/>
+    <path d="M113 83 177 38 190 53 182 91 196 105 161 132 142 116 124 145 103 116Z" fill="url(#wing)"/>
+    <path d="M25 51 47 91 19 91M43 68 62 104 39 112M175 51 153 91 181 91M157 68 138 104 161 112" fill="none" stroke="#bcadff" stroke-width="3"/>
+    <path d="M76 95 67 68 83 78 91 59 101 77 112 58 119 81 137 68 128 101 126 145 113 162 87 162 73 145Z" fill="url(#body)"/>
+    <path d="M80 145 74 162 61 168 58 161 69 150M120 145 126 162 139 168 142 161 131 150" fill="#4d368c"/>
+    <path d="M84 157 78 174 87 180 96 166M116 157 122 174 113 180 104 166" fill="#bca8ff"/>
+    <path d="M82 92 68 103 72 119 84 114M118 92 132 103 128 119 116 114" fill="#36215f"/>
+    <path d="M79 80 86 60 96 81M121 80 114 60 104 81" fill="#6c4ec2"/>
+  </g>
+  <g filter="url(#glow)">
+    <path d="M72 100 91 94 89 106 73 110Z" fill="#ffbd45"/>
+    <path d="M128 100 109 94 111 106 127 110Z" fill="#ffbd45"/>
+    <circle cx="82" cy="101" r="3" fill="#fff9cc"/><circle cx="118" cy="101" r="3" fill="#fff9cc"/>
+    <path d="M94 121 100 126 106 121 103 132 97 132Z" fill="#ff74c8"/>
+  </g>
+  <path d="M93 138 88 148 96 145M107 138 112 148 104 145" fill="none" stroke="#e0d7ff" stroke-width="4" stroke-linecap="square"/>
+  <g fill="#f5c56b"><rect x="37" y="143" width="5" height="5"/><rect x="156" y="135" width="4" height="4"/><rect x="51" y="63" width="4" height="4"/><rect x="145" y="56" width="5" height="5"/></g>
+</svg>
