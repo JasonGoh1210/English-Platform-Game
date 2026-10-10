@@ -125,6 +125,20 @@ Object.entries(worldBackgrounds).forEach(([realmId, image]) => {
 
 const AUTH_CONTEXT = window.EPQ_AUTH || {};
 const AUTH_PLAYER_ID = String(AUTH_CONTEXT.playerId || "guest");
+const PLAYER_DISPLAY_NAME = String(
+  AUTH_CONTEXT.displayName || ui.playerName?.textContent || "Adventurer"
+).trim() || "Adventurer";
+
+function personalizePlayerName(value) {
+  return String(value ?? "")
+    .replaceAll("亚历克斯·林（Alex Lin）", PLAYER_DISPLAY_NAME)
+    .replaceAll("亚历克斯·林 (Alex Lin)", PLAYER_DISPLAY_NAME)
+    .replaceAll("亚历克斯·林", PLAYER_DISPLAY_NAME)
+    .replaceAll("亚历克斯", PLAYER_DISPLAY_NAME)
+    .replaceAll("亚历", PLAYER_DISPLAY_NAME)
+    .replace(/\bAlex Lin\b/gi, PLAYER_DISPLAY_NAME)
+    .replace(/\bAlex\b/g, PLAYER_DISPLAY_NAME);
+}
 const WORLD_SAVE_KEY = `englishPowerQuest.world.v2.player.${AUTH_PLAYER_ID}`;
 const STORY_INTRO_SEEN_KEY = `englishPowerQuest.storyIntro.seen.v2.player.${AUTH_PLAYER_ID}`;
 let storyIntroPage = 0;
@@ -841,7 +855,7 @@ function buildIntroStoryboard() {
         character: page === 3 && frameIndex === frames.length - 1 ? "book" : "alex",
         speaker: page === 3 && frameIndex === frames.length - 1
           ? (getLanguage() === "zh" ? "系统之书" : "THE SYSTEM BOOK")
-          : "ALEX LIN",
+          : PLAYER_DISPLAY_NAME,
         scene,
         location: page === 1 ? "CAMPUS · 11:47 PM" : page === 2 ? "CAMPUS · THE LAST WORD" : "AETHERIA · MAPLE TOWN",
         camera: frameIndex === 0 ? "close" : frameIndex === 1 ? "pan" : "wide",
@@ -891,7 +905,7 @@ function startEndingStoryboard(callback) {
     titleKey: "story.ending.title",
     body,
     character: index === 0 ? "kai" : "alex",
-    speaker: index === 0 ? t("npc.kai.name") : "ALEX LIN",
+    speaker: index === 0 ? t("npc.kai.name") : PLAYER_DISPLAY_NAME,
     scene: index === 0 ? "ruins" : index === 1 ? "prologue" : "maple",
     location: index === 0
       ? t("location.ruins")
@@ -921,18 +935,18 @@ function renderStoryIntro() {
     ? `${isIntro ? "序章" : "剧情"} · 分镜 ${pageNumber} / ${total}`
     : `${isIntro ? "PROLOGUE" : "STORY"} · PANEL ${String(pageNumber).padStart(2, "0")} / ${total}`;
   ui.storyIntroTitle.textContent = t(slide.titleKey);
-  ui.storyIntroBody.textContent = slide.body;
+  ui.storyIntroBody.textContent = personalizePlayerName(slide.body);
   ui.storyIntroProgress.style.width = `${(pageNumber / total) * 100}%`;
   ui.storyIntroNext.textContent = isIntro
     ? t(isLast ? "story.intro.start" : "story.intro.next")
     : (getLanguage() === "zh" ? (isLast ? "继续探索" : "下一格 →") : (isLast ? "RETURN TO EXPLORATION" : "NEXT PANEL →"));
   ui.storyIntroSkip.textContent = getLanguage() === "zh" ? "跳过演出" : "SKIP SCENE";
-  ui.storyboardSpeaker.textContent = slide.speaker || "ALEX LIN";
+  ui.storyboardSpeaker.textContent = personalizePlayerName(slide.speaker || PLAYER_DISPLAY_NAME);
   ui.storyboardFrameTag.textContent = `${isIntro ? "PROLOGUE" : "CHAPTER"} · ${String(pageNumber).padStart(2, "0")}`;
   ui.storyboardLocation.textContent = slide.location || t("location.maple");
   ui.storyIntroPortraitImage.src = portrait.src;
   ui.storyIntroPortraitImage.dataset.kind = portrait.kind;
-  ui.storyIntroPortraitImage.alt = slide.speaker || "Story character";
+  ui.storyIntroPortraitImage.alt = personalizePlayerName(slide.speaker || "Story character");
   ui.storyIntroCanvas.dataset.scene = slide.scene || "prologue";
   ui.storyIntroCanvas.dataset.camera = slide.camera || "wide";
   ui.storyIntroCanvas.dataset.effect = slide.effect || "magic";
