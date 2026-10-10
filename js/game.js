@@ -159,7 +159,29 @@ function updateEnemyUI() {
   el.enemyType.textContent = enemy.isBoss ? enemy.type + " · BOSS" : enemy.type;
   el.enemyHpText.textContent = hp + " / " + maxHp;
   el.enemyHpBar.style.width = Math.max(0, (hp / maxHp) * 100) + "%";
-  el.enemySprite.textContent = enemy.visual || "👾";
+  if (enemy.spritePath) {
+    if (el.enemySprite.dataset.enemyId !== enemy.id) {
+      el.enemySprite.dataset.enemyId = enemy.id;
+      el.enemySprite.replaceChildren();
+      const art = document.createElement("img");
+      art.alt = enemy.name;
+      art.draggable = false;
+      art.decoding = "async";
+      art.style.width = "100%";
+      art.style.height = "100%";
+      art.style.objectFit = "contain";
+      art.style.imageRendering = "pixelated";
+      art.onerror = () => {
+        art.onerror = null;
+        el.enemySprite.textContent = enemy.visual || "👾";
+      };
+      art.src = enemy.spritePath;
+      el.enemySprite.appendChild(art);
+    }
+  } else {
+    el.enemySprite.dataset.enemyId = enemy.id;
+    el.enemySprite.textContent = enemy.visual || "👾";
+  }
 
   const phase = getBossPhase(enemy, hp);
   if (phase) {
