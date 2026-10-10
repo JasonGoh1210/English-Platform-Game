@@ -3,7 +3,9 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/auth.php';
 epq_require_login_page();
 
-$epqPlayerId = (int)$_SESSION['player_id'];
+$epqIsGuest = epq_is_guest();
+$epqPlayerId = $epqIsGuest ? 0 : (int)($_SESSION['player_id'] ?? 0);
+$epqStorageId = $epqIsGuest ? (string)$_SESSION['guest_id'] : (string)$epqPlayerId;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -12,7 +14,7 @@ $epqPlayerId = (int)$_SESSION['player_id'];
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#101b24">
   <title>English Power Quest · Battle</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-hpclear1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-guestmode1">
 </head>
 <body class="battle-page">
   <main class="battle-screen">
@@ -134,9 +136,11 @@ $epqPlayerId = (int)$_SESSION['player_id'];
   <script>
     // Keep battle-page storage scoped to the same logged-in player as the map.
     window.EPQ_AUTH = <?= json_encode([
-      'playerId' => $epqPlayerId
+      'playerId' => $epqPlayerId,
+      'storageId' => $epqStorageId,
+      'isGuest' => $epqIsGuest
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   </script>
-  <script type="module" src="/FYP/js/battle.js?v=20261010-enemyart1"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261010-guestmode1"></script>
 </body>
 </html>
