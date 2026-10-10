@@ -1,6 +1,12 @@
 <?php
 declare(strict_types=1);
-session_start();
+require_once __DIR__ . '/includes/auth.php';
+epq_require_login_page();
+
+$epqPlayerId = (int)$_SESSION['player_id'];
+$epqDisplayName = (string)($_SESSION['display_name'] ?? $_SESSION['username'] ?? 'Adventurer');
+$epqShowStoryIntro = !empty($_SESSION['show_story_intro']);
+$epqCsrfToken = (string)$_SESSION['csrf_token'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -10,7 +16,7 @@ session_start();
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-blackfix2">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-authstory1">
 </head>
 <body>
   <div class="game-shell pixel-world-ui">
@@ -20,7 +26,7 @@ session_start();
       <section class="pixel-player-card">
         <div class="pixel-avatar"><img src="/FYP/images/player_walk_frames/png_frames/Player_Stand.png?v=20261010-characterfix2" alt="Rookie character"></div>
         <div class="pixel-player-info">
-          <div class="pixel-player-name" data-i18n="player.name">Rookie</div>
+          <div class="pixel-player-name"><?= epq_h($epqDisplayName) ?></div>
           <div class="pixel-level"><span data-i18n="player.level">Lv.</span> <span id="levelText">1</span></div>
 
           <div class="pixel-stat-row">
@@ -120,6 +126,11 @@ session_start();
 
     <div class="hint pixel-hint" data-i18n="controls.hint">A / D or ← / → to move&nbsp;&nbsp; • &nbsp;E / SPACE to interact</div>
 
+    <form class="game-logout-form" method="post" action="/FYP/logout.php">
+      <input type="hidden" name="csrf_token" value="<?= epq_h($epqCsrfToken) ?>">
+      <span class="game-account-name"><?= epq_h($epqDisplayName) ?></span>
+      <button type="submit" class="game-logout-button">↪ 退出登录</button>
+    </form>
     <button type="button" class="settings-open-button" id="settingsOpenButton" data-i18n="settings.button">⚙ SETTINGS</button>
 
     <div class="destination-screen hidden" id="destinationScreen" role="dialog" aria-modal="true" aria-labelledby="destinationTitle">
@@ -277,6 +288,13 @@ session_start();
   </div>
 
   <script>
+    window.EPQ_AUTH = <?= json_encode([
+      'playerId' => $epqPlayerId,
+      'displayName' => $epqDisplayName,
+      'showStoryIntro' => $epqShowStoryIntro,
+      'csrfToken' => $epqCsrfToken
+    ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+
     (() => {
       const canvas = document.getElementById("gameCanvas");
       const fallbackBackground = "/FYP/images/world/maple-town.webp?v=20261010-startupfix2";
@@ -288,7 +306,7 @@ session_start();
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261010-startupfix2").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261010-authstory1").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");
