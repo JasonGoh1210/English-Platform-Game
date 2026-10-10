@@ -220,7 +220,7 @@ $epqCsrfToken = (string)$_SESSION['csrf_token'];
           <img src="/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-assetpaths1" alt="Player character">
         </div>
         <div class="typing-cave-monster" id="typingCaveMonster">
-          <img src="/FYP/images/world/monsters/cave-wraith.svg?v=20261010-monsterart1" alt="Approaching monster">
+          <img src="/FYP/images/world/monsters/cave-wraith.svg?v=20261010-monsterart2" alt="Approaching monster">
         </div>
         <div class="typing-cave-threat">
           <span id="typingCaveThreatLabel">MONSTER APPROACH</span>
