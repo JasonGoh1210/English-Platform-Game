@@ -95,10 +95,10 @@ const worldBackgrounds = {
   ruins: new Image()
 };
 const worldBackgroundPaths = {
-  maple: "/FYP/assets/world/backgrounds/maple-town.webp?v=20261010-bgart1",
-  forest: "/FYP/assets/world/backgrounds/whispering-forest.webp?v=20261010-bgart1",
-  camp: "/FYP/assets/world/backgrounds/old-camp-road.webp?v=20261010-bgart1",
-  ruins: "/FYP/assets/world/backgrounds/ancient-ruins.webp?v=20261010-bgart1"
+  maple: "/FYP/images/maple-town.webp?v=20261010-bgart1",
+  forest: "/FYP/images/whispering-forest.webp?v=20261010-bgart1",
+  camp: "/FYP/images/old-camp-road.webp?v=20261010-bgart1",
+  ruins: "/FYP/images/ancient-ruins.webp?v=20261010-bgart1"
 };
 Object.entries(worldBackgrounds).forEach(([realmId, image]) => {
   image.decoding = "async";
