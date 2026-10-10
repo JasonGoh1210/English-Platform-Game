@@ -137,6 +137,6 @@ $epqPlayerId = (int)$_SESSION['player_id'];
       'playerId' => $epqPlayerId
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   </script>
-  <script type="module" src="/FYP/js/battle.js?v=20261010-battlekeys1"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261010-enemyart1"></script>
 </body>
 </html>
