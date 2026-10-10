@@ -114,27 +114,12 @@ const worldBackgrounds = {
 // Try the currently organized backgrounds folder first, then the root world folder.
 // This supports both the repository layout and the user's previous local file placement.
 const worldBackgroundPaths = {
-  maple: [
-    "/FYP/images/world/backgrounds/maple-town.webp?v=20261010-worldassetfix1",
-    "/FYP/images/world/maple-town.webp?v=20261010-worldassetfix1",
-    "/FYP/image/world/maple-town.webp?v=20261010-worldassetfix1"
-  ],
-  forest: [
-    "/FYP/images/world/backgrounds/whispering-forest.webp?v=20261010-worldassetfix1",
-    "/FYP/images/world/whispering-forest.webp?v=20261010-worldassetfix1",
-    "/FYP/image/world/whispering-forest.webp?v=20261010-worldassetfix1"
-  ],
-  camp: [
-    "/FYP/images/world/backgrounds/old-camp-road.webp?v=20261010-worldassetfix1",
-    "/FYP/images/world/old-camp-road.webp?v=20261010-worldassetfix1",
-    "/FYP/image/world/old-camp-road.webp?v=20261010-worldassetfix1"
-  ],
-  ruins: [
-    "/FYP/images/world/backgrounds/ancient-ruins.webp?v=20261010-worldassetfix1",
-    "/FYP/images/world/ancient-ruins.webp?v=20261010-worldassetfix1",
-    "/FYP/image/world/ancient-ruins.webp?v=20261010-worldassetfix1"
-  ]
+  maple: ["/FYP/assets/world/backgrounds/maple-town.webp?v=20261010-assetpaths1"],
+  forest: ["/FYP/assets/world/backgrounds/whispering-forest.webp?v=20261010-assetpaths1"],
+  camp: ["/FYP/assets/world/backgrounds/old-camp-road.webp?v=20261010-assetpaths1"],
+  ruins: ["/FYP/assets/world/backgrounds/ancient-ruins.webp?v=20261010-assetpaths1"]
 };
+
 const worldBackgroundLoadedPaths = {};
 function loadImageFromCandidates(image, paths, onReady, onFinalError) {
   let candidateIndex = 0;
@@ -302,7 +287,7 @@ playerStandSprite.onerror = () => {
   playerStandReady = false;
   console.warn("[English Power Quest] Unable to load Player_Stand.png; using walk frame fallback.");
 };
-playerStandSprite.src = "/FYP/images/player_walk_frames/png_frames/Player_Stand.png?v=20261010-characterfix2";
+playerStandSprite.src = "/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-assetpaths1";
 
 // Cave enemies keep the existing ghost sprite. Outdoor enemies prefer the user's
 // newer SHrim asset. Try common capitalization, extension and folder variations.
@@ -313,22 +298,14 @@ monsterSprite.onerror = () => {
   monsterSpriteReady = false;
   console.warn("[English Power Quest] Unable to load map monster artwork.");
 };
-monsterSprite.src = "/FYP/images/player_walk_frames/monster/Monster.png?v=20261010-outdoor-shrim1";
+monsterSprite.src = "/FYP/assets/enemies/monster/Monster.png?v=20261010-assetpaths1";
 
 const shrimSprite = new Image();
 let shrimSpriteReady = false;
 const shrimSpriteCandidates = [
-  "/FYP/images/world/SHrim.png?v=20261010-outdoor-shrim1",
-  "/FYP/images/world/Shrim.png?v=20261010-outdoor-shrim1",
-  "/FYP/images/world/shrim.png?v=20261010-outdoor-shrim1",
-  "/FYP/images/world/SHrim.PNG?v=20261010-outdoor-shrim1",
-  "/FYP/images/world/SHrim.webp?v=20261010-outdoor-shrim1",
-  "/FYP/images/world/Shrim.webp?v=20261010-outdoor-shrim1",
-  "/FYP/images/world/backgrounds/SHrim.png?v=20261010-outdoor-shrim1",
-  "/FYP/images/world/backgrounds/Shrim.png?v=20261010-outdoor-shrim1",
-  "/FYP/images/world/backgrounds/shrim.png?v=20261010-outdoor-shrim1",
-  "/FYP/images/world/backgrounds/SHrim.webp?v=20261010-outdoor-shrim1"
+  "/FYP/assets/enemies/monster/Shrim.png?v=20261010-assetpaths1"
 ];
+
 loadImageFromCandidates(
   shrimSprite,
   shrimSpriteCandidates,
@@ -338,7 +315,7 @@ loadImageFromCandidates(
   },
   () => {
     shrimSpriteReady = false;
-    console.warn("[English Power Quest] SHrim not found in images/world; outdoor encounters use the existing sprite fallback.");
+    console.warn("[English Power Quest] SHrim not found in assets/enemies/monster; outdoor encounters use the existing sprite fallback.");
   }
 );
 
@@ -533,15 +510,16 @@ for (const direction of ["right", "left"]) {
     const frameName = "player_walk_" + direction + "_" + (index + 1);
     img.onload = () => repairEnclosedSpriteHoles(img);
     img.onerror = () => {
-      // The detailed PNG frames are preferred. Keep the SVG frames as a safe fallback.
-      if (img.dataset.svgFallbackTried !== "true") {
-        img.dataset.svgFallbackTried = "true";
-        img.src = "/FYP/images/player_walk_frames/svg_frames/" + frameName + ".svg?v=20261010-assets3";
+      // There are no SVG frames in the current repository. Use the known idle
+      // PNG as a safe fallback if any individual walking frame cannot load.
+      if (img.dataset.standFallbackTried !== "true") {
+        img.dataset.standFallbackTried = "true";
+        img.src = "/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-assetpaths1";
         return;
       }
       console.warn("[English Power Quest] Unable to load player frame:", frameName);
     };
-    img.src = "/FYP/images/player_walk_frames/png_frames/" + frameName + ".png?v=20261010-assets3";
+    img.src = "/FYP/assets/player/png_frames/" + frameName + ".png?v=20261010-assetpaths1";
   });
 }
 
@@ -801,7 +779,7 @@ function storyPortraitSource(characterId) {
   characterId = portraitAliases[characterId] || characterId;
   if (characterId === "alex") {
     return {
-      src: "/FYP/images/player_walk_frames/png_frames/Player_Stand.png?v=20261010-mangastory1",
+      src: "/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-mangastory1",
       kind: "pixel"
     };
   }
