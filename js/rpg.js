@@ -642,6 +642,18 @@ function hasWalkFrame(direction, index) {
   return Boolean(frame && frame.complete && frame.naturalWidth > 0);
 }
 
+// Maple Town elder uses the selected hand-drawn NPC sprite instead of the
+// procedural stand-in. Keep the existing Canvas character as a safe fallback.
+const elderRowanSprite = new Image();
+elderRowanSprite.decoding = "async";
+elderRowanSprite.onerror = () => console.warn(
+  "[English Power Quest] Elder Rowan PNG unavailable; using the original NPC artwork."
+);
+elderRowanSprite.src = "/FYP/images/npc/npc_elder_rowan_32.png?v=20261010-rowan1";
+function elderRowanSpriteReady() {
+  return elderRowanSprite.complete && elderRowanSprite.naturalWidth > 0;
+}
+
 const npcs = [
   { id: "elder", realmId: "maple", x: 880, name: "Elder Rowan", title: "Village Elder", titleKey: "npc.elder.title", nameKey: "npc.elder.name", dialogueKeys: ["npc.elder.1","npc.elder.2","npc.elder.3"], color: "#c79b6d", dialogue: ["Welcome to Maple Town, traveller.","The old road beyond the forest has gone silent.","If you want to help, follow the lanterns and learn the words of the road."] },
   { id: "mira", realmId: "forest", x: 790, name: "Mira", title: "Wandering Merchant", titleKey: "npc.mira.title", nameKey: "npc.mira.name", dialogueKeys: ["npc.mira.1","npc.mira.2","npc.mira.3"], color: "#c57f62", dialogue: ["You are heading into Whispering Forest, aren't you?","Remember: understanding a message can be more useful than a sharp sword.","I will wait here until you return."] },
@@ -3183,36 +3195,58 @@ function drawNPCs() {
     drawStyledNPC(x, world.groundY + bob, npc);
 
     const nearby = Math.abs(npc.x - world.player.x) < 105;
+    // The new elder's staff is taller than the procedural NPC; move the E
+    // prompt above the staff while retaining the existing interaction radius.
+    const promptLift = npc.id === "elder" && elderRowanSpriteReady() ? 18 : 0;
     if (nearby) {
       const glow = .72 + Math.sin(world.time * 5) * .18;
       ctx.save();
       ctx.globalAlpha = glow;
       ctx.fillStyle = "rgba(13, 20, 26, .9)";
-      ctx.fillRect(x - 14, world.groundY - 141, 28, 25);
+      ctx.fillRect(x - 14, world.groundY - 141 - promptLift, 28, 25);
       ctx.strokeStyle = "#f0cc78";
       ctx.lineWidth = 2;
-      ctx.strokeRect(x - 14, world.groundY - 141, 28, 25);
+      ctx.strokeRect(x - 14, world.groundY - 141 - promptLift, 28, 25);
       ctx.fillStyle = "#ffe6a0";
       ctx.font = "bold 14px system-ui";
       ctx.textAlign = "center";
-      ctx.fillText("E", x, world.groundY - 123);
+      ctx.fillText("E", x, world.groundY - 123 - promptLift);
       ctx.restore();
     } else {
       ctx.fillStyle = "rgba(16, 22, 23, .78)";
       ctx.beginPath();
-      ctx.moveTo(x, world.groundY - 126);
-      ctx.lineTo(x + 5, world.groundY - 121);
-      ctx.lineTo(x, world.groundY - 116);
-      ctx.lineTo(x - 5, world.groundY - 121);
+      ctx.moveTo(x, world.groundY - 126 - promptLift);
+      ctx.lineTo(x + 5, world.groundY - 121 - promptLift);
+      ctx.lineTo(x, world.groundY - 116 - promptLift);
+      ctx.lineTo(x - 5, world.groundY - 121 - promptLift);
       ctx.closePath();
       ctx.fill();
       ctx.fillStyle = "#f1d17f";
-      ctx.fillRect(x - 1, world.groundY - 122, 2, 2);
+      ctx.fillRect(x - 1, world.groundY - 122 - promptLift, 2, 2);
     }
   }
 }
 
 function drawStyledNPC(x, ground, npc) {
+  if (npc.id === "elder" && elderRowanSpriteReady()) {
+    const scale = 4; // Actual 32×32 PNG, displayed at 128×128 with sharp pixels.
+    const size = elderRowanSprite.naturalWidth * scale;
+    ctx.save();
+    ctx.fillStyle = "rgba(5, 9, 12, .3)";
+    ctx.beginPath();
+    ctx.ellipse(Math.round(x), Math.round(ground) + 3, 27, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(
+      elderRowanSprite,
+      Math.round(x - size / 2),
+      Math.round(ground - size),
+      size,
+      size
+    );
+    ctx.restore();
+    return;
+  }
   ctx.save();
   ctx.translate(Math.round(x), Math.round(ground));
 
