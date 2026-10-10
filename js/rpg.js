@@ -110,17 +110,58 @@ const worldBackgrounds = {
   camp: new Image(),
   ruins: new Image()
 };
+
+// Try the currently organized backgrounds folder first, then the root world folder.
+// This supports both the repository layout and the user's previous local file placement.
 const worldBackgroundPaths = {
-  maple: "/FYP/images/world/maple-town.webp?v=20261010-startupfix2",
-  forest: "/FYP/images/world/whispering-forest.webp?v=20261010-startupfix2",
-  camp: "/FYP/images/world/old-camp-road.webp?v=20261010-startupfix2",
-  ruins: "/FYP/images/world/ancient-ruins.webp?v=20261010-startupfix2"
+  maple: [
+    "/FYP/images/world/backgrounds/maple-town.webp?v=20261010-worldassetfix1",
+    "/FYP/images/world/maple-town.webp?v=20261010-worldassetfix1",
+    "/FYP/image/world/maple-town.webp?v=20261010-worldassetfix1"
+  ],
+  forest: [
+    "/FYP/images/world/backgrounds/whispering-forest.webp?v=20261010-worldassetfix1",
+    "/FYP/images/world/whispering-forest.webp?v=20261010-worldassetfix1",
+    "/FYP/image/world/whispering-forest.webp?v=20261010-worldassetfix1"
+  ],
+  camp: [
+    "/FYP/images/world/backgrounds/old-camp-road.webp?v=20261010-worldassetfix1",
+    "/FYP/images/world/old-camp-road.webp?v=20261010-worldassetfix1",
+    "/FYP/image/world/old-camp-road.webp?v=20261010-worldassetfix1"
+  ],
+  ruins: [
+    "/FYP/images/world/backgrounds/ancient-ruins.webp?v=20261010-worldassetfix1",
+    "/FYP/images/world/ancient-ruins.webp?v=20261010-worldassetfix1",
+    "/FYP/image/world/ancient-ruins.webp?v=20261010-worldassetfix1"
+  ]
 };
+const worldBackgroundLoadedPaths = {};
+function loadImageFromCandidates(image, paths, onReady, onFinalError) {
+  let candidateIndex = 0;
+  image.onload = () => {
+    if (typeof onReady === "function") onReady(image.src);
+  };
+  image.onerror = () => {
+    candidateIndex += 1;
+    if (candidateIndex < paths.length) {
+      image.src = paths[candidateIndex];
+    } else if (typeof onFinalError === "function") {
+      onFinalError();
+    }
+  };
+  image.src = paths[0];
+}
 Object.entries(worldBackgrounds).forEach(([realmId, image]) => {
   image.decoding = "async";
-  image.onload = () => console.info("[English Power Quest] World background ready:", realmId);
-  image.onerror = () => console.warn("[English Power Quest] World background missing; using procedural fallback:", realmId);
-  image.src = worldBackgroundPaths[realmId];
+  loadImageFromCandidates(
+    image,
+    worldBackgroundPaths[realmId],
+    resolvedPath => {
+      worldBackgroundLoadedPaths[realmId] = resolvedPath;
+      console.info("[English Power Quest] World background ready:", realmId, resolvedPath);
+    },
+    () => console.warn("[English Power Quest] World background missing; using procedural fallback:", realmId)
+  );
 });
 
 const AUTH_CONTEXT = window.EPQ_AUTH || {};
@@ -263,7 +304,8 @@ playerStandSprite.onerror = () => {
 };
 playerStandSprite.src = "/FYP/images/player_walk_frames/png_frames/Player_Stand.png?v=20261010-characterfix2";
 
-// Shared monster artwork for map encounters, using the uploaded asset.
+// Cave enemies keep the existing ghost sprite. Outdoor enemies prefer the user's
+// newer SHrim asset. Try common capitalization, extension and folder variations.
 const monsterSprite = new Image();
 let monsterSpriteReady = false;
 monsterSprite.onload = () => { monsterSpriteReady = true; };
@@ -271,7 +313,34 @@ monsterSprite.onerror = () => {
   monsterSpriteReady = false;
   console.warn("[English Power Quest] Unable to load map monster artwork.");
 };
-monsterSprite.src = "/FYP/images/player_walk_frames/monster/Monster.png?v=20261010-mapmonster1";
+monsterSprite.src = "/FYP/images/player_walk_frames/monster/Monster.png?v=20261010-outdoor-shrim1";
+
+const shrimSprite = new Image();
+let shrimSpriteReady = false;
+const shrimSpriteCandidates = [
+  "/FYP/images/world/SHrim.png?v=20261010-outdoor-shrim1",
+  "/FYP/images/world/Shrim.png?v=20261010-outdoor-shrim1",
+  "/FYP/images/world/shrim.png?v=20261010-outdoor-shrim1",
+  "/FYP/images/world/SHrim.PNG?v=20261010-outdoor-shrim1",
+  "/FYP/images/world/SHrim.webp?v=20261010-outdoor-shrim1",
+  "/FYP/images/world/Shrim.webp?v=20261010-outdoor-shrim1",
+  "/FYP/images/world/backgrounds/SHrim.png?v=20261010-outdoor-shrim1",
+  "/FYP/images/world/backgrounds/Shrim.png?v=20261010-outdoor-shrim1",
+  "/FYP/images/world/backgrounds/shrim.png?v=20261010-outdoor-shrim1",
+  "/FYP/images/world/backgrounds/SHrim.webp?v=20261010-outdoor-shrim1"
+];
+loadImageFromCandidates(
+  shrimSprite,
+  shrimSpriteCandidates,
+  () => {
+    shrimSpriteReady = true;
+    console.info("[English Power Quest] SHrim outdoor monster loaded.");
+  },
+  () => {
+    shrimSpriteReady = false;
+    console.warn("[English Power Quest] SHrim not found in images/world; outdoor encounters use the existing sprite fallback.");
+  }
+);
 
 const playerWalkFrames = {
   right: Array.from({ length: 6 }, () => new Image()),
@@ -950,8 +1019,11 @@ function renderStoryIntro() {
   ui.storyIntroCanvas.dataset.scene = slide.scene || "prologue";
   ui.storyIntroCanvas.dataset.camera = slide.camera || "wide";
   ui.storyIntroCanvas.dataset.effect = slide.effect || "magic";
-  ui.storyIntroSceneArt.style.backgroundImage = slide.scene && slide.scene !== "prologue" && worldBackgroundPaths[slide.scene]
-    ? `url("${worldBackgroundPaths[slide.scene]}")`
+  const storyBackgroundPath = slide.scene && slide.scene !== "prologue"
+    ? (worldBackgroundLoadedPaths[slide.scene] || worldBackgroundPaths[slide.scene]?.[0])
+    : null;
+  ui.storyIntroSceneArt.style.backgroundImage = storyBackgroundPath
+    ? `url("${storyBackgroundPath}")`
     : "none";
   ui.storyboardSfx.textContent = slide.sfx || "";
   ui.storyboardSfx.classList.toggle("hidden", !slide.sfx);
@@ -3305,12 +3377,27 @@ function drawEnemies() {
     if (Boolean(enemy.caveOnly) !== world.insideCave) continue;
     const x = worldToScreen(enemy.x);
     if (x < -100 || x > window.innerWidth + 100) continue;
-    if (monsterSpriteReady) {
-      // Draw the supplied monster PNG in place of the old canvas-drawn shapes.
-      // Keep the fallback shapes below in case the image cannot be loaded.
-      const drawHeight = enemy.type === "wraith" ? 220 : 184;
-      const drawWidth = enemy.type === "wraith" ? 156 : 184;
-      ctx.drawImage(monsterSprite, x - drawWidth / 2, world.groundY - drawHeight, drawWidth, drawHeight);
+    const activeSprite = enemy.caveOnly
+      ? (monsterSpriteReady ? monsterSprite : null)
+      : (shrimSpriteReady ? shrimSprite : (monsterSpriteReady ? monsterSprite : null));
+
+    if (activeSprite) {
+      // Fit the image within a consistent box without stretching it.
+      // Outdoor encounters use SHrim; the cave Wraith keeps the original sprite.
+      const maxWidth = enemy.caveOnly ? 156 : 178;
+      const maxHeight = enemy.caveOnly ? 220 : 164;
+      const naturalWidth = activeSprite.naturalWidth || maxWidth;
+      const naturalHeight = activeSprite.naturalHeight || maxHeight;
+      const scale = Math.min(maxWidth / naturalWidth, maxHeight / naturalHeight);
+      const drawWidth = naturalWidth * scale;
+      const drawHeight = naturalHeight * scale;
+      ctx.drawImage(
+        activeSprite,
+        Math.round(x - drawWidth / 2),
+        Math.round(world.groundY - drawHeight),
+        Math.round(drawWidth),
+        Math.round(drawHeight)
+      );
     } else if (enemy.type === "slime") {
       ctx.fillStyle = "#76b86b";
       ctx.beginPath();
