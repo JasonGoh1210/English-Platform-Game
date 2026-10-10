@@ -24,7 +24,7 @@ $epqCsrfToken = (string)$_SESSION['csrf_token'];
 
     <div class="hud">
       <section class="pixel-player-card">
-        <div class="pixel-avatar"><img src="/FYP/images/player_walk_frames/png_frames/Player_Stand.png?v=20261010-characterfix2" alt="Rookie character"></div>
+        <div class="pixel-avatar"><img src="/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-assetpaths1" alt="Rookie character"></div>
         <div class="pixel-player-info">
           <div class="pixel-player-name"><?= epq_h($epqDisplayName) ?></div>
           <div class="pixel-level"><span data-i18n="player.level">Lv.</span> <span id="levelText">1</span></div>
@@ -212,10 +212,10 @@ $epqCsrfToken = (string)$_SESSION['csrf_token'];
         <div class="typing-cave-rocks"></div>
         <div class="typing-cave-ground"></div>
         <div class="typing-cave-player">
-          <img src="/FYP/images/player_walk_frames/png_frames/Player_Stand.png?v=20261010-typingcave1" alt="Player character">
+          <img src="/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-assetpaths1" alt="Player character">
         </div>
         <div class="typing-cave-monster" id="typingCaveMonster">
-          <img src="/FYP/images/player_walk_frames/monster/Monster.png?v=20261010-typingcave1" alt="Approaching monster">
+          <img src="/FYP/assets/enemies/monster/Monster.png?v=20261010-assetpaths1" alt="Approaching monster">
         </div>
         <div class="typing-cave-threat">
           <span id="typingCaveThreatLabel">MONSTER APPROACH</span>
@@ -297,7 +297,7 @@ $epqCsrfToken = (string)$_SESSION['csrf_token'];
 
     (() => {
       const canvas = document.getElementById("gameCanvas");
-      const fallbackBackground = "/FYP/images/world/maple-town.webp?v=20261010-startupfix2";
+      const fallbackBackground = "/FYP/assets/world/backgrounds/maple-town.webp?v=20261010-assetpaths1";
       if (canvas) {
         canvas.style.backgroundColor = "#14212a";
         canvas.style.backgroundImage = 'url("' + fallbackBackground + '")';
@@ -306,7 +306,7 @@ $epqCsrfToken = (string)$_SESSION['csrf_token'];
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261010-shrimworldfix1").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261010-assetpaths1").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");
