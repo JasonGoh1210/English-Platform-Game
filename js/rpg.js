@@ -1,5 +1,6 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261011-verified1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261011-verified1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261011-audio1";
+import { playSound } from "./audio.js?v=20261011-audio1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261011-audio1";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -1198,6 +1199,8 @@ function advanceStoryIntro() {
   if (storyIntroPage < storySequence.length - 1) {
     storyIntroPage += 1;
     renderStoryIntro();
+    const slide = storySequence[storyIntroPage];
+    if (slide?.sfx) playSound(slide.effect === "impact" ? "hurt" : "portal");
   } else {
     finishStoryIntro();
   }
@@ -1269,6 +1272,7 @@ function interact() {
   const npc = nearestNPC();
 
   if (npc) {
+    playSound("dialogue");
     world.interacting = true;
     world.currentDialogueNpcId = npc.id;
     world.currentDialogueIndex = world.questStep % npc.dialogueKeys.length;
@@ -1339,6 +1343,7 @@ function recenterCamera() {
 function enterCave() {
   const cave = landmarks.find(item => item.realmId === world.currentRealmId && item.type === "cave");
   if (!cave) return;
+  playSound("cave");
   world.caveReturnX = cave.x + 120;
   world.insideCave = true;
   // Cave monsters respawn when the player enters the cave again.
@@ -1361,6 +1366,7 @@ function enterCave() {
 }
 
 function leaveCave() {
+  playSound("portal");
   world.insideCave = false;
   const cave = landmarks.find(item => item.realmId === world.currentRealmId && item.type === "cave");
   world.player.x = clamp(world.caveReturnX || (cave ? cave.x + 120 : 440), 70, world.width - 90);
@@ -1466,6 +1472,7 @@ function setTypingMessage(text, kind = "") {
 
 async function openTypingCave() {
   if (world.typingCaveOpen) return;
+  playSound("cave");
   world.typingCaveOpen = true;
   world.player.vx = 0;
   keys.clear();
@@ -1519,6 +1526,7 @@ function closeTypingCave() {
 
 function advanceTypingMonster(reason) {
   if (!world.typingCaveOpen || typingCaveState.busy || typingCaveState.gameOver) return;
+  playSound(reason === "wrong" ? "wrong" : "hurt");
   typingCaveState.approachSteps += 1;
   typingCaveState.monsterLeft = Math.max(27, typingCaveState.monsterLeft - TYPING_CAVE_STEP);
   typingCaveState.passiveTimer = 0;
@@ -1526,6 +1534,7 @@ function advanceTypingMonster(reason) {
 
   const isChinese = getLanguage() === "zh";
   if (typingCaveState.monsterLeft <= 32) {
+    playSound("defeat");
     typingCaveState.gameOver = true;
     typingCaveState.busy = true;
     typingUi.input.disabled = true;
@@ -1660,6 +1669,7 @@ function submitTypingAnswer() {
 
   clearTypingSpellingFeedback();
   typingCaveState.lastMistake = null;
+  playSound("correct");
 
   typingCaveState.busy = true;
   const token = ++typingCaveState.roundToken;
@@ -1731,6 +1741,7 @@ function submitTypingAnswer() {
         });
       }
       const showTypingVictory = () => {
+        playSound("victory");
         typingUi.winTitle.textContent = storyEnding
           ? t("story.ending.title")
           : (isChinese ? "挑战成功！" : "CAVE CLEARED!");
@@ -1841,6 +1852,7 @@ function closeDestinationMenu() {
 }
 
 function travelToSelectedDestination() {
+  playSound("portal");
   const destination = destinations[world.selectedDestinationIndex] || destinations[0];
 
   world.realmPositions[world.currentRealmId] = {
@@ -1949,6 +1961,7 @@ async function saveServerProgress(payload) {
       setSaveWarning("rewards", "save.rewardFailed");
       return false;
     }
+    if (data.levelUp) playSound("level");
     return true;
   } catch (error) {
     console.warn("Map reward will remain local until the PHP API is available.", error);
@@ -1987,6 +2000,7 @@ async function loadServerPlayer() {
 
 async function startBattle(enemy) {
   if (!enemy || enemy.defeated || world.battle) return;
+  playSound("encounter");
   world.battle = enemy;
 
   // Save a safe spawn point before leaving the map so refreshing the map

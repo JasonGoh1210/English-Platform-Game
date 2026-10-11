@@ -14,7 +14,7 @@ $epqStorageId = (string)$epqPlayerId;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#101b24">
   <title>English Power Quest · Battle</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261011-verified1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261011-audio1">
 </head>
 <body class="battle-page">
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -129,7 +129,8 @@ $epqStorageId = (string)$epqPlayerId;
         <button type="button" data-set-language="en" data-i18n="settings.english">English</button>
         <button type="button" data-set-language="zh" data-i18n="settings.chinese">简体中文</button>
       </div>
-      <p class="settings-saved" data-i18n="settings.saved">Your language choice is saved automatically.</p>
+      <?php require __DIR__ . '/includes/sound_settings.php'; ?>
+      <p class="settings-saved" data-i18n="settings.saved">Language and sound settings are saved automatically.</p>
       <button type="button" class="settings-close-button" id="settingsCloseButton" data-i18n="settings.close">CLOSE</button>
     </section>
   </div>
@@ -143,6 +144,6 @@ $epqStorageId = (string)$epqPlayerId;
       'csrfToken' => (string)$_SESSION['csrf_token']
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   </script>
-  <script type="module" src="/FYP/js/battle.js?v=20261011-verified1"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261011-audio1"></script>
 </body>
 </html>

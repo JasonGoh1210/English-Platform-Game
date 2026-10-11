@@ -53,6 +53,7 @@ function fixture() {
     clearSaveWarning: kind => warnings.delete(kind),
     t: key => key, localEnemyName: () => "Word Slime", questionSkillCode: () => "VOCABULARY",
     messages: [], setBattleMessage: key => c.messages.push(key),
+    sounds: [], playSound: name => c.sounds.push(name),
     updateHp() {}, playAttackAnimation() {}, playEnemyAttackAnimation() {},
     disableAnswers() {}, showQuestionPanel() {}, startQuestion() {},
     showResult() {}, finishDefeat() {}, battleFailure() {},
@@ -103,6 +104,7 @@ test("Correct attacks preserve player HP and schedule the next question", async 
   await f.c.resolve(true, null, false);
   assert.equal(f.c.state.playerHp, 65);
   assert.equal(f.c.state.enemyHp, 40);
+  assert.deepEqual(f.c.sounds, ["correct", "attack"]);
   assert.equal(f.tasks[0].fn, f.c.startQuestion);
   f.c.resolve(true, null, false);
   assert.equal(f.c.rewards.length, 1);
@@ -114,9 +116,11 @@ test("Wrong answers and timeouts trigger enemy damage and continuous questions",
     f.c.battleRequest = async () => ({ok:true,battle:{playerHp:55,enemyHp:60,focusUsed:false,status:"ACTIVE"},outcome:{correct:false,timedOut:timeout},player:{xp:0,coins:10,englishPowerTotal:0,level:1}});
     f.load(battleSource, ["resolve", "enemyTurn", "applyServerBattle"]);
     await f.c.resolve(false, null, timeout);
+    assert.deepEqual(f.c.sounds, ["wrong"]);
     assert.equal(f.tasks[0].fn, f.c.enemyTurn);
     f.tasks[0].fn();
     assert.equal(f.c.state.playerHp, 55);
+    assert.deepEqual(f.c.sounds, ["wrong", "hurt"]);
     assert.equal(f.tasks[1].fn, f.c.startQuestion);
   }
 });
@@ -130,6 +134,7 @@ test("Healing Herb waits for confirmation, blocks double clicks and resumes the 
   assert.equal(f.c.state.playerHp, 65);
   assert.equal(f.c.saved.coins, 10);
   assert.equal(f.c.state.itemPending, true);
+  assert.equal(f.c.sounds.length, 0, "No healing sound before purchase confirmation");
   f.c.useItem();
   f.c.resolve(true, null, false);
   assert.equal(f.c.rewards.length, 1);
@@ -139,6 +144,7 @@ test("Healing Herb waits for confirmation, blocks double clicks and resumes the 
   assert.equal(await result, true);
   assert.equal(f.c.state.playerHp, 85);
   assert.equal(f.c.saved.coins, 5);
+  assert.deepEqual(f.c.sounds, ["heal"]);
   assert.equal(f.c.state.currentQuestion, currentQuestion);
   assert.equal(f.c.state.remaining, 4, "Purchase resumes the server countdown");
   assert.deepEqual(f.c.answerButtons.map(b => b.disabled), [false, true]);
@@ -154,6 +160,7 @@ test("Rejected, unconfirmed and failed herb requests grant no healing or local s
     assert.equal(await f.c.useItem(), false);
     assert.equal(f.c.state.playerHp, 65);
     assert.equal(f.c.saved.coins, 10);
+    assert.equal(f.c.sounds.length, 0, "Rejected purchase cannot announce healing");
     assert.equal(f.c.state.itemPending, false);
     assert.equal(f.c.ui.itemButton.disabled, false);
   }

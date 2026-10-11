@@ -1,3 +1,5 @@
+import { setupAudio } from "./audio.js?v=20261011-audio1";
+
 const LANGUAGE_KEY = "englishPowerQuest.language.v1";
 
 const messages = {
@@ -9,7 +11,10 @@ const messages = {
     "settings.english": "English",
     "settings.chinese": "简体中文",
     "settings.close": "CLOSE",
-    "settings.saved": "Your language choice is saved automatically.",
+    "settings.saved": "Language and sound settings are saved automatically.",
+    "settings.sound": "SOUND EFFECTS",
+    "settings.volume": "VOLUME",
+    "settings.testSound": "TEST SOUND",
     "common.back": "BACK",
     "save.worldFailed": "Unable to reach your online save. Retrying. Please keep this browser open.",
     "save.rewardFailed": "Some rewards could not be confirmed as saved. Please check your connection.",
@@ -185,12 +190,15 @@ const messages = {
   zh: {
     "settings.button": "⚙ 设置",
     "settings.title": "游戏设置",
-    "settings.subtitle": "选择你习惯的游戏语言。",
+    "settings.subtitle": "选择游戏语言，调整音效和音量。",
     "settings.language": "游戏语言",
     "settings.english": "English（英文）",
     "settings.chinese": "简体中文",
     "settings.close": "关闭",
-    "settings.saved": "语言选择会自动保存。",
+    "settings.saved": "语言和音效设置会自动保存。",
+    "settings.sound": "游戏音效",
+    "settings.volume": "音量",
+    "settings.testSound": "试听音效",
     "common.back": "返回",
     "save.worldFailed": "暂时无法连接在线存档，正在重试。请保持当前浏览器打开。",
     "save.rewardFailed": "部分奖励尚未确认保存，请检查网络连接。",
@@ -458,3 +466,4 @@ export function setupLanguageSettings() {
 
 applyTranslations();
 setupLanguageSettings();
+setupAudio();

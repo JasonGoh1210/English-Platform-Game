@@ -43,6 +43,8 @@ For an **existing database**, export a backup first and inspect its columns/tabl
 
 `git pull origin main` updates files; it does not execute SQL. Verified battles require migration 005 on existing databases; see [`docs/VERIFIED_BATTLES.md`](docs/VERIFIED_BATTLES.md). No image installation is required.
 
+Map and battle Settings now include pixel sound effects, volume and a Test Sound button. Click/touch or press a key to enable browser audio. No sound files or SQL migration are required; see [Sound effects](docs/SOUND_EFFECTS.md).
+
 ## Validation
 
 Run PHP syntax checks, `node --check js/rpg.js`, `node --check js/battle.js`, and `node --test tests/gameplay_regression.test.cjs tests/battle_api.test.cjs` and `php tests/battle_rules_test.php`. CI checks gameplay regressions and the guest/save/upgrade and verified combat flows on MySQL 8 and MariaDB 10.4. These checks do not verify the actual browser artwork or a complete playthrough.

@@ -1,6 +1,7 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261011-verified1";
-import { battleToken, createBattleClient } from "./battle-api.js?v=20261011-verified1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261011-verified1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261011-audio1";
+import { battleToken, createBattleClient } from "./battle-api.js?v=20261011-audio1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261011-audio1";
+import { playSound } from "./audio.js?v=20261011-audio1";
 
 // Use the same per-player storage namespace as the map. If these keys differ,
 // the battle page cannot find the enemy that the map just stored and redirects back.
@@ -379,6 +380,7 @@ async function resolve(value, button, timedOut) {
   if (!result.ok) { battleFailure(result); return; }
   const correct = result.outcome.correct;
   if (button) button.classList.add(correct ? "correct" : "wrong");
+  playSound(correct ? "correct" : "wrong");
   if (!correct) {
     // Preserve delayed enemy-hit animation; HP comes from the server.
     state.confirmedEnemyTurn = result;
@@ -386,8 +388,11 @@ async function resolve(value, button, timedOut) {
     window.setTimeout(enemyTurn, 700);
     return;
   }
+  const previousLevel = Number(getSave().level || 1);
   applyServerBattle(result);
   playAttackAnimation();
+  playSound("attack");
+  if (Number(result.player?.level || 1) > previousLevel) playSound("level");
   setBattleMessage(result.outcome.usedFocus ? "battle.focusHit" : "battle.directHit", {damage:result.outcome.damage});
   if (result.battle.status === "VICTORY") window.setTimeout(finishVictory, 800);
   else window.setTimeout(startQuestion, 900);
@@ -398,6 +403,7 @@ function enemyTurn() {
   if (!result) return;
   state.confirmedEnemyTurn = null;
   playEnemyAttackAnimation();
+  playSound("hurt");
   applyServerBattle(result);
   setBattleMessage("battle.enemyAttack", {enemy:localEnemyName(), damage:state.enemy.damage});
   if (result.battle.status === "DEFEAT") window.setTimeout(finishDefeat, 800);
@@ -418,6 +424,7 @@ async function useSkill() {
   if (!applyServerBattle(result)) { battleFailure(result); return; }
   if (typeof result.battle.remaining === "number") state.remaining = result.battle.remaining;
   setBattleMessage("battle.focusActive");
+  playSound("focus");
   if (ui.questionPanel.classList.contains("hidden")) { showQuestionPanel(); void startQuestion(); }
 }
 function useItem() {
@@ -435,6 +442,7 @@ function useItem() {
       const result = await battleRequest("HERB");
       if (!result.ok) { setBattleMessage(result.status === 409 ? "battle.notEnoughCoins" : "battle.itemFailed"); return false; }
       applyServerBattle(result);
+      playSound("heal");
       if (questionAlreadyOpen && !state.leaving) {
         const resumed = await battleRequest("RESUME");
         if (resumed.ok) state.remaining = resumed.battle.remaining;
@@ -557,6 +565,7 @@ function finishVictory() {
   state.completed = true;
   window.clearInterval(state.timerId);
   finishConfirmedVictorySave();
+  playSound("victory");
   showResult(true, t("battle.victoryTitle", {enemy:localEnemyName()}), t("battle.victoryText"),
     [[t("battle.rewardXp"), "+" + state.enemy.xp], [t("battle.rewardCoins"), "+" + state.enemy.coins]]);
 }
@@ -564,6 +573,7 @@ function finishVictory() {
 function finishDefeat() {
   if (state.completed || state.leaving) return;
   state.completed = true;
+  playSound("defeat");
   window.clearInterval(state.timerId);
 
   showResult(
