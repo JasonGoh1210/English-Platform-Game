@@ -4308,3 +4308,21 @@ button { font: inherit; }
     margin-top: 12px;
   }
 }
+
+/* Visible only while an online save has failed. */
+.save-status {
+  position: fixed;
+  z-index: 10000;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(620px, calc(100vw - 24px));
+  margin: 0;
+  padding: 10px 14px;
+  border: 2px solid #d6b56f;
+  background: #101923;
+  color: #ffe6a0;
+  font: 14px/1.5 system-ui, sans-serif;
+  text-align: center;
+  pointer-events: none;
+}

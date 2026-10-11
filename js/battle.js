@@ -1,4 +1,5 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261010-battlekeys1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261011-savefix1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261011-savefix1";
 
 // Use the same per-player storage namespace as the map. If these keys differ,
 // the battle page cannot find the enemy that the map just stored and redirects back.
@@ -7,26 +8,44 @@ const IS_GUEST = Boolean(AUTH_CONTEXT.isGuest);
 const AUTH_PLAYER_ID = String(AUTH_CONTEXT.storageId || AUTH_CONTEXT.playerId || "guest");
 const BATTLE_KEY = `englishPowerQuest.battle.player.${AUTH_PLAYER_ID}`;
 const WORLD_SAVE_KEY = `englishPowerQuest.world.v2.player.${AUTH_PLAYER_ID}`;
+const WORLD_PENDING_KEY = `${WORLD_SAVE_KEY}.pending`;
 const ESCAPE_KEY = `englishPowerQuest.escape.v1.player.${AUTH_PLAYER_ID}`;
 let pendingBattleSave = Promise.resolve();
+let battleSaveRevision = 0;
+let rewardChain = Promise.resolve();
+let pendingItemUse = Promise.resolve();
 const pendingBattleRewards = [];
 function trackBattleReward(payload) {
-  const promise = saveProgressServer(payload);
+  const promise = rewardChain.catch(() => {}).then(() => saveProgressServer(payload));
+  rewardChain = promise;
   pendingBattleRewards.push(promise);
   return promise;
 }
-async function saveBattleState(state) {
+async function saveBattleState(snapshot, revision) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
   try {
     const response = await fetch("/FYP/api/game_state.php", {
       method: "POST",
       credentials: "same-origin",
       keepalive: true,
+      signal: controller.signal,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ csrfToken: AUTH_CONTEXT.csrfToken || "", state })
+      body: JSON.stringify({ csrfToken: AUTH_CONTEXT.csrfToken || "", state: snapshot })
     });
-    if (!response.ok) throw new Error("MySQL battle state save failed");
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data?.ok) throw new Error("MySQL battle state save failed");
+    if (revision === battleSaveRevision) {
+      localStorage.removeItem(WORLD_PENDING_KEY);
+      clearSaveWarning("world");
+    }
+    return true;
   } catch (error) {
+    setSaveWarning("world", "save.worldFailed");
     console.warn("[English Power Quest] Battle map state remains cached locally.", error);
+    return false;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -117,6 +136,8 @@ const state = {
   mode: "MENU",
   focusUsed: false,
   turnLocked: false,
+  itemPending: false,
+  leaving: false,
   resultType: null,
   battleMessageTranslation: null
 };
@@ -146,23 +167,34 @@ function getSave() {
 function updateSave(patch) {
   const updated = { ...getSave(), ...patch };
   localStorage.setItem(WORLD_SAVE_KEY, JSON.stringify(updated));
+  localStorage.setItem(WORLD_PENDING_KEY, "1");
+  const revision = ++battleSaveRevision;
   // Keep the battle outcome in MySQL before returning to the map.
   // Serialize saves: a slower older request must not overwrite a newer battle result.
-  pendingBattleSave = pendingBattleSave.catch(() => {}).then(() => saveBattleState(updated));
+  pendingBattleSave = pendingBattleSave.catch(() => {}).then(() => saveBattleState(updated, revision));
 }
 
 async function saveProgressServer(payload) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
   try {
     const response = await fetch("/FYP/api/save_progress.php", {
       method: "POST",
+      signal: controller.signal,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...payload, csrfToken: AUTH_CONTEXT.csrfToken || "" })
     });
-    if (!response.ok) return false;
-    const data = await response.json();
-    return Boolean(data.ok);
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data?.ok) {
+      if (payload.sourceType !== "SHOP_PURCHASE") setSaveWarning("rewards", "save.rewardFailed");
+      return { ok: false, status: response.status };
+    }
+    return data;
   } catch {
-    return false;
+    if (payload.sourceType !== "SHOP_PURCHASE") setSaveWarning("rewards", "save.rewardFailed");
+    return { ok: false, status: 0 };
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -353,6 +385,7 @@ function renderChoices(question) {
 }
 
 function startQuestion() {
+  if (state.completed || state.leaving) return;
   window.clearInterval(state.timerId);
   state.locked = false;
   state.selectedWords = [];
@@ -375,7 +408,7 @@ function startQuestion() {
   state.questionStartAt = performance.now();
 
   state.timerId = window.setInterval(() => {
-    if (state.locked || state.completed) return;
+    if (state.locked || state.completed || state.itemPending || state.leaving) return;
     remaining -= 0.1;
     ui.timerText.textContent = Math.max(0, remaining).toFixed(1) + "s";
     if (remaining <= 2) ui.timerText.classList.add("warning");
@@ -388,7 +421,7 @@ function startQuestion() {
 }
 
 function resolve(value, button, timedOut) {
-  if (state.locked || state.completed) return;
+  if (state.locked || state.completed || state.itemPending || state.leaving) return;
 
   state.locked = true;
   window.clearInterval(state.timerId);
@@ -450,7 +483,7 @@ function resolve(value, button, timedOut) {
   }
 }
 function enemyTurn() {
-  if (state.completed) return;
+  if (state.completed || state.leaving) return;
 
   playEnemyAttackAnimation();
   state.playerHp = Math.max(0, state.playerHp - state.enemy.damage);
@@ -474,7 +507,7 @@ function showBattleMenu() {
 }
 
 function useSkill() {
-  if (state.completed || state.locked) return;
+  if (state.completed || state.locked || state.itemPending || state.leaving) return;
 
   if (state.focusUsed) {
     setBattleMessage("battle.focusAlready");
@@ -492,7 +525,7 @@ function useSkill() {
   }
 }
 function useItem() {
-  if (state.completed || state.locked) return;
+  if (state.completed || state.locked || state.itemPending || state.leaving) return;
 
   const questionAlreadyOpen = !ui.questionPanel.classList.contains("hidden");
   const save = getSave();
@@ -508,31 +541,51 @@ function useItem() {
     return;
   }
 
-  state.playerHp = Math.min(state.playerMaxHp, state.playerHp + 20);
-  updateSave({ coins: currentCoins - 5 });
-  void trackBattleReward({
-    xpDelta: 0,
-    coinDelta: -5,
-    englishPowerDelta: 0,
-    englishSkillCode: "VOCABULARY",
-    sourceType: "SHOP_PURCHASE",
-    sourceId: null,
-    description: "Used Healing Herb in battle"
-  });
-
-  updateHp();
-  setBattleMessage("battle.healed");
-
-  // Do not force another command selection. If the player used the item
-  // from the initial menu, continue straight into the question flow.
-  if (!questionAlreadyOpen) {
-    showQuestionPanel();
-    startQuestion();
-  }
+  state.itemPending = true;
+  const beganAt = performance.now();
+  const buttons = [...ui.answerArea.querySelectorAll("button"), ui.itemButton, ui.activeItemButton].filter(Boolean);
+  const disabledBefore = buttons.map(button => button.disabled);
+  buttons.forEach(button => { button.disabled = true; });
+  setBattleMessage("battle.itemPending");
+  pendingItemUse = (async () => {
+    try {
+      const result = await trackBattleReward({
+        xpDelta: 0, coinDelta: -5, englishPowerDelta: 0,
+        englishSkillCode: "VOCABULARY", sourceType: "SHOP_PURCHASE", sourceId: null,
+        description: "Used Healing Herb in battle"
+      });
+      if (!result.ok) {
+        setBattleMessage(result.status === 409 ? "battle.notEnoughCoins" : "battle.itemFailed");
+        return false;
+      }
+      state.playerHp = Math.min(state.playerMaxHp, state.playerHp + 20);
+      updateSave({ coins: Number(result.player.coins) });
+      updateHp();
+      setBattleMessage("battle.healed");
+      return true;
+    } catch (error) {
+      setBattleMessage("battle.itemFailed");
+      console.warn("[English Power Quest] Healing Herb purchase was not confirmed.", error);
+      return false;
+    } finally {
+      state.itemPending = false;
+      state.questionStartAt += performance.now() - beganAt;
+      buttons.forEach((button, index) => { button.disabled = disabledBefore[index]; });
+      if (!questionAlreadyOpen && !state.leaving) {
+        showQuestionPanel();
+        startQuestion();
+      }
+    }
+  })();
+  return pendingItemUse;
 }
 async function returnToMapAfterBattle() {
+  if (state.leaving) return;
+  state.leaving = true;
   window.clearInterval(state.timerId);
-  sessionStorage.setItem(ESCAPE_KEY, state.enemy.id);
+  await pendingItemUse;
+  if (state.resultType === "VICTORY") sessionStorage.removeItem(ESCAPE_KEY);
+  else sessionStorage.setItem(ESCAPE_KEY, state.enemy.id);
   sessionStorage.removeItem(BATTLE_KEY);
   await Promise.allSettled([pendingBattleSave, ...pendingBattleRewards]);
   window.location.href = "/FYP/index.php";
@@ -582,12 +635,13 @@ function showResult(victory, title, text, rewards) {
   ).join("");
   ui.resultButton.textContent = victory ? t("battle.returnMap") : t("battle.retry");
   ui.battleResult.classList.remove("hidden");
-  ui.resultButton.onclick = () => {
+  ui.resultButton.onclick = async () => {
     if (victory) {
-      sessionStorage.removeItem(BATTLE_KEY);
-      sessionStorage.removeItem(ESCAPE_KEY);
-      void Promise.allSettled([pendingBattleSave, ...pendingBattleRewards]).then(() => { window.location.href = "/FYP/index.php"; });
+      await returnToMapAfterBattle();
     } else {
+      if (state.leaving) return;
+      state.leaving = true;
+      await Promise.allSettled([pendingBattleSave, ...pendingBattleRewards]);
       window.location.reload();
     }
   };
@@ -613,7 +667,7 @@ function renderStoredResult() {
 }
 
 function finishVictory() {
-  if (state.completed) return;
+  if (state.completed || state.leaving) return;
   state.completed = true;
   window.clearInterval(state.timerId);
 
@@ -625,9 +679,8 @@ function finishVictory() {
     xp: Number(saved.xp || 0) + state.enemy.xp,
     coins: Number(saved.coins || 0) + state.enemy.coins,
     defeatedEnemyIds: [...defeated],
-    questStep: state.enemy.id === "slime-01"
-      ? Math.max(Number(saved.questStep || 0), 2)
-      : Number(saved.questStep || 0)
+    // Story chapters advance through Rowan, Mira, Tala and Kai, not kills.
+    questStep: Number(saved.questStep || 0)
   });
 
   // Enemy victory grants XP and Coins. English Power is awarded for
@@ -651,7 +704,7 @@ function finishVictory() {
 }
 
 function finishDefeat() {
-  if (state.completed) return;
+  if (state.completed || state.leaving) return;
   state.completed = true;
   window.clearInterval(state.timerId);
 
@@ -704,6 +757,10 @@ function bindBattleEvents() {
   ui.activeRunButton?.addEventListener("click", (event) => {
     event.preventDefault();
     runAway();
+  });
+  document.getElementById("returnMapLink")?.addEventListener("click", (event) => {
+    event.preventDefault();
+    void returnToMapAfterBattle();
   });
 
   // Fallback delegation: keeps commands clickable even if another UI layer changes.

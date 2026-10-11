@@ -32,6 +32,8 @@ try {
 
     $db = epq_db();
     $playerId = epq_current_player_id($db);
+    // Failed balance/ledger statements must roll back rather than report success.
+    mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
     $db->begin_transaction();
 
     $lock = $db->prepare(
@@ -49,7 +51,7 @@ try {
     $newXp = $oldXp + $xp;
     $newCoins = $oldCoins + $coins;
     if ($newCoins < 0) {
-        throw new RuntimeException('Not enough Coins.');
+        throw new DomainException('Not enough Coins.');
     }
 
     $levelStmt = $db->prepare(
@@ -157,5 +159,5 @@ try {
     ]);
 } catch (Throwable $e) {
     if (isset($db) && $db instanceof mysqli) $db->rollback();
-    epq_json(['ok' => false, 'error' => $e->getMessage()], 500);
+    epq_json(['ok' => false, 'error' => $e->getMessage()], $e instanceof DomainException ? 409 : 500);
 }

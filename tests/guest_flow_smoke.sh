@@ -86,6 +86,22 @@ shop=$(curl -fsS -b "$cookies" -H 'Content-Type: application/json' \
 printf '%s' "$shop" | jq -e '.ok == true'
 test "$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s english_power_quest -e "SELECT coins_total FROM players WHERE player_id=$player_id")" = 5
 
+# Insufficient funds must reject the purchase without modifying the player.
+insufficient=$(curl -sS -o /tmp/epq_insufficient.json -w '%{http_code}' -b "$cookies" -H 'Content-Type: application/json' \
+  -d "{\"csrfToken\":\"$csrf\",\"coinDelta\":-6,\"sourceType\":\"SHOP_PURCHASE\"}" "$base/api/save_progress.php")
+test "$insufficient" = 409
+jq -e '.ok == false' /tmp/epq_insufficient.json
+test "$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s english_power_quest -e "SELECT coins_total FROM players WHERE player_id=$player_id")" = 5
+
+# This database is an isolated CI fixture. Force a ledger error and verify rollback.
+mysql -h 127.0.0.1 -uroot -ptestpassword english_power_quest -e "CREATE TRIGGER epq_test_reject_coin BEFORE INSERT ON player_coin_transactions FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Smoke test ledger failure'"
+ledger_failure=$(curl -sS -o /tmp/epq_ledger_failure.json -w '%{http_code}' -b "$cookies" -H 'Content-Type: application/json' \
+  -d "{\"csrfToken\":\"$csrf\",\"coinDelta\":-1,\"sourceType\":\"SHOP_PURCHASE\"}" "$base/api/save_progress.php")
+mysql -h 127.0.0.1 -uroot -ptestpassword english_power_quest -e 'DROP TRIGGER epq_test_reject_coin'
+test "$ledger_failure" = 500
+jq -e '.ok == false' /tmp/epq_ledger_failure.json
+test "$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s english_power_quest -e "SELECT coins_total FROM players WHERE player_id=$player_id")" = 5
+
 # Unauthorized state changes without CSRF are blocked.
 no_csrf=$(curl -sS -o /dev/null -w '%{http_code}' -b "$cookies" -H 'Content-Type: application/json' \
   -d '{"state":{"currentRealmId":"ruins"}}' "$base/api/game_state.php")

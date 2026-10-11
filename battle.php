@@ -14,9 +14,10 @@ $epqStorageId = (string)$epqPlayerId;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#101b24">
   <title>English Power Quest · Battle</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261010-guestmode1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261011-savefix1">
 </head>
 <body class="battle-page">
+  <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
   <main class="battle-screen">
     <header class="battle-header">
       <div class="battle-title">
@@ -142,6 +143,6 @@ $epqStorageId = (string)$epqPlayerId;
       'csrfToken' => (string)$_SESSION['csrf_token']
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   </script>
-  <script type="module" src="/FYP/js/battle.js?v=20261010-guestdb1"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261011-savefix1"></script>
 </body>
 </html>

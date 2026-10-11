@@ -1,4 +1,5 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261010-authstory1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261011-savefix1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261011-savefix1";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -169,6 +170,7 @@ function personalizePlayerName(value) {
     .replace(/\bAlex\b/g, PLAYER_DISPLAY_NAME);
 }
 const WORLD_SAVE_KEY = `englishPowerQuest.world.v2.player.${AUTH_PLAYER_ID}`;
+const WORLD_PENDING_KEY = `${WORLD_SAVE_KEY}.pending`;
 const STORY_INTRO_SEEN_KEY = `englishPowerQuest.storyIntro.seen.v2.player.${AUTH_PLAYER_ID}`;
 let storyIntroPage = 0;
 let storyMode = "intro";
@@ -182,46 +184,70 @@ let dbSaveReady = false;
 let saveDelayHandle = null;
 let pendingSaveData = null;
 let saveChain = Promise.resolve();
+let saveRevision = 0;
 let lastPeriodicX = world.player.x;
 
 function gameSaveRequest(state, keepalive = false) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
   return fetch("/FYP/api/game_state.php", {
     method: "POST",
     credentials: "same-origin",
     keepalive,
+    signal: controller.signal,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ csrfToken: AUTH_CONTEXT.csrfToken || "", state })
   }).then(async response => {
     const result = await response.json().catch(() => null);
     if (!response.ok || !result?.ok) throw new Error(result?.error || "Unable to save world");
     return result;
-  });
+  }).finally(() => clearTimeout(timeout));
 }
 
 function flushGameSave() {
   if (!dbSaveReady || !pendingSaveData) return saveChain;
   clearTimeout(saveDelayHandle);
   const snapshot = pendingSaveData;
+  const revision = saveRevision;
   pendingSaveData = null;
-  saveChain = saveChain.catch(() => {}).then(() => gameSaveRequest(snapshot)).catch(error => {
+  saveChain = saveChain.catch(() => {}).then(async () => {
+    await gameSaveRequest(snapshot);
+    if (revision === saveRevision) {
+      localStorage.removeItem(WORLD_PENDING_KEY);
+      clearSaveWarning("world");
+    }
+    return true;
+  }).catch(error => {
     console.warn("[English Power Quest] MySQL world save failed; local cache retained.", error);
+    if (revision === saveRevision) {
+      pendingSaveData = snapshot;
+      setSaveWarning("world", "save.worldFailed");
+      saveDelayHandle = setTimeout(flushGameSave, 5000);
+    }
+    return false;
   });
   return saveChain;
 }
 
 function queueGameSave(snapshot) {
-  if (!dbSaveReady) return;
+  saveRevision += 1;
   pendingSaveData = snapshot;
+  localStorage.setItem(WORLD_PENDING_KEY, "1");
   clearTimeout(saveDelayHandle);
+  if (!dbSaveReady) return;
   saveDelayHandle = setTimeout(flushGameSave, 700);
 }
 
 async function loadServerGame() {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
   try {
-    const response = await fetch("/FYP/api/game_state.php", { credentials: "same-origin", cache: "no-store" });
+    const response = await fetch("/FYP/api/game_state.php", { credentials: "same-origin", cache: "no-store", signal: controller.signal });
     const result = await response.json();
     if (!response.ok || !result?.ok) throw new Error(result?.error || "Game state unavailable");
-    if (result.state && typeof result.state === "object") {
+    const hasPendingLocalSave = localStorage.getItem(WORLD_PENDING_KEY) === "1"
+      && localStorage.getItem(WORLD_SAVE_KEY) !== null;
+    if (!hasPendingLocalSave && result.state && typeof result.state === "object") {
       const cached = (() => {
         try { return JSON.parse(localStorage.getItem(WORLD_SAVE_KEY) || "null") || {}; }
         catch { return {}; }
@@ -235,20 +261,29 @@ async function loadServerGame() {
     dbSaveReady = true;
     // Import an existing personal browser save into MySQL on first use.
     const local = localStorage.getItem(WORLD_SAVE_KEY);
-    if (local && !result.state) {
+    if (local && (hasPendingLocalSave || !result.state)) {
       queueGameSave(JSON.parse(local));
       void flushGameSave();
     }
     return true;
   } catch (error) {
     console.warn("[English Power Quest] Unable to restore MySQL world save; keeping browser cache.", error);
-    dbSaveReady = true;
+    // Do not write a default map over an existing server save after a failed GET.
+    dbSaveReady = false;
+    setTimeout(() => {
+      void loadServerGame().then(restored => {
+        if (restored) void loadServerPlayer();
+      });
+    }, 5000);
+    setSaveWarning("world", "save.worldFailed");
     return false;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
 window.addEventListener("pagehide", () => {
-  if (!dbSaveReady) return;
+  if (!dbSaveReady || localStorage.getItem(WORLD_PENDING_KEY) !== "1") return;
   const snapshot = (() => {
     try { return JSON.parse(localStorage.getItem(WORLD_SAVE_KEY) || "null"); }
     catch { return null; }
@@ -264,7 +299,7 @@ window.addEventListener("pagehide", () => {
   }
 });
 setInterval(() => {
-  if (world.storyIntroOpen || world.typingCaveOpen || world.travelMenu) return;
+  if (world.battle || world.storyIntroOpen || world.typingCaveOpen || world.travelMenu) return;
   if (Math.abs(world.player.x - lastPeriodicX) < 16) return;
   lastPeriodicX = world.player.x;
   saveWorldState();
@@ -1911,11 +1946,13 @@ async function saveServerProgress(payload) {
     const data = await response.json().catch(() => null);
     if (!response.ok || !data?.ok) {
       console.warn("Server did not save map reward:", data?.error || response.statusText);
+      setSaveWarning("rewards", "save.rewardFailed");
       return false;
     }
     return true;
   } catch (error) {
     console.warn("Map reward will remain local until the PHP API is available.", error);
+    setSaveWarning("rewards", "save.rewardFailed");
     return false;
   }
 }
@@ -1948,8 +1985,9 @@ async function loadServerPlayer() {
   }
 }
 
-function startBattle(enemy) {
-  if (!enemy || enemy.defeated) return;
+async function startBattle(enemy) {
+  if (!enemy || enemy.defeated || world.battle) return;
+  world.battle = enemy;
 
   // Save a safe spawn point before leaving the map so refreshing the map
   // cannot immediately retrigger the same encounter.
@@ -1958,6 +1996,7 @@ function startBattle(enemy) {
 
   sessionStorage.setItem(BATTLE_KEY, JSON.stringify({ enemyId: enemy.id }));
   sessionStorage.removeItem(ESCAPE_KEY);
+  await flushGameSave();
   window.location.href = "/FYP/battle.php";
 }
 
@@ -1976,7 +2015,7 @@ function update(dt) {
     return;
   }
 
-  if (!world.interacting && !world.travelMenu && !settingsIsOpen()) {
+  if (!world.battle && !world.interacting && !world.travelMenu && !settingsIsOpen()) {
     const left = keys.has("arrowleft") || keys.has("a") || touch.left;
     const right = keys.has("arrowright") || keys.has("d") || touch.right;
     const direction = (right ? 1 : 0) - (left ? 1 : 0);
@@ -3777,8 +3816,9 @@ runStartupStep("syncHUD", syncHUD);
 runStartupStep("openStoryIntroIfNew", openStoryIntroIfNew);
 
 void (async () => {
-  await loadServerGame();
-  await Promise.all([loadServerPlayer(), loadQuestions()]);
+  const restored = await loadServerGame();
+  if (restored) await Promise.all([loadServerPlayer(), loadQuestions()]);
+  else await loadQuestions();
 })().catch(error => {
   console.warn("[English Power Quest] Startup data could not be loaded.", error);
 });

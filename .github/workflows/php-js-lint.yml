@@ -14,12 +14,19 @@ jobs:
         run: |
           node --check js/rpg.js
           node --check js/battle.js
+          node --check js/save-status.js
+          node --check js/i18n.js
+      - name: Gameplay regression tests
+        run: node --test tests/gameplay_regression.test.cjs
 
   mysql-guest-flow:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        database: ["mysql:8.0", "mariadb:10.4"]
     services:
       mysql:
-        image: mysql:8.0
+        image: ${{ matrix.database }}
         env:
           MYSQL_ROOT_PASSWORD: testpassword
         ports:
@@ -34,6 +41,8 @@ jobs:
       - name: Prepare database, including old-schema migration simulation
         run: |
           mysql -h 127.0.0.1 -uroot -ptestpassword < database/english_power_quest_schema.sql
+          mysql -h 127.0.0.1 -uroot -ptestpassword < database/demo_seed.sql
+          test "$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s english_power_quest -e "SELECT w.world_order FROM players p JOIN users u ON u.user_id=p.user_id JOIN worlds w ON w.world_id=p.current_world_id WHERE u.username='demo'")" = 1
           mysql -h 127.0.0.1 -uroot -ptestpassword english_power_quest -e "
             DROP TABLE guest_login_tokens;
             DROP TABLE player_game_saves;

@@ -48,7 +48,17 @@ ORDER BY u.user_id DESC;
 6. Log out and log back in with the new username/password. Confirm the same profile returns.
 7. Explicit guest logout revokes persistent recovery. Logging out is *not* the same as merely closing the browser.
 
-GitHub Actions runs PHP/JavaScript syntax checks and a MySQL 8 guest-flow smoke test on pushes to main, including a simulated existing-schema migration.
+GitHub Actions runs PHP/JavaScript syntax checks, gameplay regression tests and guest-flow smoke tests on MySQL 8 and MariaDB 10.4 on pushes to main, including a simulated existing-schema migration.
+
+## Save failure handling
+
+- A failed map save remains marked as pending in the player's browser cache. The latest snapshot is retried after five seconds and survives a reload. Older online map state does not overwrite this pending snapshot.
+- If the initial online map read fails, the game retries that read before writing a default map. Navigation into battle waits for the queued map write, and pending battle outcomes remain cached for the map to retry.
+- A visible bilingual message reports unconfirmed map writes or rewards. A confirmed map write clears only the map warning; it does not imply that a failed reward was saved.
+- Healing Herb waits for a successful server purchase before restoring HP. Answer buttons and the countdown pause while the purchase is pending, then resume the same question. Repeated item clicks cannot start another simultaneous purchase.
+- A rejected insufficient-funds purchase returns HTTP 409 without changing balances. Failed balance/ledger statements roll back the entire reward transaction.
+- Reward amounts are still computed by the client. Failed reward POSTs are **not automatically retried**: server-side event IDs and idempotency are required before that is safe. If a response is lost after a purchase commits, return to the map to check the durable Coin balance; no unconfirmed healing is granted.
+- Story chapters advance through Rowan, Mira, Tala and Kai. Defeating Word Slime does not skip Mira's chapter. Existing saved quest steps are preserved; this update does not reset characters who already reached a later chapter.
 
 ## Security and limitations
 
