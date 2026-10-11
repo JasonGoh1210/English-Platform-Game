@@ -5,6 +5,16 @@ require_once __DIR__.'/../includes/battle_rules.php';
 require_once __DIR__.'/../config/db.php';
 if (getenv('EPQ_BATTLE_TEST_DB') !== 'isolated') throw new RuntimeException('Isolated database acknowledgement required.');
 function verify(bool $condition, string $label): void { if (!$condition) throw new RuntimeException($label); }
+function canonicalReceipt(mixed $value): mixed {
+    if (!is_array($value)) return $value;
+    foreach ($value as $key => $item) $value[$key] = canonicalReceipt($item);
+    if (!array_is_list($value)) ksort($value);
+    return $value;
+}
+function sameReceipt(array $first, array $replay): bool {
+    // MySQL JSON objects normalize key order; types and all values still must match.
+    return canonicalReceipt($first) === canonicalReceipt($replay);
+}
 function token(): string { return bin2hex(random_bytes(16)); }
 function http(string $path, ?array $body, string $cookie): array {
     $curl = curl_init('http://127.0.0.1:8081/FYP/'.$path);
@@ -64,7 +74,7 @@ $wrongInputs = ['questionToken'=>$questionToken,'answer'=>$wrong,'xpDelta'=>9999
 [, $miss] = action($actor, $battle, 'ANSWER', $wrongInputs, $request);
 verify(!$miss['outcome']['correct'] && $miss['battle']['playerHp'] === 90 && $miss['player']['xp'] === 0, 'Wrong answer damages only player and grants no reward');
 [, $replay] = action($actor, $battle, 'ANSWER', $wrongInputs, $request);
-verify($miss === $replay, 'Exact receipt replay');
+verify(sameReceipt($miss, $replay), 'Exact receipt replay');
 verify(action($actor, $battle, 'ANSWER', $wrongInputs)[0] === 409, 'New request cannot claim an old question');
 verify(action($actor, $battle, 'ANSWER', ['questionToken'=>$questionToken,'answer'=>validAnswer($question)], $request)[0] === 409, 'Token cannot change answer');
 verify(action($actor, $battle, 'HERB')[0] === 409, 'Insufficient Coins rejects purchase');
@@ -82,7 +92,7 @@ while (true) {
     verify($hit['outcome']['correct'] && $hit['battle']['playerHp'] === 90 && $hit['outcome']['damage'] < 100, 'Correct answer never harms player; damage cannot be forged');
     $xp += $hit['outcome']['xp']; $coins += $hit['outcome']['coins']; $power += $hit['outcome']['power']; $answers++;
     [, $again] = action($actor, $battle, 'ANSWER', $inputs, $request);
-    verify($hit === $again, 'Correct answer/victory replay returns exact receipt');
+    verify(sameReceipt($hit, $again), 'Correct answer/victory replay returns exact receipt');
     if ($hit['battle']['status'] === 'VICTORY') break;
 }
 verify($hit['player']['xp'] === $xp + 20 && $hit['player']['coins'] === $coins + 10 && $hit['player']['englishPowerTotal'] === $power, 'Victory grants exactly one fixed enemy reward');
@@ -103,7 +113,7 @@ verify($timeout['outcome']['timedOut'] && $timeout['battle']['playerHp'] === 86,
 $request = token();
 [, $herb] = action($actor, $battle2, 'HERB', [], $request);
 [, $herbReplay] = action($actor, $battle2, 'HERB', [], $request);
-verify($herb['battle']['playerHp'] === 100 && $herb['player']['coins'] === $coins + 5 && $herb === $herbReplay, 'Herb heals at most 20 and charges exactly once');
+verify($herb['battle']['playerHp'] === 100 && $herb['player']['coins'] === $coins + 5 && sameReceipt($herb, $herbReplay), 'Herb heals at most 20 and charges exactly once');
 verify(action($actor, $battle2, 'HERB')[0] === 409, 'Full HP rejects charge');
 [, $issued] = action($actor, $battle2, 'QUESTION');
 action($actor, $battle2, 'ANSWER', ['questionToken'=>$issued['battle']['questionToken'],'timedOut'=>true]);
