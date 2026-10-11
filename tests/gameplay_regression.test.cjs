@@ -43,7 +43,7 @@ function fixture() {
     WORLD_SAVE_KEY: "test.player.7", WORLD_PENDING_KEY: "test.player.7.pending",
     BATTLE_KEY: "battle.7", ESCAPE_KEY: "escape.7", AUTH_CONTEXT: { csrfToken: "test" },
     pendingBattleSave: Promise.resolve(), pendingBattleRewards: [], rewardChain: Promise.resolve(),
-    pendingItemUse: Promise.resolve(), battleSaveRevision: 0,
+    pendingItemUse: Promise.resolve(), pendingAnswer: Promise.resolve(), battleSaveRevision: 0, serverReady: true,
     dbSaveReady: true, saveDelayHandle: null, pendingSaveData: null,
     saveChain: Promise.resolve(), saveRevision: 0,
     now: 3000, performance: { now: () => c.now },
@@ -55,7 +55,7 @@ function fixture() {
     messages: [], setBattleMessage: key => c.messages.push(key),
     updateHp() {}, playAttackAnimation() {}, playEnemyAttackAnimation() {},
     disableAnswers() {}, showQuestionPanel() {}, startQuestion() {},
-    showResult() {}, finishDefeat() {},
+    showResult() {}, finishDefeat() {}, battleFailure() {},
     state: {
       enemy: { id: "slime-01", name: "Word Slime", hp: 60, damage: 10, xp: 20, coins: 10 },
       enemyHp: 60, playerHp: 65, playerMaxHp: 100,
@@ -72,7 +72,7 @@ function fixture() {
     saved: { coins: 10, xp: 0, power: 0, questStep: 1 },
     getSave: () => c.saved,
     updateSave: patch => Object.assign(c.saved, patch),
-    trackBattleReward: async payload => { c.rewards.push(payload); return { ok: true, player: { coins: 5 } }; },
+    battleRequest: async action => { c.rewards.push(action); return { ok: true, battle: {playerHp:65,enemyHp:40,focusUsed:false,status:"ACTIVE",remaining:4}, player:{xp:10,coins:15,englishPowerTotal:1,level:1}, outcome:{correct:true,damage:20,usedFocus:false} }; },
     rewards: [],
     fetch: async () => ({ ok: true, status: 200, json: async () => ({ ok: true }) }),
     loadWorldState() {}, recenterCamera() {}, updateQuest() {}, syncHUD() {}, loadServerPlayer() {}
@@ -82,25 +82,25 @@ function fixture() {
   return { c, storage, tasks, warnings, load: (source, names) => vm.runInContext(functions(source, names), c) };
 }
 
-test("Word Slime victory preserves every story chapter and grants its normal reward", () => {
+test("Word Slime victory UI preserves every story chapter without re-granting server rewards", () => {
   for (let chapter = 0; chapter <= 5; chapter++) {
     const f = fixture();
     f.c.saved.questStep = chapter;
-    f.load(battleSource, ["finishVictory"]);
+    f.load(battleSource, ["finishVictory", "finishConfirmedVictorySave"]);
     f.c.finishVictory();
     assert.equal(f.c.saved.questStep, chapter);
-    assert.equal(f.c.saved.xp, 20);
-    assert.equal(f.c.saved.coins, 20);
+    assert.equal(f.c.saved.xp, 0);
+    assert.equal(f.c.saved.coins, 10);
     assert.deepEqual(Array.from(f.c.saved.defeatedEnemyIds), ["slime-01"]);
     f.c.finishVictory();
-    assert.equal(f.c.rewards.length, 1, "Victory cannot grant a second reward");
+    assert.equal(f.c.rewards.length, 0, "Victory UI cannot grant rewards; server already settled them");
   }
 });
 
-test("Correct attacks preserve player HP and schedule the next question", () => {
+test("Correct attacks preserve player HP and schedule the next question", async () => {
   const f = fixture();
-  f.load(battleSource, ["normalizeSentence", "isCorrect", "resolve", "enemyTurn"]);
-  f.c.resolve(true, null, false);
+  f.load(battleSource, ["resolve", "enemyTurn", "applyServerBattle"]);
+  await f.c.resolve(true, null, false);
   assert.equal(f.c.state.playerHp, 65);
   assert.equal(f.c.state.enemyHp, 40);
   assert.equal(f.tasks[0].fn, f.c.startQuestion);
@@ -108,11 +108,12 @@ test("Correct attacks preserve player HP and schedule the next question", () => 
   assert.equal(f.c.rewards.length, 1);
 });
 
-test("Wrong answers and timeouts trigger enemy damage and continuous questions", () => {
+test("Wrong answers and timeouts trigger enemy damage and continuous questions", async () => {
   for (const timeout of [false, true]) {
     const f = fixture();
-    f.load(battleSource, ["normalizeSentence", "isCorrect", "resolve", "enemyTurn"]);
-    f.c.resolve(false, null, timeout);
+    f.c.battleRequest = async () => ({ok:true,battle:{playerHp:55,enemyHp:60,focusUsed:false,status:"ACTIVE"},outcome:{correct:false,timedOut:timeout},player:{xp:0,coins:10,englishPowerTotal:0,level:1}});
+    f.load(battleSource, ["resolve", "enemyTurn", "applyServerBattle"]);
+    await f.c.resolve(false, null, timeout);
     assert.equal(f.tasks[0].fn, f.c.enemyTurn);
     f.tasks[0].fn();
     assert.equal(f.c.state.playerHp, 55);
@@ -122,8 +123,8 @@ test("Wrong answers and timeouts trigger enemy damage and continuous questions",
 
 test("Healing Herb waits for confirmation, blocks double clicks and resumes the same question", async () => {
   const f = fixture(), purchase = deferred();
-  f.c.trackBattleReward = payload => { f.c.rewards.push(payload); return purchase.promise; };
-  f.load(battleSource, ["useItem", "normalizeSentence", "isCorrect", "resolve"]);
+  f.c.battleRequest = action => { if(action === "RESUME") return Promise.resolve({ok:true,battle:{remaining:4}}); f.c.rewards.push(action); return purchase.promise; };
+  f.load(battleSource, ["useItem", "resolve", "applyServerBattle"]);
   const currentQuestion = f.c.state.currentQuestion;
   const result = f.c.useItem();
   assert.equal(f.c.state.playerHp, 65);
@@ -134,12 +135,12 @@ test("Healing Herb waits for confirmation, blocks double clicks and resumes the 
   assert.equal(f.c.rewards.length, 1);
   assert.equal(f.c.state.enemyHp, 60);
   f.c.now += 1500;
-  purchase.resolve({ ok: true, player: { coins: 5 } });
+  purchase.resolve({ ok: true, battle:{playerHp:85,enemyHp:60,focusUsed:false}, player: { coins: 5, xp:0, englishPowerTotal:0, level:1 } });
   assert.equal(await result, true);
   assert.equal(f.c.state.playerHp, 85);
   assert.equal(f.c.saved.coins, 5);
   assert.equal(f.c.state.currentQuestion, currentQuestion);
-  assert.equal(f.c.state.questionStartAt, 1500, "Purchase wait does not penalize answer speed");
+  assert.equal(f.c.state.remaining, 4, "Purchase resumes the server countdown");
   assert.deepEqual(f.c.answerButtons.map(b => b.disabled), [false, true]);
   assert.equal(f.c.state.itemPending, false);
   assert.equal(f.tasks.length, 0, "Current question is not restarted");
@@ -148,7 +149,7 @@ test("Healing Herb waits for confirmation, blocks double clicks and resumes the 
 test("Rejected, unconfirmed and failed herb requests grant no healing or local spending", async () => {
   for (const response of [{ ok: false, status: 409 }, { ok: false, status: 500 }, { ok: false, status: 0 }, new Error("offline")]) {
     const f = fixture();
-    f.c.trackBattleReward = async () => { if (response instanceof Error) throw response; return response; };
+    f.c.battleRequest = async () => { if (response instanceof Error) throw response; return response; };
     f.load(battleSource, ["useItem"]);
     assert.equal(await f.c.useItem(), false);
     assert.equal(f.c.state.playerHp, 65);
@@ -169,23 +170,21 @@ test("Full HP and insufficient local Coins never issue a purchase", () => {
   }
 });
 
-test("Battle reward requests are serialized so earned Coins precede purchases", async () => {
-  const f = fixture(), first = deferred(), calls = [];
-  f.c.saveProgressServer = payload => { calls.push(payload); return calls.length === 1 ? first.promise : Promise.resolve({ ok: true }); };
-  f.load(battleSource, ["trackBattleReward"]);
-  const reward = f.c.trackBattleReward("answer"), purchase = f.c.trackBattleReward("purchase");
-  await Promise.resolve(); await Promise.resolve();
-  assert.deepEqual(calls, ["answer"]);
-  first.resolve({ ok: true });
-  await Promise.all([reward, purchase]);
-  assert.deepEqual(calls, ["answer", "purchase"]);
+test("Combat balances and HP are copied from confirmed server state", () => {
+  const f = fixture();
+  f.load(battleSource, ["applyServerBattle"]);
+  assert.equal(f.c.applyServerBattle({ok:false}), false);
+  assert.equal(f.c.saved.coins, 10);
+  f.c.applyServerBattle({ok:true,battle:{playerHp:90,enemyHp:27,focusUsed:true},player:{coins:8,xp:12,englishPowerTotal:2,level:1}});
+  assert.equal(f.c.state.playerHp,90); assert.equal(f.c.state.enemyHp,27);
+  assert.equal(f.c.saved.coins,8); assert.equal(f.c.saved.xp,12); assert.equal(f.c.saved.power,2);
 });
 
 test("Running waits for pending purchases/saves and suppresses delayed combat callbacks", async () => {
   const f = fixture(), purchase = deferred(), save = deferred();
   f.c.pendingItemUse = purchase.promise;
   f.c.pendingBattleSave = save.promise;
-  f.load(battleSource, ["returnToMapAfterBattle", "finishVictory", "enemyTurn"]);
+  f.load(battleSource, ["returnToMapAfterBattle", "finishVictory", "finishConfirmedVictorySave", "enemyTurn"]);
   const leave = f.c.returnToMapAfterBattle();
   f.c.finishVictory(); f.c.enemyTurn();
   assert.equal(f.c.rewards.length, 0);

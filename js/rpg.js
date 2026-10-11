@@ -1,5 +1,5 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261011-savefix1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261011-savefix1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261011-verified1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261011-verified1";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -1697,7 +1697,7 @@ function submitTypingAnswer() {
     coinDelta: 5,
     englishPowerDelta: 1,
     englishSkillCode: "VOCABULARY",
-    sourceType: "QUESTION",
+    sourceType: "QUEST",
     sourceId: null,
     description: "Typing Cavern word: " + word.answer
   });

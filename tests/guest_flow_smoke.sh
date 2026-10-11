@@ -43,7 +43,7 @@ printf '%s' "$loaded" | jq -e '.state.currentRealmId == "forest" and .state.play
 test "$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s english_power_quest -e "SELECT w.world_order FROM players p JOIN worlds w ON w.world_id=p.current_world_id WHERE p.player_id=$player_id")" = 2
 
 reward=$(curl -fsS -b "$cookies" -H 'Content-Type: application/json' \
-  -d "{\"csrfToken\":\"$csrf\",\"xpDelta\":20,\"coinDelta\":10,\"englishPowerDelta\":1,\"englishSkillCode\":\"VOCABULARY\",\"sourceType\":\"QUESTION\"}" \
+  -d "{\"csrfToken\":\"$csrf\",\"xpDelta\":20,\"coinDelta\":10,\"englishPowerDelta\":1,\"englishSkillCode\":\"VOCABULARY\",\"sourceType\":\"QUEST\"}" \
   "$base/api/save_progress.php")
 printf '%s' "$reward" | jq -e '.ok == true'
 test "$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s english_power_quest -e "SELECT xp_total FROM players WHERE player_id=$player_id")" = 20
@@ -79,28 +79,7 @@ printf '%s' "$state_after_upgrade" | jq -e '.state.currentRealmId == "forest" an
 upgraded_page=$(curl -fsS -b "$cookies" -c "$cookies" "$base/index.php")
 csrf=$(printf '%s' "$upgraded_page" | grep -oP 'name="csrf_token" value="\K[a-f0-9]{64}' | head -n1)
 
-# A legitimate shop purchase must *deduct* coins, never silently clamp it to 0.
-shop=$(curl -fsS -b "$cookies" -H 'Content-Type: application/json' \
-  -d "{\"csrfToken\":\"$csrf\",\"coinDelta\":-5,\"sourceType\":\"SHOP_PURCHASE\"}" \
-  "$base/api/save_progress.php")
-printf '%s' "$shop" | jq -e '.ok == true'
-test "$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s english_power_quest -e "SELECT coins_total FROM players WHERE player_id=$player_id")" = 5
-
-# Insufficient funds must reject the purchase without modifying the player.
-insufficient=$(curl -sS -o /tmp/epq_insufficient.json -w '%{http_code}' -b "$cookies" -H 'Content-Type: application/json' \
-  -d "{\"csrfToken\":\"$csrf\",\"coinDelta\":-6,\"sourceType\":\"SHOP_PURCHASE\"}" "$base/api/save_progress.php")
-test "$insufficient" = 409
-jq -e '.ok == false' /tmp/epq_insufficient.json
-test "$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s english_power_quest -e "SELECT coins_total FROM players WHERE player_id=$player_id")" = 5
-
-# This database is an isolated CI fixture. Force a ledger error and verify rollback.
-mysql -h 127.0.0.1 -uroot -ptestpassword english_power_quest -e "CREATE TRIGGER epq_test_reject_coin BEFORE INSERT ON player_coin_transactions FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Smoke test ledger failure'"
-ledger_failure=$(curl -sS -o /tmp/epq_ledger_failure.json -w '%{http_code}' -b "$cookies" -H 'Content-Type: application/json' \
-  -d "{\"csrfToken\":\"$csrf\",\"coinDelta\":-1,\"sourceType\":\"SHOP_PURCHASE\"}" "$base/api/save_progress.php")
-mysql -h 127.0.0.1 -uroot -ptestpassword english_power_quest -e 'DROP TRIGGER epq_test_reject_coin'
-test "$ledger_failure" = 500
-jq -e '.ok == false' /tmp/epq_ledger_failure.json
-test "$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s english_power_quest -e "SELECT coins_total FROM players WHERE player_id=$player_id")" = 5
+# Verified combat purchases and rollback are covered by battle_flow_smoke.php.
 
 # Unauthorized state changes without CSRF are blocked.
 no_csrf=$(curl -sS -o /dev/null -w '%{http_code}' -b "$cookies" -H 'Content-Type: application/json' \
@@ -120,6 +99,8 @@ curl -fsS -D /tmp/epq_login_headers.txt -o /tmp/epq_login_post.html -b "$cookies
   --data-urlencode 'password=Passw0rd-Test!' "$base/login.php"
 grep -q 'Location: /FYP/index.php' /tmp/epq_login_headers.txt
 logged_in=$(curl -fsS -b "$cookies" "$base/api/player.php")
-printf '%s' "$logged_in" | jq -e --argjson pid "$player_id" '.ok == true and .player.playerId == $pid and .player.xp == 20 and .player.coins == 5'
+printf '%s' "$logged_in" | jq -e --argjson pid "$player_id" '.ok == true and .player.playerId == $pid and .player.xp == 20 and .player.coins == 10'
 
 echo "PASS: guest, story, map, XP, CSRF, browser recovery, account upgrade and password login"
+
+EPQ_BATTLE_TEST_DB=isolated php tests/battle_flow_smoke.php

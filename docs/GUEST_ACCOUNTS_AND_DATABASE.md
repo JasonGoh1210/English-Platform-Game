@@ -16,10 +16,11 @@
 2. Confirm that `database/migrations/002_auth_story_progress.sql` is already applied (the players table should include `story_intro_seen`). Do not re-run 002 if the column exists.
 3. In phpMyAdmin, select database `english_power_quest`. Run/import `database/migrations/003_persistent_guests.sql` once.
 4. Then run/import `database/migrations/004_four_worlds.sql`. This inserts the four active world records.
-5. `git pull origin main` updates PHP/JS/SQL *files*, but **does not execute SQL against your local MySQL**.
-6. Keep the project's Apache alias `/FYP` and XAMPP running. Visit `http://localhost/FYP/login.php`.
+5. For verified battles, import `database/migrations/005_verified_battles.sql` after the backup. It only creates three new tables and preserves existing data.
+6. `git pull origin main` updates PHP/JS/SQL *files*, but **does not execute SQL against your local MySQL**.
+7. Keep the project's Apache alias `/FYP` and XAMPP running. Visit `http://localhost/FYP/login.php`.
 
-For a new empty database, import the latest `database/english_power_quest_schema.sql` once instead of 003/004. **Never** import the full schema into an existing database; it contains CREATE TABLE and sample seed inserts.
+For a new empty database, import the latest `database/english_power_quest_schema.sql` once instead of 003/004/005. **Never** import the full schema into an existing database; it contains CREATE TABLE and sample seed inserts.
 
 ## Verification queries
 
@@ -57,11 +58,11 @@ GitHub Actions runs PHP/JavaScript syntax checks, gameplay regression tests and 
 - A visible bilingual message reports unconfirmed map writes or rewards. A confirmed map write clears only the map warning; it does not imply that a failed reward was saved.
 - Healing Herb waits for a successful server purchase before restoring HP. Answer buttons and the countdown pause while the purchase is pending, then resume the same question. Repeated item clicks cannot start another simultaneous purchase.
 - A rejected insufficient-funds purchase returns HTTP 409 without changing balances. Failed balance/ledger statements roll back the entire reward transaction.
-- Reward amounts are still computed by the client. Failed reward POSTs are **not automatically retried**: server-side event IDs and idempotency are required before that is safe. If a response is lost after a purchase commits, return to the map to check the durable Coin balance; no unconfirmed healing is granted.
+- Battle rewards, damage and Herb purchases are server-computed. Uncertain battle responses replay the same request ID and cannot duplicate charges/rewards. NPC/typing QUEST rewards still use the legacy client flow and are not automatically retried. See [verified battles](VERIFIED_BATTLES.md).
 - Story chapters advance through Rowan, Mira, Tala and Kai. Defeating Word Slime does not skip Mira's chapter. Existing saved quest steps are preserved; this update does not reset characters who already reached a later chapter.
 
 ## Security and limitations
 
 This is a browser-bound guest account. Anyone with access to the same browser session can use it; use HTTPS in production. A stolen raw bearer cookie could resume that guest until it expires or is revoked. Full account recovery requires upgrading to a password account. No email verification or Google sign-in exists yet.
 
-The current gameplay still reports rewards and some quest/map state from client-side JavaScript. The save endpoint validates shape and bounds but does **not** fully prove that every answer, XP reward or quest step was earned. A production-grade game should issue server-verified question sessions, idempotent reward events and replay-resistant transactions.
+Battle answers, HP, rewards, attempts and accuracy are now server-verified and transactionally replay-safe. NPC/typing QUEST claims and map/quest state remain client-reported; the save endpoint validates shape and bounds, not proof of location or quest completion. Complete those remaining checks before treating all game progression as server-authoritative.

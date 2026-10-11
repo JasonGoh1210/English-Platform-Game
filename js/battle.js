@@ -1,10 +1,10 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261011-savefix1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261011-savefix1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261011-verified1";
+import { battleToken, createBattleClient } from "./battle-api.js?v=20261011-verified1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261011-verified1";
 
 // Use the same per-player storage namespace as the map. If these keys differ,
 // the battle page cannot find the enemy that the map just stored and redirects back.
 const AUTH_CONTEXT = window.EPQ_AUTH || {};
-const IS_GUEST = Boolean(AUTH_CONTEXT.isGuest);
 const AUTH_PLAYER_ID = String(AUTH_CONTEXT.storageId || AUTH_CONTEXT.playerId || "guest");
 const BATTLE_KEY = `englishPowerQuest.battle.player.${AUTH_PLAYER_ID}`;
 const WORLD_SAVE_KEY = `englishPowerQuest.world.v2.player.${AUTH_PLAYER_ID}`;
@@ -12,14 +12,18 @@ const WORLD_PENDING_KEY = `${WORLD_SAVE_KEY}.pending`;
 const ESCAPE_KEY = `englishPowerQuest.escape.v1.player.${AUTH_PLAYER_ID}`;
 let pendingBattleSave = Promise.resolve();
 let battleSaveRevision = 0;
-let rewardChain = Promise.resolve();
+let battleRequest;
+let serverReady = false;
+let pendingAnswer = Promise.resolve();
 let pendingItemUse = Promise.resolve();
-const pendingBattleRewards = [];
-function trackBattleReward(payload) {
-  const promise = rewardChain.catch(() => {}).then(() => saveProgressServer(payload));
-  rewardChain = promise;
-  pendingBattleRewards.push(promise);
-  return promise;
+function applyServerBattle(result) {
+  if (!result?.ok) return false;
+  state.playerHp = result.battle.playerHp;
+  state.enemyHp = result.battle.enemyHp;
+  state.focusUsed = result.battle.focusUsed;
+  if (result.player) updateSave({xp:result.player.xp, coins:result.player.coins, power:result.player.englishPowerTotal, level:result.player.level});
+  updateHp();
+  return true;
 }
 async function saveBattleState(snapshot, revision) {
   const controller = new AbortController();
@@ -125,11 +129,13 @@ const state = {
   enemyHp: 0,
   playerHp: 100,
   playerMaxHp: 100,
-  questions: [],
   currentQuestion: null,
-  usedQuestionIds: [],
+  questionToken: null,
+  remaining: 0,
+  loadingQuestion: false,
+  skillPending: false,
+  confirmedEnemyTurn: null,
   timerId: null,
-  questionStartAt: 0,
   locked: false,
   selectedWords: [],
   completed: false,
@@ -174,37 +180,11 @@ function updateSave(patch) {
   pendingBattleSave = pendingBattleSave.catch(() => {}).then(() => saveBattleState(updated, revision));
 }
 
-async function saveProgressServer(payload) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
-  try {
-    const response = await fetch("/FYP/api/save_progress.php", {
-      method: "POST",
-      signal: controller.signal,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...payload, csrfToken: AUTH_CONTEXT.csrfToken || "" })
-    });
-    const data = await response.json().catch(() => null);
-    if (!response.ok || !data?.ok) {
-      if (payload.sourceType !== "SHOP_PURCHASE") setSaveWarning("rewards", "save.rewardFailed");
-      return { ok: false, status: response.status };
-    }
-    return data;
-  } catch {
-    if (payload.sourceType !== "SHOP_PURCHASE") setSaveWarning("rewards", "save.rewardFailed");
-    return { ok: false, status: 0 };
-  } finally {
-    clearTimeout(timeout);
-  }
+function battleFailure(result) {
+  setBattleMessage(result?.errorCode === "MIGRATION_REQUIRED" ? "battle.migrationRequired" : "battle.serverFailed");
 }
 
-function questionSkillCode(question) {
-  const raw = String(question?.skill || question?.primarySkill || "VOCABULARY").toUpperCase();
-  if (raw === "SENTENCECONSTRUCTION") return "SENTENCE_CONSTRUCTION";
-  if (raw === "ITENGLISH") return "IT_ENGLISH";
-  if (raw === "GRAMMAR") return "GRAMMAR";
-  return raw;
-}
+
 
 function formatType(type) {
   if (type === "TRUE_FALSE") return t("battle.trueFalse");
@@ -231,6 +211,8 @@ function localizeBattleStaticText() {
   if (ui.enemyDifficulty) ui.enemyDifficulty.textContent = t("battle." + String(state.enemy.difficulty).toLowerCase());
 
   if (state.currentQuestion) {
+    // Global static translations replace the loading placeholder on language changes.
+    ui.questionText.textContent = state.currentQuestion.question;
     ui.questionType.textContent = formatType(state.currentQuestion.type);
     ui.questionDifficulty.textContent = t("battle." + String(state.currentQuestion.difficulty || state.enemy.difficulty).toLowerCase());
     const translatedQuestion = state.currentQuestion.questionZh || "";
@@ -268,21 +250,9 @@ onLanguageChange(() => {
   if (state.resultType) renderStoredResult();
 });
 
-function normalizeSentence(words) {
-  return (Array.isArray(words) ? words : [])
-    .map(word => String(word).trim())
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toLowerCase();
-}
 
-function isCorrect(question, value) {
-  if (question.type === "TRUE_FALSE") return value === Boolean(question.answer);
-  if (question.type === "ODD_WORD_OUT") return String(value).toLowerCase() === String(question.answer).toLowerCase();
-  if (question.type === "SENTENCE_BUILDER") return normalizeSentence(value) === normalizeSentence(question.answerOrder);
-  return false;
-}
+
+
 
 function showMenu(prompt = t("battle.whatDo"), subtext = t("battle.chooseAction")) {
   state.mode = "MENU";
@@ -304,29 +274,7 @@ function disableAnswers() {
   ui.answerArea.querySelectorAll("button").forEach(button => { button.disabled = true; });
 }
 
-function chooseQuestion() {
-  const supportsType = question =>
-    !Array.isArray(state.enemy.questionTypes) ||
-    state.enemy.questionTypes.includes(question.type);
 
-  // Keep each enemy's question types aligned with the game design data.
-  let pool = state.questions.filter(
-    q => q.difficulty === state.enemy.difficulty && supportsType(q)
-  );
-
-  if (!pool.length) {
-    pool = state.questions.filter(supportsType);
-  }
-  if (!pool.length) {
-    pool = state.questions;
-  }
-
-  const fresh = pool.filter(q => !state.usedQuestionIds.includes(q.id));
-  const candidates = fresh.length ? fresh : pool;
-  const question = candidates[Math.floor(Math.random() * candidates.length)];
-  state.usedQuestionIds.push(question.id);
-  return question;
-}
 
 function renderChoices(question) {
   ui.answerArea.className = "battle-answers";
@@ -384,13 +332,19 @@ function renderChoices(question) {
   });
 }
 
-function startQuestion() {
-  if (state.completed || state.leaving) return;
+async function startQuestion() {
+  if (state.completed || state.leaving || state.loadingQuestion || !serverReady) return;
+  state.loadingQuestion = true;
+  state.locked = true;
   window.clearInterval(state.timerId);
+  const result = await battleRequest("QUESTION");
+  state.loadingQuestion = false;
+  if (state.leaving) return;
+  if (!applyServerBattle(result)) { battleFailure(result); return; }
   state.locked = false;
   state.selectedWords = [];
-  state.currentQuestion = chooseQuestion();
-
+  state.currentQuestion = result.battle.question;
+  state.questionToken = result.battle.questionToken;
   const q = state.currentQuestion;
   ui.questionType.textContent = formatType(q.type);
   ui.questionDifficulty.textContent = t("battle." + String(q.difficulty).toLowerCase());
@@ -401,180 +355,97 @@ function startQuestion() {
     ? (q.promptZh || (q.type === "TRUE_FALSE" ? t("battle.answerPrompt") : q.prompt || ""))
     : (q.prompt || t("battle.answerPrompt"));
   renderChoices(q);
-
-  let remaining = Number(q.timeLimit || 5);
+  state.remaining = result.battle.remaining;
   ui.timerText.classList.remove("warning");
-  ui.timerText.textContent = remaining.toFixed(1) + "s";
-  state.questionStartAt = performance.now();
-
+  ui.timerText.textContent = state.remaining.toFixed(1) + "s";
   state.timerId = window.setInterval(() => {
-    if (state.locked || state.completed || state.itemPending || state.leaving) return;
-    remaining -= 0.1;
-    ui.timerText.textContent = Math.max(0, remaining).toFixed(1) + "s";
-    if (remaining <= 2) ui.timerText.classList.add("warning");
-
-    if (remaining <= 0) {
-      window.clearInterval(state.timerId);
-      resolve(null, null, true);
-    }
+    if (state.locked || state.completed || state.itemPending || state.skillPending || state.leaving) return;
+    state.remaining -= 0.1;
+    ui.timerText.textContent = Math.max(0, state.remaining).toFixed(1) + "s";
+    if (state.remaining <= 2) ui.timerText.classList.add("warning");
+    if (state.remaining <= 0) { window.clearInterval(state.timerId); void resolve(null, null, true); }
   }, 100);
 }
 
-function resolve(value, button, timedOut) {
-  if (state.locked || state.completed || state.itemPending || state.leaving) return;
-
+async function resolve(value, button, timedOut) {
+  if (state.locked || state.completed || state.itemPending || state.skillPending || state.leaving) return;
   state.locked = true;
   window.clearInterval(state.timerId);
   disableAnswers();
-
-  const q = state.currentQuestion;
-  const correct = !timedOut && isCorrect(q, value);
-
+  setBattleMessage("battle.checking");
+  pendingAnswer = battleRequest("ANSWER", {questionToken:state.questionToken, answer:value, timedOut});
+  const result = await pendingAnswer;
+  if (state.leaving) { applyServerBattle(result); return; }
+  if (!result.ok) { battleFailure(result); return; }
+  const correct = result.outcome.correct;
   if (button) button.classList.add(correct ? "correct" : "wrong");
-
   if (!correct) {
-    setBattleMessage(timedOut ? "battle.timeUp" : "battle.wrong");
-
+    // Preserve delayed enemy-hit animation; HP comes from the server.
+    state.confirmedEnemyTurn = result;
+    setBattleMessage(result.outcome.timedOut ? "battle.timeUp" : "battle.wrong");
     window.setTimeout(enemyTurn, 700);
     return;
   }
-
-  const elapsed = performance.now() - state.questionStartAt;
-  const fast = elapsed <= Number(q.timeLimit || 5) * 1000 * 0.45;
-  const baseDamage = q.difficulty === "HARD" ? 30 : q.difficulty === "MEDIUM" ? 25 : 20;
-
-  const focusMultiplier = state.focusUsed ? 1.5 : 1;
-  const fastMultiplier = fast ? 1.1 : 1;
-  const damage = Math.round(baseDamage * focusMultiplier * fastMultiplier);
-
-  const usedFocus = state.focusUsed;
-  state.focusUsed = false;
-  state.enemyHp = Math.max(0, state.enemyHp - damage);
-
-  const saved = getSave();
-  updateSave({
-    xp: Number(saved.xp || 0) + Number(q.xp || 10),
-    coins: Number(saved.coins || 0) + Number(q.coins || 5),
-    power: Number(saved.power || 0) + Number(q.englishPower || 1)
-  });
-
-  void trackBattleReward({
-    xpDelta: Number(q.xp || 10),
-    coinDelta: Number(q.coins || 5),
-    englishPowerDelta: Number(q.englishPower || 1),
-    englishSkillCode: questionSkillCode(q),
-    sourceType: "QUESTION",
-    sourceId: null,
-    description: "Question reward: " + q.id
-  });
-
+  applyServerBattle(result);
   playAttackAnimation();
-  updateHp();
-
-  setBattleMessage(usedFocus ? "battle.focusHit" : "battle.directHit", { damage });
-
-  if (state.enemyHp <= 0) {
-    window.setTimeout(finishVictory, 800);
-  } else {
-    // Correct answers are the player's successful attack turn.
-    // The enemy does NOT counterattack after a correct answer.
-    // Continue directly to the next English question.
-    window.setTimeout(startQuestion, 900);
-  }
+  setBattleMessage(result.outcome.usedFocus ? "battle.focusHit" : "battle.directHit", {damage:result.outcome.damage});
+  if (result.battle.status === "VICTORY") window.setTimeout(finishVictory, 800);
+  else window.setTimeout(startQuestion, 900);
 }
 function enemyTurn() {
   if (state.completed || state.leaving) return;
-
+  const result = state.confirmedEnemyTurn;
+  if (!result) return;
+  state.confirmedEnemyTurn = null;
   playEnemyAttackAnimation();
-  state.playerHp = Math.max(0, state.playerHp - state.enemy.damage);
-  updateHp();
-  setBattleMessage("battle.enemyAttack", {
-    enemy: localEnemyName(),
-    damage: state.enemy.damage
-  });
-
-  if (state.playerHp <= 0) {
-    window.setTimeout(finishDefeat, 800);
-  } else {
-    // Do not return to the command menu after every question.
-    // Continue directly with the next English challenge.
-    window.setTimeout(startQuestion, 750);
-  }
+  applyServerBattle(result);
+  setBattleMessage("battle.enemyAttack", {enemy:localEnemyName(), damage:state.enemy.damage});
+  if (result.battle.status === "DEFEAT") window.setTimeout(finishDefeat, 800);
+  else window.setTimeout(startQuestion, 750);
 }
 
 function showBattleMenu() {
   showMenu(t("battle.whatDo"), t("battle.chooseAction"));
 }
 
-function useSkill() {
-  if (state.completed || state.locked || state.itemPending || state.leaving) return;
-
-  if (state.focusUsed) {
-    setBattleMessage("battle.focusAlready");
-    return;
-  }
-
-  state.focusUsed = true;
+async function useSkill() {
+  if (state.completed || state.locked || state.itemPending || state.skillPending || state.leaving || !serverReady) return;
+  if (state.focusUsed) { setBattleMessage("battle.focusAlready"); return; }
+  state.skillPending = true;
+  const result = await battleRequest("FOCUS");
+  state.skillPending = false;
+  if (state.leaving) return;
+  if (!applyServerBattle(result)) { battleFailure(result); return; }
+  if (typeof result.battle.remaining === "number") state.remaining = result.battle.remaining;
   setBattleMessage("battle.focusActive");
-
-  // If SKILL is selected before the first FIGHT, start the continuous
-  // question flow. During combat, leave the current question/timer alone.
-  if (ui.questionPanel.classList.contains("hidden")) {
-    showQuestionPanel();
-    startQuestion();
-  }
+  if (ui.questionPanel.classList.contains("hidden")) { showQuestionPanel(); void startQuestion(); }
 }
 function useItem() {
-  if (state.completed || state.locked || state.itemPending || state.leaving) return;
-
+  if (state.completed || state.locked || state.itemPending || state.skillPending || state.leaving || !serverReady) return;
   const questionAlreadyOpen = !ui.questionPanel.classList.contains("hidden");
-  const save = getSave();
-  const currentCoins = Number(save.coins || 0);
-
-  if (state.playerHp >= state.playerMaxHp) {
-    setBattleMessage("battle.hpFull");
-    return;
-  }
-
-  if (currentCoins < 5) {
-    setBattleMessage("battle.notEnoughCoins");
-    return;
-  }
-
+  if (state.playerHp >= state.playerMaxHp) { setBattleMessage("battle.hpFull"); return; }
+  if (Number(getSave().coins || 0) < 5) { setBattleMessage("battle.notEnoughCoins"); return; }
   state.itemPending = true;
-  const beganAt = performance.now();
   const buttons = [...ui.answerArea.querySelectorAll("button"), ui.itemButton, ui.activeItemButton].filter(Boolean);
   const disabledBefore = buttons.map(button => button.disabled);
   buttons.forEach(button => { button.disabled = true; });
   setBattleMessage("battle.itemPending");
   pendingItemUse = (async () => {
     try {
-      const result = await trackBattleReward({
-        xpDelta: 0, coinDelta: -5, englishPowerDelta: 0,
-        englishSkillCode: "VOCABULARY", sourceType: "SHOP_PURCHASE", sourceId: null,
-        description: "Used Healing Herb in battle"
-      });
-      if (!result.ok) {
-        setBattleMessage(result.status === 409 ? "battle.notEnoughCoins" : "battle.itemFailed");
-        return false;
+      const result = await battleRequest("HERB");
+      if (!result.ok) { setBattleMessage(result.status === 409 ? "battle.notEnoughCoins" : "battle.itemFailed"); return false; }
+      applyServerBattle(result);
+      if (questionAlreadyOpen && !state.leaving) {
+        const resumed = await battleRequest("RESUME");
+        if (resumed.ok) state.remaining = resumed.battle.remaining;
       }
-      state.playerHp = Math.min(state.playerMaxHp, state.playerHp + 20);
-      updateSave({ coins: Number(result.player.coins) });
-      updateHp();
       setBattleMessage("battle.healed");
       return true;
-    } catch (error) {
-      setBattleMessage("battle.itemFailed");
-      console.warn("[English Power Quest] Healing Herb purchase was not confirmed.", error);
-      return false;
-    } finally {
+    } catch { setBattleMessage("battle.itemFailed"); return false; }
+    finally {
       state.itemPending = false;
-      state.questionStartAt += performance.now() - beganAt;
       buttons.forEach((button, index) => { button.disabled = disabledBefore[index]; });
-      if (!questionAlreadyOpen && !state.leaving) {
-        showQuestionPanel();
-        startQuestion();
-      }
+      if (!questionAlreadyOpen && !state.leaving) { showQuestionPanel(); void startQuestion(); }
     }
   })();
   return pendingItemUse;
@@ -583,11 +454,16 @@ async function returnToMapAfterBattle() {
   if (state.leaving) return;
   state.leaving = true;
   window.clearInterval(state.timerId);
-  await pendingItemUse;
-  if (state.resultType === "VICTORY") sessionStorage.removeItem(ESCAPE_KEY);
+  // Missing migration during startup must not trap the player here.
+  if (serverReady) {
+    await Promise.allSettled([pendingItemUse, pendingAnswer]);
+    if (state.enemyHp <= 0) finishConfirmedVictorySave();
+    else if (!state.completed) await battleRequest("RUN");
+  }
+  if (state.enemyHp <= 0) sessionStorage.removeItem(ESCAPE_KEY);
   else sessionStorage.setItem(ESCAPE_KEY, state.enemy.id);
   sessionStorage.removeItem(BATTLE_KEY);
-  await Promise.allSettled([pendingBattleSave, ...pendingBattleRewards]);
+  await pendingBattleSave;
   window.location.href = "/FYP/index.php";
 }
 
@@ -641,7 +517,10 @@ function showResult(victory, title, text, rewards) {
     } else {
       if (state.leaving) return;
       state.leaving = true;
-      await Promise.allSettled([pendingBattleSave, ...pendingBattleRewards]);
+      await pendingBattleSave;
+      const entry = JSON.parse(sessionStorage.getItem(BATTLE_KEY) || "{}");
+      delete entry.battleId;
+      sessionStorage.setItem(BATTLE_KEY, JSON.stringify(entry));
       window.location.reload();
     }
   };
@@ -666,41 +545,20 @@ function renderStoredResult() {
   }
 }
 
+function finishConfirmedVictorySave() {
+  const saved = getSave();
+  const defeated = new Set(Array.isArray(saved.defeatedEnemyIds) ? saved.defeatedEnemyIds : []);
+  defeated.add(state.enemy.id);
+  updateSave({defeatedEnemyIds:[...defeated], questStep:Number(saved.questStep || 0)});
+}
+
 function finishVictory() {
   if (state.completed || state.leaving) return;
   state.completed = true;
   window.clearInterval(state.timerId);
-
-  const saved = getSave();
-  const defeated = new Set(Array.isArray(saved.defeatedEnemyIds) ? saved.defeatedEnemyIds : []);
-  defeated.add(state.enemy.id);
-
-  updateSave({
-    xp: Number(saved.xp || 0) + state.enemy.xp,
-    coins: Number(saved.coins || 0) + state.enemy.coins,
-    defeatedEnemyIds: [...defeated],
-    // Story chapters advance through Rowan, Mira, Tala and Kai, not kills.
-    questStep: Number(saved.questStep || 0)
-  });
-
-  // Enemy victory grants XP and Coins. English Power is awarded for
-  // learning activities (correct answers/learning quests), not kills.
-  void trackBattleReward({
-    xpDelta: state.enemy.xp,
-    coinDelta: state.enemy.coins,
-    englishPowerDelta: 0,
-    englishSkillCode: "VOCABULARY",
-    sourceType: "ENEMY",
-    sourceId: null,
-    description: "Defeated " + state.enemy.name
-  });
-
-  showResult(
-    true,
-    t("battle.victoryTitle", { enemy: localEnemyName() }),
-    t("battle.victoryText"),
-    [[t("battle.rewardXp"), "+" + state.enemy.xp], [t("battle.rewardCoins"), "+" + state.enemy.coins]]
-  );
+  finishConfirmedVictorySave();
+  showResult(true, t("battle.victoryTitle", {enemy:localEnemyName()}), t("battle.victoryText"),
+    [[t("battle.rewardXp"), "+" + state.enemy.xp], [t("battle.rewardCoins"), "+" + state.enemy.coins]]);
 }
 
 function finishDefeat() {
@@ -723,7 +581,7 @@ function bindBattleEvents() {
 
   ui.fightButton.addEventListener("click", (event) => {
     event.preventDefault();
-    if (state.completed) return;
+    if (state.completed || state.loadingQuestion || state.leaving || !serverReady) return;
     showQuestionPanel();
     setBattleMessage("battle.menuFight");
     startQuestion();
@@ -818,11 +676,23 @@ async function init() {
   updateHp();
 
   try {
-    const response = await fetch("/FYP/data/questions.json", { cache: "no-store" });
-    if (!response.ok) throw new Error("Question data unavailable");
-    state.questions = await response.json();
-    setBattleMessage("battle.enemyAppeared", { enemy: localEnemyName() });
-    showBattleMenu();
+    const entry = JSON.parse(sessionStorage.getItem(BATTLE_KEY) || "{}");
+    if (!entry.battleId) entry.battleId = battleToken();
+    sessionStorage.setItem(BATTLE_KEY, JSON.stringify(entry));
+    battleRequest = createBattleClient(entry.battleId, AUTH_CONTEXT.csrfToken || "", retrying => {
+      if (retrying) setSaveWarning("battle", "battle.reconnecting");
+      else clearSaveWarning("battle");
+    });
+    const result = await battleRequest("START", {enemyId:state.enemy.id});
+    if (!result.ok) { battleFailure(result); return; }
+    serverReady = true;
+    applyServerBattle(result);
+    setBattleMessage("battle.enemyAppeared", {enemy:localEnemyName()});
+    if (result.battle.status === "VICTORY") finishVictory();
+    else if (result.battle.status === "DEFEAT") finishDefeat();
+    else if (result.battle.status === "ESCAPED") void returnToMapAfterBattle();
+    else if (result.battle.question) { showQuestionPanel(); void startQuestion(); }
+    else showBattleMenu();
   } catch (error) {
     setBattleMessage("battle.battleError", { error: error.message });
     console.error("English Power Quest battle error:", error);

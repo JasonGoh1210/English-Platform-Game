@@ -1,4 +1,4 @@
-import { t, onLanguageChange } from "./i18n.js?v=20261011-savefix1";
+import { t, onLanguageChange } from "./i18n.js?v=20261011-verified1";
 
 const warnings = new Map();
 
