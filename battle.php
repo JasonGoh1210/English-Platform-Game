@@ -14,7 +14,7 @@ $epqStorageId = (string)$epqPlayerId;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#101b24">
   <title>English Power Quest · Battle</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261011-audio1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261011-tutorial1">
 </head>
 <body class="battle-page">
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -60,6 +60,11 @@ $epqStorageId = (string)$epqPlayerId;
     </section>
 
     <section class="battle-command-zone">
+      <aside class="battle-mentor hidden" id="battleMentor" aria-label="Elder Rowan's tutorial" data-i18n-aria-label="tutorial.label">
+        <img src="/FYP/images/npc/npc_elder_rowan_32.png" alt="" width="48" height="48">
+        <p id="battleMentorText" role="status" aria-live="polite"></p>
+        <button type="button" id="battleTutorialSkip" data-i18n="tutorial.skip">SKIP TUTORIAL</button>
+      </aside>
       <div class="battle-message-line" id="battleMessage" data-i18n="battle.initialMessage">A wild opponent appeared!</div>
 
       <div id="battleMenu" class="battle-menu">
@@ -144,6 +149,6 @@ $epqStorageId = (string)$epqPlayerId;
       'csrfToken' => (string)$_SESSION['csrf_token']
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   </script>
-  <script type="module" src="/FYP/js/battle.js?v=20261011-audio1"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261011-tutorial1"></script>
 </body>
 </html>

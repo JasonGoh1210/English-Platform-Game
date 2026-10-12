@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/bootstrap.php';
+require_once __DIR__ . '/../includes/tutorial.php';
 
 function epq_map_number(mixed $value, float $min, float $max, float $fallback): float {
     if (!is_numeric($value)) return $fallback;
@@ -34,7 +35,8 @@ function epq_safe_map_state(array $input): array {
         'insideCave' => $realm === 'ruins' && !empty($input['insideCave']),
         'caveReturnX' => epq_map_number($input['caveReturnX'] ?? null, 0, $realms[$realm], 0),
         'questStep' => (int)epq_map_number($input['questStep'] ?? null, 0, 5, 0),
-        'defeatedEnemyIds' => $defeated
+        'defeatedEnemyIds' => $defeated,
+        'tutorial' => epq_safe_tutorial_state($input['tutorial'] ?? null)
     ];
 }
 
@@ -68,7 +70,6 @@ try {
         epq_json(['ok' => false, 'error' => 'State object required.'], 400);
     }
     $state = epq_safe_map_state($body['state']);
-    $save = json_encode($state, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
     $realmOrders = ['maple' => 1, 'forest' => 2, 'camp' => 3, 'ruins' => 4];
     $worldOrder = $realmOrders[$state['currentRealmId']];
     $lookup = $db->prepare('SELECT world_id FROM worlds WHERE world_order = ? AND is_active = 1 LIMIT 1');
@@ -79,6 +80,16 @@ try {
     $worldId = (int)$worldRow['world_id'];
 
     $db->begin_transaction();
+    if (!array_key_exists('tutorial', $body['state'])) {
+        // An older cached game client must not erase a newer guide checkpoint.
+        $previous = $db->prepare('SELECT save_json FROM player_game_saves WHERE player_id = ? FOR UPDATE');
+        $previous->bind_param('i', $playerId);
+        $previous->execute();
+        $previousRow = $previous->get_result()->fetch_assoc();
+        $previousState = $previousRow ? json_decode((string)$previousRow['save_json'], true) : null;
+        $state['tutorial'] = epq_safe_tutorial_state($previousState['tutorial'] ?? null);
+    }
+    $save = json_encode($state, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
     $stmt = $db->prepare(
         'INSERT INTO player_game_saves (player_id, save_json) VALUES (?, ?)
          ON DUPLICATE KEY UPDATE save_json = VALUES(save_json), updated_at = CURRENT_TIMESTAMP'

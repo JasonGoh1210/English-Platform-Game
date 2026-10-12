@@ -1,7 +1,8 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261011-audio1";
-import { battleToken, createBattleClient } from "./battle-api.js?v=20261011-audio1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261011-audio1";
-import { playSound } from "./audio.js?v=20261011-audio1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261011-tutorial1";
+import { battleToken, createBattleClient } from "./battle-api.js?v=20261011-tutorial1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261011-tutorial1";
+import { playSound } from "./audio.js?v=20261011-tutorial1";
+import { normalizeTutorial } from "./tutorial.js?v=20261011-tutorial1";
 
 // Use the same per-player storage namespace as the map. If these keys differ,
 // the battle page cannot find the enemy that the map just stored and redirects back.
@@ -17,6 +18,29 @@ let battleRequest;
 let serverReady = false;
 let pendingAnswer = Promise.resolve();
 let pendingItemUse = Promise.resolve();
+let tutorialBattle = false;
+
+function coachBattle(key, values = {}) {
+  if (!tutorialBattle) return;
+  state.coachMessage = { key, values };
+  const panel = document.getElementById("battleMentor");
+  panel?.classList.remove("hidden");
+  const text = document.getElementById("battleMentorText");
+  if (text) text.textContent = t(key, values);
+  ui.fightButton.classList.toggle("tutorial-highlight", state.mode === "MENU");
+}
+
+function initializeBattleTutorial() {
+  tutorialBattle = state.enemy.id === "slime-01" && normalizeTutorial(getSave().tutorial)?.stage === "BATTLE";
+  if (!tutorialBattle) return;
+  document.getElementById("battleTutorialSkip")?.addEventListener("click", () => {
+    tutorialBattle = false;
+    updateSave({ tutorial: { ...normalizeTutorial(getSave().tutorial), stage: "SKIPPED" } });
+    document.getElementById("battleMentor")?.classList.add("hidden");
+    ui.fightButton.classList.remove("tutorial-highlight");
+  });
+  coachBattle("tutorial.battle.start");
+}
 function applyServerBattle(result) {
   if (!result?.ok) return false;
   state.playerHp = result.battle.playerHp;
@@ -249,6 +273,7 @@ onLanguageChange(() => {
     );
   }
   if (state.resultType) renderStoredResult();
+  if (tutorialBattle && state.coachMessage) coachBattle(state.coachMessage.key, state.coachMessage.values);
 });
 
 
@@ -356,6 +381,7 @@ async function startQuestion() {
     ? (q.promptZh || (q.type === "TRUE_FALSE" ? t("battle.answerPrompt") : q.prompt || ""))
     : (q.prompt || t("battle.answerPrompt"));
   renderChoices(q);
+  if (tutorialBattle) coachBattle(q.type === "TRUE_FALSE" ? "tutorial.battle.trueFalse" : "tutorial.battle.oddWord");
   state.remaining = result.battle.remaining;
   ui.timerText.classList.remove("warning");
   ui.timerText.textContent = state.remaining.toFixed(1) + "s";
@@ -379,6 +405,7 @@ async function resolve(value, button, timedOut) {
   if (state.leaving) { applyServerBattle(result); return; }
   if (!result.ok) { battleFailure(result); return; }
   const correct = result.outcome.correct;
+  if (tutorialBattle) coachBattle(correct ? "tutorial.battle.correct" : "tutorial.battle.wrong");
   if (button) button.classList.add(correct ? "correct" : "wrong");
   playSound(correct ? "correct" : "wrong");
   if (!correct) {
@@ -424,6 +451,7 @@ async function useSkill() {
   if (!applyServerBattle(result)) { battleFailure(result); return; }
   if (typeof result.battle.remaining === "number") state.remaining = result.battle.remaining;
   setBattleMessage("battle.focusActive");
+  if (tutorialBattle) coachBattle("tutorial.battle.focus");
   playSound("focus");
   if (ui.questionPanel.classList.contains("hidden")) { showQuestionPanel(); void startQuestion(); }
 }
@@ -443,6 +471,7 @@ function useItem() {
       if (!result.ok) { setBattleMessage(result.status === 409 ? "battle.notEnoughCoins" : "battle.itemFailed"); return false; }
       applyServerBattle(result);
       playSound("heal");
+      if (tutorialBattle) coachBattle("tutorial.battle.heal");
       if (questionAlreadyOpen && !state.leaving) {
         const resumed = await battleRequest("RESUME");
         if (resumed.ok) state.remaining = resumed.battle.remaining;
@@ -470,6 +499,9 @@ async function returnToMapAfterBattle() {
   }
   if (state.enemyHp <= 0) sessionStorage.removeItem(ESCAPE_KEY);
   else sessionStorage.setItem(ESCAPE_KEY, state.enemy.id);
+  if (tutorialBattle && state.enemyHp > 0) {
+    updateSave({ tutorial: { ...normalizeTutorial(getSave().tutorial), stage: "SLIME" } });
+  }
   sessionStorage.removeItem(BATTLE_KEY);
   await pendingBattleSave;
   window.location.href = "/FYP/index.php";
@@ -557,7 +589,9 @@ function finishConfirmedVictorySave() {
   const saved = getSave();
   const defeated = new Set(Array.isArray(saved.defeatedEnemyIds) ? saved.defeatedEnemyIds : []);
   defeated.add(state.enemy.id);
-  updateSave({defeatedEnemyIds:[...defeated], questStep:Number(saved.questStep || 0)});
+  const patch = {defeatedEnemyIds:[...defeated], questStep:Number(saved.questStep || 0)};
+  if (tutorialBattle) patch.tutorial = { ...normalizeTutorial(saved.tutorial), stage: "RETURN" };
+  updateSave(patch);
 }
 
 function finishVictory() {
@@ -697,6 +731,7 @@ async function init() {
     if (!result.ok) { battleFailure(result); return; }
     serverReady = true;
     applyServerBattle(result);
+    initializeBattleTutorial();
     setBattleMessage("battle.enemyAppeared", {enemy:localEnemyName()});
     if (result.battle.status === "VICTORY") finishVictory();
     else if (result.battle.status === "DEFEAT") finishDefeat();
@@ -721,6 +756,17 @@ window.addEventListener("error", (event) => {
   if (ui.battleMessage && event.error) {
     setBattleMessage("battle.genericError", { error: event.error.message || "Unknown error" });
   }
+});
+
+window.render_game_to_text = () => JSON.stringify({
+  mode: state.completed ? state.resultType : state.mode,
+  enemy: state.enemy ? { name: localEnemyName(), hp: state.enemyHp } : null,
+  playerHp: state.playerHp,
+  focus: state.focusUsed,
+  timer: Math.max(0, Number(state.remaining || 0)),
+  question: state.currentQuestion ? { type: state.currentQuestion.type, text: state.currentQuestion.question } : null,
+  tutorial: tutorialBattle ? normalizeTutorial(getSave().tutorial)?.stage : null,
+  coach: tutorialBattle && state.coachMessage ? t(state.coachMessage.key, state.coachMessage.values) : null
 });
 
 init();

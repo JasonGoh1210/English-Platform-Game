@@ -44,6 +44,7 @@ function fixture() {
     BATTLE_KEY: "battle.7", ESCAPE_KEY: "escape.7", AUTH_CONTEXT: { csrfToken: "test" },
     pendingBattleSave: Promise.resolve(), pendingBattleRewards: [], rewardChain: Promise.resolve(),
     pendingItemUse: Promise.resolve(), pendingAnswer: Promise.resolve(), battleSaveRevision: 0, serverReady: true,
+    tutorialBattle: false,
     dbSaveReady: true, saveDelayHandle: null, pendingSaveData: null,
     saveChain: Promise.resolve(), saveRevision: 0,
     now: 3000, performance: { now: () => c.now },
@@ -96,6 +97,17 @@ test("Word Slime victory UI preserves every story chapter without re-granting se
     f.c.finishVictory();
     assert.equal(f.c.rewards.length, 0, "Victory UI cannot grant rewards; server already settled them");
   }
+});
+
+test("Tutorial victory advances only its guide and preserves quest steps and confirmed balances", () => {
+  const f = fixture();
+  vm.runInContext(fs.readFileSync(path.join(root,"js/tutorial.js"),"utf8").replaceAll("export function","function"),f.c);
+  f.c.tutorialBattle = true;
+  f.c.saved.tutorial = {version:1,stage:"BATTLE",moveStartX:440};
+  f.load(battleSource,["finishVictory","finishConfirmedVictorySave"]);
+  f.c.finishVictory();f.c.finishVictory();
+  assert.equal(f.c.saved.tutorial.stage,"RETURN");
+  assert.equal(f.c.saved.questStep,1);assert.equal(f.c.saved.coins,10);assert.equal(f.c.rewards.length,0);
 });
 
 test("Correct attacks preserve player HP and schedule the next question", async () => {

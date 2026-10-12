@@ -12,6 +12,15 @@ $epqDisplayName = $epqIsGuest
     : (string)($_SESSION['display_name'] ?? $_SESSION['username'] ?? 'Adventurer');
 $epqShowStoryIntro = !empty($_SESSION['show_story_intro']);
 $epqCsrfToken = (string)$_SESSION['csrf_token'];
+$epqWorldBackgrounds = [];
+foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-camp-road', 'ruins'=>'ancient-ruins'] as $realm => $filename) {
+    $candidates = ['images/world/'.$filename.'.webp', 'assets/world/backgrounds/'.$filename.'.webp'];
+    // Preserve custom-art precedence, without requesting absent optional files.
+    $epqWorldBackgrounds[$realm] = array_values(array_map(
+        static fn(string $path): string => '/FYP/'.$path,
+        array_filter($candidates, static fn(string $path): bool => is_file(__DIR__.'/'.$path))
+    ));
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -21,7 +30,7 @@ $epqCsrfToken = (string)$_SESSION['csrf_token'];
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261011-audio1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261011-tutorial1">
 </head>
 <body>
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -66,6 +75,7 @@ $epqCsrfToken = (string)$_SESSION['csrf_token'];
     </div>
 
     <div class="location-pill pixel-location" id="locationText">MAPLE TOWN</div>
+    <?php require __DIR__ . '/includes/tutorial_guide.php'; ?>
 
     <section class="story-intro-overlay hidden" id="storyIntroOverlay" role="dialog" aria-modal="true" aria-labelledby="storyIntroTitle" aria-describedby="storyIntroBody">
       <div class="storyboard-screen" id="storyboardCanvas" data-scene="prologue" data-camera="wide" data-effect="magic">
@@ -304,7 +314,8 @@ $epqCsrfToken = (string)$_SESSION['csrf_token'];
       'isGuest' => $epqIsGuest,
       'displayName' => $epqDisplayName,
       'showStoryIntro' => $epqShowStoryIntro,
-      'csrfToken' => $epqCsrfToken
+      'csrfToken' => $epqCsrfToken,
+      'worldBackgrounds' => $epqWorldBackgrounds
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
 
     (() => {
@@ -318,7 +329,7 @@ $epqCsrfToken = (string)$_SESSION['csrf_token'];
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261011-audio1").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261011-tutorial1").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");

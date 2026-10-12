@@ -57,6 +57,22 @@ function validAnswer(array $question): mixed {
 $db = epq_db();
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $actor = guest('BattleSmoke'); $other = guest('OtherBattleSmoke');
+[$mapStatus] = http('api/game_state.php', ['csrfToken'=>$actor[1], 'state'=>[
+    'currentRealmId'=>'maple','playerX'=>440,'questStep'=>0,
+    'tutorial'=>['version'=>1,'stage'=>'MOVE','moveStartX'=>440,'xpDelta'=>99999]
+]], $actor[0]);
+verify($mapStatus === 200, 'Tutorial checkpoint saved');
+[, $mapState] = http('api/game_state.php', null, $actor[0]);
+verify($mapState['state']['tutorial']['stage'] === 'MOVE'
+    && count($mapState['state']['tutorial']) === 3, 'Tutorial reload filters forged reward fields');
+[$legacyMapStatus] = http('api/game_state.php', ['csrfToken'=>$actor[1], 'state'=>[
+    'currentRealmId'=>'maple','playerX'=>450,'questStep'=>0
+]], $actor[0]);
+[, $retainedMap] = http('api/game_state.php', null, $actor[0]);
+verify($legacyMapStatus === 200 && $retainedMap['state']['tutorial']['stage'] === 'MOVE',
+    'Older cached clients cannot erase a tutorial checkpoint');
+[, $otherMap] = http('api/game_state.php', null, $other[0]);
+verify($otherMap['state'] === null, 'Tutorial checkpoints belong to the session player');
 [$questStatus, $quest] = http('api/save_progress.php', ['csrfToken'=>$other[1],'sourceType'=>'QUEST','xpDelta'=>20,'coinDelta'=>10,'englishPowerDelta'=>1], $other[0]);
 verify($questStatus === 200 && $quest['player']['xp'] === 20 && $quest['player']['coins'] === 10, 'Shared reward writer preserves existing map QUEST flow');
 $battle = token();
@@ -166,6 +182,8 @@ preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $page, $match);
 $actor[1] = $match[1];
 [, $account] = http('api/player.php', null, $actor[0]);
 verify($account['player']['playerId'] === $actor[2], 'Upgrade preserves battle player ID');
+[, $upgradedMap] = http('api/game_state.php', null, $actor[0]);
+verify($upgradedMap['state']['tutorial']['stage'] === 'MOVE', 'Guest upgrade preserves tutorial checkpoint');
 [, $oldBattle] = action($actor, $battle, 'START', ['enemyId'=>'slime-01']);
 verify($oldBattle['battle']['status'] === 'VICTORY' && $oldBattle['player']['xp'] === $xp+20, 'Upgrade preserves battle outcome, attempts and rewards');
 echo "PASS: battle ownership, CSRF, grading, combat, metrics, focus, victory, reload, replay conflicts, Herb, pause, rollback, Run, legacy rejection and guest upgrade\n";

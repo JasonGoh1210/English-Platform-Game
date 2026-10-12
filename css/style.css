@@ -2958,6 +2958,65 @@ button { font: inherit; }
 }
 .settings-audio input:focus-visible { outline: 3px solid #fff0b1; outline-offset: 3px; }
 
+/* Rowan's non-blocking first-adventure guide. */
+.tutorial-guide {
+  position: absolute;
+  z-index: 8;
+  top: 152px;
+  right: 18px;
+  width: min(360px, calc(100% - 36px));
+  padding: 14px;
+  border: 2px solid #d9b76b;
+  background: rgba(15, 29, 34, .96);
+  box-shadow: 4px 4px 0 #080e13;
+  color: #f4efd9;
+  font-family: "Courier New", "Microsoft YaHei", monospace;
+}
+.tutorial-guide-heading { display: flex; align-items: center; gap: 10px; }
+.tutorial-guide img, .battle-mentor img { image-rendering: pixelated; object-fit: contain; flex-shrink: 0; }
+.tutorial-guide-heading span { color: #dcc27f; font-size: .65rem; }
+.tutorial-guide h2 { margin: 5px 0 0; font-size: 1rem; }
+.tutorial-guide p { margin: 10px 0; font-size: .8rem; line-height: 1.65; }
+.tutorial-guide-near .tutorial-guide-heading img,
+.tutorial-guide-near .tutorial-guide-heading span { display: none; }
+.tutorial-guide-near h2 { margin: 0; }
+.tutorial-guide-near p { line-height: 1.5; }
+.tutorial-guide button, .battle-mentor button {
+  min-height: 36px;
+  padding: 5px 10px;
+  border: 1px solid #8b7955;
+  background: #24373d;
+  color: #e7d9b2;
+  cursor: pointer;
+  font: inherit;
+  font-size: .65rem;
+}
+.tutorial-highlight { outline: 3px solid #ffe095; outline-offset: 4px; }
+.battle-mentor {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border: 1px solid #b99a5d;
+  background: #1e3137;
+  color: #f6e7bd;
+}
+.battle-mentor p { margin: 0; font-size: .75rem; line-height: 1.5; }
+@media (max-width: 780px) {
+  .tutorial-guide { top: 218px; right: 12px; width: calc(100% - 24px); padding: 10px 12px; }
+  .tutorial-guide img { width: 48px; height: 48px; }
+  .tutorial-guide p { font-size: .75rem; margin: 6px 0; }
+  .battle-mentor { grid-template-columns: 32px minmax(0, 1fr); gap: 6px; }
+  .battle-mentor img { width: 32px; height: 32px; }
+  .battle-mentor button { grid-column: 2; justify-self: end; min-height: 30px; }
+  .battle-mentor p { font-size: .7rem; }
+}
+@media (max-height: 540px) and (min-width: 600px) {
+  .tutorial-guide { top: 130px; width: 310px; max-height: calc(100dvh - 160px); overflow-y: auto; }
+}
+
 .settings-screen button:focus-visible {
   outline: 3px solid #fff0b1;
   outline-offset: 3px;

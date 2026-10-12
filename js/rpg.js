@@ -1,6 +1,7 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261011-audio1";
-import { playSound } from "./audio.js?v=20261011-audio1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261011-audio1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261011-tutorial1";
+import { playSound } from "./audio.js?v=20261011-tutorial1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261011-tutorial1";
+import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261011-tutorial1";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -103,7 +104,8 @@ const world = {
   player: { x: 440, y: 0, vx: 0, facing: 1, speed: 250, width: 34, height: 58, onGround: true, bob: 0, walkFrame: 0, walkTimer: 0 },
   cameraX: 0, time: 0, questStep: 0, coins: 0, xp: 0, power: 0, level: 1,
   interacting: false, travelMenu: false, storyIntroOpen: false, selectedDestinationIndex: 0, portalX: 220, caveReturnX: 0,
-  currentDialogueNpcId: null, currentDialogueKey: null, currentDialogueIndex: 0, insideCave: false, typingCaveOpen: false, battle: null
+  currentDialogueNpcId: null, currentDialogueKey: null, currentDialogueIndex: 0, insideCave: false, typingCaveOpen: false, battle: null,
+  tutorial: null
 };
 
 const worldBackgrounds = {
@@ -123,9 +125,19 @@ const worldBackgroundPaths = {
   camp: ["/FYP/images/world/old-camp-road.webp?v=20261010-realmnames1", "/FYP/assets/world/backgrounds/old-camp-road.webp?v=20261010-realmnames1"],
   ruins: ["/FYP/images/world/ancient-ruins.webp?v=20261010-realmnames1", "/FYP/assets/world/backgrounds/ancient-ruins.webp?v=20261010-realmnames1"]
 };
+for (const realmId of Object.keys(worldBackgroundPaths)) {
+  const availablePaths = window.EPQ_AUTH?.worldBackgrounds?.[realmId];
+  if (Array.isArray(availablePaths)) {
+    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261011-tutorial1");
+  }
+}
 
 const worldBackgroundLoadedPaths = {};
 function loadImageFromCandidates(image, paths, onReady, onFinalError) {
+  if (!paths.length) {
+    if (typeof onFinalError === "function") onFinalError();
+    return;
+  }
   let candidateIndex = 0;
   image.onload = () => {
     if (typeof onReady === "function") onReady(image.src);
@@ -173,6 +185,47 @@ function personalizePlayerName(value) {
 const WORLD_SAVE_KEY = `englishPowerQuest.world.v2.player.${AUTH_PLAYER_ID}`;
 const WORLD_PENDING_KEY = `${WORLD_SAVE_KEY}.pending`;
 const STORY_INTRO_SEEN_KEY = `englishPowerQuest.storyIntro.seen.v2.player.${AUTH_PLAYER_ID}`;
+const NEW_ADVENTURE_TUTORIAL = Boolean(AUTH_CONTEXT.showStoryIntro);
+let tutorialReady = false;
+const renderTutorialGuide = createTutorialGuide(t, () => setMapTutorialStage("SKIPPED"));
+
+function setMapTutorialStage(stage) {
+  if (!tutorialReady || !world.tutorial || world.tutorial.stage === stage) return;
+  world.tutorial = { ...world.tutorial, stage };
+  saveWorldState();
+  updateMapTutorial();
+}
+
+function initializeMapTutorial() {
+  const saved = (() => { try { return JSON.parse(localStorage.getItem(WORLD_SAVE_KEY) || "null"); } catch { return null; } })();
+  world.tutorial = initialTutorial(saved, NEW_ADVENTURE_TUTORIAL, world.player.x);
+  tutorialReady = true;
+  // Returning from Run/browser-back resumes the same lesson, without restoring HP or rewards.
+  if (world.tutorial.stage === "BATTLE") world.tutorial.stage = "SLIME";
+  updateMapTutorial();
+  saveWorldState();
+}
+
+function updateMapTutorial() {
+  if (!tutorialReady) return;
+  const slime = enemies.find(enemy => enemy.id === "slime-01");
+  if (slime) slime.x = tutorialSlimeX(world.tutorial);
+  const visible = tutorialActive(world.tutorial) && world.currentRealmId === "maple"
+    && !world.storyIntroOpen && !world.interacting && !world.travelMenu && !world.battle && !settingsIsOpen();
+  if (visible && world.tutorial.stage === "MOVE"
+      && Math.abs(world.player.x - world.tutorial.moveStartX) >= 70) {
+    setMapTutorialStage("MEET");
+    return;
+  }
+  if (slime?.defeated && tutorialActive(world.tutorial) && world.tutorial.stage !== "RETURN") {
+    setMapTutorialStage("RETURN");
+    return;
+  }
+  const targetX = world.tutorial.stage === "SLIME" ? 1140
+    : ["MEET", "RETURN"].includes(world.tutorial.stage) ? 880 : null;
+  const nearTarget = targetX !== null && Math.abs(world.player.x - targetX) < 240;
+  renderTutorialGuide(world.tutorial, visible, getLanguage(), nearTarget);
+}
 let storyIntroPage = 0;
 let storyMode = "intro";
 let storySequence = [];
@@ -272,8 +325,11 @@ async function loadServerGame() {
     // Do not write a default map over an existing server save after a failed GET.
     dbSaveReady = false;
     setTimeout(() => {
-      void loadServerGame().then(restored => {
-        if (restored) void loadServerPlayer();
+      void loadServerGame().then(async restored => {
+        if (restored) {
+          await loadServerPlayer();
+          if (!tutorialReady) initializeMapTutorial();
+        }
       });
     }, 5000);
     setSaveWarning("world", "save.worldFailed");
@@ -321,6 +377,7 @@ function saveWorldState(overrides = {}) {
     portalX: destination.portalX, insideCave, caveReturnX: world.caveReturnX,
     questStep: world.questStep, coins: world.coins, xp: world.xp, power: world.power, level: world.level,
     defeatedEnemyIds: enemies.filter(enemy => enemy.defeated).map(enemy => enemy.id),
+    tutorial: world.tutorial,
     ...overrides
   };
   localStorage.setItem(WORLD_SAVE_KEY, JSON.stringify(savedState));
@@ -380,6 +437,7 @@ function loadWorldState() {
     world.xp = Number(saved.xp) || 0;
     world.power = Number(saved.power) || 0;
     world.level = Number(saved.level) || 1;
+    world.tutorial = normalizeTutorial(saved.tutorial);
 
     if (needsStoryMigration) {
       // The previous quest steps were only a short prototype, not the new
@@ -908,6 +966,7 @@ function nearestEnemy() {
   for (const enemy of enemies) {
     if (enemy.realmId !== world.currentRealmId) continue;
     if (enemy.defeated) continue;
+    if (enemy.id === "slime-01" && !tutorialSlimeVisible(world.tutorial)) continue;
     if (Boolean(enemy.caveOnly) !== world.insideCave) continue;
 
     // After RUN or browser-back from battle, give the player enough space
@@ -1277,6 +1336,16 @@ function interact() {
     world.currentDialogueNpcId = npc.id;
     world.currentDialogueIndex = world.questStep % npc.dialogueKeys.length;
 
+    if (npc.id === "elder" && world.tutorial?.stage === "RETURN") {
+      setMapTutorialStage("DONE");
+      world.currentDialogueKey = "tutorial.complete";
+      ui.dialogueName.textContent = t(npc.nameKey) + " · " + t(npc.titleKey);
+      ui.dialogueText.textContent = t("tutorial.complete");
+      ui.dialogue.classList.remove("hidden");
+      playSound("level");
+      return;
+    }
+
     const storyBeats = {
       elder: { step: 0, dialogueKey: "npc.elder.story", nextStep: 1, xp: 25, coins: 0, power: 1, skill: "VOCABULARY", label: "The First Words", titleKey: "quest.first.title" },
       mira:  { step: 1, dialogueKey: "npc.mira.story",  nextStep: 2, xp: 30, coins: 5, power: 1, skill: "VOCABULARY", label: "Words in the Woods", titleKey: "quest.forest.title" },
@@ -1290,6 +1359,9 @@ function interact() {
     if (storyBeatTriggered) {
       dialogueKey = beat.dialogueKey;
       world.questStep = beat.nextStep;
+      if (npc.id === "elder" && tutorialActive(world.tutorial)) {
+        world.tutorial = { ...world.tutorial, stage: "SLIME" };
+      }
       world.xp += beat.xp;
       world.coins += beat.coins;
       world.power += beat.power;
@@ -1310,7 +1382,8 @@ function interact() {
     }
 
     if (storyBeatTriggered) {
-      startChapterStoryboard(npc, beat, dialogueKey);
+      startChapterStoryboard(npc, beat,
+        npc.id === "elder" && world.tutorial?.stage === "SLIME" ? "tutorial.rowanStory" : dialogueKey);
       return;
     }
 
@@ -2002,6 +2075,9 @@ async function startBattle(enemy) {
   if (!enemy || enemy.defeated || world.battle) return;
   playSound("encounter");
   world.battle = enemy;
+  if (enemy.id === "slime-01" && world.tutorial?.stage === "SLIME") {
+    world.tutorial = { ...world.tutorial, stage: "BATTLE" };
+  }
 
   // Save a safe spawn point before leaving the map so refreshing the map
   // cannot immediately retrigger the same encounter.
@@ -2016,6 +2092,7 @@ async function startBattle(enemy) {
 
 function update(dt) {
   world.time += dt;
+  updateMapTutorial();
 
   if (world.storyIntroOpen) return;
 
@@ -2088,6 +2165,22 @@ function draw() {
   drawEnemies();
   drawPlayer();
   drawForeground(w, h);
+  drawTutorialMarker();
+}
+
+function drawTutorialMarker() {
+  if (!tutorialActive(world.tutorial) || world.currentRealmId !== "maple" || world.storyIntroOpen) return;
+  const stage = world.tutorial.stage;
+  const target = ["MEET", "RETURN"].includes(stage) ? 880 : stage === "SLIME" ? 1140 : null;
+  if (target === null) return;
+  if (stage !== "SLIME" && Math.abs(world.player.x - target) < 95) return;
+  const x = Math.round(worldToScreen(target));
+  const y = Math.round(world.groundY - (stage === "SLIME" ? 115 : 150) + Math.sin(world.time * 4) * 4);
+  ctx.save();
+  ctx.fillStyle = "#ffe095";
+  ctx.fillRect(x - 4, y - 20, 8, 14);
+  ctx.beginPath(); ctx.moveTo(x - 11, y - 6); ctx.lineTo(x + 11, y - 6); ctx.lineTo(x, y + 5); ctx.closePath(); ctx.fill();
+  ctx.restore();
 }
 
 function worldToScreen(x, parallax = 1) {
@@ -3568,6 +3661,7 @@ function drawEnemies() {
   for (const enemy of enemies) {
     if (enemy.realmId !== world.currentRealmId) continue;
     if (enemy.defeated) continue;
+    if (enemy.id === "slime-01" && !tutorialSlimeVisible(world.tutorial)) continue;
     if (Boolean(enemy.caveOnly) !== world.insideCave) continue;
     const x = worldToScreen(enemy.x);
     if (x < -100 || x > window.innerWidth + 100) continue;
@@ -3809,6 +3903,23 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 
+// Read-only browser diagnostics: never expose answer keys, session tokens or IDs.
+window.render_game_to_text = () => JSON.stringify({
+  coordinates: "World origin at the left; x increases right; groundY is screen pixels downward.",
+  realm: world.currentRealmId,
+  mode: world.storyIntroOpen ? "STORY" : world.interacting ? "DIALOGUE" : world.typingCaveOpen ? "TYPING"
+    : world.travelMenu ? "TRAVEL" : world.battle ? "BATTLE_TRANSITION" : "MAP",
+  player: { x: Math.round(world.player.x), vx: world.player.vx, groundY: world.groundY },
+  tutorial: world.tutorial?.stage || null,
+  chapter: world.questStep,
+  portalX: world.portalX,
+  enemies: enemies.filter(enemy => enemy.realmId === world.currentRealmId && !enemy.defeated
+    && Boolean(enemy.caveOnly) === world.insideCave && (enemy.id !== "slime-01" || tutorialSlimeVisible(world.tutorial)))
+    .map(enemy => ({ name: enemy.name, x: enemy.x })),
+  npcs: npcs.filter(npc => npc.realmId === world.currentRealmId && !world.insideCave)
+    .map(npc => ({ name: npc.name, x: npc.x }))
+});
+
 
 function runStartupStep(name, task) {
   try {
@@ -3833,6 +3944,7 @@ void (async () => {
   const restored = await loadServerGame();
   if (restored) await Promise.all([loadServerPlayer(), loadQuestions()]);
   else await loadQuestions();
+  if (restored) initializeMapTutorial();
 })().catch(error => {
   console.warn("[English Power Quest] Startup data could not be loaded.", error);
 });
