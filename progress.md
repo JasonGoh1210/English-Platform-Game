@@ -95,3 +95,14 @@ Original prompt: 试试看做新手教学，有一个小怪出现在村庄，长
 - Next priorities: battle mistake explanations/review and theme-based question expansion; client-reported coordinates/local monster timers remain outside current server verification. GitHub MySQL8/MariaDB10.4 CI pending publication.
 
 - GitHub CI for79e0110 passed syntax and both MySQL8/MariaDB10.4 guest/account/combat/quest jobs. Follow-up explicitly enables mysqli exceptions in player/save routes; isolated test temporarily hides only the new story table, confirms all three endpoints return503 MIGRATION_REQUIRED without raw database messages or unverified fallback, and restores the table in finally. Backend/account/combat checks passed again.
+
+## 2026-10-13 — UI and gameplay follow-up review
+
+- User: 在继续看看有什么要改，ui啊，玩法等等。 Applied game-ui-ux, game-design-theory, develop-web-game. Baseline ca1f200, clean main.
+- Isolated Chrome reproduced mobile/tablet location plaque covering quest text, short landscape groundY520 outside390px viewport, and timed battle question below635px. Current pools expose only10of19 questions: five EASY and five MEDIUM. Nine questions are not selected by current five encounter pools;All19question entries have Chinese question text;10odd-word/sentence entries lack both English and Chinese explanations.
+- First fixes in progress: content-flow HUD toolbar, larger status/task text and44px actions, ResizeObserver positions guide below current HUD, responsive screen-space ground, landscape encounter/answers columns. No changes to combat amounts/timers/questions, saved world X positions, schemas or art assets.
+
+- Final UI browser passed7viewports including568x320; no horizontal overflow or quest/plaque intersection. Settings/buttons44px, real landscape movement, portal interaction,12Tab focus checks/Escape restore and visible enemy HP passed. Latest map/battle/tutorial screenshots opened and visually checked. Very short screens use local answer-panel scroll; real-device keyboard/notch testing remains open.
+-36Node regressions, all PHP/JS syntax and PHP grading/tutorial/Google/XP tests passed. Skill client passed real movement with MEET/text-state consistency; full isolated audio/combat/HP/Herb/replay/focus/four-world/Echo/three-word browser regression passed.
+- Chinese UI/gameplay report identifies only10reachable battle questions,10missing EN/ZH explanations (question text is already bilingual), no battle review UI, weak target guidance, free Focus and learning-power/battle-damage disconnect. Proposed changes are not claimed implemented.
+- Main changes:index.php,battle.php,css/style.css,js/rpg.js,js/i18n.js; battle/save modules only cache version updated. No SQL migration, original sprite/background/audio asset paths unchanged and actual player database untouched.

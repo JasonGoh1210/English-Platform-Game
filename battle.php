@@ -15,7 +15,7 @@ $epqStorageId = (string)$epqPlayerId;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#101b24">
   <title>English Power Quest · Battle</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261013-quests1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261013-ui2">
 </head>
 <body class="battle-page">
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -25,7 +25,10 @@ $epqStorageId = (string)$epqPlayerId;
         <span class="battle-kicker" data-i18n="battle.kicker">WILD ENCOUNTER</span>
         <h1 id="battleEnemyName">Word Slime</h1>
       </div>
-      <a class="back-link" href="/FYP/index.php" id="returnMapLink" data-i18n="battle.back">RUN TO MAP</a>
+      <div class="battle-header-actions">
+        <button type="button" class="settings-open-button battle-settings-open" id="settingsOpenButton" data-i18n="settings.button">⚙ SETTINGS</button>
+        <a class="back-link" href="/FYP/index.php" id="returnMapLink" data-i18n="battle.back">RUN TO MAP</a>
+      </div>
     </header>
 
     <section class="battlefield-pokemon-layout" aria-label="Battle scene" data-i18n-aria-label="battle.scene">
@@ -123,8 +126,6 @@ $epqStorageId = (string)$epqPlayerId;
     </div>
   </main>
 
-  <button type="button" class="settings-open-button battle-settings-open" id="settingsOpenButton" data-i18n="settings.button">⚙ SETTINGS</button>
-
   <div class="settings-screen hidden" id="settingsScreen" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
     <section class="settings-panel">
       <div class="settings-panel-kicker">ENGLISH POWER QUEST</div>
@@ -151,6 +152,6 @@ $epqStorageId = (string)$epqPlayerId;
       'character' => $_SESSION['character'] ?? epq_character_profile(epq_db(), $epqPlayerId)
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   </script>
-  <script type="module" src="/FYP/js/battle.js?v=20261013-quests1"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261013-ui2"></script>
 </body>
 </html>

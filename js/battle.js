@@ -1,9 +1,9 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261013-quests1";
-import { battleToken, createBattleClient } from "./battle-api.js?v=20261013-quests1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-quests1";
-import { playSound } from "./audio.js?v=20261013-quests1";
-import { normalizeTutorial } from "./tutorial.js?v=20261013-quests1";
-import { paintCharacterImages } from "./characters.js?v=20261013-quests1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261013-ui2";
+import { battleToken, createBattleClient } from "./battle-api.js?v=20261013-ui2";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-ui2";
+import { playSound } from "./audio.js?v=20261013-ui2";
+import { normalizeTutorial } from "./tutorial.js?v=20261013-ui2";
+import { paintCharacterImages } from "./characters.js?v=20261013-ui2";
 
 // Use the same per-player storage namespace as the map. If these keys differ,
 // the battle page cannot find the enemy that the map just stored and redirects back.

@@ -1,4 +1,4 @@
-import { setupAudio } from "./audio.js?v=20261013-quests1";
+import { setupAudio } from "./audio.js?v=20261013-ui2";
 
 const LANGUAGE_KEY = "englishPowerQuest.language.v1";
 
@@ -281,7 +281,7 @@ const messages = {
     "quest.camp.title": "第三章 · 篝火旁的约定",
     "quest.camp.text": "前往旧营地道路，学习清楚表达如何让人彼此理解。",
     "quest.ruins.title": "第四章 · 失落者的语言",
-    "quest.ruins.text": "在远古遗迹找到凯，揭开大门隐藏的秘密。",
+    "quest.ruins.text": "在古代遗迹找到凯，揭开大门隐藏的秘密。",
     "quest.cave.title": "最终章 · 文字成为力量",
     "quest.cave.text": "完成打字洞穴的三关挑战，重新开启回家的道路。",
     "quest.ending.title": "新的开始",

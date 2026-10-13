@@ -1,4 +1,4 @@
-import { t, onLanguageChange } from "./i18n.js?v=20261013-quests1";
+import { t, onLanguageChange } from "./i18n.js?v=20261013-ui2";
 
 const warnings = new Map();
 

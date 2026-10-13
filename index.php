@@ -31,7 +31,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261013-quests1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261013-ui2">
 </head>
 <body>
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -73,9 +73,12 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
           <p id="questText">Find the village elder.</p>
         </div>
       </section>
+      <div class="map-toolbar">
+        <div class="location-pill pixel-location" id="locationText">MAPLE TOWN</div>
+        <button type="button" class="settings-open-button" id="settingsOpenButton" data-i18n="settings.button">⚙ SETTINGS</button>
+      </div>
     </div>
 
-    <div class="location-pill pixel-location" id="locationText">MAPLE TOWN</div>
     <?php require __DIR__ . '/includes/tutorial_guide.php'; ?>
 
     <section class="story-intro-overlay hidden" id="storyIntroOverlay" role="dialog" aria-modal="true" aria-labelledby="storyIntroTitle" aria-describedby="storyIntroBody">
@@ -143,8 +146,6 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
 
     <div class="hint pixel-hint" data-i18n="controls.hint">A / D or ← / → to move&nbsp;&nbsp; • &nbsp;E / SPACE to interact</div>
 
-
-    <button type="button" class="settings-open-button" id="settingsOpenButton" data-i18n="settings.button">⚙ SETTINGS</button>
 
     <div class="destination-screen hidden" id="destinationScreen" role="dialog" aria-modal="true" aria-labelledby="destinationTitle">
       <div class="destination-topbar">
@@ -333,7 +334,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261013-quests1").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261013-ui2").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");

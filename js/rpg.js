@@ -1,9 +1,9 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261013-quests1";
-import { playSound } from "./audio.js?v=20261013-quests1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-quests1";
-import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261013-quests1";
-import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261013-quests1";
-import { createQuestClient } from "./quest-api.js?v=20261013-quests1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261013-ui2";
+import { playSound } from "./audio.js?v=20261013-ui2";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-ui2";
+import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261013-ui2";
+import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261013-ui2";
+import { createQuestClient } from "./quest-api.js?v=20261013-ui2";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -128,7 +128,7 @@ const worldBackgroundPaths = {
 for (const realmId of Object.keys(worldBackgroundPaths)) {
   const availablePaths = window.EPQ_AUTH?.worldBackgrounds?.[realmId];
   if (Array.isArray(availablePaths)) {
-    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261013-quests1");
+    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261013-ui2");
   }
 }
 
@@ -838,8 +838,17 @@ function resize() {
   canvas.width = Math.floor(window.innerWidth * dpr);
   canvas.height = Math.floor(window.innerHeight * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // Screen-space ground adapts to short windows; saved world X positions stay the same.
+  world.groundY = Math.min(520, Math.max(160, window.innerHeight - 70));
+  world.waterY = world.groundY + 130;
 }
 
+const mapHud = document.querySelector(".pixel-world-ui .hud");
+if (mapHud && typeof ResizeObserver !== "undefined") {
+  new ResizeObserver(() => {
+    document.querySelector(".game-shell").style.setProperty("--map-hud-bottom", `${mapHud.getBoundingClientRect().bottom}px`);
+  }).observe(mapHud);
+}
 window.addEventListener("resize", resize);
 resize();
 
@@ -2069,7 +2078,8 @@ function update(dt) {
     }
   }
 
-  const targetCamera = clamp(world.player.x - window.innerWidth * 0.5, 0, world.width - window.innerWidth);
+  const compactLandscape = window.innerHeight <= 540 && window.innerWidth >= 560 && window.innerWidth <= 780;
+  const targetCamera = clamp(world.player.x - window.innerWidth * (compactLandscape ? 0.4 : 0.5), 0, world.width - window.innerWidth);
   world.cameraX += (targetCamera - world.cameraX) * Math.min(1, dt * 6);
 
   updateLocation();
