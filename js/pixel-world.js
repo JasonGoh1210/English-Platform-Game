@@ -1,10 +1,10 @@
 // Visual-only renderer. World positions, encounters, quests and save data stay in rpg.js.
 export const PIXEL_TILE_SIZE = 32;
 export const pixelArtPaths = {
-  npcs: { mira:"/FYP/images/npc/npc_mira_32.png", tala:"/FYP/images/npc/npc_tala_32.png", kai:"/FYP/images/npc/npc_kai_32.png" },
-  monsters: { "bat-01":"/FYP/images/world/monsters/confusion-bat-32.png", "road-guardian-01":"/FYP/images/world/monsters/road-guardian-32.png",
-    "guardian-01":"/FYP/images/world/monsters/grammar-guardian-32.png", "cave-wraith-01":"/FYP/images/world/monsters/cave-wraith-32.png" },
-  portal:"/FYP/images/world/pixel/realm_portal_32.png"
+  npcs: { mira:"/FYP/images/npc/npc_mira_64.png", tala:"/FYP/images/npc/npc_tala_64.png", kai:"/FYP/images/npc/npc_kai_64.png" },
+  monsters: { "bat-01":"/FYP/images/world/monsters/confusion-bat-64.png", "road-guardian-01":"/FYP/images/world/monsters/road-guardian-64.png",
+    "guardian-01":"/FYP/images/world/monsters/grammar-guardian-64.png", "cave-wraith-01":"/FYP/images/world/monsters/cave-wraith-64.png" },
+  portal:"/FYP/images/world/pixel/realm_portal_64.png"
 };
 const palettes = {
   maple: { sky:"#3a659c",grass:"#718663",edge:"#425d4d",soil:"#303b34",line:"#3d4940" },
@@ -39,7 +39,25 @@ function landmarkTile(type,variant) {
   const key=type+":"+variant;if(tiles.has(key))return tiles.get(key);
   const c=document.createElement("canvas");c.width=32;c.height=32;const ctx=c.getContext("2d");
   const rect=(color,x,y,w,h)=>{ctx.fillStyle=color;ctx.fillRect(x,y,w,h);};
-  if(type==="house"){
+  if(type==="cave" || type==="typingCave"){
+    c.width=c.height=64;
+    const spelling=type==="typingCave",stones=spelling?["#554965","#73617c","#8c7896"]:["#405c70","#59788b","#7596a5"];
+    for(let y=7;y<63;y++)for(let x=5;x<59;x++){
+      const outer=y>=33 || ((x-32)/27)**2+((y-34)/28)**2<=1;
+      if(!outer)continue;
+      const row=Math.floor(y/8),shift=row%2*7,col=Math.floor((x+shift)/14);
+      const edge=y%8===0 || (x+shift)%14===0;
+      rect(edge?"#263647":stones[(row+col)%3],x,y,1,1);
+    }
+    rect("#101c28",18,31,28,32);
+    for(let y=18;y<32;y++){const half=Math.floor(Math.sqrt(Math.max(0,14**2-(31-y)**2)));rect("#101c28",32-half,y,half*2,1);}
+    rect("#263647",18,56,28,7);rect("#4a586c",13,61,38,3);rect("#718094",16,59,32,2);
+    const rune=spelling?"#cbb0e7":"#85c8d4";
+    rect(rune,30,9,4,5);rect(rune,27,11,10,1);
+    for(const x of [10,51]){rect("#28343e",x,40,3,13);rect("#b89466",x,39,3,5);rect("#e2b46f",x-1,35,5,5);rect("#f7d895",x,33,3,5);}
+    rect("#192b3a",20,32,2,23);rect("#192b3a",43,32,2,23);
+    tiles.set(key,c);return c;
+  }else if(type==="house"){
     const roof=variant==="elder"?"#4a695b":variant==="shop"?"#6a577c":"#81544e";
     rect("#463a36",4,13,24,18);rect("#b8946e",6,15,20,15);rect("#dcc498",7,15,18,2);
     for(let i=0;i<7;i++)rect(roof,2+i*2,12-i,28-i*4,2);
@@ -50,12 +68,6 @@ function landmarkTile(type,variant) {
     for(let y=0;y<20;y++)rect("#ad8965",15-Math.floor(y/2),10+y,2+Math.floor(y/2)*2,1);
     rect("#664c42",15,17,2,14);rect("#403831",13,22,6,10);
     rect("#493a34",2,29,7,2);rect("#e7a25b",4,25,3,4);rect("#f4cf83",5,23,1,5);
-  }else if(type==="cave" || type==="typingCave"){
-    const stone=type==="typingCave"?"#605776":"#526c7b";
-    rect(stone,4,7,24,25);rect(stone,7,3,18,5);rect(stone,11,1,10,3);
-    rect("#13202a",9,13,14,19);rect("#13202a",11,9,10,5);
-    rect("#8893a0",5,9,3,15);rect("#303e4e",25,11,2,20);
-    rect(type==="typingCave"?"#b8a0d9":"#7cb9c4",6,25,2,6);
   }else if(type==="bridge"){
     rect("#61554b",1,24,30,5);for(const x of [2,11,20,29])rect("#907c62",x,17,2,12);
     rect("#af9776",1,19,30,2);rect("#3c474a",2,29,28,3);
@@ -68,8 +80,8 @@ function landmarkTile(type,variant) {
   tiles.set(key,c);return c;
 }
 export function drawPixelLandmark(ctx,type,x,ground,variant="") {
-  const scale=type==="bridge"?6:4;ctx.imageSmoothingEnabled=false;
-  ctx.drawImage(landmarkTile(type,variant),Math.round(x-16*scale),Math.round(ground-32*scale),32*scale,32*scale);
+  const tile=landmarkTile(type,variant),scale=tile.width===64?2:type==="bridge"?6:4;ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(tile,Math.round(x-tile.width*scale/2),Math.round(ground-tile.height*scale),tile.width*scale,tile.height*scale);
 }
 export function drawPixelCave(ctx,{width,height,ground,camera=0}) {
   ctx.fillStyle="#111c2a";ctx.fillRect(0,0,width,height);

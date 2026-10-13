@@ -19,15 +19,26 @@ function png(relative){
   }}
   return {width,height,channels,pixels:out};
 }
-const sprites=['images/npc/npc_mira_32.png','images/npc/npc_tala_32.png','images/npc/npc_kai_32.png',
-  'images/world/pixel/realm_portal_32.png','images/world/monsters/cave-wraith-32.png','images/world/monsters/confusion-bat-32.png',
-  'images/world/monsters/road-guardian-32.png','images/world/monsters/grammar-guardian-32.png'];
-test('New sprites are real 32x32 RGBA PNGs with binary alpha, bounded palettes and feet/margin inside their frame',()=>{
-  for(const file of sprites){const image=png(file);assert.equal(image.width,32,file);assert.equal(image.height,32);assert.equal(image.channels,4);
+const sprites=['images/npc/npc_mira_64.png','images/npc/npc_tala_64.png','images/npc/npc_kai_64.png',
+  'images/world/pixel/realm_portal_64.png','images/world/monsters/cave-wraith-64.png','images/world/monsters/confusion-bat-64.png',
+  'images/world/monsters/road-guardian-64.png','images/world/monsters/grammar-guardian-64.png'];
+test('Active sprites are real 64x64 RGBA PNGs with binary alpha, bounded palettes and transparent margins',()=>{
+  for(const file of sprites){const image=png(file);assert.equal(image.width,64,file);assert.equal(image.height,64);assert.equal(image.channels,4);
     const colors=new Set(),alphas=new Set();let opaque=0;
     for(let i=0;i<image.pixels.length;i+=4){const a=image.pixels[i+3];alphas.add(a);if(a){opaque++;colors.add(image.pixels.subarray(i,i+3).toString('hex'));}}
-    assert.deepEqual([...alphas].sort((a,b)=>a-b),[0,255],file);assert.ok(opaque>70 && opaque<850,file);assert.ok(colors.size<=32,file);
-    for(let x=0;x<32;x++){assert.equal(image.pixels[x*4+3],0,file);assert.equal(image.pixels[(31*32+x)*4+3],0,file);}
+    assert.deepEqual([...alphas].sort((a,b)=>a-b),[0,255],file);assert.ok(opaque>280 && opaque<3400,file);assert.ok(colors.size<=128,file);
+    for(let x=0;x<64;x++){assert.equal(image.pixels[x*4+3],0,file);assert.equal(image.pixels[(63*64+x)*4+3],0,file);
+      assert.equal(image.pixels[(x*64)*4+3],0,file);assert.equal(image.pixels[(x*64+63)*4+3],0,file);}
+  }
+});
+test('Portal runes and guardian eyes retain their gold and cyan accent colors',()=>{
+  for(const [file,accent] of [['images/world/pixel/realm_portal_64.png','gold'],
+    ['images/world/monsters/road-guardian-64.png','gold'],['images/world/monsters/grammar-guardian-64.png','cyan']]){
+    const {pixels}=png(file);let count=0;
+    for(let i=0;i<pixels.length;i+=4){const r=pixels[i],g=pixels[i+1],b=pixels[i+2];
+      if(pixels[i+3] && (accent==='gold'?r>150&&g>90&&r>b*1.5&&g>b*1.2:g>130&&b>150&&g>r*1.3&&b>r*1.3))count++;
+    }
+    assert.ok(count>=8,file+' lost its '+accent+' details');
   }
 });
 test('Every realm has a native pixel backdrop and the battle cave has its own pixel scene',()=>{

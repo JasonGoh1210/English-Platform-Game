@@ -2,7 +2,9 @@
 
 使用内置 image_gen；所有生成素材是原创，用户的 Kingdom 图片仅作为界面布局与质感参考，没有作为需要修改／复制的目标图。
 
-精灵共同规格：single original side-view fantasy RPG sprite; authentic coarse 32×32 logical pixel design shown at integer magnification; aligned square clusters, stepped contours, limited palette, dark outline, full centered silhouette with transparent margins; genuinely transparent background; no scene, ground shadow, lettering, UI, logo, watermark or other subjects; no antialiasing, smooth shading, gradients or bloom. 生成大图经过原生尺寸导出后，实际 PNG 的尺寸、alpha 和颜色上限由测试验证。
+以下记录初次生成的提示集。2026-10-14 根据用户要求，改为从保留的原始大图导出 64×64 精灵，最多 128 色；没有放大旧 32×32 文件，也没有重新生成角色。当前项目路径见 PIXEL_ART_AND_UI.md。
+
+精灵原始共同规格：single original side-view fantasy RPG sprite; authentic coarse 32×32 logical pixel design shown at integer magnification; aligned square clusters, stepped contours, limited palette, dark outline, full centered silhouette with transparent margins; genuinely transparent background; no scene, ground shadow, lettering, UI, logo, watermark or other subjects; no antialiasing, smooth shading, gradients or bloom. 生成大图经过原生尺寸导出后，实际 PNG 的尺寸、alpha 和颜色上限由测试验证。
 
 | 素材 | 主体提示 |
 |---|---|

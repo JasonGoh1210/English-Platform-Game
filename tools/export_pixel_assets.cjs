@@ -5,10 +5,10 @@ const path = require('node:path');
 const { chromium } = require(process.env.EPQ_PLAYWRIGHT_MODULE || 'playwright');
 const root = path.resolve(__dirname, '..');
 const manifest = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
-const spriteNames = { mira:'images/npc/npc_mira_32.png', tala:'images/npc/npc_tala_32.png',
-  kai:'images/npc/npc_kai_32.png', portal:'images/world/pixel/realm_portal_32.png',
-  wraith:'images/world/monsters/cave-wraith-32.png', bat:'images/world/monsters/confusion-bat-32.png',
-  road_guardian:'images/world/monsters/road-guardian-32.png', grammar_guardian:'images/world/monsters/grammar-guardian-32.png' };
+const spriteNames = { mira:'images/npc/npc_mira_64.png', tala:'images/npc/npc_tala_64.png',
+  kai:'images/npc/npc_kai_64.png', portal:'images/world/pixel/realm_portal_64.png',
+  wraith:'images/world/monsters/cave-wraith-64.png', bat:'images/world/monsters/confusion-bat-64.png',
+  road_guardian:'images/world/monsters/road-guardian-64.png', grammar_guardian:'images/world/monsters/grammar-guardian-64.png' };
 async function main() {
   const browser=await chromium.launch({executablePath:process.env.EPQ_CHROME_PATH || undefined,headless:true});
   try {
@@ -29,15 +29,30 @@ async function main() {
           else{left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x);bottom=Math.max(bottom,y);}
         }
         if(!background && (right<left || transparent===0))throw Error('Sprite needs actual alpha and a visible silhouette');
-        const canvas=document.createElement('canvas');canvas.width=background?384:32;canvas.height=background?192:32;
+        const canvas=document.createElement('canvas');canvas.width=background?384:64;canvas.height=background?192:64;
         const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
         if(background)ctx.drawImage(img,0,0,canvas.width,canvas.height);
-        else {const w=right-left+1,h=bottom-top+1,scale=Math.min(28/w,28/h),dw=Math.max(1,Math.round(w*scale)),dh=Math.max(1,Math.round(h*scale));
-          ctx.drawImage(img,left,top,w,h,Math.floor((32-dw)/2),30-dh,dw,dh);}
+        else {const w=right-left+1,h=bottom-top+1,scale=Math.min(60/w,60/h),dw=Math.max(1,Math.round(w*scale)),dh=Math.max(1,Math.round(h*scale));
+          ctx.drawImage(img,left,top,w,h,Math.floor((64-dw)/2),62-dh,dw,dh);}
         const data=ctx.getImageData(0,0,canvas.width,canvas.height),colors=new Map();
         for(let i=0;i<data.data.length;i+=4){data.data[i+3]=background?255:data.data[i+3]>=128?255:0;
           if(data.data[i+3]){const key=data.data.slice(i,i+3).join(',');colors.set(key,(colors.get(key)||0)+1);}}
-        const palette=[...colors.entries()].sort((a,b)=>b[1]-a[1]).slice(0,background?48:32).map(([key])=>key.split(',').map(Number));
+        // Frequency-only palettes can discard small gold runes and cyan eyes.
+        // Select distant colors with frequency weighting so those accents survive.
+        const entries=[...colors.entries()].sort((a,b)=>b[1]-a[1]).map(([key,count])=>({rgb:key.split(',').map(Number),count,distance:Infinity}));
+        const limit=background?48:128,palette=[];
+        if(background || entries.length<=limit)palette.push(...entries.slice(0,limit).map(e=>e.rgb));
+        else {
+          let next=entries[0];
+          for(let n=0;n<limit;n++){
+            palette.push(next.rgb);let score=-1,candidate=null;
+            for(const e of entries){
+              const d=e.rgb.reduce((sum,c,i)=>sum+(c-next.rgb[i])**2,0);e.distance=Math.min(e.distance,d);
+              const weighted=e.distance*Math.sqrt(e.count);if(weighted>score){score=weighted;candidate=e;}
+            }
+            next=candidate;
+          }
+        }
         for(let i=0;i<data.data.length;i+=4){if(!data.data[i+3]){data.data[i]=data.data[i+1]=data.data[i+2]=0;continue;}
           let best=palette[0],distance=Infinity;for(const c of palette){const d=(c[0]-data.data[i])**2+(c[1]-data.data[i+1])**2+(c[2]-data.data[i+2])**2;if(d<distance){distance=d;best=c;}}
           data.data.set(best,i);}
@@ -47,6 +62,7 @@ async function main() {
       const destination=path.join(root,relative);fs.mkdirSync(path.dirname(destination),{recursive:true});fs.writeFileSync(destination,Buffer.from(result.base64,'base64'));
       console.log(relative,result.width+'x'+result.height,'colors='+result.palette);
     }
+    if(!manifest.some(item=>['maple','forest','camp','ruins'].includes(item.key)))return;
     const cave=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=384;c.height=192;const x=c.getContext('2d');
       x.fillStyle='#101a27';x.fillRect(0,0,384,192);
       for(let y=0;y<192;y+=32)for(let col=0;col<384;col+=32){x.fillStyle=(col/32+y/32)%3?'#172432':'#1c2c3b';x.fillRect(col+1,y+1,30,30);x.fillStyle='#213445';x.fillRect(col+4,y+4,23,2);}

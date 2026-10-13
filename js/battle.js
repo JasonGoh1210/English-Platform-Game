@@ -1,11 +1,11 @@
-import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261013-pixel1";
-import { battleToken, createBattleClient } from "./battle-api.js?v=20261013-pixel1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-pixel1";
-import { playSound } from "./audio.js?v=20261013-pixel1";
-import { normalizeTutorial } from "./tutorial.js?v=20261013-pixel1";
-import { paintCharacterImages } from "./characters.js?v=20261013-pixel1";
-import { createBattleReviewPanel } from "./battle-review.js?v=20261013-pixel1";
-import { pixelArtPaths } from "./pixel-world.js?v=20261013-pixel1";
+import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261014-pixel64";
+import { battleToken, createBattleClient } from "./battle-api.js?v=20261014-pixel64";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-pixel64";
+import { playSound } from "./audio.js?v=20261014-pixel64";
+import { normalizeTutorial } from "./tutorial.js?v=20261014-pixel64";
+import { paintCharacterImages } from "./characters.js?v=20261014-pixel64";
+import { createBattleReviewPanel } from "./battle-review.js?v=20261014-pixel64";
+import { pixelArtPaths } from "./pixel-world.js?v=20261014-pixel64";
 
 // Use the same per-player storage namespace as the map. If these keys differ,
 // the battle page cannot find the enemy that the map just stored and redirects back.
@@ -731,6 +731,7 @@ async function init() {
   // Use art matched to the actual enemy. Slime encounters must not show
   // the winged purple monster; other enemies use the available fantasy sprite.
   ui.enemyFigure.textContent = "";
+  ui.enemyFigure.classList.toggle("native-pixel-64", Boolean(pixelArtPaths.monsters[state.enemy.id]));
   const monsterArt = document.createElement("img");
   monsterArt.alt = state.enemy.name;
   monsterArt.draggable = false;

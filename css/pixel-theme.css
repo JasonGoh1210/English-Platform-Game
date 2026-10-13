@@ -69,6 +69,10 @@
 .battle-page .battle-monster { top:14px; right:8%; left:auto; bottom:auto; }
 .battle-page .battle-player { top:auto; right:auto; left:8%; bottom:8px; }
 .battle-page .battle-monster .monster-sprite { width:160px; height:160px; margin:0 auto; filter:none; }
+.battle-page .battle-monster .monster-sprite.native-pixel-64 { width:192px; height:192px; }
+.battle-page .battle-monster .native-pixel-64 img { width:100% !important; height:100% !important; transform:none; }
+.battle-page .battle-monster:has(.native-pixel-64) { top:6px; }
+.battle-page .battle-monster:has(.native-pixel-64) .monster-name-box { line-height:1.2; gap:2px; }
 .battle-page .battle-player .battle-player-art { width:160px; height:160px; filter:none; margin:0 auto; }
 .battle-page .monster-name-box, .battle-page .player-name-box { padding:4px 0; margin:0; color:#f2e8cb; text-shadow:1px 2px #14202e; }
 .battle-page .monster-name-box strong, .battle-page .player-name-box strong { font-size:13px; }
@@ -157,6 +161,7 @@
   .battle-page .battle-monster { top:10px; }
   .battle-page .battle-player { bottom:7px; }
   .battle-page .battle-monster .monster-sprite { width:96px; height:96px; }
+  .battle-page .battle-monster .monster-sprite.native-pixel-64 { width:128px; height:128px; }
   .battle-page .battle-player .battle-player-art { width:128px; height:128px; }
   .battle-page .monster-name-box strong, .battle-page .player-name-box strong { font-size:12px; }
   .battle-page .hp-card, .battle-page .hp-card.player { padding:6px; }
@@ -190,7 +195,15 @@
   .battle-page .battle-monster { top:10px; right:0; }
   .battle-page .battle-player { left:0; bottom:8px; }
   .battle-page .battle-monster .monster-sprite, .battle-page .battle-player .battle-player-art { width:96px; height:96px; }
+  .battle-page .battle-monster .monster-sprite.native-pixel-64 { width:128px; height:128px; }
   .battle-page .hp-card, .battle-page .hp-card.player { padding:5px; width:95%; }
+  .battle-page .battle-monster:has(.native-pixel-64) { width:128px; right:2px; }
+  .battle-page .battle-monster:has(.native-pixel-64) .monster-name-box { padding:2px 0; gap:1px; }
+  .battle-page .battle-monster:has(.native-pixel-64) .monster-name-box strong { font-size:10px; letter-spacing:0; }
+  .battle-page .battle-monster:has(.native-pixel-64) .monster-name-box span { font-size:9px; letter-spacing:0; }
+  .battle-page .battle-monster:has(.native-pixel-64) #battleEnemyRole { display:none; }
+  .battle-page .battle-monster:has(.native-pixel-64) .hp-card { width:104px; padding:4px; }
+  .battle-page .battle-monster:has(.native-pixel-64) .hp-top { font-size:10px; line-height:1.2; margin-bottom:4px; }
   .battle-page .monster-name-box strong, .battle-page .player-name-box strong { font-size:11px; }
   .battle-page .monster-name-box span, .battle-page .player-name-box span { font-size:10px; }
   .battle-page .battle-command-zone { margin-top:0; padding:7px; }

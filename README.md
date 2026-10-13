@@ -53,7 +53,7 @@ New characters now learn movement and their first village battle with Elder Rowa
 
 The quest HUD now names the next NPC/world and points toward the target or the current world's portal. [Quest guidance and caves](docs/QUEST_GUIDANCE_AND_CAVES.md) explains the optional three-room Echo Cave, two new monsters and the original three-round spelling finale with changing monster artwork. No new SQL migration or image installation is required.
 
-[Pixel art and interface update](docs/PIXEL_ART_AND_UI.md) lists the new native 32×32 NPC/enemy/portal PNGs, quieter four-world backgrounds and the dark destination/battle UI. Original player sprites and Rowan remain unchanged; old background files remain as fallbacks. New assets arrive with Git, with no SQL migration.
+[Pixel art and interface update](docs/PIXEL_ART_AND_UI.md) lists the new native 64×64 NPC/enemy/portal PNGs with 32×32 ground tiles, quieter four-world backgrounds and the dark destination/battle UI. Original player sprites and Rowan remain unchanged; old background files remain as fallbacks. New assets arrive with Git, with no SQL migration.
 
 ## Validation
 

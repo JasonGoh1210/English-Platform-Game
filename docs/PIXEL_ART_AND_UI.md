@@ -1,12 +1,12 @@
-# 32 像素画风与传送／战斗界面
+# 32 像素地块、64 像素精灵与传送／战斗界面
 
 ## 本次视觉更新
 
 四个世界改用更安静的低分辨率背景：枫叶镇的蓝色傍晚、低语森林的青绿色树林、旧营地道路的暖色落日、古代遗迹的靛蓝废墟。背景保留空白和少量远景，前景房屋、道路、洞口及地面由像素画布绘制，避免把密集背景建筑与互动建筑叠在一起。
 
-“32×32”指原生精灵和地块尺度，而不是把整张世界地图压成一个 32×32 小图。新增 NPC、四种怪物和领域传送门都是实际 **32×32 RGBA PNG**；地图使用整数倍、最近邻放大。背景原生 **384×192**，为 12×6 个 32 像素区域，地面和洞穴使用 32 像素网格。背景最多 48 色，新增精灵最多 32 色，透明像素的 alpha 为 0，实体为 255。
+按照用户 2026-10-14 的调整，地块继续保持 **32×32**，新增 NPC、四种怪物和领域传送门改为实际 **64×64 RGBA PNG**；地图使用整数倍、最近邻放大。64 版本从原始生成大图重新导出，保留脸、眼睛与符文细节，并非把旧 32 版本放大。背景原生 **384×192**，为 12×6 个 32 像素区域，地面和洞穴使用 32 像素网格。背景最多 48 色，新增精灵最多 128 色，颜色选择兼顾分布和出现次数，保留较少出现的金色符文与青色眼睛，透明像素的 alpha 为 0，实体为 255。
 
-保留原男女主角、全部走路帧、角色配色、用户选定的罗文 `images/npc/npc_elder_rowan_32.png`，以及已经是像素 PNG 的史莱姆和飞龙。替换米拉、塔拉、凯的程序绘制外观，以及蝙蝠、道路守卫、语法守卫、幽魂的 SVG 外观；原文件没有删除。
+保留原男女主角、全部走路帧、角色配色、用户选定的罗文 `images/npc/npc_elder_rowan_32.png`，以及已经是像素 PNG 的史莱姆和飞龙。替换米拉、塔拉、凯的程序绘制外观，以及蝙蝠、道路守卫、语法守卫、幽魂的 SVG 外观；原文件和先前的 32×32 版本没有删除。两个洞口使用更细的 64×64 原生像素画布绘制石砖、拱门、火把和符文；屏幕占用尺寸及互动位置保持不变。
 
 传送页参考用户提供的 Kingdom 选择界面排版：黑底、中央明亮世界卡片、两侧暗色真实世界预览、石色地名与木牌选择按钮。保留“领域传送门”“选择你要前往的地点”及四个世界的原名称，不复制 Kingdom 的标志或游戏内容。左右箭头、侧预览、四点选择、中央选择、传送按钮、Enter 和 Esc 继续可用；Tab 留在当前弹窗，Enter 操作当前聚焦按钮，关闭后恢复地图互动按钮焦点。
 
@@ -16,14 +16,14 @@
 
 | 用途 | 项目路径 | 原生尺寸 |
 |---|---|---|
-| 米拉 | `images/npc/npc_mira_32.png` | 32×32 |
-| 塔拉 | `images/npc/npc_tala_32.png` | 32×32 |
-| 凯 | `images/npc/npc_kai_32.png` | 32×32 |
-| 领域传送门 | `images/world/pixel/realm_portal_32.png` | 32×32 |
-| 蝙蝠 | `images/world/monsters/confusion-bat-32.png` | 32×32 |
-| 道路守卫 | `images/world/monsters/road-guardian-32.png` | 32×32 |
-| 语法守卫 | `images/world/monsters/grammar-guardian-32.png` | 32×32 |
-| 洞穴幽魂 | `images/world/monsters/cave-wraith-32.png` | 32×32 |
+| 米拉 | `images/npc/npc_mira_64.png` | 64×64 |
+| 塔拉 | `images/npc/npc_tala_64.png` | 64×64 |
+| 凯 | `images/npc/npc_kai_64.png` | 64×64 |
+| 领域传送门 | `images/world/pixel/realm_portal_64.png` | 64×64 |
+| 蝙蝠 | `images/world/monsters/confusion-bat-64.png` | 64×64 |
+| 道路守卫 | `images/world/monsters/road-guardian-64.png` | 64×64 |
+| 语法守卫 | `images/world/monsters/grammar-guardian-64.png` | 64×64 |
+| 洞穴幽魂 | `images/world/monsters/cave-wraith-64.png` | 64×64 |
 | 四世界背景 | `images/world/pixel/maple.png`、`forest.png`、`camp.png`、`ruins.png` | 各 384×192 |
 | 洞穴战斗背景 | `images/world/pixel/cave.png` | 384×192 |
 

@@ -1,11 +1,11 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261013-pixel1";
-import { playSound } from "./audio.js?v=20261013-pixel1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-pixel1";
-import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261013-pixel1";
-import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261013-pixel1";
-import { createQuestClient } from "./quest-api.js?v=20261013-pixel1";
-import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261013-pixel1";
-import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave } from "./pixel-world.js?v=20261013-pixel1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261014-pixel64";
+import { playSound } from "./audio.js?v=20261014-pixel64";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-pixel64";
+import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261014-pixel64";
+import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261014-pixel64";
+import { createQuestClient } from "./quest-api.js?v=20261014-pixel64";
+import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261014-pixel64";
+import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave } from "./pixel-world.js?v=20261014-pixel64";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -130,7 +130,7 @@ const worldBackgroundPaths = {
 for (const realmId of Object.keys(worldBackgroundPaths)) {
   const availablePaths = window.EPQ_AUTH?.worldBackgrounds?.[realmId];
   if (Array.isArray(availablePaths)) {
-    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261013-pixel1");
+    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261014-pixel64");
   }
 }
 
@@ -2414,7 +2414,7 @@ function drawWorldPortals() {
 function drawPortal(destination) {
   const x=Math.round(worldToScreen(destination.portalX)),ground=Math.round(world.groundY);if(x < -140 || x > window.innerWidth+140)return;
   ctx.save();ctx.imageSmoothingEnabled=false;
-  if(realmPortalSprite.complete&&realmPortalSprite.naturalWidth)ctx.drawImage(realmPortalSprite,x-80,ground-160,160,160);
+  if(realmPortalSprite.complete&&realmPortalSprite.naturalWidth)ctx.drawImage(realmPortalSprite,x-96,ground-192,192,192);
   else drawPixelLandmark(ctx,"cave",x,ground);
   ctx.textAlign="center";ctx.font="bold 12px system-ui";ctx.fillStyle="#e8d8ab";ctx.fillText(getLocalizedRealmName(destination.id),x,ground-174);
   if(Math.abs(destination.portalX-world.player.x)<145){ctx.fillStyle="#152634";ctx.fillRect(x-100,ground-204,200,22);ctx.fillStyle="#f2dfac";ctx.font="bold 11px system-ui";ctx.fillText(t("portal.interact"),x,ground-189);}
@@ -3025,7 +3025,7 @@ function drawNPCs() {
 function drawStyledNPC(x, ground, npc) {
   const image=npc.id==="elder"?elderRowanSprite:npcPixelSprites[npc.id];
   ctx.save();ctx.imageSmoothingEnabled=false;ctx.fillStyle="#18252a";ctx.fillRect(Math.round(x-22),Math.round(ground-2),44,4);
-  if(image?.complete&&image.naturalWidth){ctx.drawImage(image,Math.round(x-64),Math.round(ground-(npc.id==="elder"?128:120)),128,128);}
+  if(image?.complete&&image.naturalWidth){ctx.drawImage(image,Math.round(x-64),Math.round(ground-(npc.id==="elder"?128:124)),128,128);}
   else{ctx.fillStyle=npc.color;ctx.fillRect(Math.round(x-16),Math.round(ground-72),32,64);ctx.fillStyle="#d3ad85";ctx.fillRect(Math.round(x-12),Math.round(ground-92),24,24);ctx.fillStyle="#25313b";ctx.fillRect(Math.round(x-16),Math.round(ground-12),12,12);ctx.fillRect(Math.round(x+4),Math.round(ground-12),12,12);}
   ctx.restore();
 }
@@ -3054,8 +3054,8 @@ function drawEnemies() {
       const dimensionsByEnemy = {
         "slime-01": [104, 96],
         "bat-01": [145, 132],
-        "road-guardian-01": [164, 172],
-        "guardian-01": [168, 176],
+        "road-guardian-01": [192, 192],
+        "guardian-01": [192, 192],
         "cave-wraith-01": [154, 174],
         "echo-slime-01": [115, 105],
         "echo-dragon-01": [210, 200]
@@ -3064,7 +3064,8 @@ function drawEnemies() {
       const naturalWidth = activeSprite.naturalWidth || maxWidth;
       const naturalHeight = activeSprite.naturalHeight || maxHeight;
       const fittingScale = Math.min(maxWidth / naturalWidth, maxHeight / naturalHeight);
-      const scale = naturalWidth === 32 && naturalHeight === 32 ? Math.max(1, Math.floor(fittingScale)) : fittingScale;
+      const nativePixelSprite = [32,64].includes(naturalWidth) && naturalHeight === naturalWidth;
+      const scale = nativePixelSprite ? Math.max(1, Math.floor(fittingScale)) : fittingScale;
       const drawWidth = naturalWidth * scale;
       const drawHeight = naturalHeight * scale;
       ctx.drawImage(
