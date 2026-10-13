@@ -1,8 +1,9 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261013-review1";
-import { playSound } from "./audio.js?v=20261013-review1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-review1";
-import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261013-review1";
-import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261013-review1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261013-quests1";
+import { playSound } from "./audio.js?v=20261013-quests1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-quests1";
+import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261013-quests1";
+import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261013-quests1";
+import { createQuestClient } from "./quest-api.js?v=20261013-quests1";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -87,9 +88,7 @@ const TYPING_CAVE_RIGHT_LIMIT = 94;
 const TYPING_CAVE_STEP = 7.5;
 
 const typingCaveState = {
-  words: [],
   currentWord: null,
-  seenIds: new Set(),
   completedLevels: 0,
   lastMistake: null,
   monsterLeft: TYPING_CAVE_START_POSITION,
@@ -129,7 +128,7 @@ const worldBackgroundPaths = {
 for (const realmId of Object.keys(worldBackgroundPaths)) {
   const availablePaths = window.EPQ_AUTH?.worldBackgrounds?.[realmId];
   if (Array.isArray(availablePaths)) {
-    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261013-review1");
+    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261013-quests1");
   }
 }
 
@@ -167,6 +166,8 @@ Object.entries(worldBackgrounds).forEach(([realmId, image]) => {
 });
 
 const AUTH_CONTEXT = window.EPQ_AUTH || {};
+const questClient=createQuestClient(AUTH_CONTEXT.csrfToken,AUTH_CONTEXT.storageId||AUTH_CONTEXT.playerId,
+  applyConfirmedQuest,waiting=>waiting?setSaveWarning("rewards","save.rewardFailed"):clearSaveWarning("rewards"));
 paintCharacterImages(AUTH_CONTEXT.character);
 const IS_GUEST = Boolean(AUTH_CONTEXT.isGuest);
 const AUTH_PLAYER_ID = String(AUTH_CONTEXT.storageId || AUTH_CONTEXT.playerId || "guest");
@@ -1305,7 +1306,9 @@ function finishStoryIntro() {
 
 
 
-function interact() {
+let npcQuestPending=false;
+async function interact() {
+  if(npcQuestPending)return;
   if (world.interacting || world.battle || world.travelMenu || settingsIsOpen()) return;
 
   // Every region has a permanent portal at its own fixed coordinate.
@@ -1363,25 +1366,18 @@ function interact() {
 
     if (storyBeatTriggered) {
       dialogueKey = beat.dialogueKey;
-      world.questStep = beat.nextStep;
+      npcQuestPending=true;
+      saveWorldState();
+      if (await flushGameSave() === false) {
+        world.interacting=false;npcQuestPending=false;setSaveWarning("rewards","save.rewardFailed");return;
+      }
+      const confirmed=await questClient.request("NPC",{npcId:npc.id});
+      npcQuestPending=false;
+      if (!confirmed.ok) {world.interacting=false;setSaveWarning("rewards","save.rewardFailed");return;}
       if (npc.id === "elder" && tutorialActive(world.tutorial)) {
         world.tutorial = { ...world.tutorial, stage: "SLIME" };
       }
-      world.xp += beat.xp;
-      world.coins += beat.coins;
-      world.power += beat.power;
-      updateQuest();
-      syncHUD();
-      saveWorldState();
-      void saveServerProgress({
-        xpDelta: beat.xp,
-        coinDelta: beat.coins,
-        englishPowerDelta: beat.power,
-        englishSkillCode: beat.skill,
-        sourceType: "QUEST",
-        sourceId: null,
-        description: "Story chapter completed: " + beat.label
-      });
+      updateQuest();syncHUD();saveWorldState();
     } else if (npc.id === "kai" && world.questStep >= 5) {
       dialogueKey = "npc.kai.after";
     }
@@ -1460,42 +1456,6 @@ function leaveCave() {
   saveWorldState({ playerX: world.player.x, insideCave: false });
 }
 
-const fallbackTypingWords = [
-  { id: "throw", answer: "throw", definition: "To propel something through the air with a movement of the arm and hand. To toss or hurl.", definitionZh: "用手臂和手的动作把东西抛向空中；投掷。" },
-  { id: "upload", answer: "upload", definition: "To transfer a file from your device to a remote computer or server.", definitionZh: "把文件从自己的设备传到远程电脑或服务器。" },
-  { id: "debug", answer: "debug", definition: "To find and remove errors from a computer program.", definitionZh: "找出并修正电脑程序中的错误。" }
-];
-
-async function ensureTypingCaveWords() {
-  if (typingCaveState.words.length) return typingCaveState.words;
-  try {
-    const response = await fetch("/FYP/data/typing_cave_words.json", { cache: "no-store" });
-    if (!response.ok) throw new Error("Typing cave word data unavailable");
-    const data = await response.json();
-    typingCaveState.words = Array.isArray(data)
-      ? data.filter(item => item && item.id && item.answer && item.definition)
-      : [];
-  } catch (error) {
-    console.warn("Typing cave will use its built-in vocabulary fallback.", error);
-  }
-  if (!typingCaveState.words.length) typingCaveState.words = fallbackTypingWords;
-  return typingCaveState.words;
-}
-
-function chooseTypingWord() {
-  if (!typingCaveState.words.length) return null;
-  let available = typingCaveState.words.filter(word => !typingCaveState.seenIds.has(word.id));
-  if (!available.length) {
-    typingCaveState.seenIds.clear();
-    available = typingCaveState.words;
-  }
-  const word = available[Math.floor(Math.random() * available.length)];
-  typingCaveState.seenIds.add(word.id);
-  typingCaveState.currentWord = word;
-  typingCaveState.lastMistake = null;
-  return word;
-}
-
 function renderTypingQuestion() {
   const word = typingCaveState.currentWord;
   if (!typingUi.screen || !word) return;
@@ -1561,9 +1521,9 @@ async function openTypingCave() {
   typingCaveState.monsterLeft = TYPING_CAVE_START_POSITION;
   typingCaveState.approachSteps = 0;
   typingCaveState.passiveTimer = 0;
-  typingCaveState.busy = false;
+  typingCaveState.busy = true;
+  typingCaveState.runId = null;
   typingCaveState.gameOver = false;
-  typingCaveState.seenIds.clear();
   typingCaveState.roundToken += 1;
 
   typingUi.screen.classList.remove("hidden");
@@ -1577,9 +1537,15 @@ async function openTypingCave() {
   setTypingMessage(getLanguage() === "zh" ? "正在准备单词挑战……" : "Preparing word challenge…");
   updateTypingCaveVisuals();
 
-  await ensureTypingCaveWords();
-  if (!world.typingCaveOpen) return;
-  chooseTypingWord();
+  const generation=typingCaveState.roundToken;
+  saveWorldState();
+  if(await flushGameSave()===false){typingUi.retry.classList.remove("hidden");setTypingMessage(getLanguage()==="zh"?"存档尚未确认，请检查连接后重试。":"Save not confirmed. Check your connection and retry.");return;}
+  const result=await questClient.request("TYPING_START");
+  if(!result.ok){typingUi.retry.classList.remove("hidden");setTypingMessage(getLanguage()==="zh"?"挑战暂时无法开始，请检查数据库更新与连接后重试。":"Challenge unavailable. Check the database update and connection, then retry.");return;}
+  if(!world.typingCaveOpen||generation!==typingCaveState.roundToken){void questClient.request("TYPING_CLOSE",{runId:result.outcome.typing.runId});return;}
+  const run=result.outcome.typing;
+  typingCaveState.runId=run.runId;typingCaveState.questionToken=run.questionToken;
+  typingCaveState.currentWord=run.word;typingCaveState.busy=false;
   renderTypingQuestion();
   typingUi.input.disabled = false;
   typingUi.submit.disabled = false;
@@ -1592,6 +1558,7 @@ async function openTypingCave() {
 function closeTypingCave() {
   if (!world.typingCaveOpen) return;
   world.typingCaveOpen = false;
+  if(typingCaveState.runId)void questClient.request("TYPING_CLOSE",{runId:typingCaveState.runId});
   typingCaveState.roundToken += 1;
   keys.clear();
   touch.left = false;
@@ -1614,6 +1581,7 @@ function advanceTypingMonster(reason) {
   if (typingCaveState.monsterLeft <= 32) {
     playSound("defeat");
     typingCaveState.gameOver = true;
+    if(typingCaveState.runId)void questClient.request("TYPING_CLOSE",{runId:typingCaveState.runId});
     typingCaveState.busy = true;
     typingUi.input.disabled = true;
     typingUi.submit.disabled = true;
@@ -1728,7 +1696,7 @@ function clearTypingSpellingFeedback() {
   typingUi.spellingFeedback.classList.add("hidden");
 }
 
-function submitTypingAnswer() {
+async function submitTypingAnswer() {
   if (!world.typingCaveOpen || typingCaveState.busy || typingCaveState.gameOver || !typingCaveState.currentWord) return;
   const typed = typingUi.input.value.trim().toLowerCase().replace(/\s+/g, " ");
   if (!typed) {
@@ -1737,8 +1705,14 @@ function submitTypingAnswer() {
     return;
   }
 
+  const generation=typingCaveState.roundToken;
+  typingCaveState.busy=true;typingUi.input.disabled=true;typingUi.submit.disabled=true;
+  const verified=await questClient.request("TYPING_ANSWER",{runId:typingCaveState.runId,questionToken:typingCaveState.questionToken,answer:typed});
+  if(!world.typingCaveOpen||generation!==typingCaveState.roundToken)return;
+  typingCaveState.busy=false;typingUi.input.disabled=false;typingUi.submit.disabled=false;
+  if(!verified.ok){setTypingMessage(getLanguage()==="zh"?"答案尚未确认，请重试或重新进入挑战。":"Answer not confirmed. Retry or re-enter the challenge.","warning");return;}
   const correctAnswer = String(typingCaveState.currentWord.answer).trim().toLowerCase();
-  if (typed !== correctAnswer) {
+  if (!verified.outcome.correct) {
     typingUi.input.value = "";
     showTypingSpellingFeedback(typed, correctAnswer);
     advanceTypingMonster("wrong");
@@ -1753,7 +1727,7 @@ function submitTypingAnswer() {
   const token = ++typingCaveState.roundToken;
   const word = typingCaveState.currentWord;
   const isChinese = getLanguage() === "zh";
-  typingCaveState.completedLevels += 1;
+  typingCaveState.completedLevels = verified.outcome.typing.completedLevels;
   typingCaveState.monsterLeft = Math.min(
     TYPING_CAVE_RIGHT_LIMIT,
     typingCaveState.monsterLeft + TYPING_CAVE_STEP
@@ -1775,20 +1749,6 @@ function submitTypingAnswer() {
     "success"
   );
 
-  world.xp += 10;
-  world.coins += 5;
-  world.power += 1;
-  syncHUD();
-  saveWorldState();
-  void saveServerProgress({
-    xpDelta: 10,
-    coinDelta: 5,
-    englishPowerDelta: 1,
-    englishSkillCode: "VOCABULARY",
-    sourceType: "QUEST",
-    sourceId: null,
-    description: "Typing Cavern word: " + word.answer
-  });
 
   window.setTimeout(() => {
     if (!world.typingCaveOpen || token !== typingCaveState.roundToken) return;
@@ -1799,25 +1759,7 @@ function submitTypingAnswer() {
     if (typingCaveState.completedLevels >= TYPING_CAVE_TOTAL_LEVELS) {
       typingCaveState.gameOver = true;
       typingCaveState.busy = true;
-      const storyEnding = world.questStep === 4;
-      if (storyEnding) {
-        world.questStep = 5;
-        world.xp += 50;
-        world.coins += 25;
-        world.power += 2;
-        updateQuest();
-        syncHUD();
-        saveWorldState();
-        void saveServerProgress({
-          xpDelta: 50,
-          coinDelta: 25,
-          englishPowerDelta: 2,
-          englishSkillCode: "IT_ENGLISH",
-          sourceType: "QUEST",
-          sourceId: null,
-          description: "Story ending: The First Real Conversation"
-        });
-      }
+      const storyEnding = verified.outcome.storyEnding;
       const showTypingVictory = () => {
         playSound("victory");
         typingUi.winTitle.textContent = storyEnding
@@ -1847,7 +1789,8 @@ function submitTypingAnswer() {
     typingCaveState.busy = false;
     typingUi.input.disabled = false;
     typingUi.submit.disabled = false;
-    chooseTypingWord();
+    typingCaveState.currentWord=verified.outcome.typing.word;
+    typingCaveState.questionToken=verified.outcome.typing.questionToken;
     renderTypingQuestion();
     setTypingMessage(
       isChinese
@@ -1859,23 +1802,7 @@ function submitTypingAnswer() {
 }
 
 function retryTypingCave() {
-  typingCaveState.completedLevels = 0;
-  typingCaveState.monsterLeft = TYPING_CAVE_START_POSITION;
-  typingCaveState.approachSteps = 0;
-  typingCaveState.passiveTimer = 0;
-  typingCaveState.busy = false;
-  typingCaveState.gameOver = false;
-  typingCaveState.roundToken += 1;
-  typingUi.loseOverlay.classList.add("hidden");
-  typingUi.winOverlay.classList.add("hidden");
-  clearTypingSpellingFeedback();
-  typingUi.input.value = "";
-  typingUi.input.disabled = false;
-  typingUi.submit.disabled = false;
-  typingUi.retry.classList.add("hidden");
-  renderTypingQuestion();
-  setTypingMessage(getLanguage() === "zh" ? "再试一次！怪物会慢慢靠近。" : "Try again! The monster will slowly approach.");
-  typingUi.input.focus();
+  closeTypingCave();void openTypingCave();
 }
 
 function nearestWorldPortal(maxDistance = Infinity) {
@@ -1995,6 +1922,7 @@ function updateLocation() {
 
 function refreshWorldLanguage() {
   updateQuest();
+  syncHUD();
   updateLocation();
   if (world.storyIntroOpen) renderStoryIntro();
   if (world.currentDialogueNpcId) {
@@ -2020,32 +1948,27 @@ onLanguageChange(refreshWorldLanguage);
 
 function syncHUD() {
   ui.level.textContent = world.level;
-  ui.xp.textContent = world.xp;
+  const progress=world.levelProgress;
+  ui.xp.textContent=progress?.maxLevel?(getLanguage()==="zh"?"满级":"MAX"):(progress?.currentXp??world.xp);
+  const target=document.getElementById("mapXpTarget"),divider=document.getElementById("mapXpDivider"),bar=document.getElementById("mapXpBar");
+  if(target){target.textContent=progress?.requiredXp??"—";target.classList.toggle("hidden",Boolean(progress?.maxLevel));}
+  if(divider)divider.classList.toggle("hidden",Boolean(progress?.maxLevel));
+  if(bar)bar.style.width=(progress?.percent??0)+"%";
   ui.power.textContent = world.power;
   ui.coins.textContent = world.coins;
 }
 
-async function saveServerProgress(payload) {
-  try {
-    const response = await fetch("/FYP/api/save_progress.php", {
-      method: "POST",
-      keepalive: true,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...payload, csrfToken: AUTH_CONTEXT.csrfToken || "" })
-    });
-    const data = await response.json().catch(() => null);
-    if (!response.ok || !data?.ok) {
-      console.warn("Server did not save map reward:", data?.error || response.statusText);
-      setSaveWarning("rewards", "save.rewardFailed");
-      return false;
-    }
-    if (data.levelUp) playSound("level");
-    return true;
-  } catch (error) {
-    console.warn("Map reward will remain local until the PHP API is available.", error);
-    setSaveWarning("rewards", "save.rewardFailed");
-    return false;
+function applyConfirmedQuest(result) {
+  const previousLevel=world.level;
+  const player=result.player;
+  world.level=Number(player.level);world.xp=Number(player.xp);world.coins=Number(player.coins);
+  world.power=Number(player.englishPowerTotal);world.levelProgress=player.levelProgress;
+  world.questStep=Number(result.chapterStep);
+  if(result.outcome?.npcId==="elder"&&tutorialActive(world.tutorial)&&["MOVE","MEET"].includes(world.tutorial.stage)) {
+    world.tutorial={...world.tutorial,stage:"SLIME"};
   }
+  updateQuest();syncHUD();saveWorldState();
+  if(world.level>previousLevel)playSound("level");
 }
 
 async function loadServerPlayer() {
@@ -2062,6 +1985,12 @@ async function loadServerPlayer() {
     world.xp = Number(data.player.xp || 0);
     world.coins = Number(data.player.coins || 0);
     world.power = Number(data.player.englishPowerTotal || 0);
+    world.levelProgress=data.player.levelProgress;
+    world.questStep=Number(data.player.chapterStep||0);
+    if(world.questStep>=1&&tutorialActive(world.tutorial)&&["MOVE","MEET"].includes(world.tutorial.stage)) {
+      world.tutorial={...world.tutorial,stage:"SLIME"};
+    }
+    updateQuest();
     syncHUD();
     saveWorldState({
       level: world.level,
@@ -3948,7 +3877,7 @@ void (async () => {
   const restored = await loadServerGame();
   if (restored) await Promise.all([loadServerPlayer(), loadQuestions()]);
   else await loadQuestions();
-  if (restored) initializeMapTutorial();
+  if (restored) {await questClient.recover();initializeMapTutorial();}
 })().catch(error => {
   console.warn("[English Power Quest] Startup data could not be loaded.", error);
 });

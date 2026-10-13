@@ -18,10 +18,11 @@
 4. Then run/import `database/migrations/004_four_worlds.sql`. This inserts the four active world records.
 5. For verified battles, import `database/migrations/005_verified_battles.sql` after the backup. It only creates three new tables and preserves existing data.
 6. Import `database/migrations/006_character_profiles.sql` for first-login naming, gender and appearance. This creates one new table without changing old characters.
+7. Import `database/migrations/007_verified_quests.sql` for NPC/typing claims and verified chapter progress. It creates four tables and snapshots old chapters without changing player balances. See [quest update](VERIFIED_QUESTS_AND_XP.md).
 7. `git pull origin main` updates PHP/JS/SQL *files*, but **does not execute SQL against your local MySQL**.
 8. Keep the project's Apache alias `/FYP` and XAMPP running. Visit `http://localhost/FYP/login.php`.
 
-For a new empty database, import the latest `database/english_power_quest_schema.sql` once instead of 003/004/005/006. **Never** import the full schema into an existing database; it contains CREATE TABLE and sample seed inserts.
+For a new empty database, import the latest `database/english_power_quest_schema.sql` once instead of 003/004/005/006/007. **Never** import the full schema into an existing database; it contains CREATE TABLE and sample seed inserts.
 
 ## Verification queries
 
@@ -59,11 +60,11 @@ GitHub Actions runs PHP/JavaScript syntax checks, gameplay regression tests and 
 - A visible bilingual message reports unconfirmed map writes or rewards. A confirmed map write clears only the map warning; it does not imply that a failed reward was saved.
 - Healing Herb waits for a successful server purchase before restoring HP. Answer buttons and the countdown pause while the purchase is pending, then resume the same question. Repeated item clicks cannot start another simultaneous purchase.
 - A rejected insufficient-funds purchase returns HTTP 409 without changing balances. Failed balance/ledger statements roll back the entire reward transaction.
-- Battle rewards, damage and Herb purchases are server-computed. Uncertain battle responses replay the same request ID and cannot duplicate charges/rewards. NPC/typing QUEST rewards still use the legacy client flow and are not automatically retried. See [verified battles](VERIFIED_BATTLES.md).
+- Battle rewards, damage and Herb purchases are server-computed. Uncertain battle responses replay the same request ID and cannot duplicate charges/rewards. NPC/typing rewards now also use fixed server amounts, canonical spelling checks, one-use claim keys and persisted request receipts. See [verified battles](VERIFIED_BATTLES.md) and [verified quests](VERIFIED_QUESTS_AND_XP.md).
 - Story chapters advance through Rowan, Mira, Tala and Kai. Defeating Word Slime does not skip Mira's chapter. Existing saved quest steps are preserved; this update does not reset characters who already reached a later chapter.
 
 ## Security and limitations
 
 This is a browser-bound guest account. Anyone with access to the same browser session can use it; use HTTPS in production. A stolen raw bearer cookie could resume that guest until it expires or is revoked. Account recovery requires upgrading to a password account or binding Google. Password email verification is not implemented. Google sign-in is available after configuration; it verifies the token and does not merge accounts just because their emails match.
 
-Battle answers, HP, rewards, attempts and accuracy are now server-verified and transactionally replay-safe. NPC/typing QUEST claims and map/quest state remain client-reported; the save endpoint validates shape and bounds, not proof of location or quest completion. Complete those remaining checks before treating all game progression as server-authoritative.
+Battle answers, HP, rewards, attempts and accuracy are now server-verified and transactionally replay-safe. NPC chapter order, typing answers and quest rewards are also server-verified. Map coordinates and local monster approach remain browser-reported; bounds and proximity checks do not prove actual movement. The static typing bank remains readable for hints and spelling feedback. This is not a complete anti-cheat system.

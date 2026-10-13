@@ -1,0 +1,127 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__.'/rewards.php';
+
+function epq_story_beats(): array {
+    return [
+        'elder'=>['step'=>0,'next'=>1,'realm'=>1,'x'=>880,'xp'=>25,'coins'=>0,'power'=>1,'skill'=>'VOCABULARY'],
+        'mira'=>['step'=>1,'next'=>2,'realm'=>2,'x'=>790,'xp'=>30,'coins'=>5,'power'=>1,'skill'=>'VOCABULARY'],
+        'tala'=>['step'=>2,'next'=>3,'realm'=>3,'x'=>900,'xp'=>30,'coins'=>5,'power'=>1,'skill'=>'VOCABULARY'],
+        'kai'=>['step'=>3,'next'=>4,'realm'=>4,'x'=>870,'xp'=>40,'coins'=>10,'power'=>2,'skill'=>'IT_ENGLISH']
+    ];
+}
+
+function epq_story_step(mysqli $db, int $playerId): int {
+    $create=$db->prepare('INSERT IGNORE INTO verified_story_progress (player_id) VALUES (?)');
+    $create->bind_param('i',$playerId);$create->execute();
+    $stmt=$db->prepare('SELECT chapter_step FROM verified_story_progress WHERE player_id=?');
+    $stmt->bind_param('i',$playerId);$stmt->execute();
+    return (int)$stmt->get_result()->fetch_assoc()['chapter_step'];
+}
+
+function epq_story_advance(mysqli $db, int $playerId, int $step): void {
+    $stmt=$db->prepare('UPDATE verified_story_progress SET chapter_step=? WHERE player_id=?');
+    $stmt->bind_param('ii',$step,$playerId);$stmt->execute();
+    $stmt=$db->prepare("UPDATE player_game_saves SET save_json=JSON_SET(save_json,'$.questStep',?) WHERE player_id=?");
+    $stmt->bind_param('ii',$step,$playerId);$stmt->execute();
+}
+
+function epq_quest_reward(mysqli $db, int $playerId, string $key, int $xp, int $coins, int $power, string $skill): bool {
+    $stmt=$db->prepare('INSERT IGNORE INTO verified_quest_claims (player_id,claim_key) VALUES (?,?)');
+    $stmt->bind_param('is',$playerId,$key);$stmt->execute();
+    if (!$stmt->affected_rows) return false;
+    epq_apply_reward($db,$playerId,$xp,$coins,$power,$skill,'QUEST','Verified quest: '.$key);
+    return true;
+}
+
+function epq_quest_location(mysqli $db, int $playerId, int $realm, float $x): void {
+    $stmt=$db->prepare('SELECT save_json FROM player_game_saves WHERE player_id=?');
+    $stmt->bind_param('i',$playerId);$stmt->execute();
+    $row=$stmt->get_result()->fetch_assoc();$state=$row?json_decode($row['save_json'],true):null;
+    $realms=[1=>'maple',2=>'forest',3=>'camp',4=>'ruins'];
+    if (!is_array($state) || ($state['currentRealmId']??null)!==$realms[$realm] || !empty($state['insideCave'])
+        || !is_numeric($state['playerX']??null) || abs((float)$state['playerX']-$x)>125) {
+        throw new DomainException('请先走到对应角色或打字洞穴旁边。');
+    }
+}
+
+function epq_typing_bank(): array {
+    static $bank;
+    return $bank ??= json_decode((string)file_get_contents(__DIR__.'/../data/typing_cave_words.json'),true,512,JSON_THROW_ON_ERROR);
+}
+
+function epq_issue_typing_word(array &$state): void {
+    $available=array_values(array_filter(epq_typing_bank(),static fn($word)=>!in_array($word['id'],$state['seen'],true)));
+    if (!$available) throw new RuntimeException('Typing bank needs at least three words.');
+    $state['word']=$available[random_int(0,count($available)-1)];
+    $state['seen'][]=$state['word']['id'];$state['questionToken']=bin2hex(random_bytes(16));
+}
+
+function epq_typing_answer_correct(array $word, mixed $answer): bool {
+    return is_string($answer) && strlen($answer)<=128
+        && strtolower(trim((string)preg_replace('/\s+/u',' ',$answer)))===strtolower(trim($word['answer']));
+}
+
+function epq_typing_view(string $runId, array $state): array {
+    // Existing hints/letter-by-letter feedback use the word spelling. Reward grading remains server-side.
+    return ['runId'=>$runId,'status'=>$state['status'],'completedLevels'=>$state['completedLevels'],
+        'questionToken'=>$state['questionToken'],'word'=>$state['word']];
+}
+
+function epq_quest_action(mysqli $db,int $playerId,array $body): array {
+    $action=$body['action']??'';
+    $outcome=['rewardClaimed'=>false,'storyEnding'=>false];
+    $step=epq_story_step($db,$playerId);
+    if ($action==='NPC') {
+        $npc=$body['npcId']??null;
+        if (!is_string($npc) || !isset(epq_story_beats()[$npc])) throw new InvalidArgumentException('Unknown NPC.');
+        $beat=epq_story_beats()[$npc];
+        $outcome['npcId']=$npc;
+        if ($step<$beat['step']) throw new DomainException('请先完成前面的剧情。');
+        if ($step===$beat['step']) {
+            epq_quest_location($db,$playerId,$beat['realm'],$beat['x']);
+            $outcome['rewardClaimed']=epq_quest_reward($db,$playerId,'npc:'.$npc,$beat['xp'],$beat['coins'],$beat['power'],$beat['skill']);
+            epq_story_advance($db,$playerId,$beat['next']);$step=$beat['next'];
+        }
+    } elseif ($action==='TYPING_START') {
+        epq_quest_location($db,$playerId,4,1940);
+        $close=$db->prepare("UPDATE verified_typing_runs SET state_json=JSON_SET(state_json,'$.status','CLOSED') WHERE player_id=? AND JSON_UNQUOTE(JSON_EXTRACT(state_json,'$.status'))='ACTIVE'");
+        $close->bind_param('i',$playerId);$close->execute();
+        $runId=bin2hex(random_bytes(16));
+        $state=['status'=>'ACTIVE','completedLevels'=>0,'seen'=>[],'word'=>null,'questionToken'=>null];
+        epq_issue_typing_word($state);
+        $json=json_encode($state,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE);
+        $stmt=$db->prepare('INSERT INTO verified_typing_runs (run_id,player_id,state_json) VALUES (?,?,?)');
+        $stmt->bind_param('sis',$runId,$playerId,$json);$stmt->execute();
+        $outcome['typing']=epq_typing_view($runId,$state);
+    } elseif (in_array($action,['TYPING_ANSWER','TYPING_CLOSE'],true)) {
+        $runId=$body['runId']??null;
+        if (!is_string($runId) || !preg_match('/\A[a-f0-9]{32}\z/',$runId)) throw new InvalidArgumentException('Invalid typing run.');
+        $stmt=$db->prepare('SELECT state_json FROM verified_typing_runs WHERE run_id=? AND player_id=? FOR UPDATE');
+        $stmt->bind_param('si',$runId,$playerId);$stmt->execute();$row=$stmt->get_result()->fetch_assoc();
+        if (!$row) throw new DomainException('当前挑战不属于这个角色。');
+        $state=json_decode($row['state_json'],true,512,JSON_THROW_ON_ERROR);
+        if ($action==='TYPING_CLOSE') { if ($state['status']==='ACTIVE') $state['status']='CLOSED'; }
+        else {
+            if ($state['status']!=='ACTIVE' || ($body['questionToken']??null)!==$state['questionToken']) throw new DomainException('本题已经结束，请重新进入挑战。');
+            if (!is_string($body['answer']??null) || strlen($body['answer'])>128) throw new InvalidArgumentException('Invalid answer.');
+            $outcome['correct']=epq_typing_answer_correct($state['word'],$body['answer']);
+            if ($outcome['correct']) {
+                $outcome['rewardClaimed']=epq_quest_reward($db,$playerId,'typing:'.$runId.':'.$state['questionToken'],10,5,1,'VOCABULARY');
+                $state['completedLevels']++;
+                if ($state['completedLevels']===3) {
+                    $state['status']='WON';$state['questionToken']=null;
+                    if ($step===4) {
+                        epq_quest_reward($db,$playerId,'story:ending',50,25,2,'IT_ENGLISH');
+                        epq_story_advance($db,$playerId,5);$step=5;$outcome['storyEnding']=true;
+                    }
+                } else epq_issue_typing_word($state);
+            }
+        }
+        $json=json_encode($state,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE);
+        $stmt=$db->prepare('UPDATE verified_typing_runs SET state_json=? WHERE run_id=?');
+        $stmt->bind_param('ss',$json,$runId);$stmt->execute();
+        $outcome['typing']=epq_typing_view($runId,$state);
+    } else throw new InvalidArgumentException('Unknown quest action.');
+    return ['ok'=>true,'chapterStep'=>$step,'player'=>epq_reward_balance($db,$playerId),'outcome'=>$outcome];
+}

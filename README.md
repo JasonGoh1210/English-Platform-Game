@@ -35,15 +35,15 @@ The project uses paths beginning with `/FYP/`, so if you use a different URL pre
 
 ## Database setup
 
-For a **new, empty local database**, import `database/english_power_quest_schema.sql` once using phpMyAdmin. It already includes the Story flag, persistent guest tables, map saves, four worlds, verified battles and character profiles. Register through `register.php` or create a guest through `login.php`.
+For a **new, empty local database**, import `database/english_power_quest_schema.sql` once using phpMyAdmin. It already includes the Story flag, persistent guest tables, map saves, four worlds, verified battles, character profiles and verified quest rewards. Register through `register.php` or create a guest through `login.php`.
 
-Do not also run migrations 001–006 on this new schema: their changes are already included. `database/demo_seed.sql` is an optional development fixture, not an installation requirement or an upgrade script. Its demo user has no password and is not a playable password login.
+Do not also run migrations 001–007 on this new schema: their changes are already included. `database/demo_seed.sql` is an optional development fixture, not an installation requirement or an upgrade script. Its demo user has no password and is not a playable password login.
 
 Check `config/db.php` for the local MySQL credentials.
 
-For an **existing database**, export a backup first and inspect its columns/tables. Apply only missing migrations in order: 001 for older question schemas, 002 for `players.story_intro_seen`, 003 for guest identities/map saves, then 004 for the four world records, 005 for verified battles and 006 for character profiles. Never reimport the full schema or demo seed over existing players. See [`docs/GUEST_ACCOUNTS_AND_DATABASE.md`](docs/GUEST_ACCOUNTS_AND_DATABASE.md).
+For an **existing database**, export a backup first and inspect its columns/tables. Apply only missing migrations in order: 001 for older question schemas, 002 for `players.story_intro_seen`, 003 for guest identities/map saves, then 004 for the four world records, 005 for verified battles, 006 for character profiles and 007 for verified NPC/typing progression. Never reimport the full schema or demo seed over existing players. See [`docs/GUEST_ACCOUNTS_AND_DATABASE.md`](docs/GUEST_ACCOUNTS_AND_DATABASE.md).
 
-`git pull origin main` updates files; it does not execute SQL. Verified battles require migration 005 on existing databases; see [`docs/VERIFIED_BATTLES.md`](docs/VERIFIED_BATTLES.md). First-login setup requires migration 006; [Google login and character setup](docs/GOOGLE_SIGNIN_AND_CHARACTERS.md) explains the safe update and Client ID configuration. No image installation is required.
+`git pull origin main` updates files; it does not execute SQL. Verified battles require migration 005 on existing databases; see [`docs/VERIFIED_BATTLES.md`](docs/VERIFIED_BATTLES.md). First-login setup requires migration 006; [Google login and character setup](docs/GOOGLE_SIGNIN_AND_CHARACTERS.md) explains the safe update and Client ID configuration. NPC/typing progression requires migration 007; see [safe quest update and XP HUD](docs/VERIFIED_QUESTS_AND_XP.md). No image installation is required.
 
 Map and battle Settings now include pixel sound effects, volume and a Test Sound button. Click/touch or press a key to enable browser audio. No sound files or SQL migration are required; see [Sound effects](docs/SOUND_EFFECTS.md).
 
@@ -51,16 +51,16 @@ New characters now learn movement and their first village battle with Elder Rowa
 
 ## Validation
 
-Run PHP syntax checks, `node --check js/rpg.js`, `node --check js/battle.js`, and `node --test tests/gameplay_regression.test.cjs tests/battle_api.test.cjs` and `php tests/battle_rules_test.php`, `node --test tests/characters.test.cjs`, `php tests/google_token_test.php`. CI checks gameplay regressions and the guest/save/upgrade and verified combat flows on MySQL 8 and MariaDB 10.4. These checks do not verify the actual browser artwork or a complete playthrough.
+Run PHP syntax checks, `node --check js/rpg.js`, `node --check js/battle.js`, and `node --test tests/*.test.cjs` and `php tests/battle_rules_test.php`, `node --test tests/characters.test.cjs`, `php tests/google_token_test.php`. CI checks gameplay regressions and the guest/save/upgrade and verified combat/quest flows on MySQL 8 and MariaDB 10.4. These checks do not verify the actual browser artwork or a complete playthrough.
 
 Latest priorities and reproduced issues: [Optimization review, 2026-10-13](docs/OPTIMIZATION_REVIEW_2026-10-13.md). Account upgrade/logout controls now live in map Settings, leaving quest titles visible.
 
 ## Known gaps before a final FYP release
 
-- Replace the remaining client-supplied NPC/typing QUEST reward deltas with server-verified one-time claims.
+- Map coordinates and local monster approach remain browser-reported; server quest validation does not prove movement.
 - Import `data/questions.json` and `data/enemies.json` into MySQL (or establish one authoritative runtime source).
-- Add mistake-review UI, mastery calculations and verified quest claims using the new persisted battle attempts/accuracy.
-- NPC/typing QUEST reward POSTs are not automatically replayed; battle actions safely replay their server receipts.
+- Add mistake-review UI and mastery calculations using the persisted battle attempts/accuracy.
+- NPC and typing rewards now use server grading, chapter order and replay-safe receipts; the legacy arbitrary reward endpoint is closed.
 - Use a restricted MySQL account and avoid returning raw exception messages outside local development.
 
 See [`docs/CODE_DATABASE_AUDIT.md`](docs/CODE_DATABASE_AUDIT.md) for the historical audit; its older authentication and persistence descriptions have been superseded by the guest-account documentation.

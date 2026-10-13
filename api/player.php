@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/bootstrap.php';
+require_once __DIR__.'/../includes/quests.php';
 
 try {
     $db = epq_db();
@@ -54,10 +55,15 @@ try {
             'skillPoints' => (int)$player['skill_points_total'],
             'worldName' => $player['world_name'],
             'englishPowerTotal' => $totalPower,
+            'chapterStep' => epq_story_step($db,$playerId),
+            'levelProgress' => epq_level_progress($db,(int)$player['level_no'],(int)$player['xp_total']),
             'character' => epq_character_profile($db, $playerId)
         ],
         'englishPower' => $stats
     ]);
 } catch (Throwable $e) {
-    epq_json(['ok' => false, 'error' => $e->getMessage()], 500);
+    error_log('[English Power Quest player] ' . $e->getMessage());
+    $missingMigration = $e instanceof mysqli_sql_exception && $e->getCode() === 1146;
+    epq_json(['ok' => false, 'errorCode' => $missingMigration ? 'MIGRATION_REQUIRED' : 'PLAYER_UNAVAILABLE',
+        'error' => $missingMigration ? 'Database update required. Check migrations 003 through 007.' : 'Player profile is temporarily unavailable.'], 503);
 }

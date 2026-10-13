@@ -38,9 +38,8 @@ bilingual update message and permits returning to the map; no unverified reward 
 
 ## Remaining scope
 
-NPC/typing-cave rewards still use the legacy QUEST endpoint; their one-time claims and
-progression are not server-verified yet. Legacy QUESTION, ENEMY, SHOP_PURCHASE and admin
-reward calls are blocked. The public static question bank can still be read, and map
+NPC/typing rewards and progression now use [verified quests (migration 007)](VERIFIED_QUESTS_AND_XP.md).
+The legacy arbitrary reward endpoint, including QUEST, is blocked. The public static question bank can still be read, and map
 coordinates/encounter entry are not proven by the server. This prevents duplicate combat
 settlement and forged combat reward amounts; it is not a complete anti-cheat system.
 

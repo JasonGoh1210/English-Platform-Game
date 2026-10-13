@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/progression.php';
 
 // Caller owns the transaction. All balances and ledgers change atomically.
 function epq_apply_reward(mysqli $db, int $playerId, int $xp, int $coins, int $power, string $skillCode, string $source, string $description, ?int $sourceId = null): array {
@@ -125,5 +126,6 @@ function epq_reward_balance(mysqli $db, int $playerId): array {
     $power = $db->prepare('SELECT COALESCE(SUM(current_power),0) AS power FROM player_english_stats WHERE player_id = ?');
     $power->bind_param('i', $playerId);
     $power->execute();
-    return ['level'=>(int)$row['level_no'], 'xp'=>(int)$row['xp_total'], 'coins'=>(int)$row['coins_total'], 'skillPoints'=>(int)$row['skill_points_total'], 'englishPowerTotal'=>(int)$power->get_result()->fetch_assoc()['power']];
+    return ['level'=>(int)$row['level_no'], 'xp'=>(int)$row['xp_total'], 'coins'=>(int)$row['coins_total'], 'skillPoints'=>(int)$row['skill_points_total'], 'englishPowerTotal'=>(int)$power->get_result()->fetch_assoc()['power'],
+        'levelProgress'=>epq_level_progress($db,(int)$row['level_no'],(int)$row['xp_total'])];
 }

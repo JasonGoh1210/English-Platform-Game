@@ -31,7 +31,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261013-review1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261013-quests1">
 </head>
 <body>
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -54,7 +54,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
           <div class="pixel-stat-row xp-row">
             <span>XP</span>
             <div class="pixel-meter"><div class="xp-meter" id="mapXpBar" style="width:0%"></div></div>
-            <b><span id="xpText">0</span> / 100</b>
+            <b><span id="xpText">0</span><span id="mapXpDivider"> / </span><span id="mapXpTarget">—</span></b>
           </div>
         </div>
 
@@ -333,7 +333,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261013-review1").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261013-quests1").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");

@@ -80,7 +80,9 @@ verify($legacyMapStatus === 200 && $retainedMap['state']['tutorial']['stage'] ==
 [, $otherMap] = http('api/game_state.php', null, $other[0]);
 verify($otherMap['state'] === null, 'Tutorial checkpoints belong to the session player');
 [$questStatus, $quest] = http('api/save_progress.php', ['csrfToken'=>$other[1],'sourceType'=>'QUEST','xpDelta'=>20,'coinDelta'=>10,'englishPowerDelta'=>1], $other[0]);
-verify($questStatus === 200 && $quest['player']['xp'] === 20 && $quest['player']['coins'] === 10, 'Shared reward writer preserves existing map QUEST flow');
+verify($questStatus === 400, 'Legacy client-computed QUEST rewards are rejected');
+// Give this disposable rollback actor known balances without using the removed reward API.
+$db->query('UPDATE players SET xp_total=20,coins_total=10 WHERE player_id='.(int)$other[2]);
 $battle = token();
 [$status, $start] = action($actor, $battle, 'START', ['enemyId'=>'slime-01', 'player_id'=>$other[2], 'xpDelta'=>99999]);
 verify($status === 200 && $start['battle']['playerHp'] === 100 && $start['player']['xp'] === 0, 'Start ignores forged balances/player ID');

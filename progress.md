@@ -78,3 +78,18 @@ Original prompt: 试试看做新手教学，有一个小怪出现在村庄，长
 - Optimization UI browser passed: desktop quest title clear; visible same-CSRF account form in Settings; 16 Tab and 16 Shift+Tab stay inside; Escape restores trigger; 390x844 Settings fits; guest upgrade/logout/password relogin retain player ID and saved progress. No console/page errors. Screenshots inspected before/after.
 - Required skill Playwright client passed real movement/MEET state and screenshot/text consistency. Audit report records remaining QUEST replay, XP meter, learner feedback, 19-question bank, mobile readability and maintainability priorities. W3C APG used for modal keyboard behavior.
 - No schema migration or new/changed sprite assets. Commit includes only account/layout/focus/cache updates, latest audit and README/progress documentation. Original gameplay and player data preserved.
+
+## 2026-10-13 — Verified quest rewards and truthful XP HUD
+
+- Continue optimization priorities 1/2: server-owned NPC chapter rewards and three-word typing runs, one-use claim keys/request receipts, additive migration007 snapshotting old chapter steps and old chapter reward ledgers. No actual XAMPP database modified.
+- Old api/save_progress.php now rejects all client-supplied amounts. api/game_state.php overwrites client chapter steps with verified progression; position/world/cave and tutorial storage remain intact.
+- Quest client serializes, persists uncertain requests per player, retries the exact receipt, resumes with fresh session CSRF and validates balance/chapter responses. No optimistic currency additions.
+- NPC constants preserve original rewards and all four original positions; typing rewards10XP/5Coins/1Power per word, one-time ending50XP/25Coins/2Power. New practice runs still reward genuine answers. Wrong answers and local monster/hint/spelling mechanics preserved, with network waits pausing the local challenge.
+- Server levelProgress comes from MySQL levels, updates on load/confirmed rewards, and displays current-level XP, dynamic denominator, percent and MAX.
+- Backend passed: ownership/CSRF/location/story order, forged amount and chapter rejection, NPC and typing replay, three correct stages, single ending, legitimate replay, old migration/reimport and failed-ledger rollback. Existing combat/account checks passed.
+
+- Final validation: 36 Node tests passed; all PHP/JS syntax, PHP question/tutorial/Google/XP tests and Bash smoke syntax passed. Isolated MariaDB tests passed fixed/forged rewards, legacy map and reward-ledger backfill, duplicate migration, abandoned runs, rollback/retry and existing account/combat flows.
+- Browser passed four NPC chapters, lost committed NPC/typing responses, wrong spelling/hints, three words and once-only ending; XP246 displays146/150 at97.33%, plus mobile/MAX. Latest screenshots were opened and inspected.
+- Full regression browser passed Rowan tutorial through durable debrief, legacy/skipped characters, synthesized audio/mute/settings, continuous combat/HP reload/Herb/focus, all four worlds and Echo Cave entry/exit/respawn. Required develop-web-game Playwright client passed real movement with matching MEET state and no console errors.
+- Friendly player/save errors now avoid exposing database exceptions and identify missing migrations. Rollout requires backing up the actual database and importing ONLY missing007; no live data, credentials or art assets changed.
+- Next priorities: battle mistake explanations/review and theme-based question expansion; client-reported coordinates/local monster timers remain outside current server verification. GitHub MySQL8/MariaDB10.4 CI pending publication.

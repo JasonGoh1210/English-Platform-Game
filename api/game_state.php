@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/../includes/tutorial.php';
+require_once __DIR__.'/../includes/quests.php';
 
 function epq_map_number(mixed $value, float $min, float $max, float $fallback): float {
     if (!is_numeric($value)) return $fallback;
@@ -48,9 +49,11 @@ try {
         $stmt->bind_param('i', $playerId);
         $stmt->execute();
         $row = $stmt->get_result()->fetch_assoc();
+        $state=$row?json_decode((string)$row['save_json'],true):null;
+        if ($state) $state['questStep']=epq_story_step($db,$playerId);
         epq_json([
             'ok' => true,
-            'state' => $row ? json_decode((string)$row['save_json'], true) : null,
+            'state' => $state,
             'savedAt' => $row['updated_at'] ?? null
         ]);
     }
@@ -63,7 +66,7 @@ try {
     }
     $body = json_decode($raw, true);
     if (!is_array($body)) epq_json(['ok' => false, 'error' => 'Invalid JSON.'], 400);
-    if (!epq_csrf_is_valid($body['csrfToken'] ?? null)) {
+    if (!is_string($body['csrfToken'] ?? null) || !epq_csrf_is_valid($body['csrfToken'])) {
         epq_json(['ok' => false, 'error' => 'Invalid request token.'], 403);
     }
     if (!is_array($body['state'] ?? null)) {
@@ -80,6 +83,9 @@ try {
     $worldId = (int)$worldRow['world_id'];
 
     $db->begin_transaction();
+    $playerLock=$db->prepare('SELECT player_id FROM players WHERE player_id=? FOR UPDATE');
+    $playerLock->bind_param('i',$playerId);$playerLock->execute();$playerLock->get_result()->free();
+    $state['questStep']=epq_story_step($db,$playerId);
     if (!array_key_exists('tutorial', $body['state'])) {
         // An older cached game client must not erase a newer guide checkpoint.
         $previous = $db->prepare('SELECT save_json FROM player_game_saves WHERE player_id = ? FOR UPDATE');
@@ -113,5 +119,7 @@ try {
 } catch (Throwable $e) {
     if (isset($db) && $db instanceof mysqli) $db->rollback();
     error_log('[English Power Quest game state] ' . $e->getMessage());
-    epq_json(['ok' => false, 'error' => 'Game save is unavailable. Apply migrations 003 and 004.'], 500);
+    $missingMigration = $e instanceof mysqli_sql_exception && $e->getCode() === 1146;
+    epq_json(['ok' => false, 'errorCode' => $missingMigration ? 'MIGRATION_REQUIRED' : 'SAVE_UNAVAILABLE',
+        'error' => $missingMigration ? 'Database update required. Check migrations 003 through 007.' : 'Game save is temporarily unavailable.'], 503);
 }

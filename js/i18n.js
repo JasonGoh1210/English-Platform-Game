@@ -1,4 +1,4 @@
-import { setupAudio } from "./audio.js?v=20261013-review1";
+import { setupAudio } from "./audio.js?v=20261013-quests1";
 
 const LANGUAGE_KEY = "englishPowerQuest.language.v1";
 

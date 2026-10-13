@@ -40,6 +40,17 @@ story=$(curl -fsS -b "$cookies" -c "$cookies" -H 'Content-Type: application/json
 printf '%s' "$story" | jq -e '.ok == true'
 test "$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s english_power_quest -e "SELECT story_intro_seen FROM players WHERE player_id=$player_id")" = 1
 
+
+# Original NPC chapters now use fixed server rewards.
+for chapter in 'maple:880:elder' 'forest:790:mira'; do
+  IFS=: read -r realm x npc <<< "$chapter"
+  curl -fsS -b "$cookies" -H 'Content-Type: application/json' \
+    -d "{\"csrfToken\":\"$csrf\",\"state\":{\"currentRealmId\":\"$realm\",\"playerX\":$x,\"questStep\":5}}" "$base/api/game_state.php" | jq -e '.ok == true'
+  request_id=$(php -r 'echo bin2hex(random_bytes(16));')
+  curl -fsS -b "$cookies" -H 'Content-Type: application/json' \
+    -d "{\"csrfToken\":\"$csrf\",\"action\":\"NPC\",\"npcId\":\"$npc\",\"requestId\":\"$request_id\"}" "$base/api/quests.php" | jq -e '.ok == true'
+done
+
 saved=$(curl -fsS -b "$cookies" -c "$cookies" -H 'Content-Type: application/json' \
   -d "{\"csrfToken\":\"$csrf\",\"state\":{\"currentRealmId\":\"forest\",\"playerX\":555,\"questStep\":2,\"defeatedEnemyIds\":[\"bat-01\"]}}" \
   "$base/api/game_state.php")
@@ -48,11 +59,11 @@ loaded=$(curl -fsS -b "$cookies" "$base/api/game_state.php")
 printf '%s' "$loaded" | jq -e '.state.currentRealmId == "forest" and .state.playerX == 555'
 test "$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s english_power_quest -e "SELECT w.world_order FROM players p JOIN worlds w ON w.world_id=p.current_world_id WHERE p.player_id=$player_id")" = 2
 
-reward=$(curl -fsS -b "$cookies" -H 'Content-Type: application/json' \
-  -d "{\"csrfToken\":\"$csrf\",\"xpDelta\":20,\"coinDelta\":10,\"englishPowerDelta\":1,\"englishSkillCode\":\"VOCABULARY\",\"sourceType\":\"QUEST\"}" \
-  "$base/api/save_progress.php")
-printf '%s' "$reward" | jq -e '.ok == true'
-test "$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s english_power_quest -e "SELECT xp_total FROM players WHERE player_id=$player_id")" = 20
+# Legacy client amounts cannot grant any rewards.
+blocked_reward=$(curl -sS -o /tmp/epq_legacy_reward.txt -w '%{http_code}' -b "$cookies" -H 'Content-Type: application/json' \
+  -d "{\"csrfToken\":\"$csrf\",\"sourceType\":\"QUEST\",\"xpDelta\":99999}" "$base/api/save_progress.php")
+test "$blocked_reward" = 400
+test "$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s english_power_quest -e "SELECT xp_total FROM players WHERE player_id=$player_id")" = 55
 
 # Simulate browser close: use ONLY the long-lived guest cookie; no PHPSESSID.
 token=$(awk '$6 == "epq_guest_resume" { print $7 }' "$cookies")
@@ -71,7 +82,7 @@ grep -q 'Location: /FYP/index.php' /tmp/epq_up_headers.txt
 
 check=$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s english_power_quest \
   -e "SELECT CONCAT(u.account_type,':',u.email,':',p.player_id,':',p.xp_total,':',p.story_intro_seen) FROM users u JOIN players p ON p.user_id=u.user_id WHERE u.user_id=$user_id")
-test "$check" = "password:smoke@example.com:$player_id:20:1"
+test "$check" = "password:smoke@example.com:$player_id:55:1"
 tokens=$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s english_power_quest -e "SELECT COUNT(*) FROM guest_login_tokens WHERE user_id=$user_id")
 test "$tokens" = 0
 # Upgraded player can no longer use the old anonymous bearer cookie.
@@ -105,9 +116,9 @@ curl -fsS -D /tmp/epq_login_headers.txt -o /tmp/epq_login_post.html -b "$cookies
   --data-urlencode 'password=Passw0rd-Test!' "$base/login.php"
 grep -q 'Location: /FYP/index.php' /tmp/epq_login_headers.txt
 logged_in=$(curl -fsS -b "$cookies" "$base/api/player.php")
-printf '%s' "$logged_in" | jq -e --argjson pid "$player_id" '.ok == true and .player.playerId == $pid and .player.xp == 20 and .player.coins == 10'
+printf '%s' "$logged_in" | jq -e --argjson pid "$player_id" '.ok == true and .player.playerId == $pid and .player.xp == 55 and .player.coins == 5'
 
 echo "PASS: guest, story, map, XP, CSRF, browser recovery, account upgrade and password login"
 
-EPQ_BATTLE_TEST_DB=isolated php tests/battle_flow_smoke.php
+EPQ_BATTLE_TEST_DB=isolated php tests/quests_flow_smoke.php
 EPQ_BATTLE_TEST_DB=isolated php tests/character_flow_smoke.php
