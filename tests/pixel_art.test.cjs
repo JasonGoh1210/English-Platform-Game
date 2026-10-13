@@ -20,6 +20,7 @@ function png(relative){
   return {width,height,channels,pixels:out};
 }
 const sprites=['images/npc/npc_mira_64.png','images/npc/npc_tala_64.png','images/npc/npc_kai_64.png',
+  'images/npc/npc_elder_rowan_64.png','images/world/pixel/system_book_64.png','images/world/pixel/wayfinder_sign_64.png',
   'images/world/pixel/realm_portal_64.png','images/world/monsters/cave-wraith-64.png','images/world/monsters/confusion-bat-64.png',
   'images/world/monsters/road-guardian-64.png','images/world/monsters/grammar-guardian-64.png'];
 test('Active sprites are real 64x64 RGBA PNGs with binary alpha, bounded palettes and transparent margins',()=>{
@@ -43,4 +44,7 @@ test('Portal runes and guardian eyes retain their gold and cyan accent colors',(
 });
 test('Every realm has a native pixel backdrop and the battle cave has its own pixel scene',()=>{
   for(const realm of ['maple','forest','camp','ruins','cave']){const image=png('images/world/pixel/'+realm+'.png');assert.equal(image.width,384);assert.equal(image.height,192);assert.equal(image.width%32,0);assert.equal(image.height%32,0);}
+});
+test('Opening campus scene is a native 384x192 pixel PNG',()=>{
+  const image=png('images/world/pixel/opening-campus.png');assert.equal(image.width,384);assert.equal(image.height,192);
 });

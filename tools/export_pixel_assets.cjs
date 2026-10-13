@@ -1,11 +1,11 @@
-// Production export for newly generated artwork. Existing player/Rowan art is never an input.
+// Production export for newly generated artwork. Original player/Rowan files are never overwritten.
 // EPQ_PLAYWRIGHT_MODULE can point at a local Playwright install; nothing is downloaded.
 const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require(process.env.EPQ_PLAYWRIGHT_MODULE || 'playwright');
 const root = path.resolve(__dirname, '..');
 const manifest = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
-const spriteNames = { mira:'images/npc/npc_mira_64.png', tala:'images/npc/npc_tala_64.png',
+const spriteNames = { rowan:'images/npc/npc_elder_rowan_64.png', mira:'images/npc/npc_mira_64.png', tala:'images/npc/npc_tala_64.png',
   kai:'images/npc/npc_kai_64.png', portal:'images/world/pixel/realm_portal_64.png',
   wraith:'images/world/monsters/cave-wraith-64.png', bat:'images/world/monsters/confusion-bat-64.png',
   road_guardian:'images/world/monsters/road-guardian-64.png', grammar_guardian:'images/world/monsters/grammar-guardian-64.png' };

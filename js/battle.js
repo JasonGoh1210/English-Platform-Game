@@ -1,11 +1,11 @@
-import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261014-pixel64";
-import { battleToken, createBattleClient } from "./battle-api.js?v=20261014-pixel64";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-pixel64";
-import { playSound } from "./audio.js?v=20261014-pixel64";
-import { normalizeTutorial } from "./tutorial.js?v=20261014-pixel64";
-import { paintCharacterImages } from "./characters.js?v=20261014-pixel64";
-import { createBattleReviewPanel } from "./battle-review.js?v=20261014-pixel64";
-import { pixelArtPaths } from "./pixel-world.js?v=20261014-pixel64";
+import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261014-storypixel";
+import { battleToken, createBattleClient } from "./battle-api.js?v=20261014-storypixel";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-storypixel";
+import { playSound } from "./audio.js?v=20261014-storypixel";
+import { normalizeTutorial } from "./tutorial.js?v=20261014-storypixel";
+import { paintCharacterImages } from "./characters.js?v=20261014-storypixel";
+import { createBattleReviewPanel } from "./battle-review.js?v=20261014-storypixel";
+import { pixelArtPaths } from "./pixel-world.js?v=20261014-storypixel";
 
 // Use the same per-player storage namespace as the map. If these keys differ,
 // the battle page cannot find the enemy that the map just stored and redirects back.

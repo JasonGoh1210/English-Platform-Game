@@ -27,3 +27,11 @@
 | Ancient Ruins | Muted indigo twilight sky, small pale pixel moon, low purple hills, a few widely spaced broken gray-blue towers; open center, no huge castle, magical swirls or ornate architecture. |
 
 洞穴背景与小型地标由原生 Canvas 方格绘制，没有调用外部图片 API。旧素材和原始生成图保留，游戏只引用项目中的最终 PNG。
+
+## 2026-10-14 罗文 64 像素版本
+
+内置 image_gen 编辑模式，透明背景，参考图为原 `images/npc/npc_elder_rowan_32.png`；该文件不覆盖。最终导出为 `images/npc/npc_elder_rowan_64.png`。
+
+提示：Use case: identity-preserve. Input image is the edit target: this game's selected Elder Rowan sprite. Create a sharper readable native 64-by-64 logical pixel-art version shown at exact integer magnification on a genuinely transparent background. Preserve this same elderly village mentor's identity: warm friendly face, white hair and long white beard, moss-green robe with cream details, brown boots, tall wooden walking staff held on the viewer's right. Preserve a front/three-quarter view, full body and feet and staff, centered balanced silhouette with transparent margins. Only increase pixel detail and readability; retain green clothing, beard and staff and proportions. Strict uniform aligned coarse square pixel clusters representing a 64x64 source grid, crisp stepped silhouette and dark outline, limited flat colors. Clearly separated dark eyes, white beard, face, cuffs and boots. No antialiasing, blur, soft shading, glow, scene, floor, shadow, letters, watermark or extra subjects. This is a production fantasy RPG sprite, not a smooth illustration.
+
+校园、告示牌与系统之书是引擎原生 Canvas 方格图形，通过 `tools/export_story_assets.cjs` 导出实际 PNG，没有使用图片生成服务。

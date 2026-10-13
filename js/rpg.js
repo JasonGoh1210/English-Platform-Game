@@ -1,11 +1,12 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261014-pixel64";
-import { playSound } from "./audio.js?v=20261014-pixel64";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-pixel64";
-import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261014-pixel64";
-import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261014-pixel64";
-import { createQuestClient } from "./quest-api.js?v=20261014-pixel64";
-import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261014-pixel64";
-import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave } from "./pixel-world.js?v=20261014-pixel64";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261014-storypixel";
+import { playSound } from "./audio.js?v=20261014-storypixel";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-storypixel";
+import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261014-storypixel";
+import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261014-storypixel";
+import { createQuestClient } from "./quest-api.js?v=20261014-storypixel";
+import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261014-storypixel";
+import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave } from "./pixel-world.js?v=20261014-storypixel";
+import { storyPortraitSource } from "./story-visuals.js?v=20261014-storypixel";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -23,6 +24,8 @@ const ui = {
   dialogueName: document.getElementById("dialogueName"),
   dialogueText: document.getElementById("dialogueText"),
   dialogueButton: document.getElementById("dialogueButton"),
+  interactButton: document.getElementById("interactButton"),
+  dialoguePortrait: document.getElementById("dialoguePortraitImage"),
   storyIntroOverlay: document.getElementById("storyIntroOverlay"),
   storyIntroCanvas: document.getElementById("storyboardCanvas"),
   storyIntroSceneArt: document.getElementById("storyboardSceneArt"),
@@ -130,7 +133,7 @@ const worldBackgroundPaths = {
 for (const realmId of Object.keys(worldBackgroundPaths)) {
   const availablePaths = window.EPQ_AUTH?.worldBackgrounds?.[realmId];
   if (Array.isArray(availablePaths)) {
-    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261014-pixel64");
+    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261014-storypixel");
   }
 }
 
@@ -750,10 +753,11 @@ function hasWalkFrame(direction, index) {
 // procedural stand-in. Keep the existing Canvas character as a safe fallback.
 const elderRowanSprite = new Image();
 elderRowanSprite.decoding = "async";
-elderRowanSprite.onerror = () => console.warn(
-  "[English Power Quest] Elder Rowan PNG unavailable; using the original NPC artwork."
-);
-elderRowanSprite.src = "/FYP/images/npc/npc_elder_rowan_32.png?v=20261010-rowan1";
+elderRowanSprite.onerror = () => {
+  elderRowanSprite.onerror = null;
+  elderRowanSprite.src = "/FYP/images/npc/npc_elder_rowan_32.png?v=20261010-rowan1";
+};
+elderRowanSprite.src = pixelArtPaths.npcs.elder;
 function elderRowanSpriteReady() {
   return elderRowanSprite.complete && elderRowanSprite.naturalWidth > 0;
 }
@@ -866,9 +870,12 @@ window.addEventListener("keydown", (e) => {
   if (guideIsOpen()) return;
 
   if (world.storyIntroOpen) {
-    if (k === "enter" || k === " ") {
+    if (k === "tab") {
       e.preventDefault();
-      if (!e.repeat) advanceStoryIntro();
+      (document.activeElement === ui.storyIntroNext ? ui.storyIntroSkip : ui.storyIntroNext).focus();
+    } else if (k === "enter" || k === " ") {
+      e.preventDefault();
+      if (!e.repeat) (document.activeElement === ui.storyIntroSkip ? finishStoryIntro : advanceStoryIntro)();
     } else if (k === "escape") {
       e.preventDefault();
       if (!e.repeat) finishStoryIntro();
@@ -992,6 +999,14 @@ function nearestNPC() {
   return dist < 95 ? best : null;
 }
 
+function showDialogue() {
+  const portrait=storyPortraitSource(world.currentDialogueNpcId);
+  ui.dialoguePortrait.src=portrait.src;
+  ui.dialoguePortrait.alt=ui.dialogueName.textContent;
+  ui.dialoguePortrait.dataset.portraitKind=pixelArtPaths.npcs[world.currentDialogueNpcId]?"npc":"object";
+  ui.dialogue.classList.remove("hidden");
+}
+
 function nearestEnemy() {
   let best = null;
   let dist = Infinity;
@@ -1041,120 +1056,6 @@ function splitStoryParagraph(paragraph, maxFrames = 3) {
   return frames.slice(0, maxFrames);
 }
 
-function storyPortraitSource(characterId) {
-  const portraitAliases = { elder: "rowan" };
-  characterId = portraitAliases[characterId] || characterId;
-  if (characterId === "alex") {
-    return {
-      src: "/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-assetpaths1",
-      kind: "pixel"
-    };
-  }
-
-  const portraits = {
-    rowan: `<g stroke-linejoin="round" stroke-linecap="round">
-      <path d="M46 348 L58 242 Q69 198 103 184 L193 184 Q232 205 245 348Z" fill="#513b36" stroke="#191a27" stroke-width="9"/>
-      <path d="M72 233 L100 199 L120 260 L103 345 L63 345Z" fill="#ac8657" stroke="#e0be7b" stroke-width="4"/>
-      <path d="M204 229 L180 197 L158 263 L184 344 L236 345Z" fill="#7c6046" stroke="#e0be7b" stroke-width="4"/>
-      <path d="M114 179 L115 154 L180 154 L182 197 L148 218Z" fill="#b88867" stroke="#6a493e" stroke-width="5"/>
-      <path d="M89 107 Q83 48 139 43 Q201 43 207 111 L196 166 Q171 198 143 193 Q105 182 94 150Z" fill="#e5c29a" stroke="#704f43" stroke-width="7"/>
-      <path d="M86 113 Q75 62 112 33 Q149 8 189 39 Q220 60 207 117 L193 91 L180 64 L163 86 L141 65 L117 93 L105 128Z" fill="#d8d6c5" stroke="#56576b" stroke-width="8"/>
-      <path d="M111 130 Q115 155 139 164 L157 164 Q181 153 185 129 Q174 145 160 139 L148 150 L137 139 Q124 146 111 130Z" fill="#f1ead8" stroke="#8a857e" stroke-width="5"/>
-      <path d="M111 114 L130 114 M165 114 L185 113" stroke="#5b4538" stroke-width="7"/>
-      <ellipse cx="125" cy="118" rx="5" ry="7" fill="#2d2d36"/><ellipse cx="173" cy="117" rx="5" ry="7" fill="#2d2d36"/>
-      <path d="M142 120 L137 137 L148 139" fill="none" stroke="#9c7053" stroke-width="4"/>
-      <path d="M116 169 L143 183 L176 165" fill="none" stroke="#fff0d9" stroke-width="8"/>
-      <path d="M39 348 L29 104 Q27 77 48 72" fill="none" stroke="#8b6844" stroke-width="9"/>
-      <path d="M28 80 Q18 59 43 51 Q57 65 42 82Z" fill="#f4ca72" stroke="#be8c44" stroke-width="5"/>
-    </g>`,
-    mira: `<g stroke-linejoin="round" stroke-linecap="round">
-      <path d="M53 348 L65 242 Q78 195 112 184 L183 184 Q221 201 235 348Z" fill="#3d594f" stroke="#172c35" stroke-width="9"/>
-      <path d="M77 233 L106 199 L123 257 L102 346 L62 346Z" fill="#6d967d" stroke="#b6d9aa" stroke-width="4"/>
-      <path d="M205 233 L180 199 L160 260 L186 346 L234 346Z" fill="#284e49" stroke="#a5c7a4" stroke-width="4"/>
-      <path d="M121 171 L120 147 L177 147 L180 190 L149 206Z" fill="#e3b391" stroke="#8b574a" stroke-width="5"/>
-      <path d="M93 97 Q92 45 145 42 Q202 46 202 105 L190 158 Q168 186 143 180 Q104 173 95 141Z" fill="#e8b794" stroke="#70413d" stroke-width="7"/>
-      <path d="M85 109 Q70 62 112 35 Q156 4 193 43 L204 107 L186 89 L172 67 L150 82 L128 66 L105 100Z" fill="#79483e" stroke="#372b35" stroke-width="8"/>
-      <path d="M62 88 L97 39 Q133 6 190 27 L238 76 L220 91 L102 75Z" fill="#526e4d" stroke="#1e393b" stroke-width="9"/>
-      <path d="M107 78 L201 67 L216 83 L101 96Z" fill="#b4cb83" stroke="#354e3d" stroke-width="5"/>
-      <path d="M185 28 Q211 3 229 30 L209 58Z" fill="#e8d9a0" stroke="#71815c" stroke-width="4"/>
-      <ellipse cx="122" cy="114" rx="7" ry="9" fill="#245b54"/><ellipse cx="170" cy="113" rx="7" ry="9" fill="#245b54"/>
-      <path d="M113 102 L132 99 M162 99 L182 102" stroke="#623b37" stroke-width="6"/>
-      <path d="M144 117 L137 135 L149 138" fill="none" stroke="#ab775e" stroke-width="4"/>
-      <path d="M132 153 Q149 164 166 151" fill="none" stroke="#a14f4c" stroke-width="4"/>
-      <path d="M67 251 L94 211 L113 240 L101 277 L80 284Z" fill="#c28f54" stroke="#72523d" stroke-width="5"/>
-      <path d="M206 244 L222 217 L238 231 L236 273 L215 285Z" fill="#8da875" stroke="#375249" stroke-width="5"/>
-    </g>`,
-    tala: `<g stroke-linejoin="round" stroke-linecap="round">
-      <path d="M46 348 L57 240 Q72 196 105 185 L190 185 Q230 205 245 348Z" fill="#4b6042" stroke="#182a2b" stroke-width="9"/>
-      <path d="M67 231 L101 197 L123 259 L102 346 L58 346Z" fill="#849969" stroke="#cfca90" stroke-width="4"/>
-      <path d="M208 235 L182 197 L160 258 L185 346 L241 346Z" fill="#314a3d" stroke="#9aab77" stroke-width="4"/>
-      <path d="M118 174 L117 146 L178 146 L182 193 L147 209Z" fill="#dfb18b" stroke="#815b4b" stroke-width="5"/>
-      <path d="M92 96 Q89 45 145 43 Q201 45 205 101 L191 158 Q167 186 140 178 Q105 171 96 143Z" fill="#e4b28a" stroke="#6f473c" stroke-width="7"/>
-      <path d="M84 111 Q69 69 101 41 L130 30 L190 48 L213 93 L196 115 L182 80 L162 101 L143 77 L118 101 L105 133Z" fill="#4e342e" stroke="#241f2b" stroke-width="8"/>
-      <path d="M75 170 L198 155 L218 188 L89 206Z" fill="#983f3c" stroke="#3c2530" stroke-width="8"/>
-      <path d="M92 167 L194 157 L200 174 L97 188Z" fill="#d77654" stroke="#60303a" stroke-width="4"/>
-      <ellipse cx="122" cy="115" rx="7" ry="9" fill="#3f5a48"/><ellipse cx="173" cy="114" rx="7" ry="9" fill="#3f5a48"/>
-      <path d="M111 102 L132 99 M162 99 L184 101" stroke="#57342e" stroke-width="6"/>
-      <path d="M145 117 L139 135 L151 138" fill="none" stroke="#a86d55" stroke-width="4"/>
-      <path d="M132 153 Q149 164 169 149" fill="none" stroke="#9f4942" stroke-width="4"/>
-      <path d="M39 248 L55 240 L56 346 L40 346Z" fill="#70513a" stroke="#302a26" stroke-width="5"/>
-      <path d="M30 229 L64 229 L71 265 L24 265Z" fill="#f7c765" stroke="#5b4430" stroke-width="6"/>
-      <path d="M39 237 L56 237 L56 256 L39 256Z" fill="#ffe9a6"/>
-      <path d="M68 220 Q45 185 67 165" stroke="#ffcc70" stroke-width="4" fill="none"/>
-    </g>`,
-    kai: `<g stroke-linejoin="round" stroke-linecap="round">
-      <path d="M46 348 L55 242 Q72 201 105 185 L194 185 Q230 209 245 348Z" fill="#263d59" stroke="#121b31" stroke-width="9"/>
-      <path d="M70 237 L101 199 L122 257 L104 346 L60 346Z" fill="#356a83" stroke="#83d8e5" stroke-width="4"/>
-      <path d="M206 234 L182 198 L160 260 L187 346 L241 346Z" fill="#142b47" stroke="#4d8cb2" stroke-width="4"/>
-      <path d="M119 173 L117 144 L178 144 L181 195 L148 208Z" fill="#d6b29c" stroke="#725966" stroke-width="5"/>
-      <path d="M90 103 Q89 47 145 39 Q203 47 202 104 L191 157 Q171 181 142 177 Q104 171 94 143Z" fill="#e2c8bb" stroke="#6c6a86" stroke-width="7"/>
-      <path d="M82 117 Q71 63 107 37 L143 22 L191 42 L214 93 L199 127 L186 88 L164 101 L144 72 L124 97 L106 124Z" fill="#8ba9ce" stroke="#344e73" stroke-width="8"/>
-      <path d="M110 110 L132 106 M161 106 L183 109" stroke="#596fa7" stroke-width="6"/>
-      <ellipse cx="121" cy="118" rx="7" ry="10" fill="#286eae"/><ellipse cx="172" cy="117" rx="7" ry="10" fill="#286eae"/>
-      <ellipse cx="123" cy="120" rx="3" ry="5" fill="#e3f8ff"/><ellipse cx="174" cy="119" rx="3" ry="5" fill="#e3f8ff"/>
-      <path d="M145 120 L138 138 L150 139" fill="none" stroke="#a97e76" stroke-width="4"/>
-      <path d="M128 152 Q149 161 170 150" fill="none" stroke="#7f5660" stroke-width="4"/>
-      <path d="M79 202 L109 185 L138 212 L122 266 L90 250Z" fill="#182b45" stroke="#83d8e5" stroke-width="4"/>
-      <path d="M158 205 L185 187 L216 216 L203 263 L171 249Z" fill="#13243e" stroke="#83d8e5" stroke-width="4"/>
-      <path d="M191 261 L228 248 L246 283 L214 314 L185 295Z" fill="#272b4a" stroke="#c4b1ff" stroke-width="4"/>
-      <path d="M205 278 L218 267 L231 281 L219 297Z" fill="#71e5ee"/>
-    </g>`,
-    book: `<g stroke-linejoin="round" stroke-linecap="round">
-      <path d="M46 113 L144 50 L252 97 L156 168Z" fill="#0e1c3d" stroke="#d9cbff" stroke-width="8"/>
-      <path d="M46 113 L45 252 L154 314 L156 168Z" fill="#132955" stroke="#6be9ff" stroke-width="7"/>
-      <path d="M156 168 L252 97 L254 232 L154 314Z" fill="#1e3975" stroke="#6be9ff" stroke-width="7"/>
-      <path d="M63 131 L143 82 L140 147 L64 199Z" fill="#223e78" stroke="#f1d683" stroke-width="4"/>
-      <path d="M174 177 L234 131 L235 210 L175 252Z" fill="#2b4b8f" stroke="#f1d683" stroke-width="4"/>
-      <path d="M150 91 L174 130 L155 173 L133 137Z" fill="#b1faff" stroke="#68e7ff" stroke-width="5"/>
-      <path d="M155 120 L179 151 L155 184 L131 151Z" fill="#e9ffff" stroke="#67ecff" stroke-width="5"/>
-      <path d="M155 25 L164 57 M226 49 L206 74 M84 58 L109 81 M274 155 L247 159 M84 235 L112 223" stroke="#6be9ff" stroke-width="6"/>
-      <circle cx="155" cy="155" r="113" fill="none" stroke="#70f2ff" stroke-width="3" stroke-dasharray="7 12"/>
-    </g>`,
-    shadow: `<g stroke-linejoin="round" stroke-linecap="round">
-      <path d="M35 349 Q39 248 76 207 L55 131 L91 106 L102 48 L139 80 L176 49 L191 106 L224 128 L212 205 Q252 242 265 349Z" fill="#141226" stroke="#3e246e" stroke-width="10"/>
-      <path d="M61 210 L78 158 L111 187 L143 157 L183 186 L219 152 L232 223 L200 320 L97 328Z" fill="#242044" stroke="#6a3a9e" stroke-width="7"/>
-      <path d="M91 148 L122 132 L143 148 L165 131 L201 148 L181 176 L143 187 L107 176Z" fill="#6e42a5"/>
-      <path d="M105 154 L131 148 L125 165Z M157 149 L188 154 L168 166Z" fill="#b9f3ff"/>
-      <path d="M112 213 L138 223 L126 256 L109 247Z M158 223 L182 210 L188 246 L169 258Z" fill="#4c2a83"/>
-      <path d="M127 275 L145 287 L163 276 L155 302 L139 306Z" fill="#bd5dff"/>
-      <path d="M81 221 L60 261 M209 221 L237 259" stroke="#a66bff" stroke-width="6"/>
-    </g>`
-  };
-  const art = portraits[characterId] || portraits.book;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="360" viewBox="0 0 300 360">
-    <defs>
-      <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e5fbff"/><stop offset=".45" stop-color="#77deff"/><stop offset="1" stop-color="#8f5bff"/></linearGradient>
-      <radialGradient id="halo"><stop stop-color="#65dfff" stop-opacity=".34"/><stop offset="1" stop-color="#65dfff" stop-opacity="0"/></radialGradient>
-      <linearGradient id="coat" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#50688f"/><stop offset="1" stop-color="#171c32"/></linearGradient>
-    </defs>
-    <ellipse cx="150" cy="185" rx="135" ry="170" fill="url(#halo)"/>
-    <path d="M150 8 L163 28 L185 20 L185 45 L213 41 L204 65 L232 77 L210 95" fill="none" stroke="url(#glow)" stroke-width="3" opacity=".55"/>
-    <path d="M43 298 L22 321 L68 315 M255 294 L279 320 L234 313" fill="none" stroke="#74dcff" stroke-width="3" opacity=".45"/>
-    ${art}
-  </svg>`;
-  return { src: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg), kind: "illustration" };
-}
-
 function buildIntroStoryboard() {
   const sequence = [];
   for (let page = 1; page <= 3; page += 1) {
@@ -1193,6 +1094,7 @@ function beginStoryboard(sequence, mode = "chapter", callback = null) {
   ui.dialogue.classList.add("hidden");
   renderStoryIntro();
   ui.storyIntroOverlay.classList.remove("hidden");
+  ui.storyIntroNext.focus();
 }
 
 function startChapterStoryboard(npc, beat, dialogueKey) {
@@ -1257,6 +1159,8 @@ function renderStoryIntro() {
     ? t(isLast ? "story.intro.start" : "story.intro.next")
     : (getLanguage() === "zh" ? (isLast ? "继续探索" : "下一格 →") : (isLast ? "RETURN TO EXPLORATION" : "NEXT PANEL →"));
   ui.storyIntroSkip.textContent = getLanguage() === "zh" ? "跳过演出" : "SKIP SCENE";
+  document.getElementById("storyIntroHint").textContent = getLanguage() === "zh"
+    ? "Enter · 继续　/　Esc · 跳过" : "Enter · Continue / Esc · Skip";
   ui.storyboardSpeaker.textContent = personalizePlayerName(slide.speaker || PLAYER_DISPLAY_NAME);
   ui.storyboardFrameTag.textContent = `${isIntro ? "PROLOGUE" : "CHAPTER"} · ${String(pageNumber).padStart(2, "0")}`;
   ui.storyboardLocation.textContent = slide.location || t("location.maple");
@@ -1269,7 +1173,7 @@ function renderStoryIntro() {
   ui.storyIntroCanvas.dataset.effect = slide.effect || "magic";
   const storyBackgroundPath = slide.scene && slide.scene !== "prologue"
     ? (worldBackgroundLoadedPaths[slide.scene] || worldBackgroundPaths[slide.scene]?.[0])
-    : null;
+    : pixelArtPaths.campus;
   ui.storyIntroSceneArt.style.backgroundImage = storyBackgroundPath
     ? `url("${storyBackgroundPath}")`
     : "none";
@@ -1334,6 +1238,7 @@ function finishStoryIntro() {
   const callback = storyCompletionCallback;
   storyCompletionCallback = null;
   if (typeof callback === "function") callback();
+  if (!world.typingCaveOpen) ui.interactButton.focus();
 }
 
 
@@ -1381,7 +1286,7 @@ async function interact() {
       world.currentDialogueKey = "tutorial.complete";
       ui.dialogueName.textContent = t(npc.nameKey) + " · " + t(npc.titleKey);
       ui.dialogueText.textContent = t("tutorial.complete");
-      ui.dialogue.classList.remove("hidden");
+      showDialogue();
       playSound("level");
       return;
     }
@@ -1423,7 +1328,7 @@ async function interact() {
     world.currentDialogueKey = dialogueKey;
     ui.dialogueName.textContent = t(npc.nameKey) + " · " + t(npc.titleKey);
     ui.dialogueText.textContent = t(dialogueKey);
-    ui.dialogue.classList.remove("hidden");
+    showDialogue();
     return;
   }
 
@@ -1434,7 +1339,7 @@ async function interact() {
     world.currentDialogueKey = getRealmSignDialogueKey();
     ui.dialogueName.textContent = t("npc.sign.name") + " · " + getLocalizedRealmName();
     ui.dialogueText.textContent = t(world.currentDialogueKey);
-    ui.dialogue.classList.remove("hidden");
+    showDialogue();
   }
 }
 
@@ -1467,7 +1372,7 @@ function enterCave() {
   updateLocation();
   ui.dialogueName.textContent = t("cave.title");
   ui.dialogueText.textContent = t("cave.entered");
-  ui.dialogue.classList.remove("hidden");
+  showDialogue();
   saveWorldState({ playerX: world.player.x, insideCave: true });
 }
 
@@ -2073,6 +1978,7 @@ function refreshWorldLanguage() {
   }
   if (world.travelMenu) renderDestinationSelection();
   if (world.typingCaveOpen) renderTypingQuestion();
+  if (!ui.dialogue.classList.contains("hidden")) ui.dialoguePortrait.alt=ui.dialogueName.textContent;
 }
 
 onLanguageChange(refreshWorldLanguage);
@@ -2933,53 +2839,16 @@ function drawGate(x, ground) {
   ctx.restore();
 }
 
+const wayfinderSignSprite = new Image();
+wayfinderSignSprite.src = pixelArtPaths.sign;
 function drawSign(x, ground, realmId) {
-  ctx.save();
-  // Shadow, braced posts and an angled wooden town sign.
-  ctx.fillStyle = "rgba(0, 0, 0, .22)";
-  ctx.fillRect(x - 70, ground - 60, 142, 7);
-  ctx.fillStyle = "#503a2b";
-  ctx.fillRect(x - 43, ground - 102, 9, 102);
-  ctx.fillRect(x + 34, ground - 94, 7, 94);
-  ctx.fillStyle = "#95653e";
-  ctx.fillRect(x - 39, ground - 99, 3, 97);
-  ctx.fillRect(x + 36, ground - 91, 3, 90);
-
-  ctx.fillStyle = "#3c2f2a";
-  ctx.fillRect(x - 86, ground - 131, 174, 42);
-  ctx.fillStyle = "#b7844e";
-  ctx.fillRect(x - 82, ground - 127, 166, 34);
-  ctx.fillStyle = "#e0bd7c";
-  ctx.fillRect(x - 78, ground - 123, 158, 3);
-  ctx.fillRect(x - 78, ground - 98, 158, 2);
-  ctx.fillStyle = "#80553a";
-  ctx.fillRect(x - 70, ground - 119, 142, 21);
-  const signName = getLocalizedRealmName(realmId);
-  ctx.fillStyle = "#f6df9d";
-  ctx.font = getLanguage() === "zh" ? "bold 12px system-ui" : "bold 11px 'Courier New', monospace";
-  ctx.textAlign = "center";
-  // Keep the name within the sign; the separate carved arrow lives at the right.
-  ctx.fillText(signName, x - 12, ground - 105, 126);
-
-  // Carved arrow and metal nail heads.
-  ctx.fillStyle = "#fff0bf";
-  ctx.beginPath();
-  ctx.moveTo(x + 57, ground - 117);
-  ctx.lineTo(x + 69, ground - 109);
-  ctx.lineTo(x + 57, ground - 101);
-  ctx.lineTo(x + 61, ground - 109);
-  ctx.closePath();
-  ctx.fill();
-  for (const nx of [x - 73, x + 73]) {
-    ctx.fillStyle = "#483932";
-    ctx.fillRect(nx, ground - 114, 4, 4);
-    ctx.fillStyle = "#e4c685";
-    ctx.fillRect(nx + 1, ground - 113, 2, 2);
-  }
-  ctx.restore();
+  ctx.save();ctx.imageSmoothingEnabled=false;
+  if(wayfinderSignSprite.complete && wayfinderSignSprite.naturalWidth)ctx.drawImage(wayfinderSignSprite,Math.round(x-96),Math.round(ground-192),192,192);
+  else {ctx.fillStyle='#896442';ctx.fillRect(x-90,ground-183,180,75);ctx.fillRect(x-60,ground-117,15,117);ctx.fillRect(x+45,ground-117,15,117);}
+  ctx.fillStyle='#f6dfb5';ctx.textAlign='center';
+  ctx.font=getLanguage()==='zh'?'bold 15px system-ui':"bold 13px 'Courier New', monospace";
+  ctx.fillText(getLocalizedRealmName(realmId),x-12,ground-138,144);ctx.restore();
 }
-
-
 
 function drawNPCs() {
   for (const npc of npcs) {
@@ -3025,7 +2894,7 @@ function drawNPCs() {
 function drawStyledNPC(x, ground, npc) {
   const image=npc.id==="elder"?elderRowanSprite:npcPixelSprites[npc.id];
   ctx.save();ctx.imageSmoothingEnabled=false;ctx.fillStyle="#18252a";ctx.fillRect(Math.round(x-22),Math.round(ground-2),44,4);
-  if(image?.complete&&image.naturalWidth){ctx.drawImage(image,Math.round(x-64),Math.round(ground-(npc.id==="elder"?128:124)),128,128);}
+  if(image?.complete&&image.naturalWidth){ctx.drawImage(image,Math.round(x-64),Math.round(ground-(image.naturalWidth===32?128:124)),128,128);}
   else{ctx.fillStyle=npc.color;ctx.fillRect(Math.round(x-16),Math.round(ground-72),32,64);ctx.fillStyle="#d3ad85";ctx.fillRect(Math.round(x-12),Math.round(ground-92),24,24);ctx.fillStyle="#25313b";ctx.fillRect(Math.round(x-16),Math.round(ground-12),12,12);ctx.fillRect(Math.round(x+4),Math.round(ground-12),12,12);}
   ctx.restore();
 }
@@ -3282,6 +3151,9 @@ window.render_game_to_text = () => JSON.stringify({
   player: { x: Math.round(world.player.x), vx: world.player.vx, groundY: world.groundY },
   tutorial: world.tutorial?.stage || null,
   chapter: world.questStep,
+  story: world.storyIntroOpen ? { mode:storyMode,page:storyIntroPage+1,total:storySequence.length,
+    title:ui.storyIntroTitle.textContent,speaker:ui.storyboardSpeaker.textContent,
+    portrait:ui.storyIntroPortraitImage.getAttribute("src") } : null,
   portalX: world.portalX,
   guidance: currentGuidance(),
   typing: world.typingCaveOpen ? { round: typingCaveState.completedLevels + 1, monsterLeft: typingCaveState.monsterLeft,
