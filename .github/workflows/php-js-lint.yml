@@ -24,9 +24,10 @@ jobs:
           node --check js/google-signin.js
           node --check js/quest-api.js
           node --check js/battle-review.js
+          node --check js/quest-guidance.js
       - name: Gameplay regression tests
         run: |
-          node --test tests/gameplay_regression.test.cjs tests/battle_api.test.cjs tests/audio.test.cjs tests/tutorial.test.cjs tests/characters.test.cjs tests/quest_api.test.cjs tests/battle_review.test.cjs
+          node --test tests/gameplay_regression.test.cjs tests/battle_api.test.cjs tests/audio.test.cjs tests/tutorial.test.cjs tests/characters.test.cjs tests/quest_api.test.cjs tests/battle_review.test.cjs tests/quest_guidance.test.cjs
           php tests/battle_rules_test.php
           php tests/tutorial_state_test.php
           php tests/google_token_test.php

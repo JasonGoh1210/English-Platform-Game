@@ -51,6 +51,8 @@ Map and battle Settings now include pixel sound effects, volume and a Test Sound
 
 New characters now learn movement and their first village battle with Elder Rowan. The guide saves progress, supports skipping and preserves existing characters. See [First adventure tutorial](docs/FIRST_ADVENTURE_TUTORIAL.md).
 
+The quest HUD now names the next NPC/world and points toward the target or the current world's portal. [Quest guidance and caves](docs/QUEST_GUIDANCE_AND_CAVES.md) explains the optional three-room Echo Cave, two new monsters and the original three-round spelling finale with changing monster artwork. No new SQL migration or image installation is required.
+
 ## Validation
 
 Run PHP syntax checks, `node --check js/rpg.js`, `node --check js/battle.js`, and `node --test tests/*.test.cjs` and `php tests/battle_rules_test.php`, `node --test tests/characters.test.cjs`, `php tests/google_token_test.php`. CI checks gameplay regressions and the guest/save/upgrade and verified combat/quest flows on MySQL 8 and MariaDB 10.4. These checks do not verify the actual browser artwork or a complete playthrough.

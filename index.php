@@ -31,7 +31,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261013-topics1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261013-guide1">
 </head>
 <body>
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -71,15 +71,18 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
           <span class="pixel-small-label" data-i18n="quest.main">MAIN QUEST</span>
           <strong id="questTitle">The First Words</strong>
           <p id="questText">Find the village elder.</p>
+          <p class="quest-direction" id="questDirection"></p>
         </div>
       </section>
       <div class="map-toolbar">
         <div class="location-pill pixel-location" id="locationText">MAPLE TOWN</div>
+        <button type="button" class="quest-guide-open" id="questGuideOpen" data-i18n="guide.open" aria-controls="questGuideScreen" aria-expanded="false">Quest & caves</button>
         <button type="button" class="settings-open-button" id="settingsOpenButton" data-i18n="settings.button">⚙ SETTINGS</button>
       </div>
     </div>
 
     <?php require __DIR__ . '/includes/tutorial_guide.php'; ?>
+    <?php require __DIR__ . '/includes/quest_guide.php'; ?>
 
     <section class="story-intro-overlay hidden" id="storyIntroOverlay" role="dialog" aria-modal="true" aria-labelledby="storyIntroTitle" aria-describedby="storyIntroBody">
       <div class="storyboard-screen" id="storyboardCanvas" data-scene="prologue" data-camera="wide" data-effect="magic">
@@ -212,6 +215,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
       </header>
 
       <section class="typing-cave-question-card" aria-live="polite">
+        <ol class="typing-rounds" id="typingRounds" aria-label="Three challenge rounds" data-i18n-aria-label="guide.typing.rounds"></ol>
         <div class="typing-cave-question-topline">
           <span class="typing-cave-question-label" id="typingCaveQuestionLabel">TYPE THE WORD THAT MEANS</span>
           <span class="typing-cave-stage-label" id="typingCaveStageLabel">LEVEL 1 / 3</span>
@@ -230,6 +234,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         </div>
         <div class="typing-cave-monster" id="typingCaveMonster">
           <img src="/FYP/images/world/monsters/cave-wraith.svg?v=20261010-monsterart2" alt="Approaching monster">
+          <span id="typingGuardianName" class="typing-guardian-name"></span>
         </div>
         <div class="typing-cave-threat">
           <span id="typingCaveThreatLabel">MONSTER APPROACH</span>
@@ -334,7 +339,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261013-topics1").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261013-guide1").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");

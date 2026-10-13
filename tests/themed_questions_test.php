@@ -44,17 +44,18 @@ foreach (array_keys($realms) as $realm) {
 $reachable = [];
 foreach (epq_battle_enemies() as $enemy) {
     $pool = epq_question_pool($enemy, []);
-    topicCheck(count($pool)===20, 'All twenty questions reachable by encounter');
+    $expectedCount = count($enemy['types']) === 1 ? 10 : 20;
+    topicCheck(count($pool)===$expectedCount, 'All matching themed questions reachable by encounter');
     foreach ($pool as $q) {
         topicCheck($q['realm']===$enemy['realm'] && $q['difficulty']===$enemy['difficulty'] && in_array($q['type'],$enemy['types'],true), 'Realm/difficulty/type selection');
         $reachable[$q['id']] = true;
     }
     $recent = array_column(array_slice($pool,0,8),'id');
     foreach (epq_question_pool($enemy, [], $recent) as $q) topicCheck(!in_array($q['id'],$recent,true), 'Avoid last eight questions');
-    $used = array_column(array_slice($pool,0,19),'id');
+    $used = array_column(array_slice($pool,0,$expectedCount-1),'id');
     topicCheck(count(epq_question_pool($enemy,$used,array_column($pool,'id')))===1, 'Unused question preferred over history when nearly exhausted');
     $used = array_column($pool,'id');
-    foreach (epq_question_pool($enemy,$used,$used) as $q) topicCheck($q['id']!==$used[19], 'Exhausted pool never immediately repeats last question');
+    foreach (epq_question_pool($enemy,$used,$used) as $q) topicCheck($q['id']!==$used[$expectedCount-1], 'Exhausted pool never immediately repeats last question');
 }
 topicCheck(count($reachable)===80 && count($bank)===99, 'Eighty playable themed questions and nineteen retained legacy questions');
 echo "PASS:99questions,80reachable,20perworld, bilingual explanations, choices/answers, reward tiers, shuffled sentences and bounded repeat avoidance\n";

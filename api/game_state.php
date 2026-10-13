@@ -25,7 +25,7 @@ function epq_safe_map_state(array $input): array {
             'caveReturnX' => epq_map_number($row['caveReturnX'] ?? null, 0, $width, 0)
         ];
     }
-    $allowedEnemies = ['slime-01','bat-01','road-guardian-01','guardian-01','cave-wraith-01'];
+    $allowedEnemies = ['slime-01','bat-01','road-guardian-01','guardian-01','cave-wraith-01','echo-slime-01','echo-dragon-01'];
     $enemyIds = is_array($input['defeatedEnemyIds'] ?? null) ? $input['defeatedEnemyIds'] : [];
     $defeated = array_values(array_unique(array_filter($enemyIds, static fn($id) => is_string($id) && in_array($id, $allowedEnemies, true))));
     return [

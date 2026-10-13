@@ -1,10 +1,10 @@
-import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261013-topics1";
-import { battleToken, createBattleClient } from "./battle-api.js?v=20261013-topics1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-topics1";
-import { playSound } from "./audio.js?v=20261013-topics1";
-import { normalizeTutorial } from "./tutorial.js?v=20261013-topics1";
-import { paintCharacterImages } from "./characters.js?v=20261013-topics1";
-import { createBattleReviewPanel } from "./battle-review.js?v=20261013-topics1";
+import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261013-guide1";
+import { battleToken, createBattleClient } from "./battle-api.js?v=20261013-guide1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-guide1";
+import { playSound } from "./audio.js?v=20261013-guide1";
+import { normalizeTutorial } from "./tutorial.js?v=20261013-guide1";
+import { paintCharacterImages } from "./characters.js?v=20261013-guide1";
+import { createBattleReviewPanel } from "./battle-review.js?v=20261013-guide1";
 
 // Use the same per-player storage namespace as the map. If these keys differ,
 // the battle page cannot find the enemy that the map just stored and redirects back.
@@ -111,6 +111,16 @@ const enemies = {
     spritePath: "/FYP/images/world/monsters/cave-wraith.svg?v=20261010-monsterart2",
     questionTypes: ["TRUE_FALSE", "SENTENCE_BUILDER"],
     hp: 110, damage: 14, xp: 45, coins: 20, role: "CAVE SPIRIT", roleKey: "battle.caveSpirit"
+  },
+  "echo-slime-01": {
+    id: "echo-slime-01", name: "Rune Slime", nameZh: "符文史莱姆", type: "slime", difficulty: "MEDIUM",
+    spritePath: "/FYP/assets/enemies/monster/Shrim.png?v=20261010-enemyart1",
+    questionTypes: ["TRUE_FALSE"], hp: 80, damage: 10, xp: 25, coins: 12, role: "CAVE SPIRIT", roleKey: "battle.caveSpirit"
+  },
+  "echo-dragon-01": {
+    id: "echo-dragon-01", name: "Echo Dragon", nameZh: "回声飞龙", type: "wraith", difficulty: "MEDIUM",
+    spritePath: "/FYP/assets/enemies/monster/Monster.png?v=20261010-enemyart1",
+    questionTypes: ["SENTENCE_BUILDER"], hp: 135, damage: 13, xp: 50, coins: 22, role: "CAVE SPIRIT", roleKey: "battle.caveSpirit"
   }
 };
 

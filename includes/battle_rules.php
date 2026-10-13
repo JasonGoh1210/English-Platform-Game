@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-// These are the five encounters actually placed in the existing four realms.
+// Live encounters in the four realms, including the optional Echo Cave rooms.
 // data/enemies.json contains older design concepts, not the current encounters.
 function epq_battle_enemies(): array {
     return [
@@ -9,7 +9,9 @@ function epq_battle_enemies(): array {
         'bat-01' => ['realm'=>'forest', 'hp'=>70, 'damage'=>10, 'xp'=>25, 'coins'=>12, 'difficulty'=>'EASY', 'types'=>['TRUE_FALSE','ODD_WORD_OUT']],
         'road-guardian-01' => ['realm'=>'camp', 'hp'=>85, 'damage'=>11, 'xp'=>28, 'coins'=>14, 'difficulty'=>'MEDIUM', 'types'=>['TRUE_FALSE','SENTENCE_BUILDER']],
         'guardian-01' => ['realm'=>'ruins', 'hp'=>100, 'damage'=>12, 'xp'=>30, 'coins'=>15, 'difficulty'=>'MEDIUM', 'types'=>['TRUE_FALSE','SENTENCE_BUILDER']],
-        'cave-wraith-01' => ['realm'=>'ruins', 'hp'=>110, 'damage'=>14, 'xp'=>45, 'coins'=>20, 'difficulty'=>'MEDIUM', 'types'=>['TRUE_FALSE','SENTENCE_BUILDER']]
+        'cave-wraith-01' => ['realm'=>'ruins', 'hp'=>110, 'damage'=>14, 'xp'=>45, 'coins'=>20, 'difficulty'=>'MEDIUM', 'types'=>['TRUE_FALSE','SENTENCE_BUILDER']],
+        'echo-slime-01' => ['realm'=>'ruins', 'hp'=>80, 'damage'=>10, 'xp'=>25, 'coins'=>12, 'difficulty'=>'MEDIUM', 'types'=>['TRUE_FALSE']],
+        'echo-dragon-01' => ['realm'=>'ruins', 'hp'=>135, 'damage'=>13, 'xp'=>50, 'coins'=>22, 'difficulty'=>'MEDIUM', 'types'=>['SENTENCE_BUILDER']]
     ];
 }
 

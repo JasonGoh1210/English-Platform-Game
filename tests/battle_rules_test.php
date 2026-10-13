@@ -25,4 +25,4 @@ foreach (epq_battle_enemies() as $enemy) {
     check(count($pool) > 0, 'Enemy has questions');
     foreach ($pool as $q) check(in_array($q['type'], $enemy['types'], true) && $q['difficulty'] === $enemy['difficulty'], 'Enemy question type/difficulty');
 }
-echo 'PASS: '.count($bank)." trusted questions, public projections, strict grading, timing, damage and five encounter pools\n";
+echo 'PASS: '.count($bank)." trusted questions, public projections, strict grading, timing, damage and encounter pools\n";
