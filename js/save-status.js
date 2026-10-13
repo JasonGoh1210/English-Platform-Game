@@ -1,4 +1,4 @@
-import { t, onLanguageChange } from "./i18n.js?v=20261014-portrait256";
+import { t, onLanguageChange } from "./i18n.js?v=20261014-gatecard";
 
 const warnings = new Map();
 

@@ -31,9 +31,9 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261014-portrait256">
-  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261014-portrait256">
-  <link rel="stylesheet" href="/FYP/css/story-pixel.css?v=20261014-portrait256">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261014-gatecard">
+  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261014-gatecard">
+  <link rel="stylesheet" href="/FYP/css/story-pixel.css?v=20261014-gatecard">
 </head>
 <body>
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -180,16 +180,16 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
               <span class="destination-realm-rune" id="destinationRune" aria-hidden="true">Ⅰ</span>
               <h2 id="destinationTitle">Maple Town</h2>
               <p id="destinationDescription">A peaceful village where your adventure and first words begin.</p>
-              <button type="button" class="destination-pick" id="destinationPick" data-i18n="destination.pick">SELECT THIS REALM</button>
             </div>
+            <button type="button" class="destination-card-hit" id="destinationCard" aria-label="Travel to Maple Town" aria-describedby="destinationDescription"></button>
           </section>
 
           <button class="destination-preview" id="destinationPreviewNext" type="button"><span></span></button>
         </div>
 
         <div class="destination-switch">
-          <button class="destination-arrow" id="destinationPrev" type="button" aria-label="Previous destination" data-i18n-aria-label="destination.previous">◀</button>
-          <button class="destination-arrow" id="destinationNext" type="button" aria-label="Next destination" data-i18n-aria-label="destination.next">▶</button>
+          <button class="destination-arrow" id="destinationPrev" type="button" aria-label="Previous destination" data-i18n-aria-label="destination.previous"><svg viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path d="M10 3H12V13H10V12H8V10H6V9H4V7H6V6H8V4H10Z"/></svg></button>
+          <button class="destination-arrow" id="destinationNext" type="button" aria-label="Next destination" data-i18n-aria-label="destination.next"><svg viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path d="M4 3H6V4H8V6H10V7H12V9H10V10H8V12H6V13H4Z"/></svg></button>
         </div>
 
         <div class="destination-dots" aria-label="Choose a destination" data-i18n-aria-label="destination.select">
@@ -201,10 +201,9 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
 
         <div class="destination-actions">
           <button class="destination-back" id="destinationBack" type="button" data-i18n="destination.back">↩ BACK TO MAP</button>
-          <button class="destination-travel" id="destinationTravel" type="button"><span data-i18n="destination.travel">TRAVEL HERE</span> <span>▶</span></button>
         </div>
 
-        <p class="destination-help" data-i18n="destination.help">← / → CHANGE LOCATION &nbsp; · &nbsp; ENTER TRAVEL &nbsp; · &nbsp; ESC CLOSE</p>
+        <p class="destination-help" data-i18n="destination.help">CLICK THE CARD TO TRAVEL · ← / → CHANGE · ENTER CONFIRM · ESC BACK</p>
       </div>
     </div>
     <section class="typing-cave-screen hidden" id="typingCaveScreen" role="dialog" aria-modal="true" aria-labelledby="typingCaveTitle">
@@ -342,7 +341,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261014-portrait256").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261014-gatecard").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");

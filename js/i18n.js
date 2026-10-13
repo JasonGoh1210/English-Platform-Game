@@ -1,10 +1,10 @@
-import { setupAudio } from "./audio.js?v=20261014-portrait256";
+import { setupAudio } from "./audio.js?v=20261014-gatecard";
 
 const LANGUAGE_KEY = "englishPowerQuest.language.v1";
 
 const messages = {
   en: {
-    "destination.pick": "SELECT THIS REALM",
+    "destination.cardTravel": "Travel to {name}",
     "guide.title": "Your next adventure",
     "guide.open": "Quest & caves",
     "guide.close": "Back to map",
@@ -206,7 +206,7 @@ const messages = {
     "destination.select.ruins": "Select Ancient Ruins",
     "destination.back": "↩ BACK TO MAP",
     "destination.travel": "TRAVEL HERE",
-    "destination.help": "← / → CHANGE LOCATION  ·  ENTER TRAVEL  ·  ESC CLOSE",
+    "destination.help": "CLICK THE CARD TO TRAVEL · ← / → CHANGE · ENTER CONFIRM · ESC BACK",
     "portal.name": "REALM GATE",
     "portal.interact": "E / INTERACT TO TRAVEL",
     "battle.kicker": "WILD ENCOUNTER",
@@ -276,7 +276,7 @@ const messages = {
     "battle.rewardHp": "HP"
   },
   zh: {
-    "destination.pick": "点击选择这个世界",
+    "destination.cardTravel": "传送到：{name}",
     "guide.title": "下一步冒险",
     "guide.open": "任务与洞穴",
     "guide.close": "返回地图",
@@ -478,7 +478,7 @@ const messages = {
     "destination.select.ruins": "选择古代遗迹",
     "destination.back": "↩ 返回地图",
     "destination.travel": "传送到这里",
-    "destination.help": "← / → 切换地点  ·  ENTER 传送  ·  ESC 关闭",
+    "destination.help": "点击整张地点卡片传送 · ← / → 切换 · ENTER 确认 · ESC 返回",
     "portal.name": "领域传送门",
     "portal.interact": "按 E / 互动传送",
     "battle.kicker": "野外遭遇",

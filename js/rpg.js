@@ -1,12 +1,12 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261014-portrait256";
-import { playSound } from "./audio.js?v=20261014-portrait256";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-portrait256";
-import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261014-portrait256";
-import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261014-portrait256";
-import { createQuestClient } from "./quest-api.js?v=20261014-portrait256";
-import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261014-portrait256";
-import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave } from "./pixel-world.js?v=20261014-portrait256";
-import { storyPortraitSource } from "./story-visuals.js?v=20261014-portrait256";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261014-gatecard";
+import { playSound } from "./audio.js?v=20261014-gatecard";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-gatecard";
+import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261014-gatecard";
+import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261014-gatecard";
+import { createQuestClient } from "./quest-api.js?v=20261014-gatecard";
+import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261014-gatecard";
+import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave } from "./pixel-world.js?v=20261014-gatecard";
+import { storyPortraitSource } from "./story-visuals.js?v=20261014-gatecard";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -133,7 +133,7 @@ const worldBackgroundPaths = {
 for (const realmId of Object.keys(worldBackgroundPaths)) {
   const availablePaths = window.EPQ_AUTH?.worldBackgrounds?.[realmId];
   if (Array.isArray(availablePaths)) {
-    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261014-portrait256");
+    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261014-gatecard");
   }
 }
 
@@ -899,12 +899,12 @@ window.addEventListener("keydown", (e) => {
     }
     if (["arrowleft", "a"].includes(k)) {
       e.preventDefault();
-      if (!e.repeat) selectDestination(-1);
+      if (!e.repeat) document.getElementById("destinationPrev").click();
       return;
     }
     if (["arrowright", "d"].includes(k)) {
       e.preventDefault();
-      if (!e.repeat) selectDestination(1);
+      if (!e.repeat) document.getElementById("destinationNext").click();
       return;
     }
     if (k === "enter" || k === " ") {
@@ -950,8 +950,15 @@ document.getElementById("destinationNext").addEventListener("click", () => selec
 document.getElementById("destinationBack").addEventListener("click", closeDestinationMenu);
 document.getElementById("destinationPreviewPrev").addEventListener("click", () => selectDestination(-1));
 document.getElementById("destinationPreviewNext").addEventListener("click", () => selectDestination(1));
-document.getElementById("destinationPick").addEventListener("click", travelToSelectedDestination);
-document.getElementById("destinationTravel").addEventListener("click", travelToSelectedDestination);
+document.getElementById("destinationCard").addEventListener("click", travelToSelectedDestination);
+for (const button of ui.destinationScreen.querySelectorAll(".destination-arrow, .destination-back")) {
+  let releaseTimer;
+  button.addEventListener("click", () => {
+    clearTimeout(releaseTimer);
+    button.classList.add("is-pressed");
+    releaseTimer = setTimeout(() => button.classList.remove("is-pressed"), 140);
+  });
+}
 ui.storyIntroNext.addEventListener("click", advanceStoryIntro);
 ui.storyIntroSkip.addEventListener("click", finishStoryIntro);
 
@@ -1779,7 +1786,7 @@ function renderDestinationSelection() {
   ui.destinationTitle.classList.toggle("long-title", getLanguage() === "en" && t(destination.nameKey).length > 14);
   document.getElementById("destinationSceneImage").src = "/FYP/images/world/pixel/" + destination.id + ".png";
   document.getElementById("destinationRune").textContent = ["Ⅰ","Ⅱ","Ⅲ","Ⅳ"][world.selectedDestinationIndex];
-  document.getElementById("destinationPick").setAttribute("aria-label", t("destination.pick") + " · " + t(destination.nameKey));
+  document.getElementById("destinationCard").setAttribute("aria-label", t("destination.cardTravel", { name: t(destination.nameKey) }));
   for (const [id,offset] of [["destinationPreviewPrev",-1],["destinationPreviewNext",1]]) {
     const realm=destinations[(world.selectedDestinationIndex+offset+destinations.length)%destinations.length];
     const preview=document.getElementById(id);preview.style.backgroundImage='url("/FYP/images/world/pixel/'+realm.id+'.png")';
@@ -1814,7 +1821,7 @@ function openDestinationMenu() {
   touch.right = false;
   renderDestinationSelection();
   ui.destinationScreen.classList.remove("hidden");
-  document.getElementById("destinationPick").focus();
+  document.getElementById("destinationCard").focus();
 }
 
 function closeDestinationMenu() {
@@ -1825,6 +1832,7 @@ function closeDestinationMenu() {
 }
 
 function travelToSelectedDestination() {
+  if (!world.travelMenu) return;
   playSound("portal");
   const destination = destinations[world.selectedDestinationIndex] || destinations[0];
 
