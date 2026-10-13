@@ -1,9 +1,13 @@
-import { setupAudio } from "./audio.js?v=20261013-review3";
+import { setupAudio } from "./audio.js?v=20261013-topics1";
 
 const LANGUAGE_KEY = "englishPowerQuest.language.v1";
 
 const messages = {
   en: {
+    "quiz.theme.maple": "Maple Town · Everyday English",
+    "quiz.theme.forest": "Whispering Forest · Nature & signs",
+    "quiz.theme.camp": "Old Camp Road · Travel & teamwork",
+    "quiz.theme.ruins": "Ancient Ruins · Technology & messages",
     "review.title": "Battle learning summary",
     "review.total": "Questions",
     "review.correct": "Correct",
@@ -234,6 +238,10 @@ const messages = {
     "battle.rewardHp": "HP"
   },
   zh: {
+    "quiz.theme.maple": "枫叶镇 · 日常与礼貌",
+    "quiz.theme.forest": "低语森林 · 自然与路牌",
+    "quiz.theme.camp": "旧营地道路 · 旅行与合作",
+    "quiz.theme.ruins": "古代遗迹 · 科技与信息",
     "review.title": "战后学习总结",
     "review.total": "题目数",
     "review.correct": "答对",

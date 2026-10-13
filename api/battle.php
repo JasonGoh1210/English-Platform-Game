@@ -99,8 +99,9 @@ try {
         unset($state['pausedAt']);
     }
     if ($action === 'QUESTION' && $state['question'] === null) {
-        $pool = epq_question_pool($enemy, $state['used']);
-        $state['question'] = $pool[random_int(0, count($pool)-1)];
+        $recent = epq_recent_question_ids($db, $playerId, $enemy['realm']);
+        $pool = epq_question_pool($enemy, $state['used'], $recent);
+        $state['question'] = epq_prepare_question($pool[random_int(0, count($pool)-1)]);
         $state['used'][] = $state['question']['id'];
         $state['questionToken'] = bin2hex(random_bytes(16));
         $state['startedAt'] = microtime(true);

@@ -1328,6 +1328,7 @@ button { font: inherit; }
   font-size: clamp(.95rem, 3vw, 1.2rem);
   line-height: 1.35;
 }
+.question-panel .question-theme { margin: 7px 0 0; font-size: .75rem; line-height: 1.4; font-weight: 700; color: #315d46; }
 
 .question-panel > p {
   margin: 0 0 10px;

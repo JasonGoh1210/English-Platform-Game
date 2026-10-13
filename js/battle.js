@@ -1,10 +1,10 @@
-import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261013-review3";
-import { battleToken, createBattleClient } from "./battle-api.js?v=20261013-review3";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-review3";
-import { playSound } from "./audio.js?v=20261013-review3";
-import { normalizeTutorial } from "./tutorial.js?v=20261013-review3";
-import { paintCharacterImages } from "./characters.js?v=20261013-review3";
-import { createBattleReviewPanel } from "./battle-review.js?v=20261013-review3";
+import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261013-topics1";
+import { battleToken, createBattleClient } from "./battle-api.js?v=20261013-topics1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-topics1";
+import { playSound } from "./audio.js?v=20261013-topics1";
+import { normalizeTutorial } from "./tutorial.js?v=20261013-topics1";
+import { paintCharacterImages } from "./characters.js?v=20261013-topics1";
+import { createBattleReviewPanel } from "./battle-review.js?v=20261013-topics1";
 
 // Use the same per-player storage namespace as the map. If these keys differ,
 // the battle page cannot find the enemy that the map just stored and redirects back.
@@ -140,6 +140,7 @@ const ui = {
   questionText: document.getElementById("questionText"),
   questionTranslation: document.getElementById("questionTranslation"),
   questionPrompt: document.getElementById("questionPrompt"),
+  questionTheme: document.getElementById("questionTheme"),
   answerArea: document.getElementById("answerArea"),
   activeSkillButton: document.getElementById("activeSkillButton"),
   activeItemButton: document.getElementById("activeItemButton"),
@@ -239,6 +240,7 @@ function localizeBattleStaticText() {
   if (ui.enemyDifficulty) ui.enemyDifficulty.textContent = t("battle." + String(state.enemy.difficulty).toLowerCase());
 
   if (state.currentQuestion) {
+    localizeQuestionTheme();
     // Global static translations replace the loading placeholder on language changes.
     ui.questionText.textContent = state.currentQuestion.question;
     ui.questionType.textContent = formatType(state.currentQuestion.type);
@@ -256,11 +258,20 @@ function localizeBattleStaticText() {
         ? (button.dataset.answerValue === "true" ? t("battle.true") : t("battle.false"))
         : (button.dataset.answerValue === "true" ? "TRUE" : "FALSE");
     });
+    const submit = ui.answerArea.querySelector(".battle-submit");
+    if (submit) submit.textContent = t("battle.buildAttack");
   }
   if (state.mode === "MENU") {
     ui.commandPrompt.textContent = t("battle.whatDo");
     ui.menuSubtext.textContent = t("battle.chooseAction");
   }
+}
+
+function localizeQuestionTheme() {
+  const realm = state.currentQuestion?.realm;
+  const themed = ["maple", "forest", "camp", "ruins"].includes(realm);
+  ui.questionTheme.textContent = themed ? t("quiz.theme." + realm) : "";
+  ui.questionTheme.classList.toggle("hidden", !themed);
 }
 
 onLanguageChange(() => {
@@ -375,6 +386,7 @@ async function startQuestion() {
   state.currentQuestion = result.battle.question;
   state.questionToken = result.battle.questionToken;
   const q = state.currentQuestion;
+  localizeQuestionTheme();
   ui.questionType.textContent = formatType(q.type);
   ui.questionDifficulty.textContent = t("battle." + String(q.difficulty).toLowerCase());
   ui.questionText.textContent = q.question;
@@ -792,7 +804,7 @@ window.render_game_to_text = () => JSON.stringify({
   playerHp: state.playerHp,
   focus: state.focusUsed,
   timer: Math.max(0, Number(state.remaining || 0)),
-  question: state.currentQuestion ? { type: state.currentQuestion.type, text: state.currentQuestion.question } : null,
+  question: state.currentQuestion ? { type: state.currentQuestion.type, text: state.currentQuestion.question, realm:state.currentQuestion.realm || null } : null,
   review: reviewPanel?.getStats() || null,
   tutorial: tutorialBattle ? normalizeTutorial(getSave().tutorial)?.stage : null,
   coach: tutorialBattle && state.coachMessage ? t(state.coachMessage.key, state.coachMessage.values) : null

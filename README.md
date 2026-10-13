@@ -10,6 +10,7 @@ A mobile-friendly fantasy RPG prototype that teaches English through exploration
 - NPC dialogue, opening/chapter story, Echo Cave and the three-stage Typing Cavern
 - Separate PHP battle page with continuous English questions
 - True/False, Odd Word Out and Sentence Builder question types
+- 80 playable themed questions across four realms, bilingual explanations, shuffled words and recent-question avoidance (99 total including legacy content)
 - Battle rewards, HP, Coins, XP and English Power
 - Sign up, login and logout with PHP sessions; passwords are stored with `password_hash`
 - Each new account receives a player profile and starts with the opening story; story completion is saved to MySQL
@@ -54,9 +55,11 @@ New characters now learn movement and their first village battle with Elder Rowa
 
 Run PHP syntax checks, `node --check js/rpg.js`, `node --check js/battle.js`, and `node --test tests/*.test.cjs` and `php tests/battle_rules_test.php`, `node --test tests/characters.test.cjs`, `php tests/google_token_test.php`. CI checks gameplay regressions and the guest/save/upgrade and verified combat/quest flows on MySQL 8 and MariaDB 10.4. These checks do not verify the actual browser artwork or a complete playthrough.
 
-Latest priorities and reproduced issues: [Optimization review, 2026-10-13](docs/OPTIMIZATION_REVIEW_2026-10-13.md). Account upgrade/logout controls now live in map Settings, leaving quest titles visible. [UI and gameplay follow-up](docs/UI_GAMEPLAY_REVIEW_2026-10-13.md) records responsive HUD/landscape fixes, the 10 reachable questions and next learning-feedback priorities.
+Latest priorities and reproduced issues: [Optimization review, 2026-10-13](docs/OPTIMIZATION_REVIEW_2026-10-13.md). Account upgrade/logout controls now live in map Settings, leaving quest titles visible. [UI and gameplay follow-up](docs/UI_GAMEPLAY_REVIEW_2026-10-13.md) records responsive HUD/landscape fixes and the original question-bank limitations, now addressed by the themed bank below.
 
 [Battle learning summary](docs/BATTLE_LEARNING_SUMMARY.md) explains the new victory/defeat review, preserved historical records and update steps. No new SQL migration is required.
+
+[Four-world themed question bank](docs/THEMED_QUESTION_BANK.md) lists the 20 questions per realm and repeat rules. Existing active questions and historical explanations remain valid; no new SQL migration.
 
 ## Known gaps before a final FYP release
 

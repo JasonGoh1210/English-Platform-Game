@@ -5,11 +5,11 @@ declare(strict_types=1);
 // data/enemies.json contains older design concepts, not the current encounters.
 function epq_battle_enemies(): array {
     return [
-        'slime-01' => ['hp'=>60, 'damage'=>10, 'xp'=>20, 'coins'=>10, 'difficulty'=>'EASY', 'types'=>['TRUE_FALSE','ODD_WORD_OUT']],
-        'bat-01' => ['hp'=>70, 'damage'=>10, 'xp'=>25, 'coins'=>12, 'difficulty'=>'EASY', 'types'=>['TRUE_FALSE','ODD_WORD_OUT']],
-        'road-guardian-01' => ['hp'=>85, 'damage'=>11, 'xp'=>28, 'coins'=>14, 'difficulty'=>'MEDIUM', 'types'=>['TRUE_FALSE','SENTENCE_BUILDER']],
-        'guardian-01' => ['hp'=>100, 'damage'=>12, 'xp'=>30, 'coins'=>15, 'difficulty'=>'MEDIUM', 'types'=>['TRUE_FALSE','SENTENCE_BUILDER']],
-        'cave-wraith-01' => ['hp'=>110, 'damage'=>14, 'xp'=>45, 'coins'=>20, 'difficulty'=>'MEDIUM', 'types'=>['TRUE_FALSE','SENTENCE_BUILDER']]
+        'slime-01' => ['realm'=>'maple', 'hp'=>60, 'damage'=>10, 'xp'=>20, 'coins'=>10, 'difficulty'=>'EASY', 'types'=>['TRUE_FALSE','ODD_WORD_OUT']],
+        'bat-01' => ['realm'=>'forest', 'hp'=>70, 'damage'=>10, 'xp'=>25, 'coins'=>12, 'difficulty'=>'EASY', 'types'=>['TRUE_FALSE','ODD_WORD_OUT']],
+        'road-guardian-01' => ['realm'=>'camp', 'hp'=>85, 'damage'=>11, 'xp'=>28, 'coins'=>14, 'difficulty'=>'MEDIUM', 'types'=>['TRUE_FALSE','SENTENCE_BUILDER']],
+        'guardian-01' => ['realm'=>'ruins', 'hp'=>100, 'damage'=>12, 'xp'=>30, 'coins'=>15, 'difficulty'=>'MEDIUM', 'types'=>['TRUE_FALSE','SENTENCE_BUILDER']],
+        'cave-wraith-01' => ['realm'=>'ruins', 'hp'=>110, 'damage'=>14, 'xp'=>45, 'coins'=>20, 'difficulty'=>'MEDIUM', 'types'=>['TRUE_FALSE','SENTENCE_BUILDER']]
     ];
 }
 
@@ -22,18 +22,48 @@ function epq_question_bank(): array {
     return $bank;
 }
 
-function epq_question_pool(array $enemy, array $used): array {
-    $supported = array_values(array_filter(epq_question_bank(), static fn($q) => in_array($q['type'], $enemy['types'], true)));
-    $pool = array_values(array_filter($supported, static fn($q) => $q['difficulty'] === $enemy['difficulty']));
-    if (!$pool) $pool = $supported;
-    $fresh = array_values(array_filter($pool, static fn($q) => !in_array($q['id'], $used, true)));
-    return $fresh ?: $pool;
+function epq_question_pool(array $enemy, array $used, array $recent = []): array {
+    $pool = array_values(array_filter(epq_question_bank(), static fn($q) =>
+        ($q['realm'] ?? null) === $enemy['realm']
+        && in_array($q['type'], $enemy['types'], true) && $q['difficulty'] === $enemy['difficulty']));
+    if (!$pool) throw new RuntimeException('No questions configured for this realm and encounter.');
+    $unused = array_values(array_filter($pool, static fn($q) => !in_array($q['id'], $used, true)));
+    $fresh = array_values(array_filter($unused, static fn($q) => !in_array($q['id'], $recent, true)));
+    if ($fresh) return $fresh;
+    if ($unused) return $unused; // Finishing this battle's pool takes priority over recent history.
+    $last = $used ? $used[array_key_last($used)] : null;
+    $cycle = array_values(array_filter($pool, static fn($q) => $q['id'] !== $last && !in_array($q['id'], $recent, true)));
+    return $cycle ?: array_values(array_filter($pool, static fn($q) => $q['id'] !== $last)) ?: $pool;
+}
+
+function epq_recent_question_ids(mysqli $db, int $playerId, string $realm): array {
+    $codes = [];
+    foreach (epq_battle_enemies() as $code => $enemy) if ($enemy['realm'] === $realm) $codes[] = $code;
+    if (!$codes) return [];
+    $placeholders = implode(',', array_fill(0, count($codes), '?'));
+    $stmt = $db->prepare('SELECT a.question_code FROM verified_answer_attempts a
+        INNER JOIN verified_battles b ON b.battle_id = a.battle_id
+        WHERE b.player_id = ? AND b.enemy_code IN ('.$placeholders.') ORDER BY a.attempt_id DESC LIMIT 8');
+    $parameters = array_merge([$playerId], $codes);
+    $stmt->bind_param('i'.str_repeat('s', count($codes)), ...$parameters);
+    $stmt->execute();
+    return array_column($stmt->get_result()->fetch_all(MYSQLI_ASSOC), 'question_code');
+}
+
+function epq_prepare_question(array $question): array {
+    if (isset($question['words'])) {
+        shuffle($question['words']);
+        if ($question['type'] === 'SENTENCE_BUILDER' && $question['words'] === $question['answerOrder']) {
+            $question['words'][] = array_shift($question['words']);
+        }
+    }
+    return $question;
 }
 
 function epq_public_question(array $question): array {
     // An allowlist prevents future answer/explanation fields leaking by default.
     return array_intersect_key($question, array_flip([
-        'id','type','skill','difficulty','question','questionZh','prompt','promptZh','words','timeLimit'
+        'id','type','skill','difficulty','realm','question','questionZh','prompt','promptZh','words','timeLimit'
     ]));
 }
 

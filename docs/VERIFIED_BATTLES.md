@@ -20,7 +20,7 @@ bilingual update message and permits returning to the map; no unverified reward 
   Refresh restores HP, Knowledge Focus, status and the active question.
 - QUESTION selects a trusted question and random token. Public responses omit answers,
   explanations and reward amounts. `data/questions.json` remains the trusted content source;
-  the older SQL question/combat tables are not yet used by this runtime.
+  the older SQL question/combat tables are not yet used by this runtime. [World-themed pools](THEMED_QUESTION_BANK.md) now provide80playable questions and player-scoped recent-history avoidance.
 - ANSWER checks the issued snapshot and answer type. The server computes correctness,
   timeout, speed bonus, damage, XP, Coins and English Power. Correct answers never harm
   the player; wrong/timeout answers damage only the player.

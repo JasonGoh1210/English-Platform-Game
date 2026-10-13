@@ -32,6 +32,7 @@ jobs:
           php tests/google_token_test.php
           php tests/progression_test.php
           php tests/battle_review_test.php
+          php tests/themed_questions_test.php
 
   mysql-guest-flow:
     runs-on: ubuntu-latest
