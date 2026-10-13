@@ -9,16 +9,19 @@ const spriteNames = { rowan:'images/npc/npc_elder_rowan_64.png', mira:'images/np
   kai:'images/npc/npc_kai_64.png', portal:'images/world/pixel/realm_portal_64.png',
   wraith:'images/world/monsters/cave-wraith-64.png', bat:'images/world/monsters/confusion-bat-64.png',
   road_guardian:'images/world/monsters/road-guardian-64.png', grammar_guardian:'images/world/monsters/grammar-guardian-64.png' };
+const portraitNames={portrait_elder:'images/npc/portraits/elder_256.png',portrait_mira:'images/npc/portraits/mira_256.png',
+  portrait_tala:'images/npc/portraits/tala_256.png',portrait_kai:'images/npc/portraits/kai_256.png'};
 async function main() {
   const browser=await chromium.launch({executablePath:process.env.EPQ_CHROME_PATH || undefined,headless:true});
   try {
     const page=await browser.newPage();
     for (const item of manifest) {
       const background=['maple','forest','camp','ruins'].includes(item.key);
-      const relative=background?'images/world/pixel/'+item.key+'.png':spriteNames[item.key];
+      const portrait=Boolean(portraitNames[item.key]);
+      const relative=background?'images/world/pixel/'+item.key+'.png':portraitNames[item.key] || spriteNames[item.key];
       if (!relative) throw new Error('Unknown export key: '+item.key);
       const source='data:image/png;base64,'+fs.readFileSync(item.source).toString('base64');
-      const result=await page.evaluate(async({source,background})=>{
+      const result=await page.evaluate(async({source,background,portrait})=>{
         const img=new Image();img.src=source;await img.decode();
         const sourceCanvas=document.createElement('canvas');sourceCanvas.width=img.width;sourceCanvas.height=img.height;
         const src=sourceCanvas.getContext('2d',{willReadFrequently:true});src.drawImage(img,0,0);
@@ -29,18 +32,19 @@ async function main() {
           else{left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x);bottom=Math.max(bottom,y);}
         }
         if(!background && (right<left || transparent===0))throw Error('Sprite needs actual alpha and a visible silhouette');
-        const canvas=document.createElement('canvas');canvas.width=background?384:64;canvas.height=background?192:64;
+        const size=portrait?256:64,margin=portrait?8:2;
+        const canvas=document.createElement('canvas');canvas.width=background?384:size;canvas.height=background?192:size;
         const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
         if(background)ctx.drawImage(img,0,0,canvas.width,canvas.height);
-        else {const w=right-left+1,h=bottom-top+1,scale=Math.min(60/w,60/h),dw=Math.max(1,Math.round(w*scale)),dh=Math.max(1,Math.round(h*scale));
-          ctx.drawImage(img,left,top,w,h,Math.floor((64-dw)/2),62-dh,dw,dh);}
+        else {const w=right-left+1,h=bottom-top+1,scale=Math.min((size-margin*2)/w,(size-margin*2)/h),dw=Math.max(1,Math.round(w*scale)),dh=Math.max(1,Math.round(h*scale));
+          ctx.drawImage(img,left,top,w,h,Math.floor((size-dw)/2),size-margin-dh,dw,dh);}
         const data=ctx.getImageData(0,0,canvas.width,canvas.height),colors=new Map();
         for(let i=0;i<data.data.length;i+=4){data.data[i+3]=background?255:data.data[i+3]>=128?255:0;
           if(data.data[i+3]){const key=data.data.slice(i,i+3).join(',');colors.set(key,(colors.get(key)||0)+1);}}
         // Frequency-only palettes can discard small gold runes and cyan eyes.
         // Select distant colors with frequency weighting so those accents survive.
         const entries=[...colors.entries()].sort((a,b)=>b[1]-a[1]).map(([key,count])=>({rgb:key.split(',').map(Number),count,distance:Infinity}));
-        const limit=background?48:128,palette=[];
+        const limit=background?48:portrait?256:128,palette=[];
         if(background || entries.length<=limit)palette.push(...entries.slice(0,limit).map(e=>e.rgb));
         else {
           let next=entries[0];
@@ -58,7 +62,7 @@ async function main() {
           data.data.set(best,i);}
         ctx.putImageData(data,0,0);
         return {base64:canvas.toDataURL('image/png').split(',')[1],width:canvas.width,height:canvas.height,palette:palette.length};
-      },{source,background});
+      },{source,background,portrait});
       const destination=path.join(root,relative);fs.mkdirSync(path.dirname(destination),{recursive:true});fs.writeFileSync(destination,Buffer.from(result.base64,'base64'));
       console.log(relative,result.width+'x'+result.height,'colors='+result.palette);
     }

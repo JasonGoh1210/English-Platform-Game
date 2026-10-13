@@ -1,12 +1,12 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261014-storypixel";
-import { playSound } from "./audio.js?v=20261014-storypixel";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-storypixel";
-import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261014-storypixel";
-import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261014-storypixel";
-import { createQuestClient } from "./quest-api.js?v=20261014-storypixel";
-import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261014-storypixel";
-import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave } from "./pixel-world.js?v=20261014-storypixel";
-import { storyPortraitSource } from "./story-visuals.js?v=20261014-storypixel";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261014-portrait256";
+import { playSound } from "./audio.js?v=20261014-portrait256";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-portrait256";
+import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261014-portrait256";
+import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261014-portrait256";
+import { createQuestClient } from "./quest-api.js?v=20261014-portrait256";
+import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261014-portrait256";
+import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave } from "./pixel-world.js?v=20261014-portrait256";
+import { storyPortraitSource } from "./story-visuals.js?v=20261014-portrait256";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -133,7 +133,7 @@ const worldBackgroundPaths = {
 for (const realmId of Object.keys(worldBackgroundPaths)) {
   const availablePaths = window.EPQ_AUTH?.worldBackgrounds?.[realmId];
   if (Array.isArray(availablePaths)) {
-    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261014-storypixel");
+    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261014-portrait256");
   }
 }
 
@@ -770,16 +770,16 @@ const npcs = [
 ];
 
 const landmarks = [
-  { realmId: "maple", x: 360, type: "sign" },
+  { realmId: "maple", x: 420, type: "sign" },
   { realmId: "maple", x: 600, type: "house", variant: "cottage" },
   { realmId: "maple", x: 835, type: "house", variant: "elder" },
   { realmId: "maple", x: 1080, type: "house", variant: "shop" },
   { realmId: "maple", x: 1430, type: "bridge" },
-  { realmId: "forest", x: 350, type: "sign" },
+  { realmId: "forest", x: 420, type: "sign" },
   { realmId: "forest", x: 620, type: "house", variant: "cottage" },
   { realmId: "forest", x: 990, type: "bridge" },
   { realmId: "forest", x: 1510, type: "tower" },
-  { realmId: "camp", x: 355, type: "sign" },
+  { realmId: "camp", x: 420, type: "sign" },
   { realmId: "camp", x: 680, type: "camp" },
   { realmId: "camp", x: 1190, type: "bridge" },
   { realmId: "camp", x: 1580, type: "tower" },
@@ -2843,11 +2843,15 @@ const wayfinderSignSprite = new Image();
 wayfinderSignSprite.src = pixelArtPaths.sign;
 function drawSign(x, ground, realmId) {
   ctx.save();ctx.imageSmoothingEnabled=false;
-  if(wayfinderSignSprite.complete && wayfinderSignSprite.naturalWidth)ctx.drawImage(wayfinderSignSprite,Math.round(x-96),Math.round(ground-192),192,192);
-  else {ctx.fillStyle='#896442';ctx.fillRect(x-90,ground-183,180,75);ctx.fillRect(x-60,ground-117,15,117);ctx.fillRect(x+45,ground-117,15,117);}
+  if(wayfinderSignSprite.complete && wayfinderSignSprite.naturalWidth)ctx.drawImage(wayfinderSignSprite,Math.round(x-64),Math.round(ground-128),128,128);
+  else {ctx.fillStyle='#896442';ctx.fillRect(x-60,ground-122,120,50);ctx.fillRect(x-40,ground-78,10,78);ctx.fillRect(x+30,ground-78,10,78);}
   ctx.fillStyle='#f6dfb5';ctx.textAlign='center';
-  ctx.font=getLanguage()==='zh'?'bold 15px system-ui':"bold 13px 'Courier New', monospace";
-  ctx.fillText(getLocalizedRealmName(realmId),x-12,ground-138,144);ctx.restore();
+  ctx.font=getLanguage()==='zh'?'bold 12px system-ui':"bold 11px 'Courier New', monospace";
+  const label=getLocalizedRealmName(realmId);
+  if(getLanguage()!=='zh' && ctx.measureText(label).width>92){
+    const words=label.split(' '),last=words.pop();ctx.fillText(words.join(' '),x-8,ground-100,92);ctx.fillText(last,x-8,ground-86,92);
+  }else ctx.fillText(label,x-8,ground-92,92);
+  ctx.restore();
 }
 
 function drawNPCs() {
@@ -3155,6 +3159,7 @@ window.render_game_to_text = () => JSON.stringify({
     title:ui.storyIntroTitle.textContent,speaker:ui.storyboardSpeaker.textContent,
     portrait:ui.storyIntroPortraitImage.getAttribute("src") } : null,
   portalX: world.portalX,
+  landmarks: landmarks.filter(item=>item.realmId===world.currentRealmId).map(item=>({type:item.type,x:item.x})),
   guidance: currentGuidance(),
   typing: world.typingCaveOpen ? { round: typingCaveState.completedLevels + 1, monsterLeft: typingCaveState.monsterLeft,
     hintHiddenLetters: document.querySelectorAll(".typing-cave-letter:not(.revealed)").length } : null,

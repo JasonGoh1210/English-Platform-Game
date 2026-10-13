@@ -31,9 +31,9 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261014-storypixel">
-  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261014-storypixel">
-  <link rel="stylesheet" href="/FYP/css/story-pixel.css?v=20261014-storypixel">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261014-portrait256">
+  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261014-portrait256">
+  <link rel="stylesheet" href="/FYP/css/story-pixel.css?v=20261014-portrait256">
 </head>
 <body>
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -135,7 +135,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
     </section>
 
     <div class="dialogue hidden" id="dialogue">
-      <div class="dialogue-portrait"><img id="dialoguePortraitImage" src="/FYP/images/npc/npc_elder_rowan_64.png" alt="Elder Rowan"></div>
+      <div class="dialogue-portrait"><img id="dialoguePortraitImage" src="/FYP/images/npc/portraits/elder_256.png" alt="Elder Rowan"></div>
       <div class="dialogue-body">
         <div class="dialogue-name" id="dialogueName">Elder Rowan</div>
         <p id="dialogueText">Welcome, traveller.</p>
@@ -342,7 +342,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261014-storypixel").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261014-portrait256").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");

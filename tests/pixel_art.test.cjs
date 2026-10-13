@@ -48,3 +48,12 @@ test('Every realm has a native pixel backdrop and the battle cave has its own pi
 test('Opening campus scene is a native 384x192 pixel PNG',()=>{
   const image=png('images/world/pixel/opening-campus.png');assert.equal(image.width,384);assert.equal(image.height,192);
 });
+test('All four dialogue portraits are true 256x256 RGBA busts with centered transparent margins',()=>{
+  for(const id of ['elder','mira','tala','kai']){
+    const image=png('images/npc/portraits/'+id+'_256.png');assert.equal(image.width,256);assert.equal(image.height,256);assert.equal(image.channels,4);
+    let left=256,right=-1,top=256,bottom=-1,opaque=0;const alphas=new Set();
+    for(let y=0;y<256;y++)for(let x=0;x<256;x++){const a=image.pixels[(y*256+x)*4+3];alphas.add(a);if(a){opaque++;left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);}}
+    assert.deepEqual([...alphas].sort((a,b)=>a-b),[0,255]);assert.ok(opaque>5000&&opaque<60000,id);
+    assert.ok(left>=8&&right<=247&&top>=8&&bottom<=247,id);assert.ok(Math.abs(left-(255-right))<=1,id+' portrait is off-center');
+  }
+});

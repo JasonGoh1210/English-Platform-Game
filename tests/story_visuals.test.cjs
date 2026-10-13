@@ -7,7 +7,7 @@ test('Story and dialogue use the same actual pixel NPC portraits, with distinct 
   vm.runInNewContext(storyCode+'\nglobalThis.storyPortraitSource=storyPortraitSource;',scope);
   const {storyPortraitSource,pixelArtPaths}=scope;
   for(const id of ['elder','mira','tala','kai']){
-    const portrait=storyPortraitSource(id);assert.equal(portrait.kind,'pixel');assert.equal(portrait.src,pixelArtPaths.npcs[id]);
+    const portrait=storyPortraitSource(id);assert.equal(portrait.kind,'pixel');assert.equal(portrait.src,pixelArtPaths.portraits[id]);
     assert.ok(fs.existsSync(path.join(__dirname,'..',portrait.src.replace('/FYP/',''))));
   }
   assert.equal(storyPortraitSource('rowan').src,storyPortraitSource('elder').src);

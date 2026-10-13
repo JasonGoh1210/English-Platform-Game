@@ -97,6 +97,8 @@
 .battle-page .command-button.item { background:#52614b; }
 .battle-page .command-button.run { background:#364f57; }
 .battle-page .question-panel { border:2px solid #79919f; border-radius:0; background:#172b3b; color:#dce5e9; padding:13px; }
+.battle-page .question-panel { text-align:center; }
+.battle-page .battle-word-bank,.battle-page .battle-sentence,.battle-page .question-battle-actions { justify-content:center; }
 .battle-page .question-panel h2 { color:#f4e7c9; font-size:20px; line-height:1.4; margin:10px 0; }
 .battle-page .question-panel > p { color:#bbced7; font-size:14px; line-height:1.5; }
 .battle-page .question-panel .question-theme { color:#d3bd80; font-size:13px; }

@@ -93,3 +93,5 @@ See [`docs/CODE_DATABASE_AUDIT.md`](docs/CODE_DATABASE_AUDIT.md) for the histori
 Core emotional outcome: **I GOT STRONGER.**
 
 [Pixel story UI and building scale](docs/PIXEL_STORY_UI.md) documents matching dialogue/story NPC portraits, larger pixel architecture and the refreshed opening/chapter UI. No SQL migration or player reset is required.
+
+[Layout review and NPC portraits](docs/LAYOUT_REVIEW_AND_PORTRAITS.md) lists the four native 256x256 upper-body portraits, smaller unobstructed signs and centered battle questions. Map sprites, portal coordinates, saved positions and combat rules remain intact.
