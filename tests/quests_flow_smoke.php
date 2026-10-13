@@ -67,4 +67,14 @@ $db->query("CREATE TRIGGER epq_quest_fail BEFORE INSERT ON player_xp_transaction
 try {verify(claim($rollback,'NPC',['npcId'=>'elder'],$id)[0]===503,'Injected ledger failure rejected');} finally {$db->query('DROP TRIGGER epq_quest_fail');}
 verify(epq_story_step($db,$rollback[2])===0&&epq_reward_balance($db,$rollback[2])['xp']===0,'Failed quest leaves balances and chapter unchanged');
 verify(claim($rollback,'NPC',['npcId'=>'elder'],$id)[1]['player']['xp']===25,'Same receipt succeeds once after rollback');
+// Temporarily hide one NEW table on the isolated database; restore it even on failure.
+$db->query('RENAME TABLE verified_story_progress TO epq_test_hidden_story_progress');
+try {
+    foreach (['api/player.php','api/game_state.php'] as $route) {
+        [$status,$unavailable]=http($route,null,$hero[0]);
+        verify($status===503&&$unavailable['errorCode']==='MIGRATION_REQUIRED','Missing quest migration has a safe public error');
+    }
+    [$status,$unavailable]=claim($hero,'NPC',['npcId'=>'elder']);
+    verify($status===503&&$unavailable['errorCode']==='MIGRATION_REQUIRED','Missing quest tables never fall back to unverified rewards');
+} finally {$db->query('RENAME TABLE epq_test_hidden_story_progress TO verified_story_progress');}
 echo "PASS: fixed QUEST amounts, ownership/CSRF/location/order, NPC and typing receipts, three-stage grading, single ending, practice, legacy migration, nonlinear XP and transactional rollback\n";

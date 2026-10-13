@@ -44,6 +44,7 @@ function epq_safe_map_state(array $input): array {
 try {
     $db = epq_db();
     $playerId = epq_current_player_id($db);
+    mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $stmt = $db->prepare('SELECT save_json, updated_at FROM player_game_saves WHERE player_id = ?');
         $stmt->bind_param('i', $playerId);

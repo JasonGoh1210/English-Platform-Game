@@ -6,6 +6,7 @@ require_once __DIR__.'/../includes/quests.php';
 try {
     $db = epq_db();
     $playerId = epq_current_player_id($db);
+    mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
     $stmt = $db->prepare(
         "SELECT p.player_id, p.display_name, p.level_no, p.xp_total, p.coins_total,
