@@ -15,7 +15,7 @@ $epqStorageId = (string)$epqPlayerId;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#101b24">
   <title>English Power Quest · Battle</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261013-female1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261013-review1">
 </head>
 <body class="battle-page">
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -151,6 +151,6 @@ $epqStorageId = (string)$epqPlayerId;
       'character' => $_SESSION['character'] ?? epq_character_profile(epq_db(), $epqPlayerId)
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   </script>
-  <script type="module" src="/FYP/js/battle.js?v=20261013-female1"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261013-review1"></script>
 </body>
 </html>

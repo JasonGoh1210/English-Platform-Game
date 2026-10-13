@@ -66,3 +66,15 @@ Original prompt: 试试看做新手教学，有一个小怪出现在村庄，长
 - Browser inspected girl previews and three palettes, real right/left walking, six distinct poses and exact mirrored alpha, all seven foot anchors at y=71, Story 她, HUD/battle/typing portraits, mobile login grouping, same-player upgrades/relogin, and no console/page errors. Required skill Playwright client passed with female character and matching MEET state.
 - Female regression browser passed continuous combat, wrong/correct answers, HP reload, Herb, focus, lost-response replay, all four realm labels, audio settings/mute, Echo Cave entry/respawn/exit/re-entry, and all three Typing Cavern stages. Latest screenshots visually inspected.
 - No SQL scripts changed or executed against the actual player database. Existing female profiles automatically use new art on refresh; male and legacy accounts keep original frames. Google credentials/configuration unchanged.
+
+## 2026-10-13 — Optimization audit
+
+- User request: 你帮我看有什么要优化的，你可以用skill。 Applied game-design-theory and game-ui-ux; used develop-web-game browser validation.
+- Baseline: 31 Node regressions and PHP battle/tutorial/Google validation passed. No local player data touched.
+- Isolated browser reproduced desktop account form overlap with quest title (account y14..57, quest y35..51), setting Tab focus escaping the modal, and wrong XP meter (level2/246 total XP displays246/100 with0% width).
+- Disposable test guest accepted the same unsupported QUEST claim twice: XP123->246, Coins7->14. Original verified battle receipts remain replay-protected. Do not equate this test to changing real user balances.
+- Safe fixes: moved upgrade/logout form into Settings without changing identity/CSRF/logout behavior; 44px action buttons, keyboard focus stays within Settings, Escape restores focus. XP and quest reward model deferred to explicit priority/acceptance notes in audit report.
+
+- Optimization UI browser passed: desktop quest title clear; visible same-CSRF account form in Settings; 16 Tab and 16 Shift+Tab stay inside; Escape restores trigger; 390x844 Settings fits; guest upgrade/logout/password relogin retain player ID and saved progress. No console/page errors. Screenshots inspected before/after.
+- Required skill Playwright client passed real movement/MEET state and screenshot/text consistency. Audit report records remaining QUEST replay, XP meter, learner feedback, 19-question bank, mobile readability and maintainability priorities. W3C APG used for modal keyboard behavior.
+- No schema migration or new/changed sprite assets. Commit includes only account/layout/focus/cache updates, latest audit and README/progress documentation. Original gameplay and player data preserved.

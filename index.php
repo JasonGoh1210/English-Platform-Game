@@ -31,7 +31,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261013-female1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261013-review1">
 </head>
 <body>
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -143,14 +143,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
 
     <div class="hint pixel-hint" data-i18n="controls.hint">A / D or ← / → to move&nbsp;&nbsp; • &nbsp;E / SPACE to interact</div>
 
-    <form class="game-logout-form" method="post" action="/FYP/logout.php">
-      <input type="hidden" name="csrf_token" value="<?= epq_h($epqCsrfToken) ?>">
-      <span class="game-account-name"><?= epq_h($epqDisplayName) ?></span>
-      <?php if ($epqIsGuest): ?>
-        <a class="game-logout-button" href="/FYP/register.php" style="text-decoration:none;">升级账号</a>
-      <?php endif; ?>
-      <button type="submit" class="game-logout-button"><?= $epqIsGuest ? '↩ 退出游客模式' : '↪ 退出登录' ?></button>
-    </form>
+
     <button type="button" class="settings-open-button" id="settingsOpenButton" data-i18n="settings.button">⚙ SETTINGS</button>
 
     <div class="destination-screen hidden" id="destinationScreen" role="dialog" aria-modal="true" aria-labelledby="destinationTitle">
@@ -304,6 +297,14 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         <?php require __DIR__ . '/includes/sound_settings.php'; ?>
         <p class="settings-saved" data-i18n="settings.saved">Language and sound settings are saved automatically.</p>
         <a class="settings-account-link" href="/FYP/account.php" data-i18n="account.settings">账号设置</a>
+        <form class="game-logout-form" method="post" action="/FYP/logout.php">
+          <input type="hidden" name="csrf_token" value="<?= epq_h($epqCsrfToken) ?>">
+          <span class="game-account-name"><?= epq_h($epqDisplayName) ?></span>
+          <?php if ($epqIsGuest): ?>
+            <a class="game-logout-button" href="/FYP/register.php" style="text-decoration:none;">升级账号</a>
+          <?php endif; ?>
+          <button type="submit" class="game-logout-button"><?= $epqIsGuest ? '↩ 退出游客模式' : '↪ 退出登录' ?></button>
+        </form>
         <button type="button" class="settings-close-button" id="settingsCloseButton" data-i18n="settings.close">CLOSE</button>
       </section>
     </div>
@@ -332,7 +333,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261013-female1").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261013-review1").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");

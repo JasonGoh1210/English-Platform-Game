@@ -53,6 +53,8 @@ New characters now learn movement and their first village battle with Elder Rowa
 
 Run PHP syntax checks, `node --check js/rpg.js`, `node --check js/battle.js`, and `node --test tests/gameplay_regression.test.cjs tests/battle_api.test.cjs` and `php tests/battle_rules_test.php`, `node --test tests/characters.test.cjs`, `php tests/google_token_test.php`. CI checks gameplay regressions and the guest/save/upgrade and verified combat flows on MySQL 8 and MariaDB 10.4. These checks do not verify the actual browser artwork or a complete playthrough.
 
+Latest priorities and reproduced issues: [Optimization review, 2026-10-13](docs/OPTIMIZATION_REVIEW_2026-10-13.md). Account upgrade/logout controls now live in map Settings, leaving quest titles visible.
+
 ## Known gaps before a final FYP release
 
 - Replace the remaining client-supplied NPC/typing QUEST reward deltas with server-verified one-time claims.

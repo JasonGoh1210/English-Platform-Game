@@ -4319,52 +4319,45 @@ button { font: inherit; }
 }
 
 
-/* Account identity controls for authenticated game pages. */
+/* Account actions live inside Settings, leaving the quest and player cards clear. */
 .game-logout-form {
-  position: fixed;
-  z-index: 25;
-  top: 14px;
-  right: 18px;
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
   gap: 8px;
-  max-width: min(42vw, 360px);
-  padding: 6px 7px 6px 12px;
-  border: 1px solid rgba(217, 197, 244, .28);
-  border-radius: 999px;
-  color: #eee7f8;
-  background: rgba(13, 20, 31, .85);
-  box-shadow: 0 8px 24px rgba(0,0,0,.18);
-  backdrop-filter: blur(10px);
+  width: 100%;
+  margin: 0 0 16px;
+  padding: 12px;
+  border: 1px solid #57686b;
+  background: rgba(13,20,31,.55);
 }
 .game-account-name {
+  flex: 0 1 100%;
   overflow: hidden;
   color: #e2d4f8;
-  font-size: .72rem;
+  font-size: .78rem;
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .game-logout-button {
-  flex: 0 0 auto;
-  padding: 6px 10px;
-  border: 1px solid rgba(211, 172, 231, .35);
-  border-radius: 999px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid rgba(211,172,231,.35);
+  border-radius: 5px;
   color: #f8eefe;
-  background: rgba(94, 56, 107, .44);
+  background: rgba(94,56,107,.44);
   font: inherit;
-  font-size: .68rem;
+  font-size: .75rem;
   font-weight: 800;
+  text-decoration: none;
   cursor: pointer;
 }
-.game-logout-button:hover { background: rgba(125, 72, 143, .62); }
+.game-logout-button:hover { background: rgba(125,72,143,.62); }
+.game-logout-button:focus-visible { outline: 2px solid #f1d17e; outline-offset: 3px; }
 .settings-account-link { display: block; margin-bottom: 16px; padding: 12px; color: #f1d17e; border: 1px solid #57686b; font-size: .8rem; }
 .settings-account-link:focus-visible { outline: 2px solid #f1d17e; outline-offset: 3px; }
-@media (max-width: 760px) {
-  .game-logout-form { top: 8px; right: 8px; gap: 4px; max-width: 52vw; padding: 4px 5px 4px 8px; }
-  .game-account-name { max-width: 16vw; font-size: .62rem; }
-  .game-logout-button { padding: 5px 7px; font-size: .6rem; }
-}
 
 
 /* Keep the battle monster art clear of its HP card. The image can look larger

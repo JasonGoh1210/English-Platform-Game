@@ -1,4 +1,4 @@
-import { setupAudio } from "./audio.js?v=20261013-female1";
+import { setupAudio } from "./audio.js?v=20261013-review1";
 
 const LANGUAGE_KEY = "englishPowerQuest.language.v1";
 
@@ -496,7 +496,7 @@ export function setupLanguageSettings() {
   const open = () => {
     screen.classList.remove("hidden");
     applyTranslations(screen);
-    closeButton.focus();
+    (screen.querySelector('[data-set-language].active') || screen.querySelector('[data-set-language]') || closeButton).focus();
   };
   const close = () => {
     screen.classList.add("hidden");
@@ -512,7 +512,23 @@ export function setupLanguageSettings() {
     button.addEventListener("click", () => setLanguage(button.dataset.setLanguage));
   });
   window.addEventListener("keydown", event => {
-    if (event.key === "Escape" && !screen.classList.contains("hidden")) close();
+    if (screen.classList.contains("hidden")) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      close();
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const controls = [...screen.querySelectorAll('button, a[href], input, select, textarea, [tabindex]')]
+      .filter(control => !control.disabled && control.tabIndex >= 0 && control.getClientRects().length);
+    if (!controls.length) return;
+    const first = controls[0], last = controls[controls.length - 1];
+    if (!screen.contains(document.activeElement)
+        || (!event.shiftKey && document.activeElement === last)
+        || (event.shiftKey && document.activeElement === first)) {
+      event.preventDefault();
+      (event.shiftKey ? last : first).focus();
+    }
   });
 }
 

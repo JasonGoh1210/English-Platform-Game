@@ -1,8 +1,8 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261013-female1";
-import { playSound } from "./audio.js?v=20261013-female1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-female1";
-import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261013-female1";
-import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261013-female1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261013-review1";
+import { playSound } from "./audio.js?v=20261013-review1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-review1";
+import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261013-review1";
+import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261013-review1";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -129,7 +129,7 @@ const worldBackgroundPaths = {
 for (const realmId of Object.keys(worldBackgroundPaths)) {
   const availablePaths = window.EPQ_AUTH?.worldBackgrounds?.[realmId];
   if (Array.isArray(availablePaths)) {
-    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261013-female1");
+    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261013-review1");
   }
 }
 
