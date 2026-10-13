@@ -36,7 +36,7 @@
 
 复用素材，无新增图片安装：
 
-- 幽魂：`images/world/monsters/cave-wraith.svg`。
+- 幽魂：后续统一像素画风使用 `images/world/monsters/cave-wraith-32.png`；原 SVG 保留。见 [像素美术更新](PIXEL_ART_AND_UI.md)。
 - 符文史莱姆：透明 PNG `assets/enemies/monster/Shrim.png`。
 - 回声飞龙：透明 PNG `assets/enemies/monster/Monster.png`。
 - 罗文及男女主角原素材保留。

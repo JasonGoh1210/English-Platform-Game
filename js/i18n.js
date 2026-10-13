@@ -1,9 +1,10 @@
-import { setupAudio } from "./audio.js?v=20261013-guide1";
+import { setupAudio } from "./audio.js?v=20261013-pixel1";
 
 const LANGUAGE_KEY = "englishPowerQuest.language.v1";
 
 const messages = {
   en: {
+    "destination.pick": "SELECT THIS REALM",
     "guide.title": "Your next adventure",
     "guide.open": "Quest & caves",
     "guide.close": "Back to map",
@@ -275,6 +276,7 @@ const messages = {
     "battle.rewardHp": "HP"
   },
   zh: {
+    "destination.pick": "点击选择这个世界",
     "guide.title": "下一步冒险",
     "guide.open": "任务与洞穴",
     "guide.close": "返回地图",

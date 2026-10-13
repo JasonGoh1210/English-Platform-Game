@@ -1,10 +1,11 @@
-import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261013-guide1";
-import { battleToken, createBattleClient } from "./battle-api.js?v=20261013-guide1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-guide1";
-import { playSound } from "./audio.js?v=20261013-guide1";
-import { normalizeTutorial } from "./tutorial.js?v=20261013-guide1";
-import { paintCharacterImages } from "./characters.js?v=20261013-guide1";
-import { createBattleReviewPanel } from "./battle-review.js?v=20261013-guide1";
+import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261013-pixel1";
+import { battleToken, createBattleClient } from "./battle-api.js?v=20261013-pixel1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-pixel1";
+import { playSound } from "./audio.js?v=20261013-pixel1";
+import { normalizeTutorial } from "./tutorial.js?v=20261013-pixel1";
+import { paintCharacterImages } from "./characters.js?v=20261013-pixel1";
+import { createBattleReviewPanel } from "./battle-review.js?v=20261013-pixel1";
+import { pixelArtPaths } from "./pixel-world.js?v=20261013-pixel1";
 
 // Use the same per-player storage namespace as the map. If these keys differ,
 // the battle page cannot find the enemy that the map just stored and redirects back.
@@ -90,25 +91,25 @@ const enemies = {
   },
   "bat-01": {
     id: "bat-01", name: "Confusion Bat", nameZh: "迷惑蝙蝠", type: "bat", difficulty: "EASY",
-    spritePath: "/FYP/images/world/monsters/confusion-bat.svg?v=20261010-monsterart2",
+    spritePath: pixelArtPaths.monsters["bat-01"],
     questionTypes: ["TRUE_FALSE", "ODD_WORD_OUT"],
     hp: 70, damage: 10, xp: 25, coins: 12, role: "FOREST ENEMY", roleKey: "battle.forestEnemy"
   },
   "road-guardian-01": {
     id: "road-guardian-01", name: "Road Guardian", nameZh: "道路守卫", type: "guardian", difficulty: "MEDIUM",
-    spritePath: "/FYP/images/world/monsters/road-guardian.svg?v=20261010-monsterart2",
+    spritePath: pixelArtPaths.monsters["road-guardian-01"],
     questionTypes: ["TRUE_FALSE", "SENTENCE_BUILDER"],
     hp: 85, damage: 11, xp: 28, coins: 14, role: "ROAD GUARDIAN", roleKey: "battle.ancientGuardian"
   },
   "guardian-01": {
     id: "guardian-01", name: "Grammar Guardian", nameZh: "语法守卫", type: "guardian", difficulty: "MEDIUM",
-    spritePath: "/FYP/images/world/monsters/grammar-guardian.svg?v=20261010-monsterart2",
+    spritePath: pixelArtPaths.monsters["guardian-01"],
     questionTypes: ["TRUE_FALSE", "SENTENCE_BUILDER"],
     hp: 100, damage: 12, xp: 30, coins: 15, role: "ANCIENT GUARDIAN", roleKey: "battle.ancientGuardian"
   },
   "cave-wraith-01": {
     id: "cave-wraith-01", name: "Cave Wraith", nameZh: "洞穴幽魂", type: "wraith", difficulty: "MEDIUM",
-    spritePath: "/FYP/images/world/monsters/cave-wraith.svg?v=20261010-monsterart2",
+    spritePath: pixelArtPaths.monsters["cave-wraith-01"],
     questionTypes: ["TRUE_FALSE", "SENTENCE_BUILDER"],
     hp: 110, damage: 14, xp: 45, coins: 20, role: "CAVE SPIRIT", roleKey: "battle.caveSpirit"
   },
@@ -396,6 +397,7 @@ async function startQuestion() {
   state.currentQuestion = result.battle.question;
   state.questionToken = result.battle.questionToken;
   const q = state.currentQuestion;
+  ui.questionPrompt.classList.toggle("generic-prompt", !q.prompt && !q.promptZh);
   localizeQuestionTheme();
   ui.questionType.textContent = formatType(q.type);
   ui.questionDifficulty.textContent = t("battle." + String(q.difficulty).toLowerCase());
@@ -717,6 +719,8 @@ async function init() {
   document.body.classList.add("battle-js-ready");
   setBattleMessage("battle.loading");
   state.enemy = getEnemy();
+  document.body.dataset.realm = state.enemy.id === "slime-01" ? "maple" : state.enemy.id === "bat-01" ? "forest" : state.enemy.id === "road-guardian-01" ? "camp" : "ruins";
+  document.body.dataset.encounter = ["cave-wraith-01","echo-slime-01","echo-dragon-01"].includes(state.enemy.id) ? "cave" : "outdoor";
   state.enemyHp = state.enemy.hp;
   state.focusUsed = false;
 

@@ -1,10 +1,11 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261013-guide1";
-import { playSound } from "./audio.js?v=20261013-guide1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-guide1";
-import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261013-guide1";
-import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261013-guide1";
-import { createQuestClient } from "./quest-api.js?v=20261013-guide1";
-import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261013-guide1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261013-pixel1";
+import { playSound } from "./audio.js?v=20261013-pixel1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-pixel1";
+import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261013-pixel1";
+import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261013-pixel1";
+import { createQuestClient } from "./quest-api.js?v=20261013-pixel1";
+import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261013-pixel1";
+import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave } from "./pixel-world.js?v=20261013-pixel1";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -129,7 +130,7 @@ const worldBackgroundPaths = {
 for (const realmId of Object.keys(worldBackgroundPaths)) {
   const availablePaths = window.EPQ_AUTH?.worldBackgrounds?.[realmId];
   if (Array.isArray(availablePaths)) {
-    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261013-guide1");
+    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261013-pixel1");
   }
 }
 
@@ -516,10 +517,7 @@ loadImageFromCandidates(
 );
 
 const mapEnemyArtPaths = {
-  "bat-01": "/FYP/images/world/monsters/confusion-bat.svg?v=20261010-monsterart2",
-  "road-guardian-01": "/FYP/images/world/monsters/road-guardian.svg?v=20261010-monsterart2",
-  "guardian-01": "/FYP/images/world/monsters/grammar-guardian.svg?v=20261010-monsterart2",
-  "cave-wraith-01": "/FYP/images/world/monsters/cave-wraith.svg?v=20261010-monsterart2",
+  ...pixelArtPaths.monsters,
   "echo-slime-01": "/FYP/assets/enemies/monster/Shrim.png?v=20261010-enemyart1",
   "echo-dragon-01": "/FYP/assets/enemies/monster/Monster.png?v=20261010-enemyart1"
 };
@@ -532,6 +530,12 @@ for (const [enemyId, imagePath] of Object.entries(mapEnemyArtPaths)) {
   image.src = imagePath;
   mapEnemyArtById[enemyId] = image;
 }
+
+const npcPixelSprites = {};
+for (const [id,path] of Object.entries(pixelArtPaths.npcs)) {
+  const image=new Image();image.src=path;image.decoding="async";npcPixelSprites[id]=image;
+}
+const realmPortalSprite=new Image();realmPortalSprite.src=pixelArtPaths.portal;
 
 const playerWalkFrames = {
   right: Array.from({ length: 6 }, () => new Image()),
@@ -881,6 +885,11 @@ window.addEventListener("keydown", (e) => {
   }
 
   if (world.travelMenu) {
+    if (k === "tab") {
+      const buttons=[...ui.destinationScreen.querySelectorAll("button")].filter(button=>!button.disabled&&button.getClientRects().length);
+      const index=buttons.indexOf(document.activeElement);
+      e.preventDefault();buttons[(index+(e.shiftKey?-1:1)+buttons.length)%buttons.length]?.focus();return;
+    }
     if (["arrowleft", "a"].includes(k)) {
       e.preventDefault();
       if (!e.repeat) selectDestination(-1);
@@ -893,7 +902,11 @@ window.addEventListener("keydown", (e) => {
     }
     if (k === "enter" || k === " ") {
       e.preventDefault();
-      if (!e.repeat) travelToSelectedDestination();
+      if (!e.repeat) {
+        const focused=document.activeElement;
+        if (focused?.tagName === "BUTTON" && ui.destinationScreen.contains(focused)) focused.click();
+        else travelToSelectedDestination();
+      }
       return;
     }
     if (k === "escape") {
@@ -928,6 +941,9 @@ document.getElementById("interactButton").addEventListener("click", interact);
 document.getElementById("destinationPrev").addEventListener("click", () => selectDestination(-1));
 document.getElementById("destinationNext").addEventListener("click", () => selectDestination(1));
 document.getElementById("destinationBack").addEventListener("click", closeDestinationMenu);
+document.getElementById("destinationPreviewPrev").addEventListener("click", () => selectDestination(-1));
+document.getElementById("destinationPreviewNext").addEventListener("click", () => selectDestination(1));
+document.getElementById("destinationPick").addEventListener("click", travelToSelectedDestination);
 document.getElementById("destinationTravel").addEventListener("click", travelToSelectedDestination);
 ui.storyIntroNext.addEventListener("click", advanceStoryIntro);
 ui.storyIntroSkip.addEventListener("click", finishStoryIntro);
@@ -1481,7 +1497,7 @@ function renderTypingQuestion() {
   typingUi.title.textContent = t("guide.typing.name");
   const round = Math.min(typingCaveState.completedLevels, 2);
   const guardians = [
-    { key: "guide.echo.wraith", src: "/FYP/images/world/monsters/cave-wraith.svg?v=20261010-monsterart2" },
+    { key: "guide.echo.wraith", src: pixelArtPaths.monsters["cave-wraith-01"] },
     { key: "guide.echo.slime", src: "/FYP/assets/enemies/monster/Shrim.png?v=20261010-enemyart1" },
     { key: "guide.echo.dragon", src: "/FYP/assets/enemies/monster/Monster.png?v=20261010-enemyart1" }
   ];
@@ -1855,6 +1871,16 @@ function renderDestinationSelection() {
     String(world.selectedDestinationIndex + 1).padStart(2, "0") +
     " / " + String(destinations.length).padStart(2, "0");
   ui.destinationScene.dataset.scene = destination.scene;
+  ui.destinationTitle.classList.toggle("long-title", getLanguage() === "en" && t(destination.nameKey).length > 14);
+  document.getElementById("destinationSceneImage").src = "/FYP/images/world/pixel/" + destination.id + ".png";
+  document.getElementById("destinationRune").textContent = ["Ⅰ","Ⅱ","Ⅲ","Ⅳ"][world.selectedDestinationIndex];
+  document.getElementById("destinationPick").setAttribute("aria-label", t("destination.pick") + " · " + t(destination.nameKey));
+  for (const [id,offset] of [["destinationPreviewPrev",-1],["destinationPreviewNext",1]]) {
+    const realm=destinations[(world.selectedDestinationIndex+offset+destinations.length)%destinations.length];
+    const preview=document.getElementById(id);preview.style.backgroundImage='url("/FYP/images/world/pixel/'+realm.id+'.png")';
+    preview.querySelector("span").textContent=t(realm.nameKey);
+    preview.setAttribute("aria-label",t(offset<0?"destination.previous":"destination.next")+" · "+t(realm.nameKey));
+  }
   ui.destinationScene.setAttribute("aria-label", t(destination.nameKey) + (getLanguage() === "zh" ? "场景" : " landscape"));
 
   document.querySelectorAll("[data-destination-index]").forEach((button) => {
@@ -1883,12 +1909,14 @@ function openDestinationMenu() {
   touch.right = false;
   renderDestinationSelection();
   ui.destinationScreen.classList.remove("hidden");
+  document.getElementById("destinationPick").focus();
 }
 
 function closeDestinationMenu() {
   world.travelMenu = false;
   ui.destinationScreen.classList.add("hidden");
   keys.clear();
+  document.getElementById("interactButton").focus();
 }
 
 function travelToSelectedDestination() {
@@ -2245,96 +2273,7 @@ function getWorldSceneForX() {
 }
 
 function drawWorldBackdrop(w, h, scene) {
-  const backgroundImage = worldBackgrounds[scene];
-  if (backgroundImage && backgroundImage.complete && backgroundImage.naturalWidth > 0) {
-    // Keep the illustration's aspect ratio: it fills the viewport with only a
-    // small parallax shift. Align its painted path with the gameplay ground.
-    const floorRatios = { maple: 0.76, forest: 0.78, camp: 0.76, ruins: 0.70 };
-    const maxCamera = Math.max(0, world.width - w);
-    const parallaxTravel = Math.max(0, maxCamera * 0.16);
-    const progress = maxCamera > 0 ? clamp(world.cameraX / maxCamera, 0, 1) : 0;
-    const drawWidth = w + parallaxTravel;
-    const drawHeight = drawWidth * backgroundImage.naturalHeight / backgroundImage.naturalWidth;
-    const drawX = -progress * parallaxTravel;
-    const drawY = world.groundY - drawHeight * (floorRatios[scene] || 0.75);
-    ctx.drawImage(backgroundImage, drawX, drawY, drawWidth, drawHeight);
-    return;
-  }
-
-  const palette = {
-    maple: { top: "#397ca1", middle: "#83c2cb", bottom: "#e6d9a7", far: "#7d9c79", hill: "#416c4b", trees1: "#244d3b", trees2: "#183c31", light: "#fff0bd" },
-    forest: { top: "#183342", middle: "#37656b", bottom: "#b1b58a", far: "#526b68", hill: "#34564a", trees1: "#1c433a", trees2: "#10372f", light: "#9ee7ba" },
-    camp: { top: "#422f4a", middle: "#ba755e", bottom: "#e7bd7b", far: "#79645d", hill: "#625b43", trees1: "#4a4a3b", trees2: "#273a34", light: "#ffcb75" },
-    ruins: { top: "#171c36", middle: "#4e5477", bottom: "#a18f98", far: "#6b6d7b", hill: "#41444f", trees1: "#303e3d", trees2: "#1d3330", light: "#c4a6ff" }
-  }[scene] || null;
-  const p = palette || { top:"#397ca1",middle:"#83c2cb",bottom:"#e6d9a7",far:"#7d9c79",hill:"#416c4b",trees1:"#244d3b",trees2:"#183c31",light:"#fff0bd" };
-
-  const sky = ctx.createLinearGradient(0,0,0,h);
-  sky.addColorStop(0,p.top); sky.addColorStop(.58,p.middle); sky.addColorStop(1,p.bottom);
-  ctx.fillStyle=sky; ctx.fillRect(0,0,w,h);
-
-  const sunX = w*.82, sunY = h*(scene==="camp"?.24:.16);
-  const glow=ctx.createRadialGradient(sunX,sunY,2,sunX,sunY,145);
-  glow.addColorStop(0, scene==="ruins"?"rgba(196,166,255,.27)":scene==="camp"?"rgba(255,196,117,.32)":"rgba(255,244,200,.25)");
-  glow.addColorStop(1,"rgba(255,255,255,0)");
-  ctx.fillStyle=glow; ctx.fillRect(sunX-150,sunY-150,300,300);
-  ctx.fillStyle=p.light; ctx.beginPath(); ctx.arc(sunX,sunY,scene==="ruins"?24:29,0,Math.PI*2); ctx.fill();
-
-  // Distant ridges give each world its own silhouette and horizon.
-  ctx.fillStyle=p.far; ctx.beginPath(); ctx.moveTo(0,h*.58);
-  for(let x=0;x<=w+100;x+=85){
-    const wave=scene==="ruins" ? Math.sin(x*.021)*35+Math.cos(x*.009)*14 :
-      scene==="camp" ? Math.sin(x*.014)*22+Math.cos(x*.006)*16 : Math.sin(x*.013)*34;
-    ctx.lineTo(x,h*.49+wave);
-  }
-  ctx.lineTo(w,world.groundY); ctx.lineTo(0,world.groundY); ctx.closePath(); ctx.fill();
-  ctx.fillStyle=p.hill; ctx.beginPath(); ctx.moveTo(0,h*.70);
-  for(let x=0;x<=w+80;x+=72) ctx.lineTo(x,h*.65+Math.cos(x*.015)*19);
-  ctx.lineTo(w,world.groundY); ctx.lineTo(0,world.groundY); ctx.closePath(); ctx.fill();
-
-  if(scene==="maple" || scene==="forest"){
-    drawForestLayer(w,h,.13,p.trees1,scene==="maple"?165:205,scene==="maple"?270:350);
-    drawForestLayer(w,h,.25,p.trees2,scene==="maple"?185:225,scene==="maple"?295:375);
-    // Fireflies in the whispering woods.
-    if(scene==="forest"){
-      for(let i=0;i<22;i++){
-        const fx=(i*131-world.cameraX*.16+w*2)%w;
-        const fy=110+((i*47)%Math.max(100,world.groundY-150));
-        ctx.globalAlpha=.35+(Math.sin(world.time*2+i)+1)*.25;
-        ctx.fillStyle=p.light; ctx.fillRect(fx,fy,3,3);
-      }
-      ctx.globalAlpha=1;
-    }
-  } else if(scene==="camp"){
-    // Pine silhouettes and drifting ember pixels under a sunset sky.
-    for(let i=-1;i<Math.ceil(w/155)+2;i++){
-      const x=i*155+60, base=world.groundY-5, ht=95+Math.abs(i*37%80);
-      ctx.fillStyle=i%2?p.trees1:p.trees2;
-      ctx.fillRect(x-4,base-ht*.35,8,ht*.35);
-      for(let tier=0;tier<4;tier++){
-        const y=base-ht+tier*ht*.2, half=19+tier*8;
-        ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-half,y+ht*.29);ctx.lineTo(x+half,y+ht*.29);ctx.closePath();ctx.fill();
-      }
-    }
-    for(let i=0;i<12;i++){
-      const ex=(i*143+world.time*(7+i%4))%w, ey=world.groundY-70-((i*43+world.time*11)%210);
-      ctx.fillStyle=p.light;ctx.globalAlpha=.42;ctx.fillRect(ex,ey,2,3);
-    }
-    ctx.globalAlpha=1;
-  } else {
-    // Ruined towers and rune-lit monoliths frame the ancient realm.
-    for(let i=0;i<Math.ceil(w/185)+2;i++){
-      const x=i*185-(world.cameraX*.12%185)+60, base=world.groundY-3, ht=84+Math.abs(i*43%85);
-      ctx.fillStyle=i%2?"#343b4b":"#3d414d";
-      ctx.fillRect(x-7,base-ht,14,ht);ctx.fillRect(x-17,base-ht+20,34,8);ctx.fillRect(x-22,base-ht+42,44,7);
-      ctx.fillStyle="rgba(196,166,255,.55)";ctx.fillRect(x-1,base-ht+7,3,Math.max(20,ht-22));
-    }
-    for(let i=0;i<16;i++){
-      const gx=((i*113-world.cameraX*.18)%w+w)%w, gy=world.groundY-50-(i*37%185);
-      ctx.fillStyle=p.light;ctx.globalAlpha=.25+(Math.sin(world.time*1.7+i)+1)*.2;ctx.fillRect(gx,gy,3,3);
-    }
-    ctx.globalAlpha=1;
-  }
+  drawPixelBackdrop(ctx, worldBackgrounds[scene], {width:w,height:h,ground:world.groundY,realm:scene,camera:world.cameraX});
 }
 
 function drawSky(w, h) {
@@ -2403,386 +2342,68 @@ function drawForestLayer(w, h, parallax, color, minSize, maxSize) {
 }
 
 function drawGround(w, h, scene = "maple") {
-  const p = {
-    maple:{soil:"#263a2d",top:"#81945a",a:"#344a33",b:"#30442f",seam:"#566844",detail:"#97a776"},
-    forest:{soil:"#1c3430",top:"#597b55",a:"#28443c",b:"#243c36",seam:"#42624b",detail:"#83b07c"},
-    camp:{soil:"#38322d",top:"#b18a56",a:"#4a3f35",b:"#41382f",seam:"#6f5b42",detail:"#d0a86a"},
-    ruins:{soil:"#272b37",top:"#77748c",a:"#343744",b:"#2e313d",seam:"#4b4f60",detail:"#8c86ad"}
-  }[scene] || {soil:"#263a2d",top:"#81945a",a:"#344a33",b:"#30442f",seam:"#566844",detail:"#97a776"};
-  ctx.fillStyle=p.soil;ctx.fillRect(0,world.groundY,w,h-world.groundY);
-  ctx.fillStyle=p.top;ctx.fillRect(0,world.groundY-8,w,8);
-  ctx.fillStyle="rgba(10,13,12,.24)";ctx.fillRect(0,world.groundY-2,w,4);
-  const tile=80,start=Math.floor(world.cameraX/tile)-1,end=start+Math.ceil(w/tile)+2;
-  for(let i=start;i<end;i++){
-    const x=i*tile-world.cameraX;
-    ctx.fillStyle=i%2===0?p.a:p.b;ctx.fillRect(x,world.groundY+22,tile-2,55);
-    ctx.fillStyle=p.seam;ctx.fillRect(x+10,world.groundY+17,22,5);
-    ctx.fillStyle=p.detail;
-    if(scene==="maple"||scene==="forest"){ctx.fillRect(x+44,world.groundY+36,4,2);ctx.fillRect(x+53,world.groundY+45,2,3);}
-    else if(scene==="camp"){ctx.fillRect(x+48,world.groundY+41,9,2);ctx.fillRect(x+18,world.groundY+59,5,2);}
-    else{ctx.fillRect(x+46,world.groundY+35,3,9);ctx.fillRect(x+49,world.groundY+35,5,2);}
-  }
+  drawPixelGround(ctx,{width:w,height:h,ground:world.groundY,realm:scene,camera:world.cameraX});
 }
 
 
 
 function drawLandmarks() {
   for (const l of landmarks) {
-    if (l.realmId !== world.currentRealmId) continue;
-    const x = worldToScreen(l.x);
-    if (x < -220 || x > window.innerWidth + 220) continue;
-    const hasPaintedBackground = Boolean(
-      worldBackgrounds[world.currentRealmId]?.complete &&
-      worldBackgrounds[world.currentRealmId]?.naturalWidth > 0
-    );
-    if (hasPaintedBackground && ["house", "bridge", "camp", "tower", "ruins", "gate"].includes(l.type)) {
-      // Those structures are painted into the selected full-world background.
-      // Keep their interaction logic/data, but do not draw duplicate foreground copies.
-      continue;
-    }
-    if (l.type === "house") drawHouse(x, world.groundY, l.variant);
-    if (l.type === "bridge") drawBridge(x, world.groundY);
-    if (l.type === "camp") drawCamp(x, world.groundY);
-    if (l.type === "tower") drawTower(x, world.groundY);
-    if (l.type === "ruins") drawRuins(x, world.groundY);
-    if (l.type === "gate") drawGate(x, world.groundY);
-    if (l.type === "sign") drawSign(x, world.groundY, l.realmId);
-    if (l.type === "cave") drawCaveEntrance(x, world.groundY, Math.abs(l.x - world.player.x) < 125);
-    if (l.type === "typingCave") drawTypingCaveEntrance(x, world.groundY, Math.abs(l.x - world.player.x) < 135);
+    if(l.realmId!==world.currentRealmId)continue;
+    const x=worldToScreen(l.x);if(x < -220 || x > window.innerWidth+220)continue;
+    if(l.type==="sign")drawSign(x,world.groundY,l.realmId);
+    else if(l.type==="cave")drawCaveEntrance(x,world.groundY,Math.abs(l.x-world.player.x)<125);
+    else if(l.type==="typingCave")drawTypingCaveEntrance(x,world.groundY,Math.abs(l.x-world.player.x)<135);
+    else drawPixelLandmark(ctx,l.type,x,world.groundY,l.variant);
   }
 }
 
 function drawCaveEntrance(x, ground, nearby) {
-  ctx.save();
-  const glow = ctx.createRadialGradient(x, ground - 80, 5, x, ground - 80, 125);
-  glow.addColorStop(0, "rgba(99, 173, 204, .24)");
-  glow.addColorStop(1, "rgba(17, 30, 40, 0)");
-  ctx.fillStyle = glow;
-  ctx.fillRect(x - 130, ground - 215, 260, 230);
-
-  ctx.fillStyle = "#292f37";
-  ctx.fillRect(x - 82, ground - 92, 28, 92);
-  ctx.fillRect(x + 54, ground - 92, 28, 92);
-  ctx.beginPath();
-  ctx.moveTo(x - 87, ground - 88);
-  ctx.lineTo(x - 73, ground - 150);
-  ctx.lineTo(x - 31, ground - 184);
-  ctx.lineTo(x + 19, ground - 191);
-  ctx.lineTo(x + 67, ground - 157);
-  ctx.lineTo(x + 87, ground - 88);
-  ctx.closePath();
-  ctx.fillStyle = "#39424a";
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(x - 54, ground);
-  ctx.lineTo(x - 51, ground - 90);
-  ctx.quadraticCurveTo(x - 44, ground - 147, x, ground - 148);
-  ctx.quadraticCurveTo(x + 45, ground - 146, x + 52, ground - 90);
-  ctx.lineTo(x + 54, ground);
-  ctx.closePath();
-  ctx.fillStyle = "#070a10";
-  ctx.fill();
-
-  ctx.fillStyle = "#657b85";
-  ctx.fillRect(x - 80, ground - 94, 12, 85);
-  ctx.fillRect(x + 68, ground - 94, 12, 85);
-  ctx.fillStyle = "#202831";
-  ctx.fillRect(x - 63, ground - 5, 126, 8);
-
-  ctx.fillStyle = "#c7e7ed";
-  ctx.textAlign = "center";
-  ctx.font = getLanguage() === "zh" ? "bold 13px sans-serif" : "bold 12px 'Courier New', monospace";
-  ctx.fillText(t("cave.entranceName"), x, ground - 205);
-  ctx.font = "bold 10px system-ui";
-  ctx.fillText(t("guide.echo.short"), x, ground - 187);
-
-  if (nearby) {
-    ctx.fillStyle = "rgba(7, 12, 18, .92)";
-    ctx.fillRect(x - 99, ground - 238, 198, 22);
-    ctx.strokeStyle = "#7eb7cb";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x - 99, ground - 238, 198, 22);
-    ctx.fillStyle = "#e3f7ff";
-    ctx.font = getLanguage() === "zh" ? "bold 11px sans-serif" : "bold 10px 'Courier New', monospace";
-    ctx.fillText(t("cave.enterPrompt"), x, ground - 223);
-  }
+  drawPixelLandmark(ctx,"cave",x,ground);
+  ctx.save();ctx.textAlign="center";ctx.font="bold 12px system-ui";ctx.fillStyle="#c5e3eb";
+  ctx.fillText(t("cave.entranceName"),x,ground-150);ctx.font="bold 10px system-ui";
+  ctx.fillText(t("guide.echo.short"),x,ground-134);
+  if(nearby){ctx.fillStyle="#142631";ctx.fillRect(Math.round(x-105),ground-180,210,22);ctx.fillStyle="#e9ddba";ctx.fillText(t("cave.enterPrompt"),x,ground-165);}
   ctx.restore();
 }
 
 function drawTypingCaveEntrance(x, ground, nearby) {
-  ctx.save();
-
-  const glow = ctx.createRadialGradient(x, ground - 82, 3, x, ground - 82, 150);
-  glow.addColorStop(0, "rgba(155, 91, 226, .34)");
-  glow.addColorStop(.55, "rgba(92, 58, 150, .16)");
-  glow.addColorStop(1, "rgba(18, 16, 31, 0)");
-  ctx.fillStyle = glow;
-  ctx.fillRect(x - 155, ground - 232, 310, 245);
-
-  // Purple-gray stone arch to distinguish this cave from the blue Echo Cave.
-  ctx.fillStyle = "#282536";
-  ctx.beginPath();
-  ctx.moveTo(x - 101, ground);
-  ctx.lineTo(x - 94, ground - 98);
-  ctx.lineTo(x - 70, ground - 164);
-  ctx.lineTo(x - 22, ground - 196);
-  ctx.lineTo(x + 35, ground - 190);
-  ctx.lineTo(x + 82, ground - 149);
-  ctx.lineTo(x + 102, ground - 76);
-  ctx.lineTo(x + 102, ground);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.fillStyle = "#545064";
-  ctx.fillRect(x - 92, ground - 92, 22, 92);
-  ctx.fillRect(x + 70, ground - 92, 22, 92);
-  ctx.fillStyle = "#756b86";
-  ctx.fillRect(x - 85, ground - 91, 5, 83);
-  ctx.fillRect(x + 80, ground - 91, 5, 83);
-
-  ctx.beginPath();
-  ctx.moveTo(x - 62, ground);
-  ctx.lineTo(x - 60, ground - 91);
-  ctx.quadraticCurveTo(x - 56, ground - 145, x, ground - 151);
-  ctx.quadraticCurveTo(x + 55, ground - 145, x + 61, ground - 91);
-  ctx.lineTo(x + 62, ground);
-  ctx.closePath();
-  ctx.fillStyle = "#05060b";
-  ctx.fill();
-
-  // A few dim crystal pixels make this entrance feel like a separate challenge area.
-  ctx.fillStyle = "#bc9cff";
-  ctx.globalAlpha = .85;
-  ctx.fillRect(x - 38, ground - 117, 4, 10);
-  ctx.fillRect(x + 30, ground - 132, 4, 10);
-  ctx.fillRect(x + 7, ground - 94, 3, 7);
-  ctx.globalAlpha = 1;
-
-  ctx.fillStyle = "#171621";
-  ctx.fillRect(x - 91, ground - 6, 182, 10);
-  ctx.fillStyle = "#87729d";
-  ctx.fillRect(x - 79, ground - 4, 158, 3);
-
-  ctx.textAlign = "center";
-  ctx.font = getLanguage() === "zh" ? "bold 13px sans-serif" : "bold 12px 'Courier New', monospace";
-  ctx.fillStyle = "#eadcff";
-  ctx.fillText(t("guide.typing.name"), x, ground - 211);
-  ctx.font = "bold 10px system-ui";
-  ctx.fillText(t("guide.typing.short"), x, ground - 191);
-
-  if (nearby) {
-    ctx.fillStyle = "rgba(10, 8, 17, .94)";
-    ctx.fillRect(x - 119, ground - 246, 238, 23);
-    ctx.strokeStyle = "#a88cd1";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x - 119, ground - 246, 238, 23);
-    ctx.fillStyle = "#f3eaff";
-    ctx.font = getLanguage() === "zh" ? "bold 11px sans-serif" : "bold 10px 'Courier New', monospace";
-    ctx.fillText(getLanguage() === "zh" ? "按 E / 互动开始打字挑战" : "PRESS E TO START TYPING CHALLENGE", x, ground - 231);
-  }
-
+  drawPixelLandmark(ctx,"typingCave",x,ground);
+  ctx.save();ctx.textAlign="center";ctx.font="bold 12px system-ui";ctx.fillStyle="#d5c7eb";
+  ctx.fillText(t("guide.typing.name"),x,ground-150);ctx.font="bold 10px system-ui";
+  ctx.fillText(t("guide.typing.short"),x,ground-134);
+  if(nearby){ctx.fillStyle="#221d33";ctx.fillRect(Math.round(x-110),ground-180,220,22);ctx.fillStyle="#e9ddba";ctx.fillText(getLanguage()==="zh"?"按 E / 互动开始三关拼写":"E / INTERACT · SPELLING",x,ground-165);}
   ctx.restore();
 }
 
 function drawCaveScene(w, h) {
-  const gradient = ctx.createLinearGradient(0, 0, 0, h);
-  gradient.addColorStop(0, "#050810");
-  gradient.addColorStop(.42, "#101722");
-  gradient.addColorStop(.72, "#242b32");
-  gradient.addColorStop(1, "#171e23");
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, w, h);
-
-  // Jagged ceiling silhouette.
-  ctx.fillStyle = "#080c13";
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  for (let x = 0; x <= w + 90; x += 70) {
-    const tooth = 18 + Math.abs(Math.sin(x * .033)) * 33;
-    ctx.lineTo(x, tooth);
-    ctx.lineTo(x + 34, 0);
-  }
-  ctx.lineTo(w, 0);
-  ctx.closePath();
-  ctx.fill();
-
-  // Distant cavern walls and narrow shafts of cold light.
-  ctx.fillStyle = "#1a252f";
-  ctx.beginPath();
-  ctx.moveTo(0, 300);
-  for (let x = 0; x <= w + 80; x += 80) {
-    ctx.lineTo(x, 215 + Math.sin(x * .017) * 47);
-  }
-  ctx.lineTo(w, 525);
-  ctx.lineTo(0, 525);
-  ctx.closePath();
-  ctx.fill();
-
-  const start = Math.floor(world.cameraX / 150) - 2;
-  const end = start + Math.ceil(w / 150) + 5;
-  for (let i = start; i < end; i++) {
-    const worldX = i * 150 + 45;
-    const x = worldToScreen(worldX);
-    const size = 28 + Math.abs(i * 31 % 48);
-    ctx.fillStyle = i % 2 ? "#222e37" : "#29323b";
-    ctx.beginPath();
-    ctx.moveTo(x - size * .48, 0);
-    ctx.lineTo(x + size * .48, 0);
-    ctx.lineTo(x + size * .12, size + 15);
-    ctx.lineTo(x - size * .09, size * .72);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = "rgba(4, 7, 12, .34)";
-    ctx.fillRect(x - 25, 105 + Math.abs(i * 17 % 110), 50, 9);
-    ctx.fillRect(x - 15, 122 + Math.abs(i * 13 % 115), 30, 5);
-  }
-
-  ctx.fillStyle = "#4e5960";
-  ctx.fillRect(0, world.groundY - 9, w, 10);
-  ctx.fillStyle = "#303b43";
-  ctx.fillRect(0, world.groundY + 1, w, h - world.groundY);
-
-  const tile = 72;
-  const floorStart = Math.floor(world.cameraX / tile) - 1;
-  const floorEnd = floorStart + Math.ceil(w / tile) + 3;
-  for (let i = floorStart; i < floorEnd; i++) {
-    const x = i * tile - world.cameraX;
-    ctx.fillStyle = i % 2 ? "#263138" : "#202a31";
-    ctx.fillRect(x, world.groundY + 18, tile - 2, 56);
-    ctx.fillStyle = "#455057";
-    ctx.fillRect(x + 11, world.groundY + 19, 18, 5);
-  }
-
-  // Location title inside the cave.
-  ctx.textAlign = "center";
-  ctx.fillStyle = "rgba(0, 0, 0, .48)";
-  ctx.fillRect(w * .5 - 176, 177, 352, 43);
-  ctx.strokeStyle = "rgba(133, 184, 203, .6)";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(w * .5 - 176, 177, 352, 43);
-  ctx.fillStyle = "#e1f1f4";
-  ctx.font = getLanguage() === "zh" ? "bold 21px sans-serif" : "bold 19px 'Courier New', monospace";
-  ctx.fillText(t("cave.title"), w * .5, 204);
-  ctx.fillStyle = "#9eafbb";
-  ctx.font = getLanguage() === "zh" ? "13px sans-serif" : "12px 'Courier New', monospace";
-  ctx.fillText(t("cave.subtitle"), w * .5, 239);
+  drawPixelCave(ctx,{width:w,height:h,ground:world.groundY,camera:world.cameraX});
 }
 
 function drawCaveExit() {
-  const exitWorldX = 260;
-  const x = worldToScreen(exitWorldX);
-  const ground = world.groundY;
-  if (x < -140 || x > window.innerWidth + 140) return;
-  const nearby = Math.abs(world.player.x - exitWorldX) < 125;
-  ctx.save();
-  ctx.fillStyle = "rgba(153, 215, 230, .12)";
-  ctx.beginPath();
-  ctx.ellipse(x, ground - 80, 104, 156, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "#59666c";
-  ctx.beginPath();
-  ctx.moveTo(x - 92, ground);
-  ctx.lineTo(x - 75, ground - 109);
-  ctx.lineTo(x - 41, ground - 170);
-  ctx.lineTo(x + 18, ground - 182);
-  ctx.lineTo(x + 73, ground - 135);
-  ctx.lineTo(x + 93, ground);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(x - 57, ground);
-  ctx.lineTo(x - 48, ground - 90);
-  ctx.quadraticCurveTo(x, ground - 155, x + 50, ground - 90);
-  ctx.lineTo(x + 57, ground);
-  ctx.closePath();
-  ctx.fillStyle = "#080c12";
-  ctx.fill();
-
-  ctx.fillStyle = "#8dd5e5";
-  ctx.fillRect(x - 72, ground - 70, 7, 62);
-  ctx.fillRect(x + 65, ground - 70, 7, 62);
-
-  if (nearby) {
-    ctx.fillStyle = "rgba(6, 10, 15, .93)";
-    ctx.fillRect(x - 98, ground - 224, 196, 22);
-    ctx.strokeStyle = "#7eb7cb";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x - 98, ground - 224, 196, 22);
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#e3f7ff";
-    ctx.font = getLanguage() === "zh" ? "bold 11px sans-serif" : "bold 10px 'Courier New', monospace";
-    ctx.fillText(t("cave.exitPrompt"), x, ground - 209);
-  }
+  const x=worldToScreen(260);if(x < -120 || x > window.innerWidth+120)return;
+  drawPixelLandmark(ctx,"cave",x,world.groundY);
+  ctx.save();ctx.textAlign="center";ctx.fillStyle="#c5e3eb";ctx.font="bold 12px system-ui";
+  ctx.fillText(t("guide.echo.exit"),x,world.groundY-148);
+  if(Math.abs(world.player.x-260)<125){ctx.fillStyle="#142631";ctx.fillRect(Math.round(x-105),world.groundY-180,210,22);ctx.fillStyle="#e9ddba";ctx.font="bold 10px system-ui";ctx.fillText(t("cave.exitPrompt"),x,world.groundY-165);}
   ctx.restore();
 }
 
 function drawCaveDetails() {
-  const positions = [400, 560, 760, 1010, 1190, 1500, 1740, 2020];
-  for (const room of echoRooms) {
-    const x = Math.round(worldToScreen(room.x));
-    if (x < -140 || x > window.innerWidth + 140) continue;
-    ctx.save(); ctx.textAlign = "center";
-    ctx.font = "bold 12px system-ui";
-    ctx.fillStyle = echoEnemyAvailable(room.id, defeatedEnemyIds()) ? "#f3db9a" : "#84919b";
-    const label = t(room.roomKey);
-    const width = ctx.measureText(label).width + 16;
-    ctx.fillRect(x - width / 2, world.groundY - 255, width, 23);
-    ctx.fillStyle = "#111b25";
-    ctx.fillText(label, x, world.groundY - 239);
-    ctx.restore();
-  }
-  for (let i = 0; i < positions.length; i++) {
-    const x = worldToScreen(positions[i]);
-    if (x < -80 || x > window.innerWidth + 80) continue;
-    if (i % 2 === 0) {
-      ctx.fillStyle = "#39464d";
-      ctx.fillRect(x - 21, world.groundY - 114, 42, 114);
-      ctx.fillStyle = "#56636a";
-      ctx.fillRect(x - 30, world.groundY - 122, 60, 14);
-      ctx.fillStyle = "#202a31";
-      ctx.fillRect(x - 14, world.groundY - 95, 6, 66);
-      ctx.fillRect(x + 8, world.groundY - 80, 6, 45);
-    } else {
-      const glow = ctx.createRadialGradient(x, world.groundY - 48, 2, x, world.groundY - 48, 52);
-      glow.addColorStop(0, "rgba(104, 218, 227, .33)");
-      glow.addColorStop(1, "rgba(66, 134, 147, 0)");
-      ctx.fillStyle = glow;
-      ctx.fillRect(x - 55, world.groundY - 105, 110, 110);
-      ctx.fillStyle = "#64bbc5";
-      ctx.beginPath();
-      ctx.moveTo(x, world.groundY - 83);
-      ctx.lineTo(x + 17, world.groundY - 45);
-      ctx.lineTo(x + 9, world.groundY - 12);
-      ctx.lineTo(x - 10, world.groundY - 12);
-      ctx.lineTo(x - 18, world.groundY - 48);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = "#b0fbff";
-      ctx.fillRect(x - 2, world.groundY - 77, 4, 36);
-    }
-  }
+  for(const room of echoRooms){const x=Math.round(worldToScreen(room.x));if(x < -160 || x > window.innerWidth+160)continue;
+    ctx.save();ctx.textAlign="center";ctx.font="bold 12px system-ui";
+    const label=t(room.roomKey),w=ctx.measureText(label).width+16;
+    ctx.fillStyle="#182735";ctx.fillRect(Math.round(x-w/2),world.groundY-248,Math.ceil(w),24);
+    ctx.fillStyle=echoEnemyAvailable(room.id,defeatedEnemyIds())?"#ecd49c":"#8194a7";ctx.fillText(label,x,world.groundY-232);ctx.restore();}
+  for(const worldX of [510,1060,1550,2040]){const x=Math.round(worldToScreen(worldX));if(x < -40 || x > window.innerWidth+40)continue;
+    ctx.fillStyle="#417789";ctx.fillRect(x,world.groundY-24,12,24);ctx.fillRect(x+4,world.groundY-32,4,8);
+    ctx.fillStyle="#86bcc5";ctx.fillRect(x+4,world.groundY-28,4,24);}
 }
 
 function drawCaveForeground(w, h) {
-  ctx.fillStyle = "rgba(5, 8, 12, .25)";
-  ctx.fillRect(0, world.groundY + 85, w, Math.max(0, h - world.groundY - 85));
-  const start = Math.floor(world.cameraX / 105) - 1;
-  const end = start + Math.ceil(w / 105) + 2;
-  for (let i = start; i < end; i++) {
-    const x = i * 105 - world.cameraX + 20;
-    ctx.fillStyle = i % 2 ? "#151d24" : "#1d272d";
-    ctx.beginPath();
-    ctx.moveTo(x - 24, h);
-    ctx.lineTo(x - 9, world.groundY + 65);
-    ctx.lineTo(x + 9, world.groundY + 59);
-    ctx.lineTo(x + 35, h);
-    ctx.closePath();
-    ctx.fill();
-  }
+  // Sparse pixel columns preserve depth without covering gameplay or adding noise.
+  for(const worldX of [40,2130]){const x=Math.round(worldToScreen(worldX));if(x < -32 || x > w+32)continue;
+    ctx.fillStyle="#0c1723";ctx.fillRect(x-12,world.groundY-128,24,128);ctx.fillRect(x-20,world.groundY-132,40,8);}
 }
 
 function drawWorldPortals() {
@@ -2791,54 +2412,12 @@ function drawWorldPortals() {
 }
 
 function drawPortal(destination) {
-  const worldX=destination.portalX, x=worldToScreen(worldX), ground=world.groundY;
-  if(x < -160 || x > window.innerWidth+160) return;
-  const nearby=Math.abs(worldX-world.player.x)<145;
-  const pulse=1+Math.sin(world.time*3.4+worldX)*.045;
-  const p={
-    maple:{glow:"rgba(120,239,197,.35)",core:"#83e2bd",mid:"#399e9a",deep:"#1d4a66",trim:"#e2cf91"},
-    forest:{glow:"rgba(110,238,157,.34)",core:"#9af3ab",mid:"#36996e",deep:"#123e3b",trim:"#c5e29c"},
-    camp:{glow:"rgba(255,182,93,.36)",core:"#ffe0a0",mid:"#d17b45",deep:"#663d45",trim:"#f2c674"},
-    ruins:{glow:"rgba(182,146,255,.38)",core:"#e4d3ff",mid:"#9071d5",deep:"#302b5f",trim:"#d3bdff"}
-  }[destination.scene];
-  ctx.save();
-  const glow=ctx.createRadialGradient(x,ground-77,3,x,ground-77,90*pulse);
-  glow.addColorStop(0,p.glow);glow.addColorStop(.5,"rgba(45,112,124,.10)");glow.addColorStop(1,"rgba(17,30,40,0)");
-  ctx.fillStyle=glow;ctx.fillRect(x-104,ground-188,208,205);
-
-  // Compact fixed gate with chipped stone edges and realm colour.
-  ctx.fillStyle="#273139";
-  ctx.fillRect(x-48,ground-126,15,126);ctx.fillRect(x+33,ground-126,15,126);
-  ctx.fillRect(x-56,ground-135,24,10);ctx.fillRect(x+31,ground-135,24,10);
-  ctx.fillRect(x-39,ground-148,21,14);ctx.fillRect(x+18,ground-148,21,14);ctx.fillRect(x-17,ground-157,34,11);
-  ctx.fillStyle="#71818a";ctx.fillRect(x-45,ground-122,4,113);ctx.fillRect(x+39,ground-122,4,113);
-  ctx.fillStyle=p.trim;ctx.fillRect(x-37,ground-151,5,4);ctx.fillRect(x+31,ground-151,5,4);ctx.fillRect(x-9,ground-154,18,3);
-  ctx.beginPath();ctx.moveTo(x-29,ground);ctx.lineTo(x-29,ground-95);
-  ctx.quadraticCurveTo(x-29,ground-135,x,ground-135);ctx.quadraticCurveTo(x+29,ground-135,x+29,ground-95);
-  ctx.lineTo(x+29,ground);ctx.closePath();ctx.fillStyle="#071018";ctx.fill();
-  const light=ctx.createLinearGradient(x-26,ground-125,x+26,ground-5);
-  light.addColorStop(0,p.core);light.addColorStop(.52,p.mid);light.addColorStop(1,p.deep);
-  ctx.globalAlpha=.82+Math.sin(world.time*4.6+worldX)*.1;ctx.fillStyle=light;ctx.fill();ctx.globalAlpha=1;
-  ctx.fillStyle=p.core;ctx.globalAlpha=.72;
-  for(let i=0;i<5;i++){
-    const py=ground-16-((world.time*28+i*27+worldX*.1)%101);
-    const px=x+Math.sin(world.time*2.1+i*1.8+worldX)*(8+(i%3)*4);
-    ctx.fillRect(Math.round(px),Math.round(py),3,4+(i%2)*2);
-  }
-  ctx.globalAlpha=1;
-  ctx.fillStyle="#121d24";ctx.fillRect(x-67,ground-6,134,9);
-  ctx.fillStyle=p.trim;ctx.fillRect(x-57,ground-4,114,3);
-  // Every portal announces its *own* realm, in both English and Chinese.
-  const gateName = getLocalizedRealmName(destination.id);
-  ctx.textAlign="center";ctx.font=getLanguage()==="zh"?"bold 11px sans-serif":"bold 9px 'Courier New', monospace";
-  ctx.fillStyle="#0b1118";ctx.fillText(gateName,x+1,ground-177,128);
-  ctx.fillStyle=p.trim;ctx.fillText(gateName,x,ground-178,128);
-  if(nearby){
-    ctx.fillStyle="rgba(7,12,18,.94)";ctx.fillRect(x-90,ground-211,180,21);
-    ctx.strokeStyle=p.trim;ctx.lineWidth=2;ctx.strokeRect(x-90,ground-211,180,21);
-    ctx.fillStyle="#fff6dc";ctx.font=getLanguage()==="zh"?"bold 11px sans-serif":"bold 9px 'Courier New', monospace";
-    ctx.fillText(t("portal.interact"),x,ground-197);
-  }
+  const x=Math.round(worldToScreen(destination.portalX)),ground=Math.round(world.groundY);if(x < -140 || x > window.innerWidth+140)return;
+  ctx.save();ctx.imageSmoothingEnabled=false;
+  if(realmPortalSprite.complete&&realmPortalSprite.naturalWidth)ctx.drawImage(realmPortalSprite,x-80,ground-160,160,160);
+  else drawPixelLandmark(ctx,"cave",x,ground);
+  ctx.textAlign="center";ctx.font="bold 12px system-ui";ctx.fillStyle="#e8d8ab";ctx.fillText(getLocalizedRealmName(destination.id),x,ground-174);
+  if(Math.abs(destination.portalX-world.player.x)<145){ctx.fillStyle="#152634";ctx.fillRect(x-100,ground-204,200,22);ctx.fillStyle="#f2dfac";ctx.font="bold 11px system-ui";ctx.fillText(t("portal.interact"),x,ground-189);}
   ctx.restore();
 }
 
@@ -3444,285 +3023,10 @@ function drawNPCs() {
 }
 
 function drawStyledNPC(x, ground, npc) {
-  if (npc.id === "elder" && elderRowanSpriteReady()) {
-    const scale = 4; // Actual 32×32 PNG, displayed at 128×128 with sharp pixels.
-    const size = elderRowanSprite.naturalWidth * scale;
-    ctx.save();
-    ctx.fillStyle = "rgba(5, 9, 12, .3)";
-    ctx.beginPath();
-    ctx.ellipse(Math.round(x), Math.round(ground) + 3, 27, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(
-      elderRowanSprite,
-      Math.round(x - size / 2),
-      Math.round(ground - size),
-      size,
-      size
-    );
-    ctx.restore();
-    return;
-  }
-  ctx.save();
-  ctx.translate(Math.round(x), Math.round(ground));
-
-  // Ground shadow and feet.
-  ctx.fillStyle = "rgba(5, 9, 12, .3)";
-  ctx.beginPath();
-  ctx.ellipse(0, 3, 28, 7, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  const isElder = npc.id === "elder";
-  const isMerchant = npc.id === "mira";
-  const isGuide = npc.id === "tala";
-  const isKeeper = npc.id === "kai";
-  const robe = isElder ? "#85734c" : isMerchant ? "#9d533e" : isGuide ? "#64764e" : "#3f7186";
-  const robeLight = isElder ? "#c2a36a" : isMerchant ? "#d28a53" : isGuide ? "#a9bd74" : "#75bac9";
-  const robeDark = isElder ? "#504736" : isMerchant ? "#5c3540" : isGuide ? "#3c4d36" : "#263d58";
-  const hair = isElder ? "#c4c2a7" : isMerchant ? "#6b352d" : isGuide ? "#805044" : "#243440";
-  const skin = isElder ? "#d5b28d" : isMerchant ? "#e2b28c" : "#d9b89b";
-
-  // Back cloak, with a role-specific silhouette.
-  ctx.fillStyle = "#242b30";
-  ctx.beginPath();
-  ctx.moveTo(-12, -74);
-  ctx.lineTo(-22, -60);
-  ctx.lineTo(-24, -31);
-  ctx.lineTo(-32, -11);
-  ctx.lineTo(-19, -14);
-  ctx.lineTo(-7, -8);
-  ctx.lineTo(18, -10);
-  ctx.lineTo(25, -36);
-  ctx.lineTo(17, -62);
-  ctx.lineTo(10, -74);
-  ctx.closePath();
-  ctx.fill();
-
-  // Boots and legs are drawn behind the tunic.
-  ctx.fillStyle = "#22252d";
-  ctx.fillRect(-14, -25, 10, 21);
-  ctx.fillRect(5, -25, 10, 21);
-  ctx.fillStyle = "#4c4c4a";
-  ctx.fillRect(-17, -7, 15, 5);
-  ctx.fillRect(4, -7, 17, 5);
-  ctx.fillStyle = "#b09a72";
-  ctx.fillRect(-13, -23, 2, 12);
-  ctx.fillRect(8, -23, 2, 12);
-
-  // Main coat/robe with shaded side and bright seam.
-  ctx.fillStyle = robeDark;
-  ctx.beginPath();
-  ctx.moveTo(-13, -72);
-  ctx.lineTo(11, -73);
-  ctx.lineTo(17, -58);
-  ctx.lineTo(19, -28);
-  ctx.lineTo(13, -17);
-  ctx.lineTo(-17, -17);
-  ctx.lineTo(-21, -31);
-  ctx.lineTo(-17, -58);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = robe;
-  ctx.beginPath();
-  ctx.moveTo(-11, -69);
-  ctx.lineTo(7, -69);
-  ctx.lineTo(12, -56);
-  ctx.lineTo(9, -24);
-  ctx.lineTo(-12, -23);
-  ctx.lineTo(-16, -34);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = robeLight;
-  ctx.fillRect(-11, -65, 3, 36);
-  ctx.fillRect(7, -58, 3, 25);
-  ctx.fillStyle = "rgba(11, 17, 22, .4)";
-  ctx.fillRect(-7, -54, 4, 22);
-  ctx.fillRect(1, -51, 3, 18);
-
-  // Belt, buckle and stitched hem.
-  ctx.fillStyle = "#2b292a";
-  ctx.fillRect(-15, -35, 29, 5);
-  ctx.fillStyle = "#d8bb7a";
-  ctx.fillRect(-2, -36, 6, 7);
-  ctx.fillStyle = "#716048";
-  ctx.fillRect(0, -34, 2, 3);
-  for (let stitch = -10; stitch <= 10; stitch += 5) {
-    ctx.fillStyle = robeLight;
-    ctx.fillRect(stitch, -20, 2, 2);
-  }
-
-  // Arms, sleeves and hands.
-  ctx.fillStyle = robeDark;
-  ctx.beginPath();
-  ctx.moveTo(-14, -67);
-  ctx.lineTo(-25, -62);
-  ctx.lineTo(-22, -45);
-  ctx.lineTo(-14, -42);
-  ctx.lineTo(-9, -49);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = robe;
-  ctx.fillRect(-23, -60, 7, 13);
-  ctx.fillStyle = skin;
-  ctx.fillRect(-22, -47, 7, 8);
-  ctx.fillStyle = robeDark;
-  ctx.beginPath();
-  ctx.moveTo(10, -67);
-  ctx.lineTo(19, -60);
-  ctx.lineTo(17, -45);
-  ctx.lineTo(11, -43);
-  ctx.lineTo(6, -50);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = robeLight;
-  ctx.fillRect(12, -58, 5, 11);
-  ctx.fillStyle = skin;
-  ctx.fillRect(11, -46, 7, 8);
-
-  // Neck and face, facing toward the player/right.
-  ctx.fillStyle = skin;
-  ctx.fillRect(-5, -81, 11, 13);
-  ctx.fillStyle = "#22242d";
-  ctx.fillRect(-14, -95, 29, 20);
-  ctx.fillStyle = skin;
-  ctx.beginPath();
-  ctx.moveTo(-11, -94);
-  ctx.lineTo(6, -94);
-  ctx.lineTo(13, -86);
-  ctx.lineTo(9, -76);
-  ctx.lineTo(1, -72);
-  ctx.lineTo(-9, -77);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = "rgba(255, 231, 195, .7)";
-  ctx.fillRect(1, -90, 7, 2);
-  ctx.fillStyle = "#4a3030";
-  ctx.fillRect(9, -85, 3, 2);
-  ctx.fillStyle = "#191f25";
-  ctx.fillRect(5, -87, 3, 4);
-  ctx.fillStyle = "#fff0bf";
-  ctx.fillRect(6, -87, 1, 1);
-
-  // Hair/hood silhouette and face-framing locks.
-  ctx.fillStyle = hair;
-  ctx.beginPath();
-  ctx.moveTo(-15, -91);
-  ctx.lineTo(-14, -102);
-  ctx.lineTo(-7, -108);
-  ctx.lineTo(4, -108);
-  ctx.lineTo(14, -101);
-  ctx.lineTo(16, -91);
-  ctx.lineTo(10, -91);
-  ctx.lineTo(8, -97);
-  ctx.lineTo(4, -91);
-  ctx.lineTo(-2, -98);
-  ctx.lineTo(-6, -91);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = robeLight;
-  ctx.fillRect(-7, -103, 9, 2);
-  ctx.fillStyle = "#141b23";
-  ctx.fillRect(-12, -96, 5, 8);
-  ctx.fillRect(8, -96, 4, 7);
-
-  // Unique class details make the three NPCs readable at a glance.
-  if (isElder) {
-    // Elder Rowan: pale beard, layered shawl and a walking staff.
-    ctx.fillStyle = "#d1cdb3";
-    ctx.beginPath();
-    ctx.moveTo(-6, -78);
-    ctx.lineTo(5, -79);
-    ctx.lineTo(4, -68);
-    ctx.lineTo(-1, -62);
-    ctx.lineTo(-7, -70);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = "#ece3c7";
-    ctx.fillRect(-5, -76, 8, 3);
-    ctx.fillStyle = "#d1b67c";
-    ctx.fillRect(-24, -79, 4, 78);
-    ctx.fillStyle = "#826441";
-    ctx.fillRect(-27, -80, 10, 4);
-    ctx.fillStyle = "#e6d29b";
-    ctx.fillRect(-15, -63, 10, 4);
-    ctx.fillRect(3, -62, 10, 4);
-  } else if (isMerchant) {
-    // Mira: merchant cap, shoulder pack, bright sash and coin pouch.
-    ctx.fillStyle = "#6c4a36";
-    ctx.beginPath();
-    ctx.moveTo(-18, -100);
-    ctx.lineTo(-10, -112);
-    ctx.lineTo(8, -111);
-    ctx.lineTo(18, -100);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = "#d3a45c";
-    ctx.fillRect(-15, -100, 31, 4);
-    ctx.fillStyle = "#b8784b";
-    ctx.fillRect(-26, -67, 12, 18);
-    ctx.fillStyle = "#e8c787";
-    ctx.fillRect(-24, -65, 8, 3);
-    ctx.fillStyle = "#e7c06e";
-    ctx.fillRect(8, -42, 8, 8);
-    ctx.fillStyle = "#6a4534";
-    ctx.fillRect(-2, -66, 18, 4);
-  } else if (isGuide) {
-    // Tala: moss-green travel scarf, trail map and a warm lantern.
-    ctx.fillStyle = "#a6b975";
-    ctx.fillRect(-15, -71, 29, 5);
-    ctx.fillRect(-3, -67, 7, 17);
-    ctx.fillStyle = "#4d5e3b";
-    ctx.fillRect(-28, -67, 14, 20);
-    ctx.fillStyle = "#d4c18e";
-    ctx.fillRect(-26, -65, 10, 2);
-    ctx.fillRect(-26, -59, 10, 2);
-    ctx.fillRect(-26, -53, 10, 2);
-    ctx.fillStyle = "#47382b";
-    ctx.fillRect(15, -45, 5, 18);
-    ctx.fillStyle = "#f7c76b";
-    ctx.fillRect(12, -55, 12, 12);
-    ctx.fillStyle = "rgba(255, 205, 113, .24)";
-    ctx.beginPath();
-    ctx.arc(18, -49, 15, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#ffebad";
-    ctx.fillRect(15, -52, 6, 6);
-  } else if (isKeeper) {
-    // Kai: teal hood, cyan rune trim and a floating holographic book.
-    ctx.fillStyle = "#263848";
-    ctx.beginPath();
-    ctx.moveTo(-17, -93);
-    ctx.lineTo(-12, -111);
-    ctx.lineTo(3, -115);
-    ctx.lineTo(17, -103);
-    ctx.lineTo(15, -88);
-    ctx.lineTo(8, -95);
-    ctx.lineTo(0, -100);
-    ctx.lineTo(-7, -93);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = "#9ce8de";
-    ctx.fillRect(-13, -72, 3, 35);
-    ctx.fillRect(8, -72, 3, 35);
-    ctx.fillRect(-4, -54, 8, 3);
-    ctx.fillStyle = "rgba(79, 227, 220, .17)";
-    ctx.fillRect(19, -58, 22, 28);
-    ctx.strokeStyle = "#83eee5";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(22, -56, 17, 23);
-    ctx.fillStyle = "#d1fff2";
-    ctx.fillRect(29, -51, 3, 13);
-    ctx.fillRect(25, -47, 11, 3);
-  }
-
-  // Edge highlights and collar details.
-  ctx.fillStyle = "#1e242c";
-  ctx.fillRect(-15, -73, 7, 5);
-  ctx.fillStyle = robeLight;
-  ctx.fillRect(-12, -69, 3, 11);
-  ctx.fillRect(4, -68, 3, 9);
-  ctx.fillStyle = "#d5bd82";
-  ctx.fillRect(0, -43, 4, 4);
+  const image=npc.id==="elder"?elderRowanSprite:npcPixelSprites[npc.id];
+  ctx.save();ctx.imageSmoothingEnabled=false;ctx.fillStyle="#18252a";ctx.fillRect(Math.round(x-22),Math.round(ground-2),44,4);
+  if(image?.complete&&image.naturalWidth){ctx.drawImage(image,Math.round(x-64),Math.round(ground-(npc.id==="elder"?128:120)),128,128);}
+  else{ctx.fillStyle=npc.color;ctx.fillRect(Math.round(x-16),Math.round(ground-72),32,64);ctx.fillStyle="#d3ad85";ctx.fillRect(Math.round(x-12),Math.round(ground-92),24,24);ctx.fillStyle="#25313b";ctx.fillRect(Math.round(x-16),Math.round(ground-12),12,12);ctx.fillRect(Math.round(x+4),Math.round(ground-12),12,12);}
   ctx.restore();
 }
 
@@ -3759,7 +3063,8 @@ function drawEnemies() {
       const [maxWidth, maxHeight] = dimensionsByEnemy[enemy.id] || [154, 158];
       const naturalWidth = activeSprite.naturalWidth || maxWidth;
       const naturalHeight = activeSprite.naturalHeight || maxHeight;
-      const scale = Math.min(maxWidth / naturalWidth, maxHeight / naturalHeight);
+      const fittingScale = Math.min(maxWidth / naturalWidth, maxHeight / naturalHeight);
+      const scale = naturalWidth === 32 && naturalHeight === 32 ? Math.max(1, Math.floor(fittingScale)) : fittingScale;
       const drawWidth = naturalWidth * scale;
       const drawHeight = naturalHeight * scale;
       ctx.drawImage(
@@ -3913,17 +3218,9 @@ function drawPlayer() {
 }
 
 function drawForeground(w, h) {
-  const waterTop = world.waterY;
-  ctx.fillStyle = "#1e4c59";
-  ctx.fillRect(0, waterTop, w, h - waterTop);
-  ctx.fillStyle = "rgba(167, 205, 196, .24)";
-  for (let i = 0; i < 32; i++) {
-    const x = ((i * 173 - world.cameraX * .65) % (w + 120)) - 60;
-    const y = waterTop + 25 + ((i * 47) % Math.max(40, h - waterTop - 40));
-    ctx.fillRect(x, y, 50 + (i % 3) * 18, 2);
-  }
-  ctx.fillStyle = "rgba(0,0,0,.12)";
-  ctx.fillRect(0, waterTop - 3, w, 7);
+  // The tile layer already defines the ground; keep foreground decoration sparse.
+  const offset=-Math.floor(world.cameraX)%128;
+  for(let x=offset;x<w;x+=128){ctx.fillStyle="#536957";if(world.currentRealmId!=="ruins"&&world.currentRealmId!=="camp")ctx.fillRect(x+20,world.groundY-4,4,4);}
 }
 
 async function loadQuestions() {

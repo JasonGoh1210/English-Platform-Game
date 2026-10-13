@@ -14,8 +14,8 @@ $epqShowStoryIntro = !empty($_SESSION['show_story_intro']);
 $epqCsrfToken = (string)$_SESSION['csrf_token'];
 $epqWorldBackgrounds = [];
 foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-camp-road', 'ruins'=>'ancient-ruins'] as $realm => $filename) {
-    $candidates = ['images/world/'.$filename.'.webp', 'assets/world/backgrounds/'.$filename.'.webp'];
-    // Preserve custom-art precedence, without requesting absent optional files.
+    $candidates = ['images/world/pixel/'.$realm.'.png', 'images/world/'.$filename.'.webp', 'assets/world/backgrounds/'.$filename.'.webp'];
+    // New pixel backgrounds take precedence; original custom art remains a fallback.
     $epqWorldBackgrounds[$realm] = array_values(array_map(
         static fn(string $path): string => '/FYP/'.$path,
         array_filter($candidates, static fn(string $path): bool => is_file(__DIR__.'/'.$path))
@@ -31,7 +31,8 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261013-guide1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261013-pixel1">
+  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261013-pixel1">
 </head>
 <body>
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -150,7 +151,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
     <div class="hint pixel-hint" data-i18n="controls.hint">A / D or ← / → to move&nbsp;&nbsp; • &nbsp;E / SPACE to interact</div>
 
 
-    <div class="destination-screen hidden" id="destinationScreen" role="dialog" aria-modal="true" aria-labelledby="destinationTitle">
+    <div class="destination-screen hidden" id="destinationScreen" role="dialog" aria-modal="true" aria-labelledby="realmGateTitle">
       <div class="destination-topbar">
         <span>ENGLISH POWER QUEST</span>
         <span data-i18n="destination.top">WORLD GATE · 01</span>
@@ -159,33 +160,34 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
       <div class="destination-content">
         <header class="destination-heading">
           <p class="destination-kicker" data-i18n="destination.kicker">THE ANCIENT PORTAL</p>
-          <h1 data-i18n="destination.title">REALM GATE</h1>
+          <h1 id="realmGateTitle" data-i18n="destination.title">REALM GATE</h1>
           <div class="destination-plaque" data-i18n="destination.choose">CHOOSE YOUR DESTINATION</div>
         </header>
 
         <div class="destination-carousel">
-          <button class="destination-arrow" id="destinationPrev" type="button" aria-label="Previous destination" data-i18n-aria-label="destination.previous">◀</button>
+          <button class="destination-preview" id="destinationPreviewPrev" type="button"><span></span></button>
 
           <section class="destination-card" aria-live="polite">
             <div class="destination-scene" id="destinationScene" data-scene="maple" aria-hidden="true">
-              <div class="destination-scene-stars"></div>
-              <div class="destination-sun"></div>
-              <div class="destination-mountains"></div>
-              <div class="destination-forest"></div>
-              <div class="destination-landmark"></div>
-              <div class="destination-ground"></div>
-              <div class="destination-road"></div>
+              <img id="destinationSceneImage" src="/FYP/images/world/pixel/maple.png" alt="">
             </div>
             <div class="destination-card-top">
               <span id="destinationCategory">SAFE HAVEN</span>
               <span id="destinationCount">01 / 04</span>
             </div>
             <div class="destination-card-copy">
+              <span class="destination-realm-rune" id="destinationRune" aria-hidden="true">Ⅰ</span>
               <h2 id="destinationTitle">Maple Town</h2>
               <p id="destinationDescription">A peaceful village where your adventure and first words begin.</p>
+              <button type="button" class="destination-pick" id="destinationPick" data-i18n="destination.pick">SELECT THIS REALM</button>
             </div>
           </section>
 
+          <button class="destination-preview" id="destinationPreviewNext" type="button"><span></span></button>
+        </div>
+
+        <div class="destination-switch">
+          <button class="destination-arrow" id="destinationPrev" type="button" aria-label="Previous destination" data-i18n-aria-label="destination.previous">◀</button>
           <button class="destination-arrow" id="destinationNext" type="button" aria-label="Next destination" data-i18n-aria-label="destination.next">▶</button>
         </div>
 
@@ -339,7 +341,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261013-guide1").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261013-pixel1").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");

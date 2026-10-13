@@ -1,0 +1,205 @@
+/* Shared pixel-art presentation; gameplay and saved world coordinates are unchanged. */
+.pixel-world-ui #gameCanvas { image-rendering: pixelated; }
+.typing-cave-monster img { image-rendering:pixelated; filter:none; }
+.destination-screen { background: #05070b; overflow-y: auto; padding: 24px 18px; align-items:flex-start; }
+.destination-screen::before, .destination-screen::after, .destination-topbar { display: none; }
+.destination-content { width: min(1160px,100%); max-height: none; gap: 14px; margin:auto; }
+.destination-kicker { color: #b9a679; font-size: 12px; letter-spacing: .18em; }
+.destination-heading h1 { color: #c6cbd7; font-size: clamp(28px,4.7vw,48px); letter-spacing: .04em;
+  text-shadow: 0 3px #5c6378, 3px 5px #171c29; margin: 3px 0 15px; }
+.destination-plaque { border: 2px solid #71513b; background: #281c18; color: #e4c289;
+  box-shadow: inset 0 0 0 2px #34251e; font-size: 14px; letter-spacing: .04em; }
+.destination-carousel { display: grid; grid-template-columns: minmax(90px,1fr) minmax(260px,520px) minmax(90px,1fr);
+  width: 100%; gap: 26px; align-items: center; }
+.destination-preview { position: relative; width: 100%; height: 220px; min-height: 44px; border: 2px solid #354052;
+  color: #a3a6b4; background-color: #141a24; background-size: cover; background-position: center;
+  image-rendering: pixelated; padding: 14px; cursor: pointer; opacity: .36; filter: grayscale(.8); overflow: hidden; }
+.destination-preview::before { content:""; position: absolute; inset:0; background:#05070b77; pointer-events:none; }
+.destination-preview span { position: relative; font: bold clamp(18px,2.5vw,34px)/1.2 "Courier New",system-ui; text-shadow: 2px 3px #141824; }
+.destination-preview:hover, .destination-preview:focus-visible { opacity: .7; filter: none; }
+.destination-card { width: 100%; height: 300px; border: 3px solid #a88e5c; border-radius: 0;
+  background: #152031; box-shadow: 5px 5px #020305, inset 0 0 0 3px #242f3d; overflow: hidden; }
+.destination-scene { position: absolute; inset: 0; }
+#destinationScene { background: #101a26; }
+.destination-scene img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; opacity: .48; }
+.destination-card-top { top: 12px; left: 15px; right: 15px; font-size: 12px; color: #dcc38b; text-shadow: 1px 2px #111722; }
+.destination-card-copy { position: absolute; inset: 36px 0 0; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 16px; text-align: center; background: #080c1455; }
+.destination-realm-rune { display: none; place-items:center; width: 38px; height: 38px; border: 2px solid #8b7957;
+  background:#131e2c; color:#b9cbd5; font: bold 22px "Courier New"; margin-bottom: 9px; }
+.destination-card-copy h2 { max-width: 100%; font: 900 clamp(30px,5.5vw,72px)/1.2 "Courier New",system-ui;
+  color: #d8dbe3; letter-spacing:.02em; text-shadow: 0 3px #596174, 3px 5px #101828; margin: 0 0 13px; }
+.destination-card-copy h2.long-title { font-size:clamp(28px,3vw,42px); }
+.destination-card-copy p { font: 14px/1.5 system-ui; color: #c5c9cb; max-width: 38ch; margin: 0 0 15px; }
+.destination-pick { min-height: 44px; padding: 9px 22px; border: 2px solid #976d3e; color: #f3c978;
+  background: #362019; box-shadow: inset 0 0 0 2px #4d2e1d; font: bold 14px system-ui; cursor: pointer; }
+.destination-switch { display:flex; justify-content:center; gap:22px; }
+.destination-arrow { width: 54px; height: 48px; border: 3px solid #adb8c4; color: #d5dce4; background:#18212e;
+  box-shadow: 3px 3px #020305, inset 0 0 0 2px #394857; border-radius:0; font-size:22px; }
+.destination-dots { gap: 12px; }
+.destination-dots button { width:44px; height:44px; min-height:44px; font-size:16px; color:#4c586a; }
+.destination-dots button.active { color:#dec07e; text-shadow:none; }
+.destination-actions { width: min(440px,100%); }
+.destination-back, .destination-travel { min-height:44px; border-radius:0; font: bold 14px system-ui;
+  border: 2px solid #687b8c; box-shadow: inset 0 0 0 2px #253645; }
+.destination-back { color:#d7e0e7; background:#152431; }
+.destination-travel { background:#dcc081; color:#2b251b; border-color:#b88f4b; box-shadow:inset 0 0 0 2px #ebd49b; }
+.destination-help { font:12px/1.5 system-ui; letter-spacing:.03em; color:#8796a8; }
+.destination-screen button:focus-visible { outline: 3px solid #f4d68b; outline-offset: 5px; }
+
+.battle-page { --battle-scenery:url("../images/world/pixel/maple.png"); background:#0b131d; color:#d8e2ea; }
+.battle-page[data-realm="forest"] { --battle-scenery:url("../images/world/pixel/forest.png"); }
+.battle-page[data-realm="camp"] { --battle-scenery:url("../images/world/pixel/camp.png"); }
+.battle-page[data-realm="ruins"] { --battle-scenery:url("../images/world/pixel/ruins.png"); }
+.battle-page[data-encounter="cave"] { --battle-scenery:url("../images/world/pixel/cave.png"); }
+.battle-page .battle-screen { width:min(1080px,calc(100% - 28px)); margin:20px auto; padding:0; }
+.battle-page .battle-header { margin-bottom:12px; gap:12px; }
+.battle-page .battle-kicker { color:#bda577; font-size:12px; letter-spacing:.14em; }
+.battle-page .battle-title h1 { font-size:clamp(19px,2.3vw,26px); color:#e9e1cc; margin-top:5px; }
+.battle-page .settings-open-button, .battle-page .back-link { min-height:44px; border:2px solid #718296;
+  border-radius:0; background:#172535; box-shadow: inset 0 0 0 2px #293748; color:#e1dfcb; font-size:13px; }
+.battle-page .battlefield-pokemon-layout { min-height:0; height:320px; border:3px solid #7b8c9e; border-radius:0;
+  background-color:#152332; background-image:var(--battle-scenery); background-size:cover; background-position:center bottom;
+  image-rendering:pixelated; box-shadow:inset 0 0 0 3px #152131,5px 5px #050b12; overflow:hidden; }
+.battle-page .battlefield-pokemon-layout::before { display:none; }
+.battle-page .scene-haze, .battle-page .monster-shadow, .battle-page .player-shadow { display:none; }
+.battle-page .monster-shadow, .battle-page .player-shadow { display:block; width:96px; height:6px; bottom:82px;
+  border-radius:0; filter:none; background:#0b172b88; box-shadow:4px 3px #1b2b3877; }
+.battle-page .battle-monster, .battle-page .battle-player { width:260px; transform:none; z-index:2; }
+.battle-page .battle-monster { top:14px; right:8%; left:auto; bottom:auto; }
+.battle-page .battle-player { top:auto; right:auto; left:8%; bottom:8px; }
+.battle-page .battle-monster .monster-sprite { width:160px; height:160px; margin:0 auto; filter:none; }
+.battle-page .battle-player .battle-player-art { width:160px; height:160px; filter:none; margin:0 auto; }
+.battle-page .monster-name-box, .battle-page .player-name-box { padding:4px 0; margin:0; color:#f2e8cb; text-shadow:1px 2px #14202e; }
+.battle-page .monster-name-box strong, .battle-page .player-name-box strong { font-size:13px; }
+.battle-page .monster-name-box span, .battle-page .player-name-box span { font-size:11px; color:#c3d4df; }
+.battle-page .hp-card, .battle-page .hp-card.player { width:230px; padding:7px 10px; margin-top:4px;
+  color:#e1e6de; background:#142332; border:2px solid #8397a6; border-radius:0; box-shadow:2px 2px #0c1420; }
+.battle-page .hp-top { color:#e1e6de; font-size:12px; }
+.battle-page .hp-card .battle-bar { height:10px; border:1px solid #658092; border-radius:0; background:#0a1420; }
+.battle-page .hp-card #enemyHpBar { border-radius:0; background:#c98867; }
+.battle-page .hp-card #playerHpBar { border-radius:0; background:#87b78c; }
+.battle-page .battle-command-zone { margin-top:14px; padding:10px; border:2px solid #627789;
+  border-radius:0; background:#10202d; box-shadow:4px 4px #050c13; }
+.battle-page .battle-message-line { background:#192c3a; border-left:3px solid #d3b97e; border-radius:0;
+  color:#dce7ec; padding:11px 13px; font-size:14px; }
+.battle-page .command-prompt { background:#1b3040; border:2px solid #586f7f; border-radius:0; color:#e9e0c6; }
+.battle-page .command-prompt strong { color:#e9e0c6; font-size:20px; }
+.battle-page .command-prompt span { color:#b1c5d1; font-size:14px; }
+.battle-page .command-button { min-height:55px; border:2px solid #7d8b9a; border-radius:0; color:#f2e9d5;
+  box-shadow:inset 0 -3px #14212c,2px 2px #07111b; font-size:16px; }
+.battle-page .command-button.fight { background:#69483b; }
+.battle-page .command-button.skill { background:#3b4c69; }
+.battle-page .command-button.item { background:#52614b; }
+.battle-page .command-button.run { background:#364f57; }
+.battle-page .question-panel { border:2px solid #79919f; border-radius:0; background:#172b3b; color:#dce5e9; padding:13px; }
+.battle-page .question-panel h2 { color:#f4e7c9; font-size:20px; line-height:1.4; margin:10px 0; }
+.battle-page .question-panel > p { color:#bbced7; font-size:14px; line-height:1.5; }
+.battle-page .question-panel .question-theme { color:#d3bd80; font-size:13px; }
+.battle-page .question-top > span { border:1px solid #647b8d; background:#223a4b; color:#cddbe3; font-size:12px; border-radius:0; }
+.battle-page .question-top .battle-timer { font-size:14px; color:#ead7a7; }
+.battle-page .question-top .battle-timer.warning { color:#ffb3a3; border-color:#c27a70; }
+.battle-page .battle-answer-button, .battle-page .battle-word-chip, .battle-page .battle-submit {
+  min-height:44px; border:2px solid #8195a1; border-radius:0; color:#e6e5d7; background:#294454;
+  box-shadow:inset 0 -3px #1b2e3a; font-size:15px; }
+.battle-page .battle-answer-button.correct { background:#41644d; }
+.battle-page .battle-answer-button.wrong { background:#704b49; }
+.battle-page .battle-word-chip.selected { opacity:.4; }
+.battle-page .battle-sentence { border:1px dashed #7d9ba7; border-radius:0; background:#102231; min-height:48px; }
+.battle-page .battle-submit { background:#536957; border-color:#90a890; }
+.battle-page .battle-action-button { border:2px solid #7b8991; border-radius:0; font-size:14px; }
+.battle-page .result-card { border:3px solid #b79c67; border-radius:0; background:#142535; color:#e2e5da; }
+.battle-page .result-card h2, .battle-page .result-card h3 { color:#eadcb5; }
+.battle-page .result-card p { color:#bdcdd3; }
+.battle-page .review-stats > div, .battle-page .result-rewards > div { background:#223b4a; border-color:#647b89; border-radius:0; }
+.battle-page .review-stats span, .battle-page .result-rewards span { color:#b3c7d1; }
+.battle-page .result-actions { background:#142535; }
+.battle-page .result-card button { border-radius:0; border:2px solid #899a9f; color:#e8dfc5; background:#304b54; min-height:44px; }
+.battle-page .result-language button.active { border-color:#d5b475; }
+.battle-page .review-mistake { background:#1d3343; border-color:#708694; }
+.battle-page .review-mistake summary { color:#e7dec7; }
+.battle-page .review-correct-answer { background:#284737; color:#d5e8d2; }
+.battle-page .review-mistake-body { color:#cfdae0; }
+.battle-page button:focus-visible, .battle-page a:focus-visible { outline:3px solid #f4d68b; outline-offset:3px; }
+
+@media (max-width:780px) {
+  .destination-carousel { grid-template-columns:50px minmax(0,1fr) 50px; gap:10px; }
+  .destination-preview { height:190px; padding:5px; }
+  .destination-preview span { font-size:15px; writing-mode:vertical-rl; }
+  .destination-card { height:280px; }
+  .battle-page .battle-monster, .battle-page .battle-player { width:46%; }
+  .battle-page .battle-monster { right:1%; }
+  .battle-page .battle-player { left:1%; }
+  .battle-page .hp-card, .battle-page .hp-card.player { width:95%; }
+}
+@media (max-width:520px) {
+  .destination-screen { padding:18px 10px; }
+  .destination-content { gap:12px; }
+  .destination-carousel { grid-template-columns:25px minmax(0,1fr) 25px; gap:7px; }
+  .destination-preview { height:170px; border-width:1px; }
+  .destination-preview span { font-size:13px; }
+  .destination-heading h1 { font-size:28px; }
+  .destination-card { height:280px; }
+  .destination-card-copy { padding:9px; }
+  .destination-card-copy h2 { font-size:27px; }
+  .destination-card-copy h2.long-title { font-size:23px; }
+  .destination-card-copy p { font-size:13px; }
+  .destination-card-top { font-size:10px; left:9px; right:9px; }
+  .destination-plaque { font-size:13px; }
+  .destination-actions { grid-template-columns:1fr 1fr; gap:8px; }
+  .destination-back, .destination-travel { padding:8px 6px; font-size:13px; }
+  .destination-help { font-size:11px; }
+  .battle-page .battle-screen { width:calc(100% - 16px); margin:9px auto; }
+  .battle-page .battle-header { gap:8px; }
+  .battle-page .battle-header-actions { gap:5px; }
+  .battle-page .battle-title h1 { font-size:17px; }
+  .battle-page .battlefield-pokemon-layout { height:280px; }
+  .battle-page .battle-monster { top:10px; }
+  .battle-page .battle-player { bottom:7px; }
+  .battle-page .battle-monster .monster-sprite { width:96px; height:96px; }
+  .battle-page .battle-player .battle-player-art { width:128px; height:128px; }
+  .battle-page .monster-name-box strong, .battle-page .player-name-box strong { font-size:12px; }
+  .battle-page .hp-card, .battle-page .hp-card.player { padding:6px; }
+  .battle-page .command-button { min-height:48px; font-size:15px; }
+  .battle-page .question-panel h2 { font-size:18px; }
+}
+@media (max-height:540px) and (min-width:560px) {
+  .destination-screen { padding:10px; align-items:flex-start; }
+  .destination-content { gap:8px; grid-template-columns:auto minmax(0,1fr); }
+  .destination-heading, .destination-carousel, .destination-help { grid-column:1 / -1; }
+  .destination-heading h1 { font-size:26px; margin:2px 0 5px; }
+  .destination-plaque { font-size:12px; padding:4px 10px; }
+  .destination-kicker { display:none; }
+  .destination-carousel { grid-template-columns:90px minmax(260px,470px) 90px; gap:16px; }
+  .destination-card { height:min(180px,calc(100dvh - 180px)); min-height:140px; }
+  .destination-preview { height:130px; }
+  .destination-preview span { font-size:16px; writing-mode:horizontal-tb; }
+  .destination-realm-rune { display:none; }
+  .destination-card-copy { inset:25px 0 0; display:grid; grid-template-columns:minmax(0,1fr) auto; padding:8px 12px; gap:5px 10px; }
+  .destination-card-copy h2 { grid-column:1; font-size:24px; margin:0; }
+  .destination-card-copy h2.long-title { font-size:20px; }
+  .destination-card-copy p { grid-column:1; font-size:12px; margin:0; }
+  .destination-pick { grid-column:2; grid-row:1 / 3; font-size:12px; padding:8px; max-width:130px; }
+  .destination-switch { grid-column:1; grid-row:3; gap:10px; }
+  .destination-actions { grid-column:2; grid-row:3; justify-self:end; }
+  .destination-dots { display:none; }
+  .destination-help { grid-row:4; margin:0; font-size:11px; }
+  .battle-page .battle-screen { width:calc(100% - 18px); margin:8px auto; }
+  .battle-page .battlefield-pokemon-layout { height:calc(100dvh - 90px); min-height:0; max-height:360px; }
+  .battle-page .battle-monster, .battle-page .battle-player { width:49%; }
+  .battle-page .battle-monster { top:10px; right:0; }
+  .battle-page .battle-player { left:0; bottom:8px; }
+  .battle-page .battle-monster .monster-sprite, .battle-page .battle-player .battle-player-art { width:96px; height:96px; }
+  .battle-page .hp-card, .battle-page .hp-card.player { padding:5px; width:95%; }
+  .battle-page .monster-name-box strong, .battle-page .player-name-box strong { font-size:11px; }
+  .battle-page .monster-name-box span, .battle-page .player-name-box span { font-size:10px; }
+  .battle-page .battle-command-zone { margin-top:0; padding:7px; }
+  .battle-page .battle-message-line { padding:7px 8px; font-size:12px; line-height:1.3; }
+  .battle-page .question-panel { padding:8px; margin-top:6px; }
+  .battle-page .question-panel h2 { font-size:16px; line-height:1.2; margin:5px 0; }
+  .battle-page .question-panel > p { font-size:13px; line-height:1.3; margin:5px 0; }
+  .battle-page .question-panel .generic-prompt { display:none; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .destination-screen *, .battle-page * { scroll-behavior:auto; }
+}
