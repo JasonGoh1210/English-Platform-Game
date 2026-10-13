@@ -129,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101521">
   <title>创建账号 · English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/auth.css?v=20261013-characters1">
+  <link rel="stylesheet" href="/FYP/css/auth.css?v=20261013-female1">
 </head>
 <body class="auth-page">
   <main class="auth-layout auth-layout-register">

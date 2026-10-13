@@ -5,7 +5,7 @@
 - 登录／注册只处理账号，不要求角色名字。新账号、游客或首次 Google 登录成功后进入 `character_setup.php`。
 - 创建角色时填写名字，或点击骰子换随机名字；选择男／女，以及暗影、森林、奥术三种外观。保存后继续已有 Opening Story 和长老教学。
 - 名字、外观和性别保存到 MySQL。重复提交不会重建角色。旧账号继续使用原名字、原精灵和原存档，不强制重新创建。
-- 男女是独立的角色资料；三种外观沿用现有中性人物的完整动作，提供斗篷配色。本次没有新增独立男女人物画稿。
+- 男角色保留原造型；女角色使用独立的长发女孩透明 PNG，包含站立和六帧左右行走。三种配色在两种造型上都可使用。随机名字每种性别有 1,600 个中英组合。
 - 从地图的“账号设置”可绑定 Google。游客升级保留同一个 user_id、player_id、角色、剧情、金币和 XP。密码账号绑定后仍可用原密码登录。
 - Google 身份以服务器验证过的 `sub` 为准。邮箱撞到其他账号时不会自动合并：先登录原账号再绑定。已绑定到其他角色的 Google 账号不能覆盖当前存档。
 
@@ -51,7 +51,9 @@
 
 前端：`js/character-setup.js`、`js/characters.js`、`js/google-signin.js`、`css/auth.css`；地图、战斗和打字肖像使用同一角色资料。
 
-原始素材保持不变：`assets/player/png_frames/Player_Stand.png` 和左右各六帧 `player_walk_*` PNG。额外配色由 Canvas 生成，保留尺寸、透明通道和方向。长老仍使用 `images/npc/npc_elder_rowan_32.png`。
+女角色素材：`assets/player/female/female_adventurer_sheet.png`，生成提示词和帧布局见该目录的 README。Canvas 按 alpha 边界提取七帧并统一脚底，向左动作镜像；开场／结局主角称谓随性别显示她／she。Google 登录入口与游客入口同组，位于游客入口上方。
+
+原始男角色素材保持不变：`assets/player/png_frames/Player_Stand.png` 和左右各六帧 `player_walk_*` PNG。额外配色由 Canvas 生成，保留尺寸、透明通道和方向。长老仍使用 `images/npc/npc_elder_rowan_32.png`。
 
 测试包含名字和配色、RSA 签名与声明、CSRF、首次设置、旧账号、游客升级、Google 身份复用及冲突保护。真实 Google 弹窗需配置 Client ID 后再测试。
 

@@ -10,10 +10,24 @@ function epq_character_catalog(): array {
 }
 
 function epq_character_names(): array {
-    return [
-        'male'=>['Arin Vale','Rowan Ash','Finn River','Leo Flint','Kai Winter','艾登','星野','晨风','林舟','诺亚'],
-        'female'=>['Luna Reed','Mira Dawn','Iris Vale','Aria Sky','Elara Moss','露娜','星澜','晴川','月棠','艾拉']
+    $given = [
+        'male'=>['Arin','Rowan','Finn','Leo','Kai','Aiden','Noah','Eli','Owen','Theo','Asher','Ezra','Jasper','Milo','Felix','Luca','Orion','Atlas','Caleb','Silas','Ronan','Evan','Arthur','Julian','Oliver','Reid','Emrys','Dorian','Nolan','Robin','Cedric','Tristan'],
+        'female'=>['Luna','Mira','Iris','Aria','Elara','Freya','Hazel','Aurora','Lyra','Willow','Ivy','Clara','Nora','Flora','Sylvie','Ember','Celeste','Alina','Dahlia','Maeve','Isla','Seren','Zara','Lilia','Tessa','Evelyn','Ada','Cora','Violet','Evangeline','Sienna','Rosalie']
     ];
+    $family = ['Vale','Ash','River','Flint','Winter','Reed','Dawn','Sky','Moss','Brook','Stone','Rose','Frost','Wren','Leaf','Moon','Light','Glen','Wood','Hart','Fox','Rain','Aster','Meadow','Willow','Hollow','Bright','Silver','Bloom','Cloud','Cedar','Star'];
+    $starts = [
+        'male'=>['星','晨','林','云','青','沐','明','清','柏','景','远','凌','言','知','竹','玄','墨','白','秋','寒','泽','松','承','亦'],
+        'female'=>['月','晴','花','雪','露','灵','若','梦','语','诗','瑶','苏','安','雨','紫','夏','依','晚','兰','念','初','宁','锦','晓']
+    ];
+    $ends = ['澜','川','棠','岚','音','霜','溪','萤','羽','辰','泉','璃','禾','瑾','庭','曦','萱','歌','遥','宁','风','舟','野','然'];
+    $names = [];
+    foreach (['male','female'] as $gender) {
+        $pool = [];
+        foreach ($given[$gender] as $first) foreach ($family as $last) $pool[] = $first.' '.$last;
+        foreach ($starts[$gender] as $first) foreach ($ends as $last) $pool[] = $first.$last;
+        $names[$gender] = array_values(array_unique($pool));
+    }
+    return $names;
 }
 
 function epq_valid_character_name(string $name): bool {

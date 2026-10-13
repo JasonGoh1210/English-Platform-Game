@@ -54,3 +54,15 @@ Original prompt: 试试看做新手教学，有一个小怪出现在村庄，长
 - Final required skill Playwright client passed actual movement, MEET checkpoint, matching text/canvas and no errors. Screenshots visually inspected, including mobile setup/map/settings/account and desktop battle. Account binding entry is inside Settings to keep mobile header controls within the viewport.
 - PHP fetched Google's real public signing certificates over verified HTTPS successfully. Real Google account/popup remains intentionally untested without the user's Client ID.
 - Next deployment steps: back up actual database, import ONLY missing migration 006, configure public Client ID locally per docs/GOOGLE_SIGNIN_AND_CHARACTERS.md, hard-refresh and test real Google sign-in/link. No actual player database changed and no new sprite PNGs.
+
+## 2026-10-13 — Independent female character and login grouping
+
+- User request: 女角角色是女孩子，然后随机名字多一点。然后把google登陆放在游客登陆上面和游客一起。
+- New transparent female sheet generated with built-in imagegen, persisted at assets/player/female/female_adventurer_sheet.png. Seven used cells (idle plus six right-walk), left walk mirrored in Canvas; alpha bounds and one scale normalize the feet at 72 px. Original male PNGs and Rowan untouched.
+- Girls selected by saved gender; live character previews, map/HUD, Story hero portraits, battle and typing portraits share the asset. Palette choices still apply to clothes; warm chestnut hair preserved.
+- Expanded each gender to 1,600 unique valid English/Chinese names. Google and guest are grouped immediately below the password login form. No SQL migration or player data changes.
+
+- Verification complete: 31 Node tests (including female pronouns), PHP validation of all 3,200 names, RSA/security checks and all PHP/JS syntax. Isolated database account/character/combat tests passed.
+- Browser inspected girl previews and three palettes, real right/left walking, six distinct poses and exact mirrored alpha, all seven foot anchors at y=71, Story 她, HUD/battle/typing portraits, mobile login grouping, same-player upgrades/relogin, and no console/page errors. Required skill Playwright client passed with female character and matching MEET state.
+- Female regression browser passed continuous combat, wrong/correct answers, HP reload, Herb, focus, lost-response replay, all four realm labels, audio settings/mute, Echo Cave entry/respawn/exit/re-entry, and all three Typing Cavern stages. Latest screenshots visually inspected.
+- No SQL scripts changed or executed against the actual player database. Existing female profiles automatically use new art on refresh; male and legacy accounts keep original frames. Google credentials/configuration unchanged.

@@ -334,6 +334,7 @@ body.auth-page {
 .auth-guest-button:hover .auth-guest-arrow { transform: translateX(3px); }
 
 .google-signin-container { display: flex; justify-content: center; min-height: 44px; }
+.auth-alternative-logins { display: grid; gap: 14px; }
 .google-placeholder {
   width: 100%; min-height: 44px; display: flex; gap: 12px; align-items: center; justify-content: center;
   border: 1px solid #747775; border-radius: 7px; background: #fff; color: #1f1f1f;

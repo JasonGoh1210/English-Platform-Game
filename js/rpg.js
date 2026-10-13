@@ -1,8 +1,8 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261013-characters1";
-import { playSound } from "./audio.js?v=20261013-characters1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-characters1";
-import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261013-characters1";
-import { characterSprite, paintCharacterImages } from "./characters.js?v=20261013-characters1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261013-female1";
+import { playSound } from "./audio.js?v=20261013-female1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-female1";
+import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261013-female1";
+import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261013-female1";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -129,7 +129,7 @@ const worldBackgroundPaths = {
 for (const realmId of Object.keys(worldBackgroundPaths)) {
   const availablePaths = window.EPQ_AUTH?.worldBackgrounds?.[realmId];
   if (Array.isArray(availablePaths)) {
-    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261013-characters1");
+    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261013-female1");
   }
 }
 
@@ -1215,8 +1215,10 @@ function renderStoryIntro() {
   ui.storyIntroCounter.textContent = getLanguage() === "zh"
     ? `${isIntro ? "序章" : "剧情"} · 分镜 ${pageNumber} / ${total}`
     : `${isIntro ? "PROLOGUE" : "STORY"} · PANEL ${String(pageNumber).padStart(2, "0")} / ${total}`;
-  ui.storyIntroTitle.textContent = t(slide.titleKey);
-  ui.storyIntroBody.textContent = personalizePlayerName(slide.body);
+  const heroNarration = isIntro || storyMode === "ending";
+  const heroText = text => heroNarration ? heroStoryText(text,AUTH_CONTEXT.character) : text;
+  ui.storyIntroTitle.textContent = heroText(t(slide.titleKey));
+  ui.storyIntroBody.textContent = personalizePlayerName(heroText(slide.body));
   ui.storyIntroProgress.style.width = `${(pageNumber / total) * 100}%`;
   ui.storyIntroNext.textContent = isIntro
     ? t(isLast ? "story.intro.start" : "story.intro.next")
@@ -1226,6 +1228,7 @@ function renderStoryIntro() {
   ui.storyboardFrameTag.textContent = `${isIntro ? "PROLOGUE" : "CHAPTER"} · ${String(pageNumber).padStart(2, "0")}`;
   ui.storyboardLocation.textContent = slide.location || t("location.maple");
   ui.storyIntroPortraitImage.src = portrait.src;
+  paintCharacterImage(ui.storyIntroPortraitImage,(slide.character || "alex") === "alex" ? AUTH_CONTEXT.character : null);
   ui.storyIntroPortraitImage.dataset.kind = portrait.kind;
   ui.storyIntroPortraitImage.alt = personalizePlayerName(slide.speaker || "Story character");
   ui.storyIntroCanvas.dataset.scene = slide.scene || "prologue";
@@ -3811,8 +3814,7 @@ function drawCharacter(x, ground, coat, skin, player) {
     if (!displayFrameIsWalk && world.player.facing < 0) ctx.scale(-1, 1);
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(
-      characterSprite(displayFrame, AUTH_CONTEXT.character),
-      0, 0, displayFrame.naturalWidth, displayFrame.naturalHeight,
+      characterSprite(displayFrame, AUTH_CONTEXT.character, {moving:displayFrameIsWalk,direction:currentWalkDirection,frame:currentWalkIndex}),
       -drawW / 2, -drawH, drawW, drawH
     );
     ctx.restore();

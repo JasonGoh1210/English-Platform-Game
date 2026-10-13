@@ -1,4 +1,4 @@
-import { characterSprite, randomCharacterName } from "./characters.js?v=20261013-characters1";
+import { characterSprite, randomCharacterName, loadCharacterAssets } from "./characters.js?v=20261013-female1";
 
 const config = window.EPQ_CHARACTER_SETUP;
 const name = document.getElementById("characterName");
@@ -9,7 +9,7 @@ const sprite = new Image();
 sprite.src = "/FYP/assets/player/png_frames/Player_Stand.png";
 function selectedProfile() {
   const appearance = document.querySelector('[name="appearance"]:checked')?.value || "shadow";
-  return {appearance,palette:config.catalog[appearance].palette};
+  return {appearance,palette:config.catalog[appearance].palette,gender:document.querySelector('[name="gender"]:checked')?.value||"male"};
 }
 function render() {
   if (!sprite.complete || !sprite.naturalWidth) return;
@@ -17,14 +17,15 @@ function render() {
     const appearance = canvas.dataset.characterPreview || selectedProfile().appearance;
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0,0,canvas.width,canvas.height);ctx.imageSmoothingEnabled = false;
-    const look = {appearance,palette:config.catalog[appearance].palette};
+    const look = {appearance,palette:config.catalog[appearance].palette,gender:selectedProfile().gender};
     const image = characterSprite(sprite,look);
-    ctx.drawImage(image,0,0,sprite.naturalWidth,sprite.naturalHeight,0,canvas.height-canvas.width,canvas.width,canvas.width);
+    ctx.drawImage(image,0,0,image.naturalWidth||image.width,image.naturalHeight||image.height,0,canvas.height-canvas.width,canvas.width,canvas.width);
   });
   previewName.textContent = name.value.trim() || "你的冒险者";
   previewStyle.textContent = config.catalog[selectedProfile().appearance].label;
 }
 sprite.onload = render;
+loadCharacterAssets({gender:"female"}).then(render);
 document.querySelectorAll('[name="appearance"], [name="gender"]').forEach(input => input.addEventListener("change",render));
 name.addEventListener("input",render);
 dice.addEventListener("click", () => {

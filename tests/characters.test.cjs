@@ -28,3 +28,10 @@ test("The name dice changes the current name and stays within the supplied valid
   assert.equal(c.randomCharacterName(names,"Luna Reed",length=>length-1),"星澜");
   for(let n=0;n<50;n++)assert.ok(names.includes(c.randomCharacterName(names,"")));
 });
+
+test("Female hero narration uses she/her and 她 while male and legacy narration stay unchanged",()=>{
+  const c=fixture(),text="He listened to his classmates. They helped him help himself. Heather saw other people. 他找到了其他旅人。";
+  const result=c.heroStoryText(text,{gender:"female"});
+  assert.equal(result,"She listened to her classmates. They helped her help herself. Heather saw other people. 她找到了其他旅人。");
+  assert.equal(c.heroStoryText(text,{gender:"male"}),text);assert.equal(c.heroStoryText(text,{}),text);
+});

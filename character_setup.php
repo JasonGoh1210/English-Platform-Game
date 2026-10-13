@@ -43,7 +43,7 @@ if (!in_array($gender,['male','female'],true)) $gender = 'male';
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23101521'/%3E%3Cpath d='M16 4 20 12 28 16 20 20 16 28 12 20 4 16 12 12Z' fill='%23e6ca8b'/%3E%3C/svg%3E">
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101521"><title>创建你的角色 · English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/auth.css?v=20261013-characters1">
+  <link rel="stylesheet" href="/FYP/css/auth.css?v=20261013-female1">
 </head>
 <body class="auth-page character-page">
   <main class="auth-layout character-layout">
@@ -89,6 +89,6 @@ if (!in_array($gender,['male','female'],true)) $gender = 'male';
     </div></section>
   </main>
   <script>window.EPQ_CHARACTER_SETUP = <?= json_encode(['catalog'=>$catalog,'names'=>epq_character_names()],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;</script>
-  <script type="module" src="/FYP/js/character-setup.js?v=20261013-characters1"></script>
+  <script type="module" src="/FYP/js/character-setup.js?v=20261013-female1"></script>
 </body>
 </html>

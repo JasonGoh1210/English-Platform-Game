@@ -25,6 +25,10 @@ foreach([signed($claims,['alg'=>'none','kid'=>'fixture']),signed($claims,['alg'=
 }
 foreach(['星澜','Arin Vale',"O'Neil",str_repeat('星',24)] as $name)gcheck(epq_valid_character_name($name),'Unicode character name');
 foreach(['A',str_repeat('星',25),'<script>','bad/name'] as $name)gcheck(!epq_valid_character_name($name),'Invalid character name');
+foreach(epq_character_names() as $pool) {
+    gcheck(count($pool)===1600&&count(array_unique($pool))===1600,'Expanded name pool is unique');
+    foreach($pool as $name)gcheck(epq_valid_character_name($name),'Every random name passes server validation');
+}
 $_SESSION=[];$request=epq_google_request('login');gcheck(strlen($request['nonce'])===64&&$request['user_id']===0,'Anonymous page nonce');
 $_SESSION=['user_id'=>7,'player_id'=>8];$link=epq_google_request('link');gcheck($link['user_id']===7&&$link['player_id']===8,'Link binds session owner');
 $rejected=false;try{epq_google_request('login');}catch(DomainException $e){$rejected=true;}gcheck($rejected,'Cannot silently switch logged-in owner');

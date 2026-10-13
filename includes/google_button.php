@@ -16,5 +16,5 @@ $epqGoogleRequest=$epqGoogleClientId!==''?epq_google_request($epqGoogleMode):nul
 <?php if ($epqGoogleRequest): ?>
 <script>window.EPQ_GOOGLE = <?= json_encode(['clientId'=>$epqGoogleClientId,'nonce'=>$epqGoogleRequest['nonce'],
     'csrfToken'=>(string)$_SESSION['csrf_token']],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;</script>
-<script src="/FYP/js/google-signin.js?v=20261013-characters1" defer></script>
+<script src="/FYP/js/google-signin.js?v=20261013-female1" defer></script>
 <?php endif; ?>

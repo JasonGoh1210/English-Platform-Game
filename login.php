@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['guest_mode'] ?? ''
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101521">
   <title>登录 · English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/auth.css?v=20261013-characters1">
+  <link rel="stylesheet" href="/FYP/css/auth.css?v=20261013-female1">
 </head>
 <body class="auth-page">
   <main class="auth-layout">
@@ -98,8 +98,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['guest_mode'] ?? ''
           <div class="auth-alert" role="alert"><?= epq_h($error) ?></div>
         <?php endif; ?>
 
-        <?php $epqGoogleMode="login"; require __DIR__."/includes/google_button.php"; ?>
-        <div class="auth-divider"><span>或使用账号密码</span></div>
         <form class="auth-form" method="post" action="/FYP/login.php">
           <input type="hidden" name="csrf_token" value="<?= epq_h((string)$_SESSION['csrf_token']) ?>">
           <label for="username">用户名</label>
@@ -110,6 +108,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['guest_mode'] ?? ''
         </form>
 
         <div class="auth-divider"><span>或</span></div>
+        <div class="auth-alternative-logins" aria-label="其他登录方式">
+        <?php $epqGoogleMode="login"; require __DIR__."/includes/google_button.php"; ?>
         <form class="auth-guest-form" method="post" action="/FYP/login.php">
           <input type="hidden" name="csrf_token" value="<?= epq_h((string)$_SESSION['csrf_token']) ?>">
           <input type="hidden" name="guest_mode" value="1">
@@ -119,6 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['guest_mode'] ?? ''
             <span class="auth-guest-arrow" aria-hidden="true">→</span>
           </button>
         </form>
+        </div>
 
         <p class="auth-footnote">第一次来到这里？<a href="/FYP/register.php">创建账号</a>，开始你的序章 Story。</p>
         <p class="auth-smallprint">你的角色等级、金币和冒险进度会跟随账号保存。</p>

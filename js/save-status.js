@@ -1,4 +1,4 @@
-import { t, onLanguageChange } from "./i18n.js?v=20261013-characters1";
+import { t, onLanguageChange } from "./i18n.js?v=20261013-female1";
 
 const warnings = new Map();
 
