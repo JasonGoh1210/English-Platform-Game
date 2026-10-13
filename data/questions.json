@@ -153,7 +153,9 @@
     "coins": 5,
     "englishPower": 1,
     "questionZh": "哪一个单词不属于同一类？",
-    "promptZh": "其中三个单词与电脑有关。"
+    "promptZh": "其中三个单词与电脑有关。",
+    "explanation": "Banana is a fruit. A laptop, keyboard and mouse are used with computers.",
+    "explanationZh": "Banana（香蕉）是水果；laptop（笔记本电脑）、keyboard（键盘）和 mouse（鼠标）都与电脑有关。"
   },
   {
     "id": "dw-o-002",
@@ -174,7 +176,9 @@
     "coins": 5,
     "englishPower": 1,
     "questionZh": "哪一个单词不属于同一类？",
-    "promptZh": "其中三个单词都有正面、积极的意思。"
+    "promptZh": "其中三个单词都有正面、积极的意思。",
+    "explanation": "Angry means feeling anger. Happy, joyful and cheerful describe positive, happy feelings.",
+    "explanationZh": "Angry 表示生气；happy、joyful 和 cheerful 都表示开心、愉快的心情。"
   },
   {
     "id": "dw-o-003",
@@ -195,7 +199,9 @@
     "coins": 8,
     "englishPower": 2,
     "questionZh": "哪一个单词不属于同一类？",
-    "promptZh": "其中三个词常用于软件开发。"
+    "promptZh": "其中三个词常用于软件开发。",
+    "explanation": "Delicious describes food that tastes good. Debug, compile and deploy describe software development tasks.",
+    "explanationZh": "Delicious 表示食物美味；debug（调试）、compile（编译）和 deploy（部署）是软件开发中的工作。"
   },
   {
     "id": "dw-o-004",
@@ -216,7 +222,9 @@
     "coins": 8,
     "englishPower": 2,
     "questionZh": "哪一个单词不属于同一类？",
-    "promptZh": "其中三个词都与科技有关。"
+    "promptZh": "其中三个词都与科技有关。",
+    "explanation": "A sandwich is food. A server, database and router are used in computer systems.",
+    "explanationZh": "Sandwich（三明治）是食物；server（服务器）、database（数据库）和 router（路由器）用于电脑系统。"
   },
   {
     "id": "dw-o-005",
@@ -237,7 +245,9 @@
     "coins": 10,
     "englishPower": 3,
     "questionZh": "哪一个单词不属于同一类？",
-    "promptZh": "其中三个词用于描述网络性能。"
+    "promptZh": "其中三个词用于描述网络性能。",
+    "explanation": "Chocolate is food. Latency is delay; bandwidth is capacity; throughput is the actual data transfer rate.",
+    "explanationZh": "Chocolate（巧克力）是食物；latency 是延迟，bandwidth 是带宽容量，throughput 是实际数据传输速率。"
   },
   {
     "id": "dw-s-001",
@@ -265,7 +275,9 @@
     "coins": 5,
     "englishPower": 1,
     "questionZh": "把单词排列成正确的句子。",
-    "promptZh": "把所有单词排列成自然、通顺的句子。"
+    "promptZh": "把所有单词排列成自然、通顺的句子。",
+    "explanation": "I study IT every day. Start with the subject I, then the verb study and its object IT. Every day tells us how often.",
+    "explanationZh": "I study IT every day.（我每天学习 IT。）先放主语 I，再放动词 study 和宾语 IT；every day 表示频率。"
   },
   {
     "id": "dw-s-002",
@@ -295,7 +307,9 @@
     "coins": 5,
     "englishPower": 1,
     "questionZh": "把单词排列成正确的句子。",
-    "promptZh": "请正确使用现在进行时。"
+    "promptZh": "请正确使用现在进行时。",
+    "explanation": "She is working on a project. The present continuous uses subject + am/is/are + verb-ing. Use is with she, and work on a project.",
+    "explanationZh": "She is working on a project.（她正在做一个项目。）现在进行时使用“主语 + am/is/are + 动词-ing”；she 搭配 is，work on 表示从事某项工作。"
   },
   {
     "id": "dw-s-003",
@@ -323,7 +337,9 @@
     "coins": 8,
     "englishPower": 2,
     "questionZh": "把单词排列成正确的句子。",
-    "promptZh": "请使用现在完成时结构。"
+    "promptZh": "请使用现在完成时结构。",
+    "explanation": "We have completed the assignment. The present perfect uses have/has + past participle. We takes have; completed is the past participle of complete.",
+    "explanationZh": "We have completed the assignment.（我们已经完成作业。）现在完成时使用 have/has + 过去分词；we 搭配 have，completed 是 complete 的过去分词。"
   },
   {
     "id": "dw-s-004",
@@ -353,7 +369,9 @@
     "coins": 8,
     "englishPower": 2,
     "questionZh": "把单词排列成正确的句子。",
-    "promptZh": "组成一句清楚的 IT 相关句子。"
+    "promptZh": "组成一句清楚的 IT 相关句子。",
+    "explanation": "The server stores the user data. The server is the singular subject, so the present-tense verb is stores. The user data is the object.",
+    "explanationZh": "The server stores the user data.（服务器保存用户数据。）The server 是单数主语，因此一般现在时动词用 stores；the user data 是宾语。"
   },
   {
     "id": "dw-s-005",
@@ -385,6 +403,8 @@
     "coins": 10,
     "englishPower": 3,
     "questionZh": "把单词排列成正确的句子。",
-    "promptZh": "把单词排列成专业、通顺的 IT 句子。"
+    "promptZh": "把单词排列成专业、通顺的 IT 句子。",
+    "explanation": "The application needs a secure database connection. The singular subject takes needs. A secure database connection is the object; secure describes the connection.",
+    "explanationZh": "The application needs a secure database connection.（应用程序需要安全的数据库连接。）单数主语搭配 needs；a secure database connection 是宾语，secure 修饰连接。"
   }
 ]

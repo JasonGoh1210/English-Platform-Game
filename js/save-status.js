@@ -1,4 +1,4 @@
-import { t, onLanguageChange } from "./i18n.js?v=20261013-ui2";
+import { t, onLanguageChange } from "./i18n.js?v=20261013-review3";
 
 const warnings = new Map();
 

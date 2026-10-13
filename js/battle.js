@@ -1,9 +1,10 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261013-ui2";
-import { battleToken, createBattleClient } from "./battle-api.js?v=20261013-ui2";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-ui2";
-import { playSound } from "./audio.js?v=20261013-ui2";
-import { normalizeTutorial } from "./tutorial.js?v=20261013-ui2";
-import { paintCharacterImages } from "./characters.js?v=20261013-ui2";
+import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261013-review3";
+import { battleToken, createBattleClient } from "./battle-api.js?v=20261013-review3";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-review3";
+import { playSound } from "./audio.js?v=20261013-review3";
+import { normalizeTutorial } from "./tutorial.js?v=20261013-review3";
+import { paintCharacterImages } from "./characters.js?v=20261013-review3";
+import { createBattleReviewPanel } from "./battle-review.js?v=20261013-review3";
 
 // Use the same per-player storage namespace as the map. If these keys differ,
 // the battle page cannot find the enemy that the map just stored and redirects back.
@@ -20,6 +21,7 @@ let serverReady = false;
 let pendingAnswer = Promise.resolve();
 let pendingItemUse = Promise.resolve();
 let tutorialBattle = false;
+let reviewPanel;
 
 function coachBattle(key, values = {}) {
   if (!tutorialBattle) return;
@@ -543,6 +545,7 @@ function updateHp() {
 }
 
 function showResult(victory, title, text, rewards) {
+  const firstShow = ui.battleResult.classList.contains("hidden");
   state.resultType = victory ? "VICTORY" : "DEFEAT";
   ui.resultKicker.textContent = victory ? t("battle.victory") : t("battle.defeat");
   ui.resultTitle.textContent = title;
@@ -552,6 +555,14 @@ function showResult(victory, title, text, rewards) {
   ).join("");
   ui.resultButton.textContent = victory ? t("battle.returnMap") : t("battle.retry");
   ui.battleResult.classList.remove("hidden");
+  reviewPanel?.show();
+  const mapButton = document.getElementById("resultMapButton");
+  mapButton.classList.toggle("hidden", victory);
+  mapButton.onclick = () => void returnToMapAfterBattle();
+  if (firstShow) {
+    ui.resultTitle.tabIndex = -1;
+    ui.resultTitle.focus();
+  }
   ui.resultButton.onclick = async () => {
     if (victory) {
       await returnToMapAfterBattle();
@@ -719,12 +730,27 @@ async function init() {
   paintCharacterImages(AUTH_CONTEXT.character);
 
   bindBattleEvents();
+  ui.battleResult.querySelectorAll("[data-set-language]").forEach(button => {
+    button.addEventListener("click", () => setLanguage(button.dataset.setLanguage));
+  });
+  ui.battleResult.addEventListener("keydown", event => {
+    if (event.key !== "Tab") return;
+    const controls = [...ui.battleResult.querySelectorAll("button:not(:disabled), summary")].filter(element => element.getClientRects().length);
+    const first = controls[0], last = controls[controls.length - 1];
+    if (!first) return;
+    if (event.shiftKey && (document.activeElement === first || !controls.includes(document.activeElement))) {
+      event.preventDefault(); last.focus();
+    } else if (!event.shiftKey && (document.activeElement === last || !controls.includes(document.activeElement))) {
+      event.preventDefault(); first.focus();
+    }
+  });
   updateHp();
 
   try {
     const entry = JSON.parse(sessionStorage.getItem(BATTLE_KEY) || "{}");
     if (!entry.battleId) entry.battleId = battleToken();
     sessionStorage.setItem(BATTLE_KEY, JSON.stringify(entry));
+    reviewPanel = createBattleReviewPanel(document.getElementById("battleReview"), entry.battleId, t, getLanguage);
     battleRequest = createBattleClient(entry.battleId, AUTH_CONTEXT.csrfToken || "", retrying => {
       if (retrying) setSaveWarning("battle", "battle.reconnecting");
       else clearSaveWarning("battle");
@@ -767,6 +793,7 @@ window.render_game_to_text = () => JSON.stringify({
   focus: state.focusUsed,
   timer: Math.max(0, Number(state.remaining || 0)),
   question: state.currentQuestion ? { type: state.currentQuestion.type, text: state.currentQuestion.question } : null,
+  review: reviewPanel?.getStats() || null,
   tutorial: tutorialBattle ? normalizeTutorial(getSave().tutorial)?.stage : null,
   coach: tutorialBattle && state.coachMessage ? t(state.coachMessage.key, state.coachMessage.values) : null
 });

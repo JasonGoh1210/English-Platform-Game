@@ -4527,3 +4527,56 @@ button { font: inherit; }
   .battle-monster .hp-card { margin-top: 6px; }
   .battle-monster .monster-name-box strong { font-size: .7rem; line-height: 1.3; }
 }
+
+/* Finished battle summaries use saved answers; long reviews scroll inside the dialog. */
+.battle-page .result-card {
+  width: min(760px, 100%);
+  max-height: calc(100dvh - 30px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  text-align: left;
+}
+.result-language { display: flex; justify-content: flex-end; gap: 7px; }
+.result-language button { width: auto; min-height: 44px; padding: 7px 11px; font-size: .75rem; }
+.result-language button.active { outline: 2px solid #b98d42; outline-offset: 2px; }
+.battle-page .result-card h2 { font-size: clamp(1.1rem, 4vw, 1.5rem); }
+.result-card .battle-kicker { color: #476349; font-size: .7rem; }
+.result-card #resultTitle:focus { outline: none; }
+.battle-page .result-rewards { grid-template-columns: repeat(auto-fit, minmax(85px, 1fr)); text-align: center; }
+.battle-page .result-rewards span { font-size: .75rem; }
+.battle-review { border-top: 1px solid #b6c5b2; margin-top: 16px; padding-top: 14px; }
+.battle-review h3 { margin: 0 0 12px; font-size: 1rem; }
+.review-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
+.review-stats > div { padding: 9px 5px; background: #d9e1d4; text-align: center; border: 1px solid #b5c4b1; border-radius: 6px; }
+.review-stats span { display: block; font-size: .75rem; color: #405947; overflow-wrap: anywhere; }
+.review-stats b { display: block; margin-top: 4px; font-size: 1.1rem; }
+.result-card .review-accuracy, .result-card .review-perfect { color: #24533a; font-weight: 700; }
+.review-help, .review-notice { font-size: .85rem; line-height: 1.5; }
+.review-mistakes { display: grid; gap: 9px; }
+.review-mistake { border: 1px solid #9daf98; border-radius: 7px; background: #f7f8ee; overflow-wrap: anywhere; }
+.review-mistake summary { min-height: 44px; padding: 12px; cursor: pointer; color: #29362f; font-size: .85rem; font-weight: 700; }
+.review-badge { display: inline-block; margin-left: 8px; padding: 3px 7px; background: #eedace; color: #7c342d; border-radius: 4px; font-size: .75rem; }
+.review-mistake-body { padding: 0 12px 12px; }
+.review-mistake h4 { margin: 5px 0 8px; line-height: 1.5; font-size: 1rem; }
+.review-mistake h5 { margin: 14px 0 6px; font-size: .85rem; }
+.review-mistake-body p { margin: 6px 0; font-size: .85rem; line-height: 1.65; color: #344537; white-space: pre-wrap; }
+.review-mistake-body .review-your-answer { color: #853d34; }
+.review-mistake-body .review-correct-answer { padding: 8px; background: #dfebd9; color: #245337; }
+.review-words { padding: 7px; background: #e8ecdf; }
+.review-load-more { min-height: 44px; margin-top: 10px; }
+.result-actions { display: flex; gap: 8px; position: sticky; bottom: 0; padding-top: 12px; margin-top: 15px; background: #e9eee1; border-top: 1px solid #b6c5b2; }
+.result-actions button { min-height: 44px; }
+.result-card button:focus-visible, .review-mistake summary:focus-visible { outline: 3px solid #956f2c; outline-offset: 2px; }
+@media (max-width: 520px) {
+  .battle-page .result-card { padding: 15px; }
+  .review-stats { gap: 5px; }
+}
+@media (max-height: 540px) and (min-width: 560px) {
+  .result-language { float: right; margin-left: 12px; }
+  .battle-page .result-card h2 { font-size: 1.1rem; }
+  .battle-page .result-card > p { font-size: .8rem; margin: 6px 0; }
+  .battle-page .result-rewards { margin: 8px 0; }
+  .battle-page .result-rewards > div { padding: 6px; }
+  .battle-review { margin-top: 8px; padding-top: 8px; }
+}

@@ -23,13 +23,15 @@ jobs:
           node --check js/character-setup.js
           node --check js/google-signin.js
           node --check js/quest-api.js
+          node --check js/battle-review.js
       - name: Gameplay regression tests
         run: |
-          node --test tests/gameplay_regression.test.cjs tests/battle_api.test.cjs tests/audio.test.cjs tests/tutorial.test.cjs tests/characters.test.cjs tests/quest_api.test.cjs
+          node --test tests/gameplay_regression.test.cjs tests/battle_api.test.cjs tests/audio.test.cjs tests/tutorial.test.cjs tests/characters.test.cjs tests/quest_api.test.cjs tests/battle_review.test.cjs
           php tests/battle_rules_test.php
           php tests/tutorial_state_test.php
           php tests/google_token_test.php
           php tests/progression_test.php
+          php tests/battle_review_test.php
 
   mysql-guest-flow:
     runs-on: ubuntu-latest

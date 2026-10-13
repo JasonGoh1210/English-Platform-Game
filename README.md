@@ -20,6 +20,7 @@ A mobile-friendly fantasy RPG prototype that teaches English through exploration
 - Healing Herb restores HP only after a confirmed 5-Coin purchase; the current question resumes after the purchase
 - Server-issued battle questions, server grading/damage/rewards, durable HP and idempotent action receipts
 - Persisted correct/wrong/timeout attempts and per-skill accuracy
+- Post-battle learning summary with saved mistakes, correct answers, bilingual explanations and pagination
 - First-login character creation with saved name, dice, gender and three sprite palettes
 - Google Identity Services sign-in and same-player binding, enabled by a local Client ID
 
@@ -55,11 +56,13 @@ Run PHP syntax checks, `node --check js/rpg.js`, `node --check js/battle.js`, an
 
 Latest priorities and reproduced issues: [Optimization review, 2026-10-13](docs/OPTIMIZATION_REVIEW_2026-10-13.md). Account upgrade/logout controls now live in map Settings, leaving quest titles visible. [UI and gameplay follow-up](docs/UI_GAMEPLAY_REVIEW_2026-10-13.md) records responsive HUD/landscape fixes, the 10 reachable questions and next learning-feedback priorities.
 
+[Battle learning summary](docs/BATTLE_LEARNING_SUMMARY.md) explains the new victory/defeat review, preserved historical records and update steps. No new SQL migration is required.
+
 ## Known gaps before a final FYP release
 
 - Map coordinates and local monster approach remain browser-reported; server quest validation does not prove movement.
 - Import `data/questions.json` and `data/enemies.json` into MySQL (or establish one authoritative runtime source).
-- Add mistake-review UI and mastery calculations using the persisted battle attempts/accuracy.
+- Add a map entry for historical mistakes, independent practice and mastery calculations; the current review is for the finished battle.
 - NPC and typing rewards now use server grading, chapter order and replay-safe receipts; the legacy arbitrary reward endpoint is closed.
 - Use a restricted MySQL account and avoid returning raw exception messages outside local development.
 

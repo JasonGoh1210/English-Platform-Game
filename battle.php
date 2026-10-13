@@ -15,7 +15,7 @@ $epqStorageId = (string)$epqPlayerId;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#101b24">
   <title>English Power Quest · Battle</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261013-ui2">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261013-review3">
 </head>
 <body class="battle-page">
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -115,13 +115,21 @@ $epqStorageId = (string)$epqPlayerId;
       </div>
     </section>
 
-    <div class="battle-result hidden" id="battleResult">
+    <div class="battle-result hidden" id="battleResult" role="dialog" aria-modal="true" aria-labelledby="resultTitle" aria-describedby="resultText">
       <div class="result-card">
+        <div class="result-language" aria-label="Language / 语言">
+          <button type="button" data-set-language="en">English</button>
+          <button type="button" data-set-language="zh">中文</button>
+        </div>
         <span class="battle-kicker" id="resultKicker" data-i18n="battle.victory">VICTORY</span>
         <h2 id="resultTitle" data-i18n="battle.enemyDefeated">Enemy Defeated!</h2>
         <p id="resultText" data-i18n="battle.stronger">You got stronger.</p>
         <div class="result-rewards" id="resultRewards"></div>
-        <button id="resultButton" data-i18n="battle.returnMap">Return to Map</button>
+        <section id="battleReview" class="battle-review" aria-labelledby="battleReviewTitle"></section>
+        <div class="result-actions">
+          <button id="resultButton" data-i18n="battle.returnMap">Return to Map</button>
+          <button type="button" id="resultMapButton" class="hidden" data-i18n="battle.returnMap">Return to Map</button>
+        </div>
       </div>
     </div>
   </main>
@@ -152,6 +160,6 @@ $epqStorageId = (string)$epqPlayerId;
       'character' => $_SESSION['character'] ?? epq_character_profile(epq_db(), $epqPlayerId)
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   </script>
-  <script type="module" src="/FYP/js/battle.js?v=20261013-ui2"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261013-review3"></script>
 </body>
 </html>

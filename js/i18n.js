@@ -1,9 +1,29 @@
-import { setupAudio } from "./audio.js?v=20261013-ui2";
+import { setupAudio } from "./audio.js?v=20261013-review3";
 
 const LANGUAGE_KEY = "englishPowerQuest.language.v1";
 
 const messages = {
   en: {
+    "review.title": "Battle learning summary",
+    "review.total": "Questions",
+    "review.correct": "Correct",
+    "review.wrong": "Incorrect",
+    "review.timeout": "Timed out",
+    "review.accuracy": "Accuracy: {value}%",
+    "review.noAttempts": "No answers were submitted in this battle.",
+    "review.perfect": "All answers correct! Keep building your knowledge.",
+    "review.help": "Open a question to check your answer and learn why.",
+    "review.entry": "{number}. {type}",
+    "review.yourAnswer": "Your answer:",
+    "review.correctAnswer": "Correct answer:",
+    "review.explanation": "Why this answer is correct",
+    "review.noAnswer": "No answer submitted",
+    "review.invalidAnswer": "Invalid answer",
+    "review.noExplanation": "An explanation is not available for this question.",
+    "review.loading": "Loading your battle summary…",
+    "review.failed": "Summary unavailable. Retry, or return to the map.",
+    "review.retry": "Retry loading summary",
+    "review.more": "Show more mistakes",
     "settings.button": "⚙ SETTINGS",
     "account.settings": "Account settings",
     "settings.title": "SETTINGS",
@@ -214,6 +234,26 @@ const messages = {
     "battle.rewardHp": "HP"
   },
   zh: {
+    "review.title": "战后学习总结",
+    "review.total": "题目数",
+    "review.correct": "答对",
+    "review.wrong": "答错",
+    "review.timeout": "超时",
+    "review.accuracy": "正确率：{value}%",
+    "review.noAttempts": "这场战斗还没有提交答案。",
+    "review.perfect": "全部答对！继续积累你的英语知识。",
+    "review.help": "展开错题，核对答案，了解原因。",
+    "review.entry": "{number}. {type}",
+    "review.yourAnswer": "你的答案：",
+    "review.correctAnswer": "正确答案：",
+    "review.explanation": "为什么这样答",
+    "review.noAnswer": "未提交答案",
+    "review.invalidAnswer": "无效答案",
+    "review.noExplanation": "这道题暂时没有解释。",
+    "review.loading": "正在读取本场学习总结……",
+    "review.failed": "总结暂时无法读取。可以重试或返回地图。",
+    "review.retry": "重新读取总结",
+    "review.more": "查看更多错题",
     "settings.button": "⚙ 设置",
     "account.settings": "账号设置",
     "settings.title": "游戏设置",

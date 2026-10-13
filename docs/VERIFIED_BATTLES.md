@@ -34,7 +34,7 @@ bilingual update message and permits returning to the map; no unverified reward 
   the page open while the bilingual reconnect notice is visible. Reload restores durable
   state; it cannot reset HP or re-grant a completed victory's rewards.
 - Attempts store question snapshots, submitted answers, correctness, timeouts and duration.
-  Per-skill attempts, correct counts and accuracy provide data for later mistake review.
+  Per-skill attempts, correct counts and accuracy are persisted. [Post-battle learning summaries](BATTLE_LEARNING_SUMMARY.md) now show saved mistakes and bilingual explanations.
 
 ## Remaining scope
 
