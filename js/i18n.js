@@ -1,10 +1,11 @@
-import { setupAudio } from "./audio.js?v=20261011-tutorial1";
+import { setupAudio } from "./audio.js?v=20261013-characters1";
 
 const LANGUAGE_KEY = "englishPowerQuest.language.v1";
 
 const messages = {
   en: {
     "settings.button": "⚙ SETTINGS",
+    "account.settings": "Account settings",
     "settings.title": "SETTINGS",
     "settings.subtitle": "Make the game comfortable for you.",
     "settings.language": "LANGUAGE / 语言",
@@ -214,6 +215,7 @@ const messages = {
   },
   zh: {
     "settings.button": "⚙ 设置",
+    "account.settings": "账号设置",
     "settings.title": "游戏设置",
     "settings.subtitle": "选择游戏语言，调整音效和音量。",
     "settings.language": "游戏语言",

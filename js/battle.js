@@ -1,8 +1,9 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261011-tutorial1";
-import { battleToken, createBattleClient } from "./battle-api.js?v=20261011-tutorial1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261011-tutorial1";
-import { playSound } from "./audio.js?v=20261011-tutorial1";
-import { normalizeTutorial } from "./tutorial.js?v=20261011-tutorial1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261013-characters1";
+import { battleToken, createBattleClient } from "./battle-api.js?v=20261013-characters1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-characters1";
+import { playSound } from "./audio.js?v=20261013-characters1";
+import { normalizeTutorial } from "./tutorial.js?v=20261013-characters1";
+import { paintCharacterImages } from "./characters.js?v=20261013-characters1";
 
 // Use the same per-player storage namespace as the map. If these keys differ,
 // the battle page cannot find the enemy that the map just stored and redirects back.
@@ -715,6 +716,7 @@ async function init() {
     };
     ui.playerSprite.src = "/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-assetpaths1";
   }
+  paintCharacterImages(AUTH_CONTEXT.character);
 
   bindBattleEvents();
   updateHp();

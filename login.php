@@ -1,30 +1,27 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/includes/auth.php';
+header('Cross-Origin-Opener-Policy: same-origin-allow-popups');
 epq_redirect_if_logged_in();
 
 $error = '';
 $username = '';
-$guestName = trim((string)($_POST['guest_name'] ?? ''));
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['guest_mode'] ?? '') === '1') {
     $csrf = (string)($_POST['csrf_token'] ?? '');
     if (!epq_csrf_is_valid($csrf)) {
         $error = '页面已过期，请刷新后再试。';
-    } elseif ($guestName === '') {
-        $error = '请先为你的角色取一个名字。';
-    } elseif (preg_match("/^[\\p{L}\\p{N} _.'-]{2,24}$/u", $guestName) !== 1) {
-        $error = '角色名字需要 2–24 个字符，只能使用文字、数字、空格、点、连字符或下划线。';
     } else {
         try {
             $db = epq_db();
-            $guestPlayer = epq_create_guest_player($db, $guestName);
+            $guestPlayer = epq_create_guest_player($db);
             epq_guest_start_session($guestPlayer);
-            header('Location: /FYP/index.php');
+            header('Location: ' . epq_home_url());
             exit;
         } catch (Throwable $e) {
             error_log('[English Power Quest guest registration] ' . $e->getMessage());
-            $error = '无法创建游客存档。请先运行 database/migrations/003_persistent_guests.sql，并确认数据库已经导入基础数据。';
+            $error = '暂时无法创建新角色，请确认数据库更新 006 已完成。现有账号仍可登录。';
         }
     }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -56,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['guest_mode'] ?? ''
                 $error = '用户名或密码不正确。';
             } else {
                 epq_authenticate_session($row, (int)$row['story_intro_seen'] !== 1);
-                header('Location: /FYP/index.php');
+                header('Location: ' . epq_home_url());
                 exit;
             }
         } catch (Throwable $e) {
@@ -69,11 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['guest_mode'] ?? ''
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23101521'/%3E%3Cpath d='M16 4 20 12 28 16 20 20 16 28 12 20 4 16 12 12Z' fill='%23e6ca8b'/%3E%3C/svg%3E">
+  <meta name="referrer" content="no-referrer-when-downgrade">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101521">
   <title>登录 · English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/auth.css?v=20261010-guestname1">
+  <link rel="stylesheet" href="/FYP/css/auth.css?v=20261013-characters1">
 </head>
 <body class="auth-page">
   <main class="auth-layout">
@@ -99,37 +98,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['guest_mode'] ?? ''
           <div class="auth-alert" role="alert"><?= epq_h($error) ?></div>
         <?php endif; ?>
 
+        <?php $epqGoogleMode="login"; require __DIR__."/includes/google_button.php"; ?>
+        <div class="auth-divider"><span>或使用账号密码</span></div>
         <form class="auth-form" method="post" action="/FYP/login.php">
           <input type="hidden" name="csrf_token" value="<?= epq_h((string)$_SESSION['csrf_token']) ?>">
           <label for="username">用户名</label>
           <input id="username" name="username" type="text" autocomplete="username" maxlength="50" value="<?= epq_h($username) ?>" required autofocus>
           <label for="password">密码</label>
           <input id="password" name="password" type="password" autocomplete="current-password" required>
-          <button class="auth-submit" type="submit">登录游戏 <span>→</span></button>
+          <button class="auth-submit" type="submit">登录 <span>→</span></button>
         </form>
 
         <div class="auth-divider"><span>或</span></div>
         <form class="auth-guest-form" method="post" action="/FYP/login.php">
           <input type="hidden" name="csrf_token" value="<?= epq_h((string)$_SESSION['csrf_token']) ?>">
           <input type="hidden" name="guest_mode" value="1">
-          <label class="auth-guest-name-label" for="guestName">角色名字 / Character Name</label>
-          <input
-            class="auth-guest-name-input"
-            id="guestName"
-            name="guest_name"
-            type="text"
-            maxlength="24"
-            minlength="2"
-            value="<?= epq_h($guestName) ?>"
-            placeholder="例如：Kenny、星夜旅人"
-            autocomplete="nickname"
-            aria-describedby="guestNameHint"
-            required
-          >
-          <small class="auth-guest-name-hint" id="guestNameHint">2–24 个字符 · 自动创建 MySQL 游客存档 · 此浏览器 30 天内可继续</small>
           <button class="auth-guest-button" type="submit">
             <span class="auth-guest-icon" aria-hidden="true">◇</span>
-            <span><strong>以游客身份游玩</strong><small>使用你填写的角色名字开始冒险</small></span>
+            <span><strong>以游客身份游玩</strong><small>进入后选择名字、角色外观和男女</small></span>
             <span class="auth-guest-arrow" aria-hidden="true">→</span>
           </button>
         </form>

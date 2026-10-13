@@ -25,12 +25,13 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23101521'/%3E%3Cpath d='M16 4 20 12 28 16 20 20 16 28 12 20 4 16 12 12Z' fill='%23e6ca8b'/%3E%3C/svg%3E">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261011-tutorial1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261013-characters1">
 </head>
 <body>
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -39,7 +40,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
 
     <div class="hud">
       <section class="pixel-player-card">
-        <div class="pixel-avatar"><img src="/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-assetpaths1" alt="Rookie character"></div>
+        <div class="pixel-avatar"><img data-character-sprite src="/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-assetpaths1" alt="Rookie character"></div>
         <div class="pixel-player-info">
           <div class="pixel-player-name"><?= epq_h($epqDisplayName) ?></div>
           <div class="pixel-level"><span data-i18n="player.level">Lv.</span> <span id="levelText">1</span></div>
@@ -231,7 +232,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         <div class="typing-cave-rocks"></div>
         <div class="typing-cave-ground"></div>
         <div class="typing-cave-player">
-          <img src="/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-assetpaths1" alt="Player character">
+          <img data-character-sprite src="/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-assetpaths1" alt="Player character">
         </div>
         <div class="typing-cave-monster" id="typingCaveMonster">
           <img src="/FYP/images/world/monsters/cave-wraith.svg?v=20261010-monsterart2" alt="Approaching monster">
@@ -302,6 +303,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         </div>
         <?php require __DIR__ . '/includes/sound_settings.php'; ?>
         <p class="settings-saved" data-i18n="settings.saved">Language and sound settings are saved automatically.</p>
+        <a class="settings-account-link" href="/FYP/account.php" data-i18n="account.settings">账号设置</a>
         <button type="button" class="settings-close-button" id="settingsCloseButton" data-i18n="settings.close">CLOSE</button>
       </section>
     </div>
@@ -315,7 +317,8 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
       'displayName' => $epqDisplayName,
       'showStoryIntro' => $epqShowStoryIntro,
       'csrfToken' => $epqCsrfToken,
-      'worldBackgrounds' => $epqWorldBackgrounds
+      'worldBackgrounds' => $epqWorldBackgrounds,
+      'character' => $_SESSION['character'] ?? epq_character_profile(epq_db(), $epqPlayerId)
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
 
     (() => {
@@ -329,7 +332,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261011-tutorial1").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261013-characters1").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");

@@ -10,11 +10,12 @@ $epqStorageId = (string)$epqPlayerId;
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23101521'/%3E%3Cpath d='M16 4 20 12 28 16 20 20 16 28 12 20 4 16 12 12Z' fill='%23e6ca8b'/%3E%3C/svg%3E">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#101b24">
   <title>English Power Quest · Battle</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261011-tutorial1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261013-characters1">
 </head>
 <body class="battle-page">
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -47,7 +48,7 @@ $epqStorageId = (string)$epqPlayerId;
 
       <div class="battle-player player-side">
         <div class="player-shadow"></div>
-        <img class="battle-player-art" id="battlePlayerSprite" src="/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-assetpaths1" alt="Player character">
+        <img class="battle-player-art" id="battlePlayerSprite" data-character-sprite src="/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-assetpaths1" alt="Player character">
         <div class="player-name-box">
           <strong data-i18n="battle.you">YOU</strong>
           <span data-i18n="battle.adventurer">LANGUAGE ADVENTURER</span>
@@ -146,9 +147,10 @@ $epqStorageId = (string)$epqPlayerId;
       'playerId' => $epqPlayerId,
       'storageId' => $epqStorageId,
       'isGuest' => $epqIsGuest,
-      'csrfToken' => (string)$_SESSION['csrf_token']
+      'csrfToken' => (string)$_SESSION['csrf_token'],
+      'character' => $_SESSION['character'] ?? epq_character_profile(epq_db(), $epqPlayerId)
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   </script>
-  <script type="module" src="/FYP/js/battle.js?v=20261011-tutorial1"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261013-characters1"></script>
 </body>
 </html>

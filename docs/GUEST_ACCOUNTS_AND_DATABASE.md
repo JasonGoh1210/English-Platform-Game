@@ -3,12 +3,12 @@
 ## Implemented behavior
 
 - Each guest gets a unique users row (`account_type='guest'`) and an initialized players row with `story_intro_seen=0`.
-- The first visit displays the same opening Story as registration. Story completion updates `players.story_intro_seen` for **both** account types.
+- The first authenticated visit asks for a name, appearance and gender, then displays the same opening Story as registration. Story completion updates `players.story_intro_seen` for **both** account types.
 - Anonymous resume uses a 256-bit random cookie `epq_guest_resume` (30-day expiry, HttpOnly, SameSite=Lax, Secure when HTTPS). MySQL stores only the SHA-256 token hash in `guest_login_tokens`.
 - Closing the browser normally preserves the recovery cookie. Explicit "退出游客模式" revokes all that guest's tokens and clears the recovery cookie. Clearing browser cookies loses automatic access; this is intentionally not a transferable password.
 - Map data (`player_game_saves`), selected world (`players.current_world_id`), explored worlds (`player_world_progress`), XP, coins, English skills and opening Story are stored in MySQL. Browser localStorage is only a per-player cache.
 - A guest may open **升级账号** in the map to set a username/password and optional email. The existing users.user_id and players.player_id are preserved, so the map, story, quests, XP and transaction ledgers stay attached to the same character. Guest recovery tokens are revoked on upgrade.
-- Passwords use PHP `password_hash`, not plaintext. No Google OAuth is implemented yet: the nullable `google_sub` field is schema preparation only. When Google sign-in is implemented, verify the Google ID token on the server, use its stable `sub`, and store the verified email in `users.email`. Never store Gmail passwords.
+- Passwords use PHP `password_hash`, not plaintext. Google Identity Services sign-in and linking now verify signed ID tokens on the server, use stable `google_sub`, and store verified email. A Client ID is required to enable the button. Existing accounts and guest upgrades retain the same player; see [configuration and character setup](GOOGLE_SIGNIN_AND_CHARACTERS.md). Never store Gmail passwords.
 
 ## Updating an existing local database (XAMPP / phpMyAdmin)
 
@@ -17,10 +17,11 @@
 3. In phpMyAdmin, select database `english_power_quest`. Run/import `database/migrations/003_persistent_guests.sql` once.
 4. Then run/import `database/migrations/004_four_worlds.sql`. This inserts the four active world records.
 5. For verified battles, import `database/migrations/005_verified_battles.sql` after the backup. It only creates three new tables and preserves existing data.
-6. `git pull origin main` updates PHP/JS/SQL *files*, but **does not execute SQL against your local MySQL**.
-7. Keep the project's Apache alias `/FYP` and XAMPP running. Visit `http://localhost/FYP/login.php`.
+6. Import `database/migrations/006_character_profiles.sql` for first-login naming, gender and appearance. This creates one new table without changing old characters.
+7. `git pull origin main` updates PHP/JS/SQL *files*, but **does not execute SQL against your local MySQL**.
+8. Keep the project's Apache alias `/FYP` and XAMPP running. Visit `http://localhost/FYP/login.php`.
 
-For a new empty database, import the latest `database/english_power_quest_schema.sql` once instead of 003/004/005. **Never** import the full schema into an existing database; it contains CREATE TABLE and sample seed inserts.
+For a new empty database, import the latest `database/english_power_quest_schema.sql` once instead of 003/004/005/006. **Never** import the full schema into an existing database; it contains CREATE TABLE and sample seed inserts.
 
 ## Verification queries
 
@@ -41,7 +42,7 @@ ORDER BY u.user_id DESC;
 
 ## Acceptance test
 
-1. From login.php, create a guest with a unique name. Verify a users guest row, a players row, and `story_intro_seen=0`.
+1. From login.php, create a guest, then choose a unique name, appearance and gender on the character page. Verify a users guest row, a players row, and `story_intro_seen=0`.
 2. Finish or skip the opening Story. Verify `story_intro_seen=1`.
 3. Walk, teleport and earn XP; verify `player_game_saves` and player balances change.
 4. Close **all** browser windows without pressing logout, reopen the same browser within 30 days, visit /FYP/login.php. Guest should resume with the same player_id and Story should not replay.
@@ -63,6 +64,6 @@ GitHub Actions runs PHP/JavaScript syntax checks, gameplay regression tests and 
 
 ## Security and limitations
 
-This is a browser-bound guest account. Anyone with access to the same browser session can use it; use HTTPS in production. A stolen raw bearer cookie could resume that guest until it expires or is revoked. Full account recovery requires upgrading to a password account. No email verification or Google sign-in exists yet.
+This is a browser-bound guest account. Anyone with access to the same browser session can use it; use HTTPS in production. A stolen raw bearer cookie could resume that guest until it expires or is revoked. Account recovery requires upgrading to a password account or binding Google. Password email verification is not implemented. Google sign-in is available after configuration; it verifies the token and does not merge accounts just because their emails match.
 
 Battle answers, HP, rewards, attempts and accuracy are now server-verified and transactionally replay-safe. NPC/typing QUEST claims and map/quest state remain client-reported; the save endpoint validates shape and bounds, not proof of location or quest completion. Complete those remaining checks before treating all game progression as server-authoritative.

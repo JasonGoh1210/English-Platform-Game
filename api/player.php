@@ -53,7 +53,8 @@ try {
             'coins' => (int)$player['coins_total'],
             'skillPoints' => (int)$player['skill_points_total'],
             'worldName' => $player['world_name'],
-            'englishPowerTotal' => $totalPower
+            'englishPowerTotal' => $totalPower,
+            'character' => epq_character_profile($db, $playerId)
         ],
         'englishPower' => $stats
     ]);

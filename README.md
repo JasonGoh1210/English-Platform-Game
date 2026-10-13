@@ -20,6 +20,8 @@ A mobile-friendly fantasy RPG prototype that teaches English through exploration
 - Healing Herb restores HP only after a confirmed 5-Coin purchase; the current question resumes after the purchase
 - Server-issued battle questions, server grading/damage/rewards, durable HP and idempotent action receipts
 - Persisted correct/wrong/timeout attempts and per-skill accuracy
+- First-login character creation with saved name, dice, gender and three sprite palettes
+- Google Identity Services sign-in and same-player binding, enabled by a local Client ID
 
 > This is still a prototype. Some game APIs/reward flows may still rely on client-supplied values and LocalStorage, so not all progress is server-authoritative. Do not deploy this version as a public multi-user game without a full security and data-persistence audit.
 
@@ -33,15 +35,15 @@ The project uses paths beginning with `/FYP/`, so if you use a different URL pre
 
 ## Database setup
 
-For a **new, empty local database**, import `database/english_power_quest_schema.sql` once using phpMyAdmin. It already includes the Story flag, persistent guest tables, map saves, four worlds and verified battles. Register through `register.php` or create a guest through `login.php`.
+For a **new, empty local database**, import `database/english_power_quest_schema.sql` once using phpMyAdmin. It already includes the Story flag, persistent guest tables, map saves, four worlds, verified battles and character profiles. Register through `register.php` or create a guest through `login.php`.
 
-Do not also run migrations 001–005 on this new schema: their changes are already included. `database/demo_seed.sql` is an optional development fixture, not an installation requirement or an upgrade script. Its demo user has no password and is not a playable password login.
+Do not also run migrations 001–006 on this new schema: their changes are already included. `database/demo_seed.sql` is an optional development fixture, not an installation requirement or an upgrade script. Its demo user has no password and is not a playable password login.
 
 Check `config/db.php` for the local MySQL credentials.
 
-For an **existing database**, export a backup first and inspect its columns/tables. Apply only missing migrations in order: 001 for older question schemas, 002 for `players.story_intro_seen`, 003 for guest identities/map saves, then 004 for the four world records and 005 for verified battles. Never reimport the full schema or demo seed over existing players. See [`docs/GUEST_ACCOUNTS_AND_DATABASE.md`](docs/GUEST_ACCOUNTS_AND_DATABASE.md).
+For an **existing database**, export a backup first and inspect its columns/tables. Apply only missing migrations in order: 001 for older question schemas, 002 for `players.story_intro_seen`, 003 for guest identities/map saves, then 004 for the four world records, 005 for verified battles and 006 for character profiles. Never reimport the full schema or demo seed over existing players. See [`docs/GUEST_ACCOUNTS_AND_DATABASE.md`](docs/GUEST_ACCOUNTS_AND_DATABASE.md).
 
-`git pull origin main` updates files; it does not execute SQL. Verified battles require migration 005 on existing databases; see [`docs/VERIFIED_BATTLES.md`](docs/VERIFIED_BATTLES.md). No image installation is required.
+`git pull origin main` updates files; it does not execute SQL. Verified battles require migration 005 on existing databases; see [`docs/VERIFIED_BATTLES.md`](docs/VERIFIED_BATTLES.md). First-login setup requires migration 006; [Google login and character setup](docs/GOOGLE_SIGNIN_AND_CHARACTERS.md) explains the safe update and Client ID configuration. No image installation is required.
 
 Map and battle Settings now include pixel sound effects, volume and a Test Sound button. Click/touch or press a key to enable browser audio. No sound files or SQL migration are required; see [Sound effects](docs/SOUND_EFFECTS.md).
 
@@ -49,7 +51,7 @@ New characters now learn movement and their first village battle with Elder Rowa
 
 ## Validation
 
-Run PHP syntax checks, `node --check js/rpg.js`, `node --check js/battle.js`, and `node --test tests/gameplay_regression.test.cjs tests/battle_api.test.cjs` and `php tests/battle_rules_test.php`. CI checks gameplay regressions and the guest/save/upgrade and verified combat flows on MySQL 8 and MariaDB 10.4. These checks do not verify the actual browser artwork or a complete playthrough.
+Run PHP syntax checks, `node --check js/rpg.js`, `node --check js/battle.js`, and `node --test tests/gameplay_regression.test.cjs tests/battle_api.test.cjs` and `php tests/battle_rules_test.php`, `node --test tests/characters.test.cjs`, `php tests/google_token_test.php`. CI checks gameplay regressions and the guest/save/upgrade and verified combat flows on MySQL 8 and MariaDB 10.4. These checks do not verify the actual browser artwork or a complete playthrough.
 
 ## Known gaps before a final FYP release
 

@@ -4358,6 +4358,8 @@ button { font: inherit; }
   cursor: pointer;
 }
 .game-logout-button:hover { background: rgba(125, 72, 143, .62); }
+.settings-account-link { display: block; margin-bottom: 16px; padding: 12px; color: #f1d17e; border: 1px solid #57686b; font-size: .8rem; }
+.settings-account-link:focus-visible { outline: 2px solid #f1d17e; outline-offset: 3px; }
 @media (max-width: 760px) {
   .game-logout-form { top: 8px; right: 8px; gap: 4px; max-width: 52vw; padding: 4px 5px 4px 8px; }
   .game-account-name { max-width: 16vw; font-size: .62rem; }

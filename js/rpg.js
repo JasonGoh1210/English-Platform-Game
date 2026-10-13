@@ -1,7 +1,8 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261011-tutorial1";
-import { playSound } from "./audio.js?v=20261011-tutorial1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261011-tutorial1";
-import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261011-tutorial1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261013-characters1";
+import { playSound } from "./audio.js?v=20261013-characters1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261013-characters1";
+import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261013-characters1";
+import { characterSprite, paintCharacterImages } from "./characters.js?v=20261013-characters1";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -128,7 +129,7 @@ const worldBackgroundPaths = {
 for (const realmId of Object.keys(worldBackgroundPaths)) {
   const availablePaths = window.EPQ_AUTH?.worldBackgrounds?.[realmId];
   if (Array.isArray(availablePaths)) {
-    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261011-tutorial1");
+    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261013-characters1");
   }
 }
 
@@ -166,6 +167,7 @@ Object.entries(worldBackgrounds).forEach(([realmId, image]) => {
 });
 
 const AUTH_CONTEXT = window.EPQ_AUTH || {};
+paintCharacterImages(AUTH_CONTEXT.character);
 const IS_GUEST = Boolean(AUTH_CONTEXT.isGuest);
 const AUTH_PLAYER_ID = String(AUTH_CONTEXT.storageId || AUTH_CONTEXT.playerId || "guest");
 const PLAYER_DISPLAY_NAME = String(
@@ -3809,7 +3811,7 @@ function drawCharacter(x, ground, coat, skin, player) {
     if (!displayFrameIsWalk && world.player.facing < 0) ctx.scale(-1, 1);
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(
-      displayFrame,
+      characterSprite(displayFrame, AUTH_CONTEXT.character),
       0, 0, displayFrame.naturalWidth, displayFrame.naturalHeight,
       -drawW / 2, -drawH, drawW, drawH
     );

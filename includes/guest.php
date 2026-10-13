@@ -52,6 +52,7 @@ function epq_guest_start_session(array $row): void {
     $_SESSION['display_name'] = (string)$row['display_name'];
     $_SESSION['show_story_intro'] = (int)$row['story_intro_seen'] !== 1;
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    epq_sync_character_session();
 }
 
 function epq_guest_try_resume(): void {
@@ -88,13 +89,7 @@ function epq_guest_try_resume(): void {
 }
 
 /** Create a database user and an initialized player for each new guest. */
-function epq_create_guest_player(mysqli $db, string $displayName): array {
-    $worldResult = $db->query(
-        'SELECT world_id FROM worlds WHERE is_active = 1 ORDER BY world_order LIMIT 1'
-    );
-    $world = $worldResult ? $worldResult->fetch_assoc() : null;
-    if (!$world) throw new RuntimeException('No active world; import starter data first.');
-    $worldId = (int)$world['world_id'];
+function epq_create_guest_player(mysqli $db): array {
     $username = 'guest_' . bin2hex(random_bytes(12));
     $db->begin_transaction();
     try {
@@ -102,25 +97,7 @@ function epq_create_guest_player(mysqli $db, string $displayName): array {
         $userStmt->bind_param('s', $username);
         if (!$userStmt->execute()) throw new RuntimeException('Could not create guest identity.');
         $userId = (int)$db->insert_id;
-        $playerStmt = $db->prepare(
-            'INSERT INTO players (user_id, display_name, level_no, xp_total, coins_total, skill_points_total, current_world_id, story_intro_seen)
-             VALUES (?, ?, 1, 0, 0, 0, ?, 0)'
-        );
-        $playerStmt->bind_param('isi', $userId, $displayName, $worldId);
-        if (!$playerStmt->execute()) throw new RuntimeException('Could not initialize guest player.');
-        $playerId = (int)$db->insert_id;
-        $progressStmt = $db->prepare(
-            "INSERT INTO player_world_progress (player_id, world_id, status, unlocked_at)
-             VALUES (?, ?, 'UNLOCKED', CURRENT_TIMESTAMP)"
-        );
-        $progressStmt->bind_param('ii', $playerId, $worldId);
-        if (!$progressStmt->execute()) throw new RuntimeException('Could not initialize guest world.');
-        $skillsStmt = $db->prepare(
-            'INSERT INTO player_english_stats (player_id, english_skill_id)
-             SELECT ?, english_skill_id FROM english_skills WHERE is_active = 1'
-        );
-        $skillsStmt->bind_param('i', $playerId);
-        if (!$skillsStmt->execute()) throw new RuntimeException('Could not initialize guest skills.');
+        $playerId = epq_new_player($db, $userId);
         $db->commit();
     } catch (Throwable $e) {
         $db->rollback();
@@ -131,6 +108,6 @@ function epq_create_guest_player(mysqli $db, string $displayName): array {
     epq_guest_issue_token($db, $userId);
     return [
         'user_id' => $userId, 'player_id' => $playerId, 'username' => $username,
-        'display_name' => $displayName, 'story_intro_seen' => 0
+        'display_name' => 'Adventurer', 'story_intro_seen' => 0
     ];
 }

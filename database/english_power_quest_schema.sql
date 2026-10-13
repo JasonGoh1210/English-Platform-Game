@@ -978,3 +978,16 @@ CREATE TABLE IF NOT EXISTS verified_answer_attempts (
     UNIQUE KEY uq_verified_answer (battle_id, question_token),
     CONSTRAINT fk_verified_answer_battle FOREIGN KEY (battle_id) REFERENCES verified_battles(battle_id)
 );
+
+-- First-login character profiles (existing accounts without a row are legacy).
+-- Back up english_power_quest before importing this additive migration.
+-- Existing accounts have no row and retain their original character/progress.
+CREATE TABLE IF NOT EXISTS player_character_profiles (
+    player_id BIGINT UNSIGNED PRIMARY KEY,
+    appearance ENUM('shadow', 'forest', 'arcane') NOT NULL DEFAULT 'shadow',
+    gender ENUM('male', 'female') NULL,
+    setup_completed TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_character_profile_player FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE
+);

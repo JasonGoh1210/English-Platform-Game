@@ -29,6 +29,9 @@ function epq_current_player_id(mysqli $db): int {
 
     $playerId = (int)$row['player_id'];
     $_SESSION['player_id'] = $playerId;
+    if (!epq_character_profile($db, $playerId)['complete']) {
+        epq_json(['ok'=>false, 'error'=>'请先创建你的角色。', 'errorCode'=>'CHARACTER_SETUP_REQUIRED'], 409);
+    }
     return $playerId;
 }
 

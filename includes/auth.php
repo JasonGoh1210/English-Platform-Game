@@ -14,6 +14,7 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 }
 
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/characters.php';
 require_once __DIR__ . '/guest.php';
 
 if (empty($_SESSION['csrf_token'])) {
@@ -30,18 +31,23 @@ function epq_is_guest(): bool {
 }
 
 function epq_require_login_page(): void {
-    if (epq_is_guest()) {
-        return;
-    }
     if (empty($_SESSION['user_id']) || empty($_SESSION['player_id'])) {
         header('Location: /FYP/login.php');
         exit;
     }
+    if (!empty($_SESSION['character_setup_pending'])) {
+        header('Location: /FYP/character_setup.php');
+        exit;
+    }
+}
+
+function epq_home_url(): string {
+    return !empty($_SESSION['character_setup_pending']) ? '/FYP/character_setup.php' : '/FYP/index.php';
 }
 
 function epq_redirect_if_logged_in(): void {
     if (epq_is_guest() || (!empty($_SESSION['user_id']) && !empty($_SESSION['player_id']))) {
-        header('Location: /FYP/index.php');
+        header('Location: ' . epq_home_url());
         exit;
     }
 }
@@ -61,6 +67,7 @@ function epq_authenticate_session(array $row, bool $showStory): void {
     $_SESSION['display_name'] = (string)$row['display_name'];
     $_SESSION['show_story_intro'] = $showStory;
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    epq_sync_character_session();
 }
 
 // Recover an anonymous player from the browser's HttpOnly 30-day cookie.

@@ -15,9 +15,15 @@ csrf=$(printf '%s' "$login" | grep -oP 'name="csrf_token" value="\K[a-f0-9]{64}'
 test -n "$csrf"
 
 curl -fsS -D /tmp/epq_headers.txt -o /tmp/epq_guest_post.html -c "$cookies" -b "$cookies" \
-  --data-urlencode 'guest_mode=1' --data-urlencode 'guest_name=SmokeHero' \
+  --data-urlencode 'guest_mode=1' \
   --data-urlencode "csrf_token=$csrf" "$base/login.php"
-grep -q 'Location: /FYP/index.php' /tmp/epq_headers.txt
+grep -q 'Location: /FYP/character_setup.php' /tmp/epq_headers.txt
+setup=$(curl -fsS -c "$cookies" -b "$cookies" "$base/character_setup.php")
+setup_csrf=$(printf '%s' "$setup" | grep -oP 'name="csrf_token" value="\K[a-f0-9]{64}' | head -n1)
+curl -fsS -D /tmp/epq_setup_headers.txt -o /tmp/epq_setup_post.html -c "$cookies" -b "$cookies" \
+  --data-urlencode "csrf_token=$setup_csrf" --data-urlencode 'display_name=SmokeHero' \
+  --data-urlencode 'appearance=forest' --data-urlencode 'gender=female' "$base/character_setup.php"
+grep -q 'Location: /FYP/index.php' /tmp/epq_setup_headers.txt
 
 guest=$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s english_power_quest \
   -e "SELECT CONCAT(u.user_id,':',p.player_id) FROM users u JOIN players p ON p.user_id=u.user_id WHERE u.account_type='guest' AND p.display_name='SmokeHero' ORDER BY p.player_id DESC LIMIT 1")
@@ -104,3 +110,4 @@ printf '%s' "$logged_in" | jq -e --argjson pid "$player_id" '.ok == true and .pl
 echo "PASS: guest, story, map, XP, CSRF, browser recovery, account upgrade and password login"
 
 EPQ_BATTLE_TEST_DB=isolated php tests/battle_flow_smoke.php
+EPQ_BATTLE_TEST_DB=isolated php tests/character_flow_smoke.php

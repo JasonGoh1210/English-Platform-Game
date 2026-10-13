@@ -1,0 +1,37 @@
+import { characterSprite, randomCharacterName } from "./characters.js?v=20261013-characters1";
+
+const config = window.EPQ_CHARACTER_SETUP;
+const name = document.getElementById("characterName");
+const dice = document.getElementById("randomName");
+const previewName = document.getElementById("previewName");
+const previewStyle = document.getElementById("previewStyle");
+const sprite = new Image();
+sprite.src = "/FYP/assets/player/png_frames/Player_Stand.png";
+function selectedProfile() {
+  const appearance = document.querySelector('[name="appearance"]:checked')?.value || "shadow";
+  return {appearance,palette:config.catalog[appearance].palette};
+}
+function render() {
+  if (!sprite.complete || !sprite.naturalWidth) return;
+  document.querySelectorAll("[data-character-preview]").forEach(canvas => {
+    const appearance = canvas.dataset.characterPreview || selectedProfile().appearance;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0,0,canvas.width,canvas.height);ctx.imageSmoothingEnabled = false;
+    const look = {appearance,palette:config.catalog[appearance].palette};
+    const image = characterSprite(sprite,look);
+    ctx.drawImage(image,0,0,sprite.naturalWidth,sprite.naturalHeight,0,canvas.height-canvas.width,canvas.width,canvas.width);
+  });
+  previewName.textContent = name.value.trim() || "你的冒险者";
+  previewStyle.textContent = config.catalog[selectedProfile().appearance].label;
+}
+sprite.onload = render;
+document.querySelectorAll('[name="appearance"], [name="gender"]').forEach(input => input.addEventListener("change",render));
+name.addEventListener("input",render);
+dice.addEventListener("click", () => {
+  const gender = document.querySelector('[name="gender"]:checked')?.value || "male";
+  name.value = randomCharacterName(config.names[gender],name.value.trim());
+  render();name.focus();
+});
+document.getElementById("characterForm").addEventListener("submit", () => {
+  const submit = document.getElementById("createCharacter");submit.disabled = true;submit.textContent = "正在保存角色……";
+});

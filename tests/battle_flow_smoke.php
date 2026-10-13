@@ -41,7 +41,13 @@ function guest(string $name): array {
     [, $page] = http('login.php', null, $cookie);
     preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $page, $match);
     verify(isset($match[1]), 'Guest CSRF');
-    http('login.php', ['guest_mode'=>'1','guest_name'=>$name,'csrf_token'=>$match[1]], $cookie);
+    http('login.php', ['guest_mode'=>'1','csrf_token'=>$match[1]], $cookie);
+    [, $setup] = http('character_setup.php', null, $cookie);
+    preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $setup, $setupToken);
+    verify(isset($setupToken[1]), 'Character setup CSRF');
+    verify(http('api/player.php',null,$cookie)[0] === 409, 'New characters cannot skip setup');
+    [$created] = http('character_setup.php', ['csrf_token'=>$setupToken[1], 'display_name'=>$name,'appearance'=>'shadow','gender'=>'male'], $cookie);
+    verify($created===302,'Character selected before gameplay');
     [, $page] = http('index.php', null, $cookie);
     preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $page, $match);
     [, $player] = http('api/player.php', null, $cookie);
