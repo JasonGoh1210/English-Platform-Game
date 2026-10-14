@@ -1,10 +1,10 @@
-import { setupAudio } from "./audio.js?v=20261014-companions1";
+import { setupAudio } from "./audio.js?v=20261015-village2";
 
 const LANGUAGE_KEY = "englishPowerQuest.language.v1";
 
 const messages = {
   en: {
-    "shop.title":"Traveler's Shop", "shop.open":"Shop", "shop.subtitle":"Pack potions and bring your pixel companion.",
+    "shop.title":"Traveler's Shop", "shop.open":"Shop", "shop.subtitle":"Pack potions and bring your pixel companion.", "shop.enterPrompt":"E / INTERACT · ENTER SHOP", "shop.villageGuide":"Visit the village shop for potions and companions. Dungeon challenges await in the other worlds.",
     "shop.coins":"Coins", "shop.stock":"Potion bag", "shop.equipped":"Your companion", "shop.supplies":"Adventure supplies", "shop.skins":"Six companion looks",
     "shop.guideHelp":"Every companion follows you and guides your next task. Looks do not change combat power. Scout Owl is free.",
     "shop.heal":"Restores {hp} HP in battle. Stored until used.", "shop.follows":"Follows you · shows the next destination", "shop.price":"{coins} Coins", "shop.free":"Free companion",
@@ -379,7 +379,7 @@ const messages = {
     "battle.rewardHp": "HP"
   },
   zh: {
-    "shop.title":"旅人商店", "shop.open":"商店", "shop.subtitle":"准备药水，带上你的像素伙伴。",
+    "shop.title":"旅人商店", "shop.open":"商店", "shop.subtitle":"准备药水，带上你的像素伙伴。", "shop.enterPrompt":"按 E / 互动进入商店", "shop.villageGuide":"村庄商店可购买药水和随从，洞穴与高塔挑战在其他世界。",
     "shop.coins":"金币", "shop.stock":"药水背包", "shop.equipped":"当前随从", "shop.supplies":"冒险补给", "shop.skins":"六种随从外观",
     "shop.guideHelp":"所有随从都会跟随你并指引任务。外观不会改变战斗能力；猫头鹰免费陪伴。",
     "shop.heal":"战斗中恢复 {hp} HP，购买后保存在背包中。", "shop.follows":"跟随冒险 · 提示下一目的地", "shop.price":"{coins} 金币", "shop.free":"免费随从",

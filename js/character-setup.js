@@ -1,4 +1,4 @@
-import { characterSprite, randomCharacterName, loadCharacterAssets } from "./characters.js?v=20261014-companions1";
+import { characterSprite, randomCharacterName, loadCharacterAssets } from "./characters.js?v=20261015-village2";
 
 const config = window.EPQ_CHARACTER_SETUP;
 const name = document.getElementById("characterName");

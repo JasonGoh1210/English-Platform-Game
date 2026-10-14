@@ -1,6 +1,6 @@
 {
   "maple": {
-    "nameKey": "dungeon.maple.name", "kind": "tower", "x": 1580, "gate": "slime-01", "legacy": "Defeated Word Slime",
+    "nameKey": "dungeon.maple.name", "kind": "tower", "legacyOnly": true, "x": 1580, "gate": "slime-01", "legacy": "Defeated Word Slime",
     "entrance": "/FYP/images/dungeons/maple-entrance-128.png", "background": "/FYP/images/dungeons/maple-interior.png",
     "enemies": [{"id":"clockwork-owl-01","x":1050,"name":"Clockwork Owl","nameZh":"发条夜枭","nameKey":"dungeon.owl","roomKey":"dungeon.maple.room","hp":95,"damage":11,"xp":35,"coins":16,"difficulty":"EASY","types":["TRUE_FALSE","ODD_WORD_OUT"],"spritePath":"/FYP/images/dungeons/clockwork-owl-64.png"}]
   },

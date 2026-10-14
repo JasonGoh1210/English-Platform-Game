@@ -28,7 +28,7 @@ function loadDistinctCharacter(key,path) {
         const right=frames.slice(1),left=right.map(frame=>{const c=document.createElement('canvas');c.width=48;c.height=72;const ctx=c.getContext('2d');ctx.translate(48,0);ctx.scale(-1,1);ctx.drawImage(frame,0,0);return c;});
         characterFrames.set(key,{idle:frames[0],right,left});
       }catch(error){console.warn('[EPQ] Hero frames unavailable; using original sprites.',error);}resolve();
-    };sheet.onerror=()=>{console.warn('[EPQ] Hero sheet unavailable; using original sprites.');resolve();};sheet.src=path+'?v=20261014-companions1';
+    };sheet.onerror=()=>{console.warn('[EPQ] Hero sheet unavailable; using original sprites.');resolve();};sheet.src=path+'?v=20261015-village2';
   });characterLoads.set(key,loading);return loading;
 }
 

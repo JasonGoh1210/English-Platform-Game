@@ -47,6 +47,29 @@ function png(relative){
   }}
   return {width,height,channels,pixels:out};
 }
+
+test('Companion sheets contain real limb/wing animation and the village shop is transparent native pixel art',()=>{
+  for(const id of ['owl','fox','cat','dragon','wisp','bunny']){
+    const image=png('images/companions/'+id+'-motion-64.png');assert.equal(image.width,256);assert.equal(image.height,128);assert.equal(image.channels,4);
+    const moving=new Set(),colors=new Set(),bottoms=[];
+    for(let frame=0;frame<8;frame++){
+      const alpha=[];let visible=0,bottom=-1;
+      for(let y=0;y<64;y++)for(let x=0;x<64;x++){
+        const at=((Math.floor(frame/4)*64+y)*256+frame%4*64+x)*4,a=image.pixels[at+3];assert.ok(a===0||a===255);
+        if(a){visible++;bottom=Math.max(bottom,y);colors.add(image.pixels.subarray(at,at+3).toString('hex'));}
+        if(x===0||x===63||y===0||y===63)assert.equal(a,0,'Each complete pose stays inside its own cell');
+        alpha.push(a);
+      }
+      assert.ok(visible>200,id+' frame '+frame);bottoms.push(bottom);if(frame>=4)moving.add(alpha.join(','));
+    }
+    assert.ok(moving.size>=3,id+' must change its actual silhouette while moving');assert.ok(colors.size<=128);
+    if(id==='fox'||id==='cat')assert.ok(bottoms.every(bottom=>bottom===60),'Paws stay aligned to the walking plane');
+    if(id==='bunny')assert.ok(bottoms[6]<bottoms[4]-4,'Rabbit hop actually lifts its feet');
+  }
+  const shop=png('images/shop/village-apothecary-192.png');assert.equal(shop.width,192);assert.equal(shop.height,128);assert.equal(shop.channels,4);
+  let visible=0,transparent=0;for(let i=0;i<shop.pixels.length;i+=4){const alpha=shop.pixels[i+3];assert.ok(alpha===0||alpha===255);if(alpha)visible++;else transparent++;}
+  assert.ok(visible>10000&&transparent>2000,'Shop is a complete building with transparent surrounding space');
+});
 const sprites=['images/npc/npc_mira_64.png','images/npc/npc_tala_64.png','images/npc/npc_kai_64.png',
   'images/npc/npc_elder_rowan_64.png','images/world/pixel/system_book_64.png','images/world/pixel/wayfinder_sign_64.png',
   'images/world/pixel/realm_portal_64.png','images/world/monsters/cave-wraith-64.png','images/world/monsters/confusion-bat-64.png',

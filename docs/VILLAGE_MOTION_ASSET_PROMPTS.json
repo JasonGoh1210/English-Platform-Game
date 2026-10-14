@@ -1,0 +1,54 @@
+{
+  "mode": "built-in image_gen",
+  "requests": [
+    {
+      "key": "owl",
+      "prompt": "Use case: stylized-concept. EDIT TARGET: the supplied companion image; preserve species, colors and costume, expand it into a production game animation spritesheet. Transparent RGBA background, strict crisp 16-bit pixel art, hard square pixels, dark outlines, limited palette, no blur, no antialias, no gradients, no shadows, no text, no numbers, no grid lines. EXACT layout: 4 columns by 2 rows, eight equally sized square cells, total 2:1 wide sheet. All 8 sprites the same character, scale and right-facing direction. One full complete character centered in each cell with generous blank margins; identical anchor and body center across frames. Nothing crosses cell boundaries. A small golden-brown scout owl, cream face, amber eyes, little blue scarf. Keep the reference's friendly owl identity. Row one four hovering poses; row two four flying poses with clearly different wing positions: wings high overhead, wings half open, wings down, wings half open recovery. Legs tucked up, wings actually move, face and beak point right.",
+      "reference": "C:/Users/Kenny/Favorites/Downloads/English-Platform-Game/images/companions/owl-64.png",
+      "transparent_background": true,
+      "output": "images/companions/owl-motion-64.png"
+    },
+    {
+      "key": "fox",
+      "prompt": "Use case: stylized-concept. EDIT TARGET: the supplied companion image; preserve species, colors and costume, expand it into a production game animation spritesheet. Transparent RGBA background, strict crisp 16-bit pixel art, hard square pixels, dark outlines, limited palette, no blur, no antialias, no gradients, no shadows, no text, no numbers, no grid lines. EXACT layout: 4 columns by 2 rows, eight equally sized square cells, total 2:1 wide sheet. All 8 sprites the same character, scale and right-facing direction. One full complete character centered in each cell with generous blank margins; identical anchor and body center across frames. Nothing crosses cell boundaries. A small orange red fox, cream muzzle and paws, huge fluffy white-tipped tail, tiny green leaf collar. Keep the reference identity. Row one four idle poses with tail twitch and blink. Row two four walking poses, clearly alternating front and rear paws, raised and planted legs, tail swaying. Body and head point right.",
+      "reference": "C:/Users/Kenny/Favorites/Downloads/English-Platform-Game/images/companions/fox-64.png",
+      "transparent_background": true,
+      "output": "images/companions/fox-motion-64.png"
+    },
+    {
+      "key": "cat",
+      "prompt": "Use case: stylized-concept. EDIT TARGET: the supplied companion image; preserve species, colors and costume, expand it into a production game animation spritesheet. Transparent RGBA background, strict crisp 16-bit pixel art, hard square pixels, dark outlines, limited palette, no blur, no antialias, no gradients, no shadows, no text, no numbers, no grid lines. EXACT layout: 4 columns by 2 rows, eight equally sized square cells, total 2:1 wide sheet. All 8 sprites the same character, scale and right-facing direction. One full complete character centered in each cell with generous blank margins; identical anchor and body center across frames. Nothing crosses cell boundaries. A small navy-blue moon kitten, pale silver muzzle, tall pointed ears, long curling tail and tiny golden moon charm. Keep the reference identity. Row one four idle poses with tail flick and blink. Row two four walking poses, alternating forepaws and hindpaws, lifted and grounded legs. Body and head point right.",
+      "reference": "C:/Users/Kenny/Favorites/Downloads/English-Platform-Game/images/companions/cat-64.png",
+      "transparent_background": true,
+      "output": "images/companions/cat-motion-64.png"
+    },
+    {
+      "key": "dragon",
+      "prompt": "Use case: stylized-concept. EDIT TARGET: the supplied companion image; preserve species, colors and costume, expand it into a production game animation spritesheet. Transparent RGBA background, strict crisp 16-bit pixel art, hard square pixels, dark outlines, limited palette, no blur, no antialias, no gradients, no shadows, no text, no numbers, no grid lines. EXACT layout: 4 columns by 2 rows, eight equally sized square cells, total 2:1 wide sheet. All 8 sprites the same character, scale and right-facing direction. One full complete character centered in each cell with generous blank margins; identical anchor and body center across frames. Nothing crosses cell boundaries. A small friendly turquoise crystal baby dragon, amber little horns, pale cream belly, purple wing membranes, curling tail. Keep the reference identity. Row one four hovering poses; row two four flying poses with wings fully raised, half open, fully down, half open recovery, legs tucked, tail counterbalancing. Clearly different wing silhouettes. Face and snout point right.",
+      "reference": "C:/Users/Kenny/Favorites/Downloads/English-Platform-Game/images/companions/dragon-64.png",
+      "transparent_background": true,
+      "output": "images/companions/dragon-motion-64.png"
+    },
+    {
+      "key": "wisp",
+      "prompt": "Use case: stylized-concept. EDIT TARGET: the supplied companion image; preserve species, colors and costume, expand it into a production game animation spritesheet. Transparent RGBA background, strict crisp 16-bit pixel art, hard square pixels, dark outlines, limited palette, no blur, no antialias, no gradients, no shadows, no text, no numbers, no grid lines. EXACT layout: 4 columns by 2 rows, eight equally sized square cells, total 2:1 wide sheet. All 8 sprites the same character, scale and right-facing direction. One full complete character centered in each cell with generous blank margins; identical anchor and body center across frames. Nothing crosses cell boundaries. A lilac lantern spirit, tiny friendly face, golden lantern ring and two cyan lilac leaflike fins. Keep the reference identity. Row one four hovering poses with blink, fins opening, tail curling. Row two four moving-flight poses with fins raised/back/down, a trailing little pixel magic tail, lantern ring swaying. Face points right. Solid hard pixel highlights, no blurred glow.",
+      "reference": "C:/Users/Kenny/Favorites/Downloads/English-Platform-Game/images/companions/wisp-64.png",
+      "transparent_background": true,
+      "output": "images/companions/wisp-motion-64.png"
+    },
+    {
+      "key": "bunny",
+      "prompt": "Use case: stylized-concept. EDIT TARGET: the supplied companion image; preserve species, colors and costume, expand it into a production game animation spritesheet. Transparent RGBA background, strict crisp 16-bit pixel art, hard square pixels, dark outlines, limited palette, no blur, no antialias, no gradients, no shadows, no text, no numbers, no grid lines. EXACT layout: 4 columns by 2 rows, eight equally sized square cells, total 2:1 wide sheet. All 8 sprites the same character, scale and right-facing direction. One full complete character centered in each cell with generous blank margins; identical anchor and body center across frames. Nothing crosses cell boundaries. A small cream-white courier bunny with tall pink-lined ears and red little scarf. Keep the reference identity. Row one four idle poses ears twitch and blink. Row two four hopping poses: crouch, push-off, midair extended, landing; rear legs clearly bend/extend, ears tilt. Head and nose point right.",
+      "reference": "C:/Users/Kenny/Favorites/Downloads/English-Platform-Game/images/companions/bunny-64.png",
+      "transparent_background": true,
+      "output": "images/companions/bunny-motion-64.png"
+    },
+    {
+      "key": "village-shop",
+      "prompt": "Use case: stylized-concept. Production standalone 2D side-scrolling RPG village SHOP building on genuine transparent RGBA background. Strict clean hand-crafted 16-bit pixel art, hard square pixels, restricted warm earthy palette, dark readable outlines, no blur/no antialias/no gradients/no UI/no watermark/no letters or words. A welcoming low two-storey timber and stone village apothecary shop, broad terracotta red tiled roof and one little chimney, cream plaster and oak beams, open wooden central doorway, striped ochre and cream canvas awning, warm lit square windows, wooden hanging sign displaying a recognizable bright ruby red potion bottle icon, crates and jars beside door. FRONT elevation, full building, ample transparent margins, flat stone foundation at bottom. Building is WIDE and LOW, about 5:4 aspect, complete roof and base visible. No clock, no tower, no spire, no landscape, no people. Readable at native 160x128 pixel scale and 3x integer display. Matches cozy medieval fantasy village.",
+      "reference": null,
+      "transparent_background": true,
+      "output": "images/shop/village-apothecary-192.png"
+    }
+  ]
+}

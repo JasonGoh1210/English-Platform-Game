@@ -1,5 +1,5 @@
-import {t,getLanguage,onLanguageChange,setLanguage} from './i18n.js?v=20261014-companions1';
-import {playSound} from './audio.js?v=20261014-companions1';
+import {t,getLanguage,onLanguageChange,setLanguage} from './i18n.js?v=20261015-village2';
+import {playSound} from './audio.js?v=20261015-village2';
 
 const config=window.EPQ_SHOP,catalog=config.catalog,key=`englishPowerQuest.shop.pending.${config.playerId}`;
 let view=null,pending=null,busy=false,selection=null;
