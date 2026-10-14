@@ -9,7 +9,7 @@ epq_require_login_page();
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="icon" href="data:,">
   <title>学习与错题 · English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/learning.css?v=20261014-dungeons1">
+  <link rel="stylesheet" href="/FYP/css/learning.css?v=20261014-companions1">
 </head>
 <body class="learning-page">
   <main class="learning-shell">
@@ -33,6 +33,6 @@ epq_require_login_page();
     </section>
   </main>
   <script>window.EPQ_LEARNING = <?= json_encode(['csrfToken'=>(string)$_SESSION['csrf_token']], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
-  <script type="module" src="/FYP/js/learning.js?v=20261014-dungeons1"></script>
+  <script type="module" src="/FYP/js/learning.js?v=20261014-companions1"></script>
 </body>
 </html>

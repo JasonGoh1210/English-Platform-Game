@@ -3,7 +3,35 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 const zlib=require('node:zlib');
+const vm=require('node:vm');
 const root=path.resolve(__dirname,'..');
+test('Portal, cave, tower and doorway visible bases touch the ground despite PNG padding',()=>{
+  const source=fs.readFileSync(path.join(root,'js/pixel-world.js'),'utf8').replaceAll('export ','');
+  const c={document:{createElement(){let source;return {getContext:()=>({drawImage(image){source=image;},getImageData:()=>({data:source.pixels})})};}}};vm.createContext(c);vm.runInContext(source,c);
+  for(const [file,size] of [['images/world/pixel/realm_portal_64.png',192],['images/dungeons/forest-entrance-128.png',256],['images/dungeons/maple-entrance-128.png',384],['images/dungeons/exit-door-128.png',256],['assets/player/png_frames/Player_Stand.png',144],['assets/player/png_frames/player_walk_right_3.png',144],['images/npc/npc_elder_rowan_64.png',128],['images/dungeons/moss-sentinel-64.png',128]]){
+    const data=png(file),image={...data,naturalWidth:data.width,naturalHeight:data.height,complete:true};let args;
+    const context={drawImage:(image,...a)=>args=a};assert.ok(c.drawGroundedSprite(context,image,500,520,size));const bounds=c.spriteBounds(image),scale=size/data.height;
+    assert.ok(Math.abs(args[1]+(bounds.bottom+1)*scale-520)<=.5,'Visible threshold sits on the walking plane');
+    assert.ok(Math.abs(args[0]+(bounds.left+bounds.right+1)/2*scale-500)<=.5,'Visible silhouette centered on interaction point');
+  }
+});
+test('Six companion skins, potion and doorway are binary-alpha pixel sprites with transparent margins',()=>{
+  const files=['owl','fox','cat','dragon','wisp','bunny'].map(id=>['images/companions/'+id+'-64.png',64]);files.push(['images/dungeons/exit-door-128.png',128],['images/shop/ruby-potion-32.png',32]);
+  const signatures=new Set();for(const [file,size] of files){const image=png(file);assert.equal(image.width,size);assert.equal(image.height,size);assert.equal(image.channels,4);let visible=0;
+    for(let y=0;y<size;y++)for(let x=0;x<size;x++){const alpha=image.pixels[(y*size+x)*4+3];assert.ok(alpha===0||alpha===255);if(alpha)visible++;if(x<2||y<2||x>=size-2||y>=size-2)assert.equal(alpha,0);}
+    assert.ok(visible>size*size*.15);signatures.add(image.pixels.toString('base64'));
+  }assert.equal(signatures.size,8);
+});
+test('Four new hero sheets contain seven distinct complete walking frames with aligned boots',()=>{
+  const silhouettes=[];
+  for(const gender of ['male','female'])for(const appearance of ['forest','arcane']){
+    const image=png('assets/player/looks/'+gender+'-'+appearance+'-sheet.png');assert.equal(image.width,320);assert.equal(image.height,160);assert.equal(image.channels,4);
+    const frames=new Set();for(let frame=0;frame<8;frame++){let visible=0,bottom=-1;const signature=[];
+      for(let y=0;y<80;y++)for(let x=0;x<80;x++){const at=((Math.floor(frame/4)*80+y)*320+(frame%4)*80+x)*4,alpha=image.pixels[at+3];assert.ok(alpha===0||alpha===255);if(alpha){visible++;bottom=Math.max(bottom,y);}if(x<3||x>=77||y<3||y>=77)assert.equal(alpha,0);signature.push(...image.pixels.subarray(at,at+4));}
+      if(frame===7)assert.equal(visible,0);else{assert.ok(visible>500);assert.equal(bottom,75);frames.add(Buffer.from(signature).toString('base64'));if(frame===0)silhouettes.push(signature.filter((_,i)=>i%4===3).join(','));}
+    }assert.equal(frames.size,7,'Walking frames must change actual poses');
+  }assert.equal(new Set(silhouettes).size,4,'New heroes have different silhouettes, not merely palette swaps');
+});
 function png(relative){
   const b=fs.readFileSync(path.join(root,relative));assert.equal(b.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
   const width=b.readUInt32BE(16),height=b.readUInt32BE(20),depth=b[24],type=b[25];

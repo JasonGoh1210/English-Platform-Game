@@ -1,5 +1,22 @@
 // Visual-only renderer. World positions, encounters, quests and save data stay in rpg.js.
 export const PIXEL_TILE_SIZE = 32;
+const groundedBounds=new WeakMap();
+export function spriteBounds(image) {
+  if(!image || image.complete===false || !(image.naturalWidth||image.width))return null;
+  if(groundedBounds.has(image))return groundedBounds.get(image);
+  const width=image.naturalWidth||image.width,height=image.naturalHeight||image.height;
+  const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+  const context=canvas.getContext('2d',{willReadFrequently:true});context.drawImage(image,0,0);
+  const pixels=context.getImageData(0,0,width,height).data;let left=width,right=-1,top=height,bottom=-1;
+  for(let y=0;y<height;y++)for(let x=0;x<width;x++)if(pixels[(y*width+x)*4+3]>=128){left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);}
+  if(bottom<0)return null;const bounds={left,right,top,bottom,width,height};groundedBounds.set(image,bounds);return bounds;
+}
+export function drawGroundedSprite(ctx,image,x,ground,size) {
+  const bounds=spriteBounds(image);if(!bounds)return false;
+  const scale=size/bounds.height;ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(image,Math.round(x-(bounds.left+bounds.right+1)*scale/2),Math.round(ground-(bounds.bottom+1)*scale),bounds.width*scale,size);
+  return true;
+}
 export const pixelArtPaths = {
   portraits: { elder:"/FYP/images/npc/portraits/elder_256.png", mira:"/FYP/images/npc/portraits/mira_256.png",
     tala:"/FYP/images/npc/portraits/tala_256.png", kai:"/FYP/images/npc/portraits/kai_256.png" },
@@ -32,7 +49,7 @@ export function drawPixelGround(ctx,{width,height,ground,realm,camera=0}) {
   const p=palettes[realm] || palettes.ruins;
   ctx.fillStyle=p.soil;ctx.fillRect(0,ground,width,height-ground);
   const offset=-Math.floor(camera)%PIXEL_TILE_SIZE;
-  for(let y=0;y<Math.min(height-ground,128);y+=32)for(let x=offset-32;x<width+32;x+=32){
+  for(let y=0;y<height-ground;y+=32)for(let x=offset-32;x<width+32;x+=32){
     ctx.fillStyle=p.line;ctx.fillRect(x+1,ground+y+1,30,1);
     if((Math.floor((x+camera)/32)+y/32)%3===0)ctx.fillRect(x+22,ground+y+16,4,2);
   }
@@ -114,8 +131,16 @@ export function drawDungeonBackdrop(ctx,image,{width,height,ground,camera=0,real
   ctx.imageSmoothingEnabled=false;
   ctx.drawImage(image,Math.round((width-w)/2-Math.min((w-width)/2,camera*.06)),Math.round(ground-h*.75),w,h);
   // Retain the artwork's stone floor beneath the actor instead of painting outdoor grass over it.
-  const floorBottom=Math.round(ground+h*.25),base={maple:"#23262d",forest:"#183430",camp:"#302420",ruins:"#182138"}[realm];
-  if(floorBottom<height){ctx.fillStyle=base;ctx.fillRect(0,floorBottom,width,height-floorBottom);
-    for(let y=floorBottom;y<height;y+=32){ctx.fillStyle="#111b26";ctx.fillRect(0,y,width,1);}}
+  // Solid pixel masonry beneath the walkway; no duplicated rooms/windows or flat stripe extension.
+  const floor={maple:['#252e38','#303b49','#455566','#18212b'],forest:['#223c35','#2d4940','#466653','#142c26'],camp:['#44352f','#554036','#785541','#2c2526'],ruins:['#292d43','#353a51','#515872','#1c2335']}[realm]||['#252e38','#303b49','#455566','#18212b'];
+  ctx.fillStyle=floor[0];ctx.fillRect(0,ground+3,width,height-ground-3);
+  for(let row=0,y=Math.round(ground+6);y<height;row++,y+=32){
+    const offset=-Math.floor(camera)%32+(row%2?16:0);
+    for(let x=offset-32;x<width+32;x+=32){const hash=(Math.floor((x+camera)/32)*17+row*31)>>>0;
+      ctx.fillStyle=hash%3?floor[0]:floor[1];ctx.fillRect(x+2,y+2,28,28);
+      ctx.fillStyle=floor[3];ctx.fillRect(x,y,2,32);ctx.fillRect(x,y+30,32,2);
+      ctx.fillStyle=floor[2];if(hash%4===0)ctx.fillRect(x+5,y+5,8,2);if(hash%7===0)ctx.fillRect(x+21,y+20,3,3);
+    }
+  }
   ctx.fillStyle={maple:"#ae9570",forest:"#698970",camp:"#bb8a59",ruins:"#879dc0"}[realm];ctx.fillRect(0,Math.round(ground),width,3);
 }

@@ -1,9 +1,18 @@
-import { setupAudio } from "./audio.js?v=20261014-dungeons1";
+import { setupAudio } from "./audio.js?v=20261014-companions1";
 
 const LANGUAGE_KEY = "englishPowerQuest.language.v1";
 
 const messages = {
   en: {
+    "shop.title":"Traveler's Shop", "shop.open":"Shop", "shop.subtitle":"Pack potions and bring your pixel companion.",
+    "shop.coins":"Coins", "shop.stock":"Potion bag", "shop.equipped":"Your companion", "shop.supplies":"Adventure supplies", "shop.skins":"Six companion looks",
+    "shop.guideHelp":"Every companion follows you and guides your next task. Looks do not change combat power. Scout Owl is free.",
+    "shop.heal":"Restores {hp} HP in battle. Stored until used.", "shop.follows":"Follows you · shows the next destination", "shop.price":"{coins} Coins", "shop.free":"Free companion",
+    "shop.selected":"Equipped", "shop.equip":"Equip", "shop.buy":"Buy", "shop.confirmTitle":"Buy this item?", "shop.confirmText":"Buy {name} for {coins} Coins?", "shop.confirm":"Confirm purchase",
+    "shop.loading":"Opening your backpack…", "shop.saving":"Saving your purchase…", "shop.saved":"Saved to your backpack.", "shop.pending":"Purchase is awaiting confirmation. Retry checks the same purchase without charging twice.",
+    "shop.unavailable":"Shop is temporarily unavailable. Retry to load your backpack.", "shop.noCoins":"Not enough Coins.", "shop.alreadyOwned":"You already own this look.", "shop.rejected":"Purchase was not accepted. Your backpack has been refreshed.",
+    "companion.lead":"Guide me", "companion.follow":"Follow me", "companion.hint":"Next: {name} · {realm}. {route}",
+    "battle.potion":"Potion ×{count} · +40 HP", "battle.noPotions":"No stored potions. Buy supplies in the shop.", "battle.potionHealed":"Your potion restored up to 40 HP.",
     "dungeon.kicker": "DUNGEON CHALLENGE",
     "dungeon.exit": "Return outside",
     "dungeon.maple.name": "Clockwork Tower",
@@ -370,6 +379,15 @@ const messages = {
     "battle.rewardHp": "HP"
   },
   zh: {
+    "shop.title":"旅人商店", "shop.open":"商店", "shop.subtitle":"准备药水，带上你的像素伙伴。",
+    "shop.coins":"金币", "shop.stock":"药水背包", "shop.equipped":"当前随从", "shop.supplies":"冒险补给", "shop.skins":"六种随从外观",
+    "shop.guideHelp":"所有随从都会跟随你并指引任务。外观不会改变战斗能力；猫头鹰免费陪伴。",
+    "shop.heal":"战斗中恢复 {hp} HP，购买后保存在背包中。", "shop.follows":"跟随冒险 · 提示下一目的地", "shop.price":"{coins} 金币", "shop.free":"免费随从",
+    "shop.selected":"已装备", "shop.equip":"装备随从", "shop.buy":"购买", "shop.confirmTitle":"购买这件商品？", "shop.confirmText":"花费 {coins} 金币购买「{name}」？", "shop.confirm":"确认购买",
+    "shop.loading":"正在打开背包……", "shop.saving":"正在保存购买……", "shop.saved":"已经保存到你的背包。", "shop.pending":"购买结果尚未确认。点击重试核对同一笔购买，不会重复扣款。",
+    "shop.unavailable":"商店暂时无法连接，请重试读取背包。", "shop.noCoins":"金币不足。", "shop.alreadyOwned":"你已经拥有这个外观。", "shop.rejected":"这次操作未被接受，已重新读取背包。",
+    "companion.lead":"随从带路", "companion.follow":"跟随我", "companion.hint":"下一站：{name} · {realm}。{route}",
+    "battle.potion":"药水 ×{count} · +40 HP", "battle.noPotions":"背包没有药水，可到商店购买。", "battle.potionHealed":"使用药水，恢复最多 40 HP。",
     "dungeon.kicker": "洞穴／高塔挑战",
     "dungeon.exit": "返回外面的世界",
     "dungeon.maple.name": "发条钟楼",

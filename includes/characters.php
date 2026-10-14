@@ -4,8 +4,8 @@ declare(strict_types=1);
 function epq_character_catalog(): array {
     return [
         'shadow'=>['label'=>'暗影旅人', 'description'=>'沉静的深色斗篷', 'accent'=>'#98a2ca', 'palette'=>null],
-        'forest'=>['label'=>'森林旅人', 'description'=>'森林绿的冒险装束', 'accent'=>'#8dbd95', 'palette'=>[42, 102, 71]],
-        'arcane'=>['label'=>'奥术旅人', 'description'=>'紫色的星光装束', 'accent'=>'#c2a0ed', 'palette'=>[111, 64, 156]]
+        'forest'=>['label'=>'森林游侠', 'description'=>'短披肩、箭袋与轻甲的游侠', 'accent'=>'#8dbd95', 'palette'=>[42, 102, 71]],
+        'arcane'=>['label'=>'星辰法师', 'description'=>'星辰尖帽、银发与短袍的法师', 'accent'=>'#c2a0ed', 'palette'=>[111, 64, 156]]
     ];
 }
 

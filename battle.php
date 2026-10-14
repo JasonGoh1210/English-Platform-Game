@@ -16,8 +16,8 @@ $epqStorageId = (string)$epqPlayerId;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#101b24">
   <title>English Power Quest · Battle</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261014-dungeons1">
-  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261014-dungeons1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261014-companions1">
+  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261014-companions1">
 </head>
 <body class="battle-page">
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -114,6 +114,7 @@ $epqStorageId = (string)$epqPlayerId;
         <div class="question-battle-actions" aria-label="Battle actions" data-i18n-aria-label="battle.actions">
           <button type="button" id="activeSkillButton" class="battle-action-button"><span>✦ </span><span data-i18n="battle.skill">SKILL</span></button>
           <button type="button" id="activeItemButton" class="battle-action-button"><span>◈ </span><span data-i18n="battle.item">ITEM</span></button>
+          <button type="button" id="activePotionButton" class="battle-action-button hidden"></button>
           <button type="button" id="activeRunButton" class="battle-action-button danger"><span>↩ </span><span data-i18n="battle.run">RUN</span></button>
         </div>
       </div>
@@ -168,6 +169,6 @@ $epqStorageId = (string)$epqPlayerId;
       'character' => $_SESSION['character'] ?? epq_character_profile(epq_db(), $epqPlayerId)
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   </script>
-  <script type="module" src="/FYP/js/battle.js?v=20261014-dungeons1"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261014-companions1"></script>
 </body>
 </html>

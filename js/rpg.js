@@ -1,12 +1,13 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261014-dungeons1";
-import { playSound } from "./audio.js?v=20261014-dungeons1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-dungeons1";
-import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261014-dungeons1";
-import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261014-dungeons1";
-import { createQuestClient } from "./quest-api.js?v=20261014-dungeons1";
-import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261014-dungeons1";
-import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave, drawDungeonBackdrop } from "./pixel-world.js?v=20261014-dungeons1";
-import { storyPortraitSource } from "./story-visuals.js?v=20261014-dungeons1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261014-companions1";
+import { playSound } from "./audio.js?v=20261014-companions1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-companions1";
+import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261014-companions1";
+import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261014-companions1";
+import { createQuestClient } from "./quest-api.js?v=20261014-companions1";
+import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261014-companions1";
+import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave, drawDungeonBackdrop, drawGroundedSprite } from "./pixel-world.js?v=20261014-companions1";
+import {createCompanion} from './companions.js?v=20261014-companions1';
+import { storyPortraitSource } from "./story-visuals.js?v=20261014-companions1";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -112,6 +113,20 @@ const world = {
   currentDialogueNpcId: null, currentDialogueKey: null, currentDialogueIndex: 0, insideCave: false, typingCaveOpen: false, battle: null,
   tutorial: null
 };
+const companion=createCompanion(window.EPQ_AUTH?.shopCatalog||{});
+world.shop={equipped:'owl',owned:['owl'],potions:0};
+const exitDoorSprite=new Image();exitDoorSprite.src='/FYP/images/dungeons/exit-door-128.png?v=20261014-companions1';
+const companionHint=document.createElement('p');companionHint.className='companion-hint hidden';document.querySelector('.game-shell').appendChild(companionHint);
+document.getElementById('companionLead')?.addEventListener('click',()=>{
+  const leading=companion.toggle();document.getElementById('companionLead').setAttribute('aria-pressed',String(leading));
+  document.getElementById('companionLead').textContent=t(leading?'companion.follow':'companion.lead');
+  companionHint.classList.toggle('hidden',!leading);updateCompanionHint();
+});
+function updateCompanionHint(){
+  const guide=currentGuidance();companionHint.textContent=t('companion.hint',{name:t(guide.target.nameKey),realm:getLocalizedRealmName(guide.target.realm),route:t(guide.routeKey,{realm:getLocalizedRealmName(guide.target.realm)})});
+  const state=companion.state(world.shop.equipped);companionHint.classList.toggle('hidden',!state.leading||world.storyIntroOpen||world.interacting||world.travelMenu||world.typingCaveOpen||settingsIsOpen()||guideIsOpen());
+}
+function drawCompanion(){companion.draw(ctx,{camera:world.cameraX,ground:world.groundY,equipped:world.shop.equipped,playerX:world.player.x,routeX:currentGuidance().routeX,time:world.time});}
 
 const worldBackgrounds = {
   maple: new Image(),
@@ -133,7 +148,7 @@ const worldBackgroundPaths = {
 for (const realmId of Object.keys(worldBackgroundPaths)) {
   const availablePaths = window.EPQ_AUTH?.worldBackgrounds?.[realmId];
   if (Array.isArray(availablePaths)) {
-    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261014-dungeons1");
+    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261014-companions1");
   }
 }
 
@@ -881,7 +896,8 @@ function resize() {
   canvas.height = Math.floor(window.innerHeight * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   // Screen-space ground adapts to short windows; saved world X positions stay the same.
-  world.groundY = Math.min(520, Math.max(160, window.innerHeight - 70));
+  const shortLandscape=window.innerHeight<=540&&window.innerWidth>=560;
+  world.groundY = Math.min(520, Math.max(160, window.innerHeight - (shortLandscape?42:70)));
   world.waterY = world.groundY + 130;
 }
 
@@ -995,7 +1011,7 @@ bindHoldButton("rightButton", "right");
 document.getElementById("interactButton").addEventListener("click", interact);
 
 let journalNavigationPending = false;
-document.querySelectorAll('a[href="/FYP/learning.php"], a[href="/FYP/skills.php"]').forEach(link => {
+document.querySelectorAll('a[href="/FYP/learning.php"], a[href="/FYP/skills.php"], a[href="/FYP/shop.php"]').forEach(link => {
   link.addEventListener("click", async event => {
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
     event.preventDefault();
@@ -1329,6 +1345,7 @@ async function interact() {
   }
 
   if (!world.insideCave) {
+    if(world.currentRealmId==='maple' && Math.abs(1080-world.player.x)<95){document.querySelector('.pixel-shop-link')?.click();return;}
     const typingCave = landmarks.find(item => item.realmId === world.currentRealmId && item.type === "typingCave");
     if (typingCave && Math.abs(typingCave.x - world.player.x) < 118) {
       if(!dungeonReady()) {showDungeonLocked(true);return;}
@@ -2044,6 +2061,7 @@ function updateLocation() {
 }
 
 function refreshWorldLanguage() {
+  const leadButton=document.getElementById('companionLead');if(leadButton)leadButton.textContent=t(companion.state(world.shop.equipped).leading?'companion.follow':'companion.lead');
   const journalLink = document.querySelector(".pixel-learning-link");
   if (journalLink) journalLink.title = t("learning.seen") + " · " + t("learning.open");
   updateQuest();
@@ -2116,6 +2134,7 @@ async function loadServerPlayer() {
     world.power = Number(data.player.englishPowerTotal || 0);
     world.levelProgress=data.player.levelProgress;
     world.dungeonAccess=data.dungeonAccess || null;
+    if(data.shop)world.shop=data.shop;
     if(world.dungeonAccess)for(const [realm,spec] of Object.entries(dungeonSpecs)) {
       const gate=enemies.find(enemy=>enemy.id===spec.gate);
       if(gate)gate.defeated=dungeonReady(realm);
@@ -2214,6 +2233,9 @@ function update(dt) {
 
   updateLocation();
   updateQuestGuidance();
+  const guidance=currentGuidance();companion.update(dt,{playerX:world.player.x,routeX:guidance.routeX,width:world.width,realm:world.currentRealmId,inside:world.insideCave,equipped:world.shop.equipped,
+    camera:world.cameraX,safeScreenLeft:window.innerHeight<=540&&window.innerWidth>=560?240:0});
+  updateCompanionHint();
 }
 
 function draw() {
@@ -2227,6 +2249,7 @@ function draw() {
     drawCaveDetails();
     drawEnemies();
     drawPlayer();
+    drawCompanion();
     drawCaveForeground(w, h);
     drawQuestMarker();
     return;
@@ -2240,6 +2263,7 @@ function draw() {
   drawNPCs();
   drawEnemies();
   drawPlayer();
+  drawCompanion();
   drawForeground(w, h);
   drawTutorialMarker();
   drawQuestMarker();
@@ -2362,7 +2386,10 @@ function drawLandmarks() {
     if(l.type==="sign")drawSign(x,world.groundY,l.realmId);
     else if(l.type==="cave")drawCaveEntrance(x,world.groundY,Math.abs(l.x-world.player.x)<125);
     else if(l.type==="typingCave")drawTypingCaveEntrance(x,world.groundY,Math.abs(l.x-world.player.x)<135);
-    else drawPixelLandmark(ctx,l.type,x,world.groundY,l.variant);
+    else {
+      drawPixelLandmark(ctx,l.type,x,world.groundY,l.variant);
+      if(l.type==='house'&&l.variant==='shop'){ctx.save();ctx.textAlign='center';ctx.font='bold 12px system-ui';ctx.fillStyle='#f2d28c';ctx.fillText(t('shop.open'),x,world.groundY-158);ctx.restore();}
+    }
   }
 }
 
@@ -2382,16 +2409,16 @@ function drawCaveEntrance(x, ground, nearby) {
 function drawDungeonStructure(x,ground,size=dungeonSpecs[world.currentRealmId]?.kind==="tower"?384:256) {
   const image=dungeonArt[world.currentRealmId]?.entrance;
   if(image?.complete && image.naturalWidth) {
-    ctx.imageSmoothingEnabled=false;ctx.drawImage(image,Math.round(x-size/2),Math.round(ground-size),size,size);
+    drawGroundedSprite(ctx,image,x,ground,size);
   } else drawPixelLandmark(ctx,dungeonSpecs[world.currentRealmId]?.kind==="tower"?"tower":"cave",x,ground);
 }
 
 function drawTypingCaveEntrance(x, ground, nearby) {
-  drawDungeonStructure(x,ground,256);
+  drawGroundedSprite(ctx,exitDoorSprite,x,ground,256);
   ctx.save();ctx.textAlign="center";ctx.font="bold 12px system-ui";ctx.fillStyle="#d5c7eb";
-  ctx.fillText(t("guide.typing.name"),x,ground-150);ctx.font="bold 10px system-ui";
-  ctx.fillText(t("guide.typing.short"),x,ground-134);
-  if(nearby){ctx.fillStyle="#221d33";ctx.fillRect(Math.round(x-110),ground-180,220,22);ctx.fillStyle="#e9ddba";ctx.fillText(getLanguage()==="zh"?"按 E / 互动开始三关拼写":"E / INTERACT · SPELLING",x,ground-165);}
+  ctx.fillText(t("guide.typing.name"),x,ground-248);ctx.font="bold 10px system-ui";
+  ctx.fillText(t("guide.typing.short"),x,ground-232);
+  if(nearby){ctx.fillStyle="#221d33";ctx.fillRect(Math.round(x-110),ground-226,220,22);ctx.fillStyle="#e9ddba";ctx.fillText(getLanguage()==="zh"?"按 E / 互动开始三关拼写":"E / INTERACT · SPELLING",x,ground-211);}
   ctx.restore();
 }
 
@@ -2401,10 +2428,10 @@ function drawCaveScene(w, h) {
 
 function drawCaveExit() {
   const x=worldToScreen(260);if(x < -120 || x > window.innerWidth+120)return;
-  drawDungeonStructure(x,world.groundY,256);
+  drawGroundedSprite(ctx,exitDoorSprite,x,world.groundY,256);
   ctx.save();ctx.textAlign="center";ctx.fillStyle="#c5e3eb";ctx.font="bold 12px system-ui";
-  ctx.fillText(t("dungeon.exit"),x,world.groundY-148);
-  if(Math.abs(world.player.x-260)<125){ctx.fillStyle="#142631";ctx.fillRect(Math.round(x-105),world.groundY-180,210,22);ctx.fillStyle="#e9ddba";ctx.font="bold 10px system-ui";ctx.fillText(t("cave.exitPrompt"),x,world.groundY-165);}
+  ctx.fillText(t("dungeon.exit"),x,world.groundY-248);
+  if(Math.abs(world.player.x-260)<125){ctx.fillStyle="#142631";ctx.fillRect(Math.round(x-105),world.groundY-228,210,22);ctx.fillStyle="#e9ddba";ctx.font="bold 10px system-ui";ctx.fillText(t("cave.exitPrompt"),x,world.groundY-213);}
   ctx.restore();
 }
 
@@ -2433,7 +2460,7 @@ function drawWorldPortals() {
 function drawPortal(destination) {
   const x=Math.round(worldToScreen(destination.portalX)),ground=Math.round(world.groundY);if(x < -140 || x > window.innerWidth+140)return;
   ctx.save();ctx.imageSmoothingEnabled=false;
-  if(realmPortalSprite.complete&&realmPortalSprite.naturalWidth)ctx.drawImage(realmPortalSprite,x-96,ground-192,192,192);
+  if(realmPortalSprite.complete&&realmPortalSprite.naturalWidth)drawGroundedSprite(ctx,realmPortalSprite,x,ground,192);
   else drawPixelLandmark(ctx,"cave",x,ground);
   ctx.textAlign="center";ctx.font="bold 12px system-ui";ctx.fillStyle="#e8d8ab";ctx.fillText(getLocalizedRealmName(destination.id),x,ground-174);
   if(Math.abs(destination.portalX-world.player.x)<145){ctx.fillStyle="#152634";ctx.fillRect(x-100,ground-204,200,22);ctx.fillStyle="#f2dfac";ctx.font="bold 11px system-ui";ctx.fillText(t("portal.interact"),x,ground-189);}
@@ -2956,7 +2983,7 @@ const wayfinderSignSprite = new Image();
 wayfinderSignSprite.src = pixelArtPaths.sign;
 function drawSign(x, ground, realmId) {
   ctx.save();ctx.imageSmoothingEnabled=false;
-  if(wayfinderSignSprite.complete && wayfinderSignSprite.naturalWidth)ctx.drawImage(wayfinderSignSprite,Math.round(x-64),Math.round(ground-128),128,128);
+  if(wayfinderSignSprite.complete && wayfinderSignSprite.naturalWidth)drawGroundedSprite(ctx,wayfinderSignSprite,x,ground,128);
   else {ctx.fillStyle='#896442';ctx.fillRect(x-60,ground-122,120,50);ctx.fillRect(x-40,ground-78,10,78);ctx.fillRect(x+30,ground-78,10,78);}
   ctx.fillStyle='#f6dfb5';ctx.textAlign='center';
   ctx.font=getLanguage()==='zh'?'bold 12px system-ui':"bold 11px 'Courier New', monospace";
@@ -3011,7 +3038,7 @@ function drawNPCs() {
 function drawStyledNPC(x, ground, npc) {
   const image=npc.id==="elder"?elderRowanSprite:npcPixelSprites[npc.id];
   ctx.save();ctx.imageSmoothingEnabled=false;ctx.fillStyle="#18252a";ctx.fillRect(Math.round(x-22),Math.round(ground-2),44,4);
-  if(image?.complete&&image.naturalWidth){ctx.drawImage(image,Math.round(x-64),Math.round(ground-(image.naturalWidth===32?128:124)),128,128);}
+  if(image?.complete&&image.naturalWidth){drawGroundedSprite(ctx,image,x,ground,128);}
   else{ctx.fillStyle=npc.color;ctx.fillRect(Math.round(x-16),Math.round(ground-72),32,64);ctx.fillStyle="#d3ad85";ctx.fillRect(Math.round(x-12),Math.round(ground-92),24,24);ctx.fillStyle="#25313b";ctx.fillRect(Math.round(x-16),Math.round(ground-12),12,12);ctx.fillRect(Math.round(x+4),Math.round(ground-12),12,12);}
   ctx.restore();
 }
@@ -3052,15 +3079,8 @@ function drawEnemies() {
       const fittingScale = Math.min(maxWidth / naturalWidth, maxHeight / naturalHeight);
       const nativePixelSprite = [32,64].includes(naturalWidth) && naturalHeight === naturalWidth;
       const scale = nativePixelSprite ? Math.max(1, Math.floor(fittingScale)) : fittingScale;
-      const drawWidth = naturalWidth * scale;
       const drawHeight = naturalHeight * scale;
-      ctx.drawImage(
-        activeSprite,
-        Math.round(x - drawWidth / 2),
-        Math.round(world.groundY - drawHeight),
-        Math.round(drawWidth),
-        Math.round(drawHeight)
-      );
+      drawGroundedSprite(ctx,activeSprite,x,world.groundY,drawHeight);
     } else if (enemy.type === "slime") {
       ctx.fillStyle = "#76b86b";
       ctx.beginPath();
@@ -3165,7 +3185,6 @@ function drawCharacter(x, ground, coat, skin, player) {
   if (player && displayFrameReady) {
     // Keep each asset's aspect ratio: walk frames use a 2:3 portrait box,
     // while Player_Stand.png uses a square box. Both remain bottom-aligned at the feet.
-    const drawW = displayFrameIsWalk ? 96 : 144;
     const drawH = 144;
 
     ctx.save();
@@ -3173,10 +3192,7 @@ function drawCharacter(x, ground, coat, skin, player) {
     // Player_Stand.png faces right; mirror only this stand image when facing left.
     if (!displayFrameIsWalk && world.player.facing < 0) ctx.scale(-1, 1);
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(
-      characterSprite(displayFrame, AUTH_CONTEXT.character, {moving:displayFrameIsWalk,direction:currentWalkDirection,frame:currentWalkIndex}),
-      -drawW / 2, -drawH, drawW, drawH
-    );
+    drawGroundedSprite(ctx,characterSprite(displayFrame, AUTH_CONTEXT.character, {moving:displayFrameIsWalk,direction:currentWalkDirection,frame:currentWalkIndex}),0,0,drawH);
     ctx.restore();
     return;
   }
@@ -3260,6 +3276,11 @@ function loop(now) {
 }
 
 // Read-only browser diagnostics: never expose answer keys, session tokens or IDs.
+window.advanceTime = ms => {
+  const frames=Math.max(1,Math.ceil(Math.min(30000,Math.max(0,Number(ms)||0))/(1000/60)));
+  for(let i=0;i<frames;i++)update(1/60);
+  draw();
+};
 window.render_game_to_text = () => JSON.stringify({
   coordinates: "World origin at the left; x increases right; groundY is screen pixels downward.",
   realm: world.currentRealmId,
@@ -3276,6 +3297,7 @@ window.render_game_to_text = () => JSON.stringify({
     name:currentDungeonName(),rooms:currentDungeonRooms().length,pending:world.dungeonPending },
   landmarks: landmarks.filter(item=>item.realmId===world.currentRealmId).map(item=>({type:item.type,x:item.x})),
   guidance: currentGuidance(),
+  companion:companion.state(world.shop.equipped),
   typing: world.typingCaveOpen ? { round: typingCaveState.completedLevels + 1, monsterLeft: typingCaveState.monsterLeft,
     hintHiddenLetters: document.querySelectorAll(".typing-cave-letter:not(.revealed)").length } : null,
   enemies: enemies.filter(enemy => enemy.realmId === world.currentRealmId && !enemy.defeated

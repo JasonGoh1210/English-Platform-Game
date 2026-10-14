@@ -1,0 +1,78 @@
+{
+  "mode": "built-in image_gen",
+  "exporter": "tools/export_pixel_assets.cjs",
+  "requests": [
+    {
+      "key": "companion_fox",
+      "prompt": "Use case: stylized-concept. Production 2D side-scrolling English-learning fantasy RPG companion sprite, one character centered full body on genuine transparent background. Strict hand-made 64x64 pixel-art aesthetic, crisp hard square pixels, restrained 16-bit palette, clean dark outlines, no anti-aliasing/gradient/blur, readable silhouette, no text/watermark/ground/shadow/UI. Single sprite facing right, front three-quarter view, small friendly helper, feet at same flat baseline. Ample transparent margins. Subject: a friendly red-orange fox with oversized bushy white-tipped tail, cream muzzle, small emerald leaf collar, four paws. Distinct fox silhouette.",
+      "transparent_background": true,
+      "output": "images/companions/fox-64.png"
+    },
+    {
+      "key": "companion_cat",
+      "prompt": "Use case: stylized-concept. Production 2D side-scrolling English-learning fantasy RPG companion sprite, one character centered full body on genuine transparent background. Strict hand-made 64x64 pixel-art aesthetic, crisp hard square pixels, restrained 16-bit palette, clean dark outlines, no anti-aliasing/gradient/blur, readable silhouette, no text/watermark/ground/shadow/UI. Single sprite facing right, front three-quarter view, small friendly helper, feet at same flat baseline. Ample transparent margins. Subject: a friendly navy-blue moon kitten with long upright pointed ears, slender curling tail, pale silver muzzle and tiny gold moon charm, four paws. Distinct cat silhouette.",
+      "transparent_background": true,
+      "output": "images/companions/cat-64.png"
+    },
+    {
+      "key": "companion_dragon",
+      "prompt": "Use case: stylized-concept. Production 2D side-scrolling English-learning fantasy RPG companion sprite, one character centered full body on genuine transparent background. Strict hand-made 64x64 pixel-art aesthetic, crisp hard square pixels, restrained 16-bit palette, clean dark outlines, no anti-aliasing/gradient/blur, readable silhouette, no text/watermark/ground/shadow/UI. Single sprite facing right, front three-quarter view, small friendly helper, feet at same flat baseline. Ample transparent margins. Subject: a friendly small turquoise baby dragon with two little amber horns, pale belly, curled tail, folded purple wings, tiny clawed feet. Distinct dragon silhouette.",
+      "transparent_background": true,
+      "output": "images/companions/dragon-64.png"
+    },
+    {
+      "key": "companion_wisp",
+      "prompt": "Use case: stylized-concept. Production 2D side-scrolling English-learning fantasy RPG companion sprite, one character centered full body on genuine transparent background. Strict hand-made 64x64 pixel-art aesthetic, crisp hard square pixels, restrained 16-bit palette, clean dark outlines, no anti-aliasing/gradient/blur, readable silhouette, no text/watermark/ground/shadow/UI. Single sprite facing right, front three-quarter view, small friendly helper, feet at same flat baseline. Ample transparent margins. Subject: a friendly luminous lilac spirit sprite inside a golden lantern ring, two leaflike fins, tiny face, hovering with pointed lower tail. NO smooth glow, only hard pixel cyan and lavender highlights. Distinct ethereal silhouette.",
+      "transparent_background": true,
+      "output": "images/companions/wisp-64.png"
+    },
+    {
+      "key": "companion_bunny",
+      "prompt": "Use case: stylized-concept. Production 2D side-scrolling English-learning fantasy RPG companion sprite, one character centered full body on genuine transparent background. Strict hand-made 64x64 pixel-art aesthetic, crisp hard square pixels, restrained 16-bit palette, clean dark outlines, no anti-aliasing/gradient/blur, readable silhouette, no text/watermark/ground/shadow/UI. Single sprite facing right, front three-quarter view, small friendly helper, feet at same flat baseline. Ample transparent margins. Subject: a friendly cream white rabbit with very long ears, rose scarf, small brown satchel, four paws and round tail. Distinct rabbit silhouette.",
+      "transparent_background": true,
+      "output": "images/companions/bunny-64.png"
+    },
+    {
+      "key": "exit_door",
+      "prompt": "Production single large dungeon EXIT DOOR sprite on genuinely transparent background. Strict128x128 pixel-art aesthetic, crisp hard pixels, limited navy/stone/gold palette, 16-bit fantasy RPG. One heavy medieval oak double door inside a carved stone frame, brass hinges and two torch sconces, partially open dark passage showing warm distant light, no tower or roof or entire building, human-scale large doorway, ground-level threshold, straight-on side-scroller prop, full object centered with transparent margins. No text, arrows, characters, smooth gradients, blur or UI.",
+      "transparent_background": true,
+      "output": "images/dungeons/exit-door-128.png"
+    },
+    {
+      "key": "potion",
+      "prompt": "Production one red healing potion inventory icon on genuine transparent background. Strict32x32 pixel-art aesthetic, crisp hard pixels, limited16-bit palette, dark outlines. Round ruby-red glass bottle, tan cork, gold small band, strong readable silhouette, hard white pixel highlights, centered full bottle with transparent margins, no lettering, no glow/gradient/blur/shadow/UI.",
+      "transparent_background": true,
+      "output": "images/shop/ruby-potion-32.png"
+    },
+    {
+      "key": "hero_male_forest",
+      "prompt": "Production 2D side-scrolling fantasy RPG walking SPRITE SHEET, genuine transparent background. ONE SAME character throughout, seven full-body frames in a regular4columns by2rows grid with eighth final cell EMPTY. Row1: standing idle facing right, right walk contact left-foot-forward, right walk down, right walk passing. Row2: right walk contact right-foot-forward, right walk down, right walk passing, EMPTY. Each frame EXACTLY same cell size, same baseline at bottom and same scale/head height, no frame crossing cells, ample transparent cell padding. Strict80x80-per-cell hand-made pixel-art aesthetic, crisp square pixels, clean dark outlines, restrained16-bit colors, coherent six-step locomotion with clear changing arms/legs, boots visible, facing RIGHT in every frame, no text/grid outlines/labels/background/shadow. Human proportions similar to a cloaked RPG traveler, not tiny chibi. Character: young MALE forest ranger, short auburn hair, hood down, cropped emerald shoulder cape, brown leather fitted tunic, visible quiver on back, short sheathed knife, tan trousers, sturdy boots. Ranger silhouette distinct from long black cloak and wizard hat.",
+      "transparent_background": true,
+      "output": "assets/player/looks/male-forest-sheet.png"
+    },
+    {
+      "key": "hero_female_forest",
+      "prompt": "Production 2D side-scrolling fantasy RPG walking SPRITE SHEET, genuine transparent background. ONE SAME character throughout, seven full-body frames in a regular4columns by2rows grid with eighth final cell EMPTY. Row1: standing idle facing right, right walk contact left-foot-forward, right walk down, right walk passing. Row2: right walk contact right-foot-forward, right walk down, right walk passing, EMPTY. Each frame EXACTLY same cell size, same baseline at bottom and same scale/head height, no frame crossing cells, ample transparent cell padding. Strict80x80-per-cell hand-made pixel-art aesthetic, crisp square pixels, clean dark outlines, restrained16-bit colors, coherent six-step locomotion with clear changing arms/legs, boots visible, facing RIGHT in every frame, no text/grid outlines/labels/background/shadow. Human proportions similar to a cloaked RPG traveler, not tiny chibi. Character: young FEMALE forest ranger, blonde braided ponytail, hood down, cropped emerald shoulder cape, brown leather fitted tunic, visible quiver on back, short sheathed knife, tan trousers, sturdy boots. Clearly young female face and feminine ranger silhouette, distinct from long brown-haired purple adventurer and wizard hat.",
+      "transparent_background": true,
+      "output": "assets/player/looks/female-forest-sheet.png"
+    },
+    {
+      "key": "hero_male_arcane",
+      "prompt": "Production 2D side-scrolling fantasy RPG walking SPRITE SHEET, genuine transparent background. ONE SAME character throughout, seven full-body frames in a regular4columns by2rows grid with eighth final cell EMPTY. Row1: standing idle facing right, right walk contact left-foot-forward, right walk down, right walk passing. Row2: right walk contact right-foot-forward, right walk down, right walk passing, EMPTY. Each frame EXACTLY same cell size, same baseline at bottom and same scale/head height, no frame crossing cells, ample transparent cell padding. Strict80x80-per-cell hand-made pixel-art aesthetic, crisp square pixels, clean dark outlines, restrained16-bit colors, coherent six-step locomotion with clear changing arms/legs, boots visible, facing RIGHT in every frame, no text/grid outlines/labels/background/shadow. Human proportions similar to a cloaked RPG traveler, not tiny chibi. Character: young MALE star wizard, short silver hair, large pointed navy wizard hat with gold star brooch, belted knee-length violet coat with visible trouser legs, pale turquoise scarf, tall brown boots. Compact robe hem must leave moving legs visible. Silhouette distinct from ranger and long black cloak.",
+      "transparent_background": true,
+      "output": "assets/player/looks/male-arcane-sheet.png"
+    },
+    {
+      "key": "hero_female_arcane",
+      "prompt": "Production 2D side-scrolling fantasy RPG walking SPRITE SHEET, genuine transparent background. ONE SAME character throughout, seven full-body frames in a regular4columns by2rows grid with eighth final cell EMPTY. Row1: standing idle facing right, right walk contact left-foot-forward, right walk down, right walk passing. Row2: right walk contact right-foot-forward, right walk down, right walk passing, EMPTY. Each frame EXACTLY same cell size, same baseline at bottom and same scale/head height, no frame crossing cells, ample transparent cell padding. Strict80x80-per-cell hand-made pixel-art aesthetic, crisp square pixels, clean dark outlines, restrained16-bit colors, coherent six-step locomotion with clear changing arms/legs, boots visible, facing RIGHT in every frame, no text/grid outlines/labels/background/shadow. Human proportions similar to a cloaked RPG traveler, not tiny chibi. Character: young FEMALE star witch, silver bob haircut, large pointed navy witch hat with gold star brooch, belted knee-length violet coat with visible trouser legs, pale turquoise scarf, tall brown boots. Clearly young female face, compact coat hem must leave moving legs visible. Silhouette distinct from ranger and brown-haired purple adventurer.",
+      "transparent_background": true,
+      "output": "assets/player/looks/female-arcane-sheet.png"
+    },
+    {
+      "key": "companion_owl",
+      "prompt": "Use case: stylized-concept. Production 2D side-scrolling English-learning fantasy RPG companion sprite, one character centered full body on genuine transparent background. Strict hand-made 64x64 pixel-art aesthetic, crisp hard square pixels, restrained 16-bit palette, clean dark outlines, no anti-aliasing/gradient/blur, readable silhouette, no text/watermark/ground/shadow/UI. Single sprite facing right, front three-quarter view, small friendly helper, feet at same flat baseline. Ample transparent margins. Subject: a friendly golden-brown owl wearing a tiny navy explorer scarf, expressive large eyes, compact round body, visible short wings and talons. The default adventure guide companion.",
+      "transparent_background": true,
+      "output": "images/companions/owl-64.png"
+    }
+  ]
+}

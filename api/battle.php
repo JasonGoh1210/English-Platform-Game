@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/../includes/battle_rules.php';
 require_once __DIR__ . '/../includes/rewards.php';
+require_once __DIR__.'/../includes/shop.php';
 
 function epq_battle_key(mixed $key): string {
     if (!is_string($key) || !preg_match('/\A[a-f0-9]{32}\z/', $key)) throw new InvalidArgumentException('Invalid battle/request token.');
@@ -46,7 +47,7 @@ try {
     if (!is_array($body)) throw new InvalidArgumentException('Object required.');
     if (!epq_csrf_is_valid($body['csrfToken'] ?? null)) epq_json(['ok'=>false, 'error'=>'Invalid request token.'], 403);
     $action = $body['action'] ?? '';
-    if (!in_array($action, ['START','QUESTION','ANSWER','FOCUS','HERB','PAUSE','RESUME','RUN'], true)) throw new InvalidArgumentException('Unknown action.');
+    if (!in_array($action, ['START','QUESTION','ANSWER','FOCUS','HERB','POTION','PAUSE','RESUME','RUN'], true)) throw new InvalidArgumentException('Unknown action.');
     $battleId = epq_battle_key($body['battleId'] ?? null);
     $requestId = epq_battle_key($body['requestId'] ?? null);
     $db = epq_db();
@@ -106,7 +107,7 @@ try {
     $outcome = null;
     if ($action !== 'START' && $state['status'] !== 'ACTIVE') throw new DomainException('Battle has already ended.');
     $settingsPaused = isset($state['pausedAt']) && ($state['pauseReason'] ?? null) === 'settings';
-    if ($settingsPaused && in_array($action, ['ANSWER','FOCUS','HERB'], true)) {
+    if ($settingsPaused && in_array($action, ['ANSWER','FOCUS','HERB','POTION'], true)) {
         throw new DomainException('Close settings before continuing the battle.');
     }
     if (isset($state['pausedAt']) && (in_array($action, ['RESUME','RUN'], true)
@@ -157,6 +158,11 @@ try {
         $state['question'] = null;
     } elseif ($action === 'FOCUS') {
         $state['focusUsed'] = true;
+    } elseif ($action === 'POTION') {
+        if ($state['playerHp'] >= 100) throw new DomainException('HP is full.');
+        epq_use_potion($db,$playerId,$requestId);
+        $state['playerHp']=min(100,$state['playerHp']+epq_shop_catalog()['potion']['heal']);
+        if ($state['question'] !== null) $state['pausedAt'] = microtime(true);
     } elseif ($action === 'HERB') {
         if ($state['playerHp'] >= 100) throw new DomainException('HP is full.');
         epq_apply_reward($db, $playerId, 0, -5, 0, 'VOCABULARY', 'SHOP_PURCHASE', 'Verified Healing Herb');
@@ -166,7 +172,8 @@ try {
         $state['status'] = 'ESCAPED';
         $state['question'] = null;
     }
-    $response = ['ok'=>true, 'battle'=>epq_battle_view($state), 'player'=>epq_reward_balance($db, $playerId), 'outcome'=>$outcome];
+    $response = ['ok'=>true, 'battle'=>epq_battle_view($state), 'player'=>epq_reward_balance($db, $playerId), 'outcome'=>$outcome,
+        'shop'=>epq_shop_view($db,$playerId)];
     $stateJson = json_encode($state, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
     $stmt = $db->prepare('UPDATE verified_battles SET state_json = ? WHERE battle_id = ?');
     $stmt->bind_param('ss', $stateJson, $battleId);

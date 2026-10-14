@@ -1,0 +1,27 @@
+.pixel-world-ui .map-toolbar {flex-wrap:wrap}
+#companionLead[aria-pressed="true"] {background:#456753;border-color:#c4d4a0;color:#fff2c4}
+.pixel-shop-link,.pixel-skills-link {text-decoration:none;text-align:center}
+.pixel-shop-link:focus-visible {outline:3px solid #f4d68b;outline-offset:2px}
+.companion-hint {position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:7;max-width:min(520px,calc(100vw - 32px));padding:10px 14px;border:2px solid #d3bc80;background:#172b39;color:#f4e6c7;font-size:13px;line-height:1.5;pointer-events:none;text-align:center;box-shadow:3px 3px 0 #080f17}
+@media(max-width:600px){.pixel-world-ui .map-toolbar {grid-template-columns:repeat(2,minmax(0,1fr))}.companion-hint {bottom:88px}}
+@media(max-width:480px){
+  .pixel-world-ui .hud {gap:8px}
+  .pixel-player-card {min-height:0;grid-template-columns:56px minmax(0,1fr)38px;gap:6px;padding:7px}
+  .pixel-avatar {min-height:64px;height:64px}.pixel-avatar img {width:64px;height:64px;transform:none}
+  .pixel-player-name {font-size:13px;line-height:1.25;letter-spacing:0}
+  .pixel-level,.pixel-stat-row,.pixel-currency-list {font-size:11px}.pixel-stat-row {grid-template-columns:18px minmax(0,1fr)68px;gap:3px}
+  .pixel-quest-card {padding:8px}.pixel-quest-card p {font-size:12px;line-height:1.4;margin:3px 0}
+  .pixel-world-ui .map-toolbar>* {min-height:44px;font-size:12px;padding:7px}
+}
+@media(max-height:540px) and (min-width:560px){
+  .pixel-world-ui .hud {gap:6px;padding:6px 10px}
+  .pixel-player-card {min-height:0;padding:4px;grid-template-columns:48px minmax(0,1fr)80px;gap:4px}
+  .pixel-avatar {min-height:54px;height:54px}.pixel-avatar img {width:48px;height:48px;transform:none}
+  .pixel-player-name {font-size:12px;line-height:1.15;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pixel-level,.pixel-stat-row,.pixel-currency-list {font-size:11px;line-height:1.2}.pixel-level {margin-bottom:0}.pixel-stat-row {margin-top:2px}
+  .pixel-currency-list {grid-template-columns:1fr 1fr;grid-template-rows:14px 44px;gap:0;padding-left:3px}.pixel-currency-list>div {gap:2px;min-width:0}.pixel-currency-list>div:nth-child(3) {grid-column:1/-1;justify-content:center}
+  .pixel-quest-card {padding:4px 6px}.pixel-quest-card strong,.pixel-quest-card .pixel-small-label {display:none}.pixel-quest-card p {font-size:11px;line-height:1.3;margin:2px 0}
+  .pixel-world-ui .map-toolbar {display:flex;flex-wrap:nowrap;gap:6px}.pixel-world-ui .map-toolbar>* {padding:7px;font-size:11px;min-height:44px}
+  .pixel-world-ui .map-toolbar .pixel-location {font-size:10px;padding:5px;max-width:100px;flex-shrink:1}
+  .companion-hint {bottom:78px;font-size:11px;padding:6px 8px}
+}

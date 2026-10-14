@@ -1,4 +1,4 @@
-import { characterSprite, randomCharacterName, loadCharacterAssets } from "./characters.js?v=20261013-female1";
+import { characterSprite, randomCharacterName, loadCharacterAssets } from "./characters.js?v=20261014-companions1";
 
 const config = window.EPQ_CHARACTER_SETUP;
 const name = document.getElementById("characterName");
@@ -25,8 +25,9 @@ function render() {
   previewStyle.textContent = config.catalog[selectedProfile().appearance].label;
 }
 sprite.onload = render;
-loadCharacterAssets({gender:"female"}).then(render);
-document.querySelectorAll('[name="appearance"], [name="gender"]').forEach(input => input.addEventListener("change",render));
+function loadLooks(){const gender=selectedProfile().gender;return Promise.all(Object.keys(config.catalog).map(appearance=>loadCharacterAssets({gender,appearance}))).then(render);}
+void loadLooks();
+document.querySelectorAll('[name="appearance"], [name="gender"]').forEach(input => input.addEventListener("change",()=>{render();void loadLooks();}));
 name.addEventListener("input",render);
 dice.addEventListener("click", () => {
   const gender = document.querySelector('[name="gender"]:checked')?.value || "male";

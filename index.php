@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__.'/includes/dungeons.php';
+require_once __DIR__.'/includes/shop.php';
 epq_require_login_page();
 
 $epqIsGuest = epq_is_guest();
@@ -32,10 +33,11 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261014-dungeons1">
-  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261014-dungeons1">
-  <link rel="stylesheet" href="/FYP/css/story-pixel.css?v=20261014-dungeons1">
-  <link rel="stylesheet" href="/FYP/css/dungeon-pixel.css?v=20261014-dungeons1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261014-companions1">
+  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261014-companions1">
+  <link rel="stylesheet" href="/FYP/css/story-pixel.css?v=20261014-companions1">
+  <link rel="stylesheet" href="/FYP/css/dungeon-pixel.css?v=20261014-companions1">
+  <link rel="stylesheet" href="/FYP/css/companions.css?v=20261014-companions1">
 </head>
 <body>
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -81,6 +83,8 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
       <div class="map-toolbar">
         <div class="location-pill pixel-location" id="locationText">MAPLE TOWN</div>
         <a class="settings-open-button pixel-skills-link" href="/FYP/skills.php" data-i18n="skills.open">技能树</a>
+        <a class="settings-open-button pixel-shop-link" href="/FYP/shop.php" data-i18n="shop.open">商店</a>
+        <button type="button" class="settings-open-button" id="companionLead" aria-pressed="false" data-i18n="companion.lead">随从带路</button>
         <button type="button" class="quest-guide-open" id="questGuideOpen" data-i18n="guide.open" aria-controls="questGuideScreen" aria-expanded="false">Quest & caves</button>
         <button type="button" class="settings-open-button" id="settingsOpenButton" data-i18n="settings.button">⚙ SETTINGS</button>
       </div>
@@ -332,6 +336,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
       'csrfToken' => $epqCsrfToken,
       'worldBackgrounds' => $epqWorldBackgrounds,
       'dungeonSpecs' => epq_dungeon_specs(),
+      'shopCatalog' => epq_shop_catalog(),
       'character' => $_SESSION['character'] ?? epq_character_profile(epq_db(), $epqPlayerId)
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
 
@@ -346,7 +351,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261014-dungeons1").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261014-companions1").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");

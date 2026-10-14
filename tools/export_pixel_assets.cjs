@@ -12,6 +12,8 @@ const spriteNames = { rowan:'images/npc/npc_elder_rowan_64.png', mira:'images/np
 const portraitNames={portrait_elder:'images/npc/portraits/elder_256.png',portrait_mira:'images/npc/portraits/mira_256.png',
   portrait_tala:'images/npc/portraits/tala_256.png',portrait_kai:'images/npc/portraits/kai_256.png'};
 const dungeonNames={owl:'clockwork-owl-64.png',moss:'moss-sentinel-64.png',scorpion:'ember-scorpion-64.png',beetle:'crystal-beetle-64.png'};
+const companionNames=Object.fromEntries(['owl','fox','cat','dragon','wisp','bunny'].map(id=>['companion_'+id,'images/companions/'+id+'-64.png']));
+const heroNames=Object.fromEntries(['male_forest','female_forest','male_arcane','female_arcane'].map(id=>['hero_'+id,'assets/player/looks/'+id.replaceAll('_','-')+'-sheet.png']));
 for(const realm of ['maple','forest','camp','ruins']) {
   dungeonNames[realm+'_interior']=realm+'-interior.png';dungeonNames[realm+'_entrance']=realm+'-entrance-128.png';
 }
@@ -22,13 +24,15 @@ async function main() {
     for (const item of manifest) {
       const dungeonKey=item.key.startsWith('dungeon_')?item.key.slice(8):null;
       const background=['maple','forest','camp','ruins'].includes(item.key) || Boolean(dungeonKey?.endsWith('_interior'));
-      const entrance=Boolean(dungeonKey?.endsWith('_entrance'));
+      const entrance=Boolean(dungeonKey?.endsWith('_entrance')) || item.key==='exit_door';
+      const sheet=Boolean(heroNames[item.key]),potion=item.key==='potion';
       const portrait=Boolean(portraitNames[item.key]);
       const relative=dungeonKey && dungeonNames[dungeonKey]?'images/dungeons/'+dungeonNames[dungeonKey]
-        :background?'images/world/pixel/'+item.key+'.png':portraitNames[item.key] || spriteNames[item.key];
+        :background?'images/world/pixel/'+item.key+'.png':portraitNames[item.key] || spriteNames[item.key] || companionNames[item.key] || heroNames[item.key]
+        || (item.key==='exit_door'?'images/dungeons/exit-door-128.png':potion?'images/shop/ruby-potion-32.png':null);
       if (!relative) throw new Error('Unknown export key: '+item.key);
       const source='data:image/png;base64,'+fs.readFileSync(item.source).toString('base64');
-      const result=await page.evaluate(async({source,background,portrait,entrance,floorFraction,dungeonKey})=>{
+      const result=await page.evaluate(async({source,background,portrait,entrance,floorFraction,dungeonKey,sheet,potion})=>{
         const img=new Image();img.src=source;await img.decode();
         const sourceCanvas=document.createElement('canvas');sourceCanvas.width=img.width;sourceCanvas.height=img.height;
         const src=sourceCanvas.getContext('2d',{willReadFrequently:true});src.drawImage(img,0,0);
@@ -39,10 +43,19 @@ async function main() {
           else{left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x);bottom=Math.max(bottom,y);}
         }
         if(!background && (right<left || transparent===0))throw Error('Sprite needs actual alpha and a visible silhouette');
-        const size=portrait?256:entrance?128:64,margin=portrait?8:entrance?4:2;
-        const canvas=document.createElement('canvas');canvas.width=background?384:size;canvas.height=background?192:size;
+        const size=portrait?256:entrance?128:potion?32:64,margin=portrait?8:entrance?4:2;
+        const canvas=document.createElement('canvas');canvas.width=sheet?320:background?384:size;canvas.height=sheet?160:background?192:size;
         const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
-        if(background)ctx.drawImage(img,0,0,img.width,Math.min(img.height,img.height*(floorFraction||.75)/.75),0,0,canvas.width,canvas.height);
+        if(sheet){
+          const cellW=img.width/4,cellH=img.height/2,frames=[];
+          for(let frame=0;frame<7;frame++){
+            const sx=Math.floor(frame%4*cellW),sy=Math.floor(Math.floor(frame/4)*cellH);let l=cellW,r=-1,t=cellH,b=-1;
+            for(let y=0;y<cellH;y++)for(let x=0;x<cellW;x++)if(pixels[((sy+y)*img.width+sx+x)*4+3]>=128){l=Math.min(l,x);r=Math.max(r,x);t=Math.min(t,y);b=Math.max(b,y);}
+            if(b<t)throw Error('Empty hero frame '+frame);frames.push({sx:sx+l,sy:sy+t,w:r-l+1,h:b-t+1});
+          }
+          const scale=Math.min(72/Math.max(...frames.map(f=>f.w)),72/Math.max(...frames.map(f=>f.h)));
+          frames.forEach((f,i)=>{const w=Math.round(f.w*scale),h=Math.round(f.h*scale);ctx.drawImage(img,f.sx,f.sy,f.w,f.h,(i%4)*80+Math.floor((80-w)/2),Math.floor(i/4)*80+76-h,w,h);});
+        }else if(background)ctx.drawImage(img,0,0,img.width,Math.min(img.height,img.height*(floorFraction||.75)/.75),0,0,canvas.width,canvas.height);
         else {const w=right-left+1,h=bottom-top+1,scale=Math.min((size-margin*2)/w,(size-margin*2)/h),dw=Math.max(1,Math.round(w*scale)),dh=Math.max(1,Math.round(h*scale));
           ctx.drawImage(img,left,top,w,h,Math.floor((size-dw)/2),size-margin-dh,dw,dh);}
         const data=ctx.getImageData(0,0,canvas.width,canvas.height),colors=new Map();
@@ -69,7 +82,7 @@ async function main() {
           data.data.set(best,i);}
         ctx.putImageData(data,0,0);
         return {base64:canvas.toDataURL('image/png').split(',')[1],width:canvas.width,height:canvas.height,palette:palette.length};
-      },{source,background,portrait,entrance,floorFraction:item.floorFraction,dungeonKey});
+      },{source,background,portrait,entrance,floorFraction:item.floorFraction,dungeonKey,sheet,potion});
       const destination=path.join(root,relative);fs.mkdirSync(path.dirname(destination),{recursive:true});fs.writeFileSync(destination,Buffer.from(result.base64,'base64'));
       console.log(relative,result.width+'x'+result.height,'colors='+result.palette);
     }

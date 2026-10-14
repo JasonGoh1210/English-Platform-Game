@@ -1,0 +1,9 @@
+{
+  "potion": {"kind":"potion","nameZh":"红宝石药水","name":"Ruby Potion","price":12,"heal":40,"sprite":"/FYP/images/shop/ruby-potion-32.png"},
+  "owl": {"kind":"companion","nameZh":"向导猫头鹰","name":"Scout Owl","price":0,"sprite":"/FYP/images/companions/owl-64.png"},
+  "fox": {"kind":"companion","nameZh":"枫叶小狐","name":"Maple Fox","price":40,"sprite":"/FYP/images/companions/fox-64.png"},
+  "cat": {"kind":"companion","nameZh":"星月灵猫","name":"Moon Cat","price":55,"sprite":"/FYP/images/companions/cat-64.png"},
+  "dragon": {"kind":"companion","nameZh":"青晶幼龙","name":"Crystal Drake","price":65,"sprite":"/FYP/images/companions/dragon-64.png"},
+  "wisp": {"kind":"companion","nameZh":"萤灯精灵","name":"Lantern Wisp","price":80,"sprite":"/FYP/images/companions/wisp-64.png"},
+  "bunny": {"kind":"companion","nameZh":"信使白兔","name":"Courier Bunny","price":100,"sprite":"/FYP/images/companions/bunny-64.png"}
+}

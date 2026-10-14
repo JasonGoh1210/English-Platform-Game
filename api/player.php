@@ -4,6 +4,7 @@ require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__.'/../includes/quests.php';
 require_once __DIR__.'/../includes/learning.php';
 require_once __DIR__.'/../includes/dungeons.php';
+require_once __DIR__.'/../includes/shop.php';
 
 try {
     $db = epq_db();
@@ -64,7 +65,8 @@ try {
         ],
         'englishPower' => $stats,
         'learning' => epq_learning_stats($db, $playerId),
-        'dungeonAccess' => epq_dungeon_access($db,$playerId)
+        'dungeonAccess' => epq_dungeon_access($db,$playerId),
+        'shop' => epq_shop_view($db,$playerId)
     ]);
 } catch (Throwable $e) {
     error_log('[English Power Quest player] ' . $e->getMessage());

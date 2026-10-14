@@ -2,8 +2,39 @@ const variants = new WeakMap();
 const portraitJobs = new WeakMap();
 let femaleLoading;
 let femaleFrames;
+const characterFrames=new Map(),characterLoads=new Map();
+const characterSheetPaths={
+  'male:forest':'/FYP/assets/player/looks/male-forest-sheet.png',
+  'female:forest':'/FYP/assets/player/looks/female-forest-sheet.png',
+  'male:arcane':'/FYP/assets/player/looks/male-arcane-sheet.png',
+  'female:arcane':'/FYP/assets/player/looks/female-arcane-sheet.png'
+};
+function loadDistinctCharacter(key,path) {
+  if(characterLoads.has(key))return characterLoads.get(key);
+  const loading=new Promise(resolve=>{
+    const sheet=new Image();sheet.onload=()=>{
+      try {
+        const cellWidth=sheet.naturalWidth/4,cellHeight=sheet.naturalHeight/2,cells=[],bounds=[];
+        for(let i=0;i<7;i++){
+          const cell=document.createElement('canvas');cell.width=cellWidth;cell.height=cellHeight;const ctx=cell.getContext('2d',{willReadFrequently:true});
+          ctx.drawImage(sheet,(i%4)*cellWidth,Math.floor(i/4)*cellHeight,cellWidth,cellHeight,0,0,cellWidth,cellHeight);
+          const pixels=ctx.getImageData(0,0,cellWidth,cellHeight).data;let left=cellWidth,right=-1,top=cellHeight,bottom=-1;
+          for(let y=0;y<cellHeight;y++)for(let x=0;x<cellWidth;x++)if(pixels[(y*cellWidth+x)*4+3]>=128){left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);}
+          if(bottom<top)throw Error('Empty hero frame');cells.push(cell);bounds.push({left,top,width:right-left+1,height:bottom-top+1});
+        }
+        const scale=Math.min(46/Math.max(...bounds.map(b=>b.width)),68/Math.max(...bounds.map(b=>b.height)));
+        const frames=cells.map((cell,i)=>{const c=document.createElement('canvas');c.width=i===0?72:48;c.height=72;const ctx=c.getContext('2d');ctx.imageSmoothingEnabled=false;
+          const b=bounds[i],w=Math.round(b.width*scale),h=Math.round(b.height*scale);ctx.drawImage(cell,b.left,b.top,b.width,b.height,Math.round((c.width-w)/2),72-h,w,h);return c;});
+        const right=frames.slice(1),left=right.map(frame=>{const c=document.createElement('canvas');c.width=48;c.height=72;const ctx=c.getContext('2d');ctx.translate(48,0);ctx.scale(-1,1);ctx.drawImage(frame,0,0);return c;});
+        characterFrames.set(key,{idle:frames[0],right,left});
+      }catch(error){console.warn('[EPQ] Hero frames unavailable; using original sprites.',error);}resolve();
+    };sheet.onerror=()=>{console.warn('[EPQ] Hero sheet unavailable; using original sprites.');resolve();};sheet.src=path+'?v=20261014-companions1';
+  });characterLoads.set(key,loading);return loading;
+}
 
 export function loadCharacterAssets(profile) {
+  const key=profile?.gender+':'+profile?.appearance;
+  if(characterSheetPaths[key])return loadDistinctCharacter(key,characterSheetPaths[key]);
   if (profile?.gender !== "female") return Promise.resolve();
   if (femaleLoading) return femaleLoading;
   femaleLoading = new Promise(resolve => {
@@ -68,6 +99,11 @@ export function recolorPixels(pixels, width, height, palette) {
 }
 
 export function characterSprite(image, profile, pose = {}) {
+  const heroKey=profile?.gender+':'+profile?.appearance;
+  if(characterSheetPaths[heroKey]){
+    loadCharacterAssets(profile);const frames=characterFrames.get(heroKey);
+    if(frames)return pose.moving?frames[pose.direction==='left'?'left':'right'][((pose.frame||0)%6+6)%6]:frames.idle;
+  }
   if (profile?.gender === "female") {
     loadCharacterAssets(profile);
     if (femaleFrames) image = pose.moving

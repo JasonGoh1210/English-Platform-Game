@@ -1,11 +1,11 @@
-import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261014-dungeons1";
-import { battleToken, createBattleClient } from "./battle-api.js?v=20261014-dungeons1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-dungeons1";
-import { playSound } from "./audio.js?v=20261014-dungeons1";
-import { normalizeTutorial } from "./tutorial.js?v=20261014-dungeons1";
-import { paintCharacterImages } from "./characters.js?v=20261014-dungeons1";
-import { createBattleReviewPanel } from "./battle-review.js?v=20261014-dungeons1";
-import { pixelArtPaths } from "./pixel-world.js?v=20261014-dungeons1";
+import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261014-companions1";
+import { battleToken, createBattleClient } from "./battle-api.js?v=20261014-companions1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-companions1";
+import { playSound } from "./audio.js?v=20261014-companions1";
+import { normalizeTutorial } from "./tutorial.js?v=20261014-companions1";
+import { paintCharacterImages } from "./characters.js?v=20261014-companions1";
+import { createBattleReviewPanel } from "./battle-review.js?v=20261014-companions1";
+import { pixelArtPaths } from "./pixel-world.js?v=20261014-companions1";
 
 // Use the same per-player storage namespace as the map. If these keys differ,
 // the battle page cannot find the enemy that the map just stored and redirects back.
@@ -25,6 +25,7 @@ let tutorialBattle = false;
 let reviewPanel;
 let settingsTransition = Promise.resolve();
 let settingsRevision = 0;
+let potionStock=0;
 
 function coachBattle(key, values = {}) {
   if (!tutorialBattle) return;
@@ -53,6 +54,7 @@ function applyServerBattle(result) {
   state.enemyHp = result.battle.enemyHp;
   state.focusUsed = result.battle.focusUsed;
   state.wordStrikeLevel = result.battle.wordStrikeLevel || 0;
+  if(result.shop){potionStock=result.shop.potions;renderPotions();}
   if (ui.wordStrikeStatus) renderWordStrike();
   if (result.player) updateSave({xp:result.player.xp, coins:result.player.coins, power:result.player.englishPowerTotal, level:result.player.level});
   updateHp();
@@ -150,6 +152,7 @@ const ui = {
   fightButton: document.getElementById("fightButton"),
   skillButton: document.getElementById("skillButton"),
   itemButton: document.getElementById("itemButton"),
+  activePotionButton:document.getElementById('activePotionButton'),
   runButton: document.getElementById("runButton"),
   questionPanel: document.getElementById("questionPanel"),
   questionType: document.getElementById("questionType"),
@@ -312,6 +315,7 @@ function localizeQuestionTheme() {
 }
 
 onLanguageChange(() => {
+  renderPotions();
   renderSettingsPause();
   localizeBattleStaticText();
   if (state.battleMessageTranslation) {
@@ -584,20 +588,22 @@ async function useSkill() {
   playSound("focus");
   if (ui.questionPanel.classList.contains("hidden")) { showQuestionPanel(); void startQuestion(); }
 }
-function useItem() {
+function renderPotions(){const button=document.getElementById('activePotionButton');if(button){button.textContent=t('battle.potion',{count:potionStock});button.classList.toggle('hidden',potionStock===0);}}
+function useItem(action='HERB') {
   if (state.settingsOpen || state.settingsPending || state.settingsPaused || state.settingsFailed) return;
   if (state.completed || state.locked || state.itemPending || state.skillPending || state.leaving || !serverReady) return;
   const questionAlreadyOpen = !ui.questionPanel.classList.contains("hidden");
   if (state.playerHp >= state.playerMaxHp) { setBattleMessage("battle.hpFull"); return; }
-  if (Number(getSave().coins || 0) < 5) { setBattleMessage("battle.notEnoughCoins"); return; }
+  if(action==='POTION' && potionStock<1){setBattleMessage('battle.noPotions');return;}
+  if (action==='HERB' && Number(getSave().coins || 0) < 5) { setBattleMessage("battle.notEnoughCoins"); return; }
   state.itemPending = true;
-  const buttons = [...ui.answerArea.querySelectorAll("button"), ui.itemButton, ui.activeItemButton].filter(Boolean);
+  const buttons = [...ui.answerArea.querySelectorAll("button"), ui.itemButton, ui.activeItemButton,ui.activePotionButton].filter(Boolean);
   const disabledBefore = buttons.map(button => button.disabled);
   buttons.forEach(button => { button.disabled = true; });
   setBattleMessage("battle.itemPending");
   pendingItemUse = (async () => {
     try {
-      const result = await battleRequest("HERB");
+      const result = await battleRequest(action);
       if (!result.ok) { setBattleMessage(result.status === 409 ? "battle.notEnoughCoins" : "battle.itemFailed"); return false; }
       applyServerBattle(result);
       playSound("heal");
@@ -606,7 +612,7 @@ function useItem() {
         const resumed = await battleRequest("RESUME");
         if (resumed.ok) state.remaining = resumed.battle.remaining;
       }
-      setBattleMessage("battle.healed");
+      setBattleMessage(action==='POTION'?"battle.potionHealed":"battle.healed");
       return true;
     } catch { setBattleMessage("battle.itemFailed"); return false; }
     finally {
@@ -781,6 +787,7 @@ function bindBattleEvents() {
     event.preventDefault();
     useItem();
   });
+  document.getElementById('activePotionButton')?.addEventListener('click',()=>useItem('POTION'));
 
   ui.runButton.addEventListener("click", (event) => {
     event.preventDefault();
