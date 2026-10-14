@@ -23,6 +23,7 @@ const sprites=['images/npc/npc_mira_64.png','images/npc/npc_tala_64.png','images
   'images/npc/npc_elder_rowan_64.png','images/world/pixel/system_book_64.png','images/world/pixel/wayfinder_sign_64.png',
   'images/world/pixel/realm_portal_64.png','images/world/monsters/cave-wraith-64.png','images/world/monsters/confusion-bat-64.png',
   'images/world/monsters/road-guardian-64.png','images/world/monsters/grammar-guardian-64.png'];
+for(const id of ['clockwork-owl','moss-sentinel','ember-scorpion','crystal-beetle'])sprites.push('images/dungeons/'+id+'-64.png');
 test('Active sprites are real 64x64 RGBA PNGs with binary alpha, bounded palettes and transparent margins',()=>{
   for(const file of sprites){const image=png(file);assert.equal(image.width,64,file);assert.equal(image.height,64);assert.equal(image.channels,4);
     const colors=new Set(),alphas=new Set();let opaque=0;
@@ -31,6 +32,19 @@ test('Active sprites are real 64x64 RGBA PNGs with binary alpha, bounded palette
     for(let x=0;x<64;x++){assert.equal(image.pixels[x*4+3],0,file);assert.equal(image.pixels[(63*64+x)*4+3],0,file);
       assert.equal(image.pixels[(x*64)*4+3],0,file);assert.equal(image.pixels[(x*64+63)*4+3],0,file);}
   }
+});
+test('All four new interiors are native pixel PNGs, and cave/tower entrances preserve transparent margins',()=>{
+  const signatures=new Set();
+  for(const realm of ['maple','forest','camp','ruins']) {
+    const bg=png('images/dungeons/'+realm+'-interior.png');assert.equal(bg.width,384);assert.equal(bg.height,192);
+    const colors=new Set();for(let i=0;i<bg.pixels.length;i+=4){assert.equal(bg.pixels[i+3],255);colors.add(bg.pixels.subarray(i,i+3).toString('hex'));}assert.ok(colors.size<=96);
+    signatures.add(bg.pixels.toString('base64'));
+    const entrance=png('images/dungeons/'+realm+'-entrance-128.png');assert.equal(entrance.width,128);assert.equal(entrance.height,128);
+    const alpha=new Set();for(let i=3;i<entrance.pixels.length;i+=4)alpha.add(entrance.pixels[i]);assert.deepEqual([...alpha].sort((a,b)=>a-b),[0,255]);
+    for(let x=0;x<128;x++){assert.equal(entrance.pixels[x*4+3],0);assert.equal(entrance.pixels[(127*128+x)*4+3],0);}
+    assert.equal(entrance.pixels[(92*128+64)*4+3],255,'The dark entrance opening is opaque, not a transparency hole');
+  }
+  assert.equal(signatures.size,4,'World interiors must be visually distinct');
 });
 test('Portal runes and guardian eyes retain their gold and cyan accent colors',()=>{
   for(const [file,accent] of [['images/world/pixel/realm_portal_64.png','gold'],

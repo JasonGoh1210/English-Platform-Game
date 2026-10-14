@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/rewards.php';
+require_once __DIR__.'/dungeons.php';
 
 function epq_story_beats(): array {
     return [
@@ -84,6 +85,7 @@ function epq_quest_action(mysqli $db,int $playerId,array $body): array {
             epq_story_advance($db,$playerId,$beat['next']);$step=$beat['next'];
         }
     } elseif ($action==='TYPING_START') {
+        epq_require_dungeon_access($db,$playerId,'ruins');
         epq_quest_location($db,$playerId,4,1940);
         $close=$db->prepare("UPDATE verified_typing_runs SET state_json=JSON_SET(state_json,'$.status','CLOSED') WHERE player_id=? AND JSON_UNQUOTE(JSON_EXTRACT(state_json,'$.status'))='ACTIVE'");
         $close->bind_param('i',$playerId);$close->execute();

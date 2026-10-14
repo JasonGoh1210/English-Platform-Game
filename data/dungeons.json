@@ -1,0 +1,26 @@
+{
+  "maple": {
+    "nameKey": "dungeon.maple.name", "kind": "tower", "x": 1580, "gate": "slime-01", "legacy": "Defeated Word Slime",
+    "entrance": "/FYP/images/dungeons/maple-entrance-128.png", "background": "/FYP/images/dungeons/maple-interior.png",
+    "enemies": [{"id":"clockwork-owl-01","x":1050,"name":"Clockwork Owl","nameZh":"发条夜枭","nameKey":"dungeon.owl","roomKey":"dungeon.maple.room","hp":95,"damage":11,"xp":35,"coins":16,"difficulty":"EASY","types":["TRUE_FALSE","ODD_WORD_OUT"],"spritePath":"/FYP/images/dungeons/clockwork-owl-64.png"}]
+  },
+  "forest": {
+    "nameKey": "dungeon.forest.name", "kind": "cave", "x": 1760, "gate": "bat-01", "legacy": "Defeated Confusion Bat",
+    "entrance": "/FYP/images/dungeons/forest-entrance-128.png", "background": "/FYP/images/dungeons/forest-interior.png",
+    "enemies": [{"id":"moss-sentinel-01","x":1100,"name":"Moss Sentinel","nameZh":"苔菇守卫","nameKey":"dungeon.moss","roomKey":"dungeon.forest.room","hp":105,"damage":12,"xp":40,"coins":18,"difficulty":"EASY","types":["TRUE_FALSE","ODD_WORD_OUT"],"spritePath":"/FYP/images/dungeons/moss-sentinel-64.png"}]
+  },
+  "camp": {
+    "nameKey": "dungeon.camp.name", "kind": "tower", "x": 1580, "gate": "road-guardian-01", "legacy": "Defeated Road Guardian",
+    "entrance": "/FYP/images/dungeons/camp-entrance-128.png", "background": "/FYP/images/dungeons/camp-interior.png",
+    "enemies": [{"id":"ember-scorpion-01","x":1100,"name":"Ember Scorpion","nameZh":"余烬魔蝎","nameKey":"dungeon.scorpion","roomKey":"dungeon.camp.room","hp":120,"damage":13,"xp":45,"coins":20,"difficulty":"MEDIUM","types":["TRUE_FALSE","SENTENCE_BUILDER"],"spritePath":"/FYP/images/dungeons/ember-scorpion-64.png"}]
+  },
+  "ruins": {
+    "nameKey": "cave.title", "kind": "cave", "x": 1680, "gate": "guardian-01", "legacy": "Defeated Grammar Guardian",
+    "entrance": "/FYP/images/dungeons/ruins-entrance-128.png", "background": "/FYP/images/dungeons/ruins-interior.png",
+    "enemies": [
+      {"id":"cave-wraith-01","x":810,"name":"Cave Wraith","nameZh":"洞穴幽魂","nameKey":"guide.echo.wraith","roomKey":"guide.echo.room1","hp":110,"damage":14,"xp":45,"coins":20,"difficulty":"MEDIUM","types":["TRUE_FALSE","SENTENCE_BUILDER"],"spritePath":"/FYP/images/world/monsters/cave-wraith-64.png"},
+      {"id":"echo-slime-01","x":1350,"name":"Crystal Beetle","nameZh":"水晶甲虫","nameKey":"dungeon.beetle","roomKey":"guide.echo.room2","hp":80,"damage":10,"xp":25,"coins":12,"difficulty":"MEDIUM","types":["TRUE_FALSE"],"spritePath":"/FYP/images/dungeons/crystal-beetle-64.png"},
+      {"id":"echo-dragon-01","x":1870,"name":"Echo Dragon","nameZh":"回声飞龙","nameKey":"guide.echo.dragon","roomKey":"guide.echo.room3","hp":135,"damage":13,"xp":50,"coins":22,"difficulty":"MEDIUM","types":["SENTENCE_BUILDER"],"spritePath":"/FYP/assets/enemies/monster/Monster.png?v=20261010-enemyart1"}
+    ]
+  }
+}

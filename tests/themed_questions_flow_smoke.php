@@ -30,11 +30,13 @@ foreach (['slime-01','bat-01','road-guardian-01','guardian-01'] as $enemyId) {
     action($topicActor,$topicBattle,'RUN');
 }
 verify(epq_recent_question_ids($db,$topicActor[2],'maple')===array_reverse(array_slice($seenByRealm['maple'],-8)), 'Recent history remains scoped to realm after visiting other worlds');
+fixtureDungeonAccess($db,$topicActor,'ruins');
 foreach (['slime-01','cave-wraith-01'] as $enemyId) {
     $realm = epq_battle_enemies()[$enemyId]['realm'];
     $recent = array_slice($seenByRealm[$realm],-8);
     $topicBattle=token(); action($topicActor,$topicBattle,'START',['enemyId'=>$enemyId]);
-    [, $next] = action($topicActor,$topicBattle,'QUESTION');
+    [$issuedStatus, $next] = action($topicActor,$topicBattle,'QUESTION');
+    verify($issuedStatus===200 && isset($next['battle']['question']), 'Shared-history encounter issues a valid question');
     verify(!in_array($next['battle']['question']['id'],$recent,true), 'New battles avoid recent history, including Guardian/Wraith shared realm');
     action($topicActor,$topicBattle,'RUN');
 }

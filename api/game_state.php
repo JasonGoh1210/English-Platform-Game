@@ -21,11 +21,12 @@ function epq_safe_map_state(array $input): array {
         $row = $rawPositions[$id];
         $positions[$id] = [
             'playerX' => epq_map_number($row['playerX'] ?? null, 70, $width - 90, 440),
-            'insideCave' => $id === 'ruins' && !empty($row['insideCave']),
+            'insideCave' => !empty($row['insideCave']),
             'caveReturnX' => epq_map_number($row['caveReturnX'] ?? null, 0, $width, 0)
         ];
     }
-    $allowedEnemies = ['slime-01','bat-01','road-guardian-01','guardian-01','cave-wraith-01','echo-slime-01','echo-dragon-01'];
+    $allowedEnemies = ['slime-01','bat-01','road-guardian-01','guardian-01'];
+    foreach (epq_dungeon_specs() as $spec) $allowedEnemies=array_merge($allowedEnemies,array_column($spec['enemies'],'id'));
     $enemyIds = is_array($input['defeatedEnemyIds'] ?? null) ? $input['defeatedEnemyIds'] : [];
     $defeated = array_values(array_unique(array_filter($enemyIds, static fn($id) => is_string($id) && in_array($id, $allowedEnemies, true))));
     return [
@@ -33,7 +34,7 @@ function epq_safe_map_state(array $input): array {
         'currentRealmId' => $realm,
         'realmPositions' => $positions,
         'playerX' => epq_map_number($input['playerX'] ?? null, 70, $realms[$realm] - 90, 440),
-        'insideCave' => $realm === 'ruins' && !empty($input['insideCave']),
+        'insideCave' => !empty($input['insideCave']),
         'caveReturnX' => epq_map_number($input['caveReturnX'] ?? null, 0, $realms[$realm], 0),
         'questStep' => (int)epq_map_number($input['questStep'] ?? null, 0, 5, 0),
         'defeatedEnemyIds' => $defeated,
@@ -87,6 +88,7 @@ try {
     $playerLock=$db->prepare('SELECT player_id FROM players WHERE player_id=? FOR UPDATE');
     $playerLock->bind_param('i',$playerId);$playerLock->execute();$playerLock->get_result()->free();
     $state['questStep']=epq_story_step($db,$playerId);
+    if ($state['insideCave']) epq_require_dungeon_access($db,$playerId,$state['currentRealmId']);
     if (!array_key_exists('tutorial', $body['state'])) {
         // An older cached game client must not erase a newer guide checkpoint.
         $previous = $db->prepare('SELECT save_json FROM player_game_saves WHERE player_id = ? FOR UPDATE');
@@ -119,6 +121,9 @@ try {
     epq_json(['ok' => true, 'saved' => true]);
 } catch (Throwable $e) {
     if (isset($db) && $db instanceof mysqli) $db->rollback();
+    if ($e instanceof DomainException && $e->getMessage()==='DUNGEON_LOCKED') {
+        epq_json(['ok'=>false,'errorCode'=>'DUNGEON_LOCKED','error'=>'Defeat the outdoor guardian first.'],409);
+    }
     error_log('[English Power Quest game state] ' . $e->getMessage());
     $missingMigration = $e instanceof mysqli_sql_exception && $e->getCode() === 1146;
     epq_json(['ok' => false, 'errorCode' => $missingMigration ? 'MIGRATION_REQUIRED' : 'SAVE_UNAVAILABLE',

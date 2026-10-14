@@ -11,6 +11,8 @@
       <p id="questGuideMain" class="hidden"></p>
     </section>
     <ol class="quest-guide-chapters" id="questGuideChapters" aria-label="Story route" data-i18n-aria-label="guide.storyRoute"></ol>
+    <h3 data-i18n="dungeon.guideTitle">四世界挑战</h3>
+    <div id="questGuideDungeons" class="dungeon-guide-grid"></div>
     <div class="quest-guide-caves">
       <section>
         <span class="quest-guide-badge" data-i18n="guide.optional">OPTIONAL EXPLORATION</span>

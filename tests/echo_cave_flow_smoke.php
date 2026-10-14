@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require __DIR__.'/themed_questions_flow_smoke.php';
 $echoActor=guest('EchoSmoke');
+fixtureDungeonAccess($db,$echoActor,'ruins');
 $cleared=[];
 foreach (['cave-wraith-01','echo-slime-01','echo-dragon-01'] as $enemyId) {
     $enemy=epq_battle_enemies()[$enemyId];

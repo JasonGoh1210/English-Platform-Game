@@ -27,12 +27,15 @@ A mobile-friendly fantasy RPG prototype that teaches English through exploration
 - Self-paced ordinary realm battles; optional Echo Cave encounters retain timed challenges
 - Three-level Word Power skill branch with permanent, server-validated Skill Point purchases and vocabulary attack bonuses
 - Sentence Builder supports removing selected words, clearing the sentence and blocking incomplete submissions
+- One gated pixel cave/tower challenge per realm, distinct interior guardians and saved interior positions; outdoor victory unlocks access
+- All realm portals are fixed at the left (X220); Word Cavern uses one guardian across three spelling rounds with pixel victory/defeat screens
 - First-login character creation with saved name, dice, gender and three sprite palettes
 - Google Identity Services sign-in and same-player binding, enabled by a local Client ID
 
 Combat, NPC chapter and typing rewards now use server grading and replay-safe receipts. Map coordinates and exploration snapshots remain browser-reported, with per-player LocalStorage used to recover unconfirmed saves.
 
 See [skill progression and combat pacing](docs/SKILLS_AND_COMBAT_PACING.md) for unlock costs, saved data, verification and remaining GDD priorities.
+See [realm dungeons and typing UI](docs/REALM_DUNGEONS_AND_TYPING_UI.md) for entrances, guardians, unlock compatibility, the moved ruins portal and the twelve asset paths.
 
 ## Run locally with XAMPP
 

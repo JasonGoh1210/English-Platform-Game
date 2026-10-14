@@ -1,0 +1,44 @@
+/* Pixel presentation for the complete typing flow, including its result screens. */
+.typing-cave-screen { background:#0c1723; color:#dfebec; }
+.typing-cave-screen::before { display:none; }
+.typing-cave-question-card { border:3px solid #8da6ac; border-radius:0; background:#19313e; box-shadow:4px 4px #060e16; }
+.typing-cave-heading h1 { color:#f0dfb5; text-shadow:2px 3px #050c16; }
+.typing-cave-kicker,.typing-cave-hint-label { color:#b4ced2; }
+.typing-cave-letter { border:2px solid #728e9f; border-radius:0; background:#152a38; }
+.typing-cave-letter.revealed { background:#4f4931; }
+.typing-cave-stage { background:#142431 url('../images/dungeons/ruins-interior.png') center 55% / cover; border:3px solid #718999; border-radius:0; image-rendering:pixelated; }
+.typing-cave-rocks { display:none; }
+.typing-cave-ground { background:#263744; border-top:4px solid #9aacb7; }
+.typing-cave-player img,.typing-cave-monster img { filter:none; image-rendering:pixelated; }
+.typing-cave-monster { width:128px; height:128px; }
+.typing-cave-exit,.typing-cave-answer-row button,.typing-cave-retry,.typing-cave-answer-row input,
+.typing-cave-lose-actions button,.typing-cave-win-actions button { border:2px solid #95a6ac; border-radius:0; min-height:44px; color:#efe5c9; background:#294453; box-shadow:inset 0 -3px #102333,3px 3px #050c13; }
+.typing-cave-answer-row input { color:#eef3f4; background:#0f2231; padding:12px; }
+.typing-cave-answer-row button { border-color:#c8ac6f; background:#665537; }
+.typing-cave-screen button:active { transform:translateY(3px); box-shadow:inset 0 -1px #102333; }
+.typing-cave-screen button:focus-visible,.typing-cave-screen input:focus-visible { outline:3px solid #f2d28b; outline-offset:3px; }
+.typing-cave-threat-track { border-radius:0; border:1px solid #9cadb3; background:#07131e; }
+.typing-cave-threat-track>div { border-radius:0; background:#ba765a; }
+.typing-cave-win-overlay,.typing-cave-lose-overlay { position:fixed; background:rgba(3,10,18,.92); backdrop-filter:none; padding:18px; }
+.typing-cave-win-panel,.typing-cave-lose-panel { width:min(540px,100%); max-height:calc(100dvh - 36px); overflow:auto;
+  border:3px solid #c6ac73; border-radius:0; padding:24px; color:#dce6e9; background:#142b3a; box-shadow:inset 0 0 0 3px #294553,6px 6px #030b13; animation:pixel-result-appear 180ms ease-out; }
+.typing-cave-lose-panel { border-color:#c99270; }
+.typing-cave-win-panel h2 { color:#d4e9ae; text-shadow:2px 3px #102a20; }
+.typing-cave-lose-panel h2 { color:#e6b196; text-shadow:2px 3px #432b27; }
+.typing-cave-win-panel>p,.typing-cave-lose-panel>p { color:#cad8df; }
+.typing-cave-win-icon,.typing-cave-lose-icon { border:2px solid #a6b98b; border-radius:0; background:#274d40; color:#edddaa; box-shadow:3px 3px #06131b; }
+.typing-cave-lose-icon { border-color:#bb8b75; background:#4d3736; }
+.typing-cave-win-kicker,.typing-cave-lose-kicker { color:#bdcbd0; }
+.typing-cave-lose-review { border:2px solid #738b98; border-radius:0; background:#0f2231; padding:14px; }
+.typing-cave-lose-review p { overflow-wrap:anywhere; }
+.typing-cave-win-actions button:first-child,.typing-cave-lose-actions button:first-child { border-color:#c7ae79; background:#665437; color:#f1e7ce; }
+.typing-cave-win-actions button:last-child,.typing-cave-lose-actions button:last-child { background:#294453; }
+.dungeon-guide-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:12px 0 24px; }
+.dungeon-guide-card { padding:12px; border:2px solid #8e7d64; background:#172b39; }
+.dungeon-guide-card.unlocked { border-color:#8eb695; }
+.dungeon-guide-card h3 { margin:0 0 8px; color:#e5d6ad; font-size:16px; }
+.dungeon-guide-card p { margin:6px 0; font-size:14px; color:#c1d2da; }
+.dungeon-guide-card p:last-child { color:#dabf87; }
+@keyframes pixel-result-appear { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+@media(max-width:520px) { .dungeon-guide-grid { grid-template-columns:1fr; } .typing-cave-win-panel,.typing-cave-lose-panel { padding:18px 14px; } }
+@media(prefers-reduced-motion:reduce) { .typing-cave-win-panel,.typing-cave-lose-panel { animation:none; } .typing-cave-monster { transition:none; } }

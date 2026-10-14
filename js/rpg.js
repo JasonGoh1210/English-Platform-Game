@@ -1,12 +1,12 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261014-skills1";
-import { playSound } from "./audio.js?v=20261014-skills1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-skills1";
-import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261014-skills1";
-import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261014-skills1";
-import { createQuestClient } from "./quest-api.js?v=20261014-skills1";
-import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261014-skills1";
-import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave } from "./pixel-world.js?v=20261014-skills1";
-import { storyPortraitSource } from "./story-visuals.js?v=20261014-skills1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261014-dungeons1";
+import { playSound } from "./audio.js?v=20261014-dungeons1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-dungeons1";
+import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261014-dungeons1";
+import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261014-dungeons1";
+import { createQuestClient } from "./quest-api.js?v=20261014-dungeons1";
+import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261014-dungeons1";
+import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave, drawDungeonBackdrop } from "./pixel-world.js?v=20261014-dungeons1";
+import { storyPortraitSource } from "./story-visuals.js?v=20261014-dungeons1";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -133,7 +133,7 @@ const worldBackgroundPaths = {
 for (const realmId of Object.keys(worldBackgroundPaths)) {
   const availablePaths = window.EPQ_AUTH?.worldBackgrounds?.[realmId];
   if (Array.isArray(availablePaths)) {
-    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261014-skills1");
+    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261014-dungeons1");
   }
 }
 
@@ -171,6 +171,9 @@ Object.entries(worldBackgrounds).forEach(([realmId, image]) => {
 });
 
 const AUTH_CONTEXT = window.EPQ_AUTH || {};
+const dungeonSpecs = AUTH_CONTEXT.dungeonSpecs || {};
+world.dungeonAccess = null;
+world.dungeonPending = false;
 const questClient=createQuestClient(AUTH_CONTEXT.csrfToken,AUTH_CONTEXT.storageId||AUTH_CONTEXT.playerId,
   applyConfirmedQuest,waiting=>waiting?setSaveWarning("rewards","save.rewardFailed"):clearSaveWarning("rewards"));
 paintCharacterImages(AUTH_CONTEXT.character);
@@ -348,7 +351,11 @@ async function loadServerGame() {
 }
 
 window.addEventListener("pagehide", () => {
-  if (!dbSaveReady || localStorage.getItem(WORLD_PENDING_KEY) !== "1") return;
+  if (!dbSaveReady) return;
+  // Capture movement since the five-second periodic save, including browser reload.
+  // A battle transition has already saved a safe position; retain that snapshot.
+  if (!world.battle) saveWorldState();
+  if (localStorage.getItem(WORLD_PENDING_KEY) !== "1") return;
   const snapshot = (() => {
     try { return JSON.parse(localStorage.getItem(WORLD_SAVE_KEY) || "null"); }
     catch { return null; }
@@ -434,7 +441,7 @@ function loadWorldState() {
     if (world.insideCave) {
       const cave = landmarks.find(item => item.realmId === world.currentRealmId && item.type === "cave");
       if (!world.caveReturnX && cave) world.caveReturnX = cave.x + 120;
-      world.player.x = 440;
+      world.player.x = clamp(hasLocalPosition ? Number(savedPosition.playerX) : migratedX,70,world.width-90);
     } else {
       const position = hasLocalPosition ? Number(savedPosition.playerX) : migratedX;
       world.player.x = clamp(position, 70, world.width - 90);
@@ -524,6 +531,12 @@ const mapEnemyArtPaths = {
   "echo-slime-01": "/FYP/assets/enemies/monster/Shrim.png?v=20261010-enemyart1",
   "echo-dragon-01": "/FYP/assets/enemies/monster/Monster.png?v=20261010-enemyart1"
 };
+for (const spec of Object.values(dungeonSpecs)) for (const enemy of spec.enemies) mapEnemyArtPaths[enemy.id]=enemy.spritePath;
+const dungeonArt = {};
+for (const [realm,spec] of Object.entries(dungeonSpecs)) {
+  const entrance=new Image(),background=new Image();entrance.src=spec.entrance;background.src=spec.background;
+  dungeonArt[realm]={entrance,background};
+}
 const mapEnemyArtById = {};
 for (const [enemyId, imagePath] of Object.entries(mapEnemyArtPaths)) {
   const image = new Image();
@@ -775,15 +788,16 @@ const landmarks = [
   { realmId: "maple", x: 835, type: "house", variant: "elder" },
   { realmId: "maple", x: 1080, type: "house", variant: "shop" },
   { realmId: "maple", x: 1430, type: "bridge" },
+  { realmId: "maple", x: 1580, type: "cave" },
   { realmId: "forest", x: 420, type: "sign" },
   { realmId: "forest", x: 620, type: "house", variant: "cottage" },
   { realmId: "forest", x: 990, type: "bridge" },
-  { realmId: "forest", x: 1510, type: "tower" },
+  { realmId: "forest", x: 1760, type: "cave" },
   { realmId: "camp", x: 420, type: "sign" },
   { realmId: "camp", x: 680, type: "camp" },
   { realmId: "camp", x: 1190, type: "bridge" },
-  { realmId: "camp", x: 1580, type: "tower" },
-  { realmId: "ruins", x: 340, type: "sign" },
+  { realmId: "camp", x: 1580, type: "cave" },
+  { realmId: "ruins", x: 420, type: "sign" },
   { realmId: "ruins", x: 630, type: "tower" },
   { realmId: "ruins", x: 930, type: "ruins" },
   { realmId: "ruins", x: 1250, type: "gate" },
@@ -795,7 +809,7 @@ const destinations = [
   { id: "maple", name: "Maple Town", nameKey: "destination.maple.name", category: "SAFE HAVEN", categoryKey: "destination.safe", description: "A peaceful village where your adventure and first words begin.", descriptionKey: "destination.maple.description", scene: "maple", width: 1800, spawnX: 440, portalX: 220 },
   { id: "forest", name: "Whispering Forest", nameKey: "destination.forest.name", category: "VOCABULARY TRAIL", categoryKey: "destination.vocab", description: "A standalone enchanted forest with lantern paths and hidden words.", descriptionKey: "destination.forest.description", scene: "forest", width: 2100, spawnX: 440, portalX: 220 },
   { id: "camp", name: "Old Camp Road", nameKey: "destination.camp.name", category: "SURVIVAL ROUTE", categoryKey: "destination.survival", description: "A separate sunset wilderness with a campfire, pine trees and a guide.", descriptionKey: "destination.camp.description", scene: "camp", width: 1950, spawnX: 440, portalX: 220 },
-  { id: "ruins", name: "Ancient Ruins", nameKey: "destination.ruins.name", category: "ANCIENT CHALLENGE", categoryKey: "destination.challenge", description: "A separate ancient realm with stone towers, a sealed gate and two caves.", descriptionKey: "destination.ruins.description", scene: "ruins", width: 2200, spawnX: 440, portalX: 1510 }
+  { id: "ruins", name: "Ancient Ruins", nameKey: "destination.ruins.name", category: "ANCIENT CHALLENGE", categoryKey: "destination.challenge", description: "A separate ancient realm with stone towers, a sealed gate and two caves.", descriptionKey: "destination.ruins.description", scene: "ruins", width: 2200, spawnX: 440, portalX: 220 }
 ];
 
 // Single source of truth for localized names across HUD, wooden signposts,
@@ -818,6 +832,21 @@ const enemies = [
   { id: "echo-slime-01", realmId: "ruins", x: 1350, type: "slime", name: "Rune Slime", nameKey: "guide.echo.slime", difficulty: "MEDIUM", hp: 80, damage: 10, xp: 25, coins: 12, defeated: false, caveOnly: true },
   { id: "echo-dragon-01", realmId: "ruins", x: 1870, type: "wraith", name: "Echo Dragon", nameKey: "guide.echo.dragon", difficulty: "MEDIUM", hp: 135, damage: 13, xp: 50, coins: 22, defeated: false, caveOnly: true }
 ];
+for (const [realm,spec] of Object.entries(dungeonSpecs)) for (const creature of spec.enemies) {
+  const existing=enemies.find(enemy=>enemy.id===creature.id);
+  if(existing)Object.assign(existing,creature);
+  else enemies.push({...creature,realmId:realm,type:"guardian",defeated:false,caveOnly:true});
+}
+function currentDungeonRooms() { return dungeonSpecs[world.currentRealmId]?.enemies || echoRooms; }
+function currentDungeonName() { return t(dungeonSpecs[world.currentRealmId]?.nameKey || "cave.title"); }
+function dungeonReady(realm=world.currentRealmId) { return world.dungeonAccess?.[realm]===true; }
+function showDungeonLocked(typing=false) {
+  world.lockedDoorTyping=typing;
+  world.interacting=true;world.currentDialogueNpcId="dungeonLocked";resetMovementInput();
+  ui.dialogueName.textContent=typing?t("guide.typing.name"):currentDungeonName();
+  ui.dialogueText.textContent=t(world.dungeonAccess===null?"dungeon.checkFailed":"dungeon.locked",{enemy:t("dungeon.gate."+dungeonSpecs[world.currentRealmId]?.gate)});
+  showDialogue();
+}
 
 
 
@@ -859,7 +888,8 @@ function resize() {
 const mapHud = document.querySelector(".pixel-world-ui .hud");
 if (mapHud && typeof ResizeObserver !== "undefined") {
   new ResizeObserver(() => {
-    document.querySelector(".game-shell").style.setProperty("--map-hud-bottom", `${mapHud.getBoundingClientRect().bottom}px`);
+    world.hudBottom=mapHud.getBoundingClientRect().bottom;
+    document.querySelector(".game-shell").style.setProperty("--map-hud-bottom", `${world.hudBottom}px`);
   }).observe(mapHud);
 }
 window.addEventListener("resize", resize);
@@ -1061,7 +1091,7 @@ function nearestEnemy() {
     if (enemy.defeated) continue;
     if (enemy.id === "slime-01" && !tutorialSlimeVisible(world.tutorial)) continue;
     if (Boolean(enemy.caveOnly) !== world.insideCave) continue;
-    if (enemy.caveOnly && !echoEnemyAvailable(enemy.id, defeatedEnemyIds())) continue;
+    if (enemy.caveOnly && (!dungeonReady() || !echoEnemyAvailable(enemy.id, defeatedEnemyIds(),currentDungeonRooms()))) continue;
 
     // After RUN or browser-back from battle, give the player enough space
     // to move away before the same encounter can trigger again.
@@ -1289,7 +1319,7 @@ function finishStoryIntro() {
 
 let npcQuestPending=false;
 async function interact() {
-  if(npcQuestPending)return;
+  if(npcQuestPending || world.dungeonPending)return;
   if (world.interacting || world.battle || world.travelMenu || settingsIsOpen()) return;
 
   // Every region has a permanent portal at its own fixed coordinate.
@@ -1301,6 +1331,7 @@ async function interact() {
   if (!world.insideCave) {
     const typingCave = landmarks.find(item => item.realmId === world.currentRealmId && item.type === "typingCave");
     if (typingCave && Math.abs(typingCave.x - world.player.x) < 118) {
+      if(!dungeonReady()) {showDungeonLocked(true);return;}
       openTypingCave();
       return;
     }
@@ -1395,9 +1426,12 @@ function recenterCamera() {
   );
 }
 
-function enterCave() {
+async function enterCave() {
   const cave = landmarks.find(item => item.realmId === world.currentRealmId && item.type === "cave");
-  if (!cave) return;
+  if (!cave || world.dungeonPending) return;
+  world.dungeonPending=true;resetMovementInput();
+  try {await loadServerPlayer();} finally {world.dungeonPending=false;}
+  if(!dungeonReady()) {showDungeonLocked();return;}
   playSound("cave");
   world.caveReturnX = cave.x + 120;
   world.insideCave = true;
@@ -1414,8 +1448,8 @@ function enterCave() {
   world.currentDialogueNpcId = "caveEntry";
   recenterCamera();
   updateLocation();
-  ui.dialogueName.textContent = t("cave.title");
-  ui.dialogueText.textContent = t("cave.entered");
+  ui.dialogueName.textContent = currentDungeonName();
+  ui.dialogueText.textContent = t("dungeon.entered",{count:currentDungeonRooms().length});
   showDialogue();
   saveWorldState({ playerX: world.player.x, insideCave: true });
 }
@@ -1445,20 +1479,15 @@ function renderTypingQuestion() {
   typingUi.kicker.textContent = isChinese ? "回声之外 · 英语打字挑战" : "BEYOND THE ECHO · TYPING CHALLENGE";
   typingUi.title.textContent = t("guide.typing.name");
   const round = Math.min(typingCaveState.completedLevels, 2);
-  const guardians = [
-    { key: "guide.echo.wraith", src: pixelArtPaths.monsters["cave-wraith-01"] },
-    { key: "guide.echo.slime", src: "/FYP/assets/enemies/monster/Shrim.png?v=20261010-enemyart1" },
-    { key: "guide.echo.dragon", src: "/FYP/assets/enemies/monster/Monster.png?v=20261010-enemyart1" }
-  ];
-  const guardian = guardians[round];
+  const guardian = {key:"guide.echo.wraith",src:pixelArtPaths.monsters["cave-wraith-01"]};
   const monsterImage = typingUi.monster.querySelector("img");
   if (monsterImage.getAttribute("src") !== guardian.src) monsterImage.src = guardian.src;
   monsterImage.alt = t(guardian.key);
   document.getElementById("typingGuardianName").textContent = t(guardian.key);
   const rounds = document.getElementById("typingRounds");
-  rounds.replaceChildren(...guardians.map((item, index) => {
+  rounds.replaceChildren(...Array.from({length:3},(_,index) => {
     const li = document.createElement("li");
-    li.textContent = (index < typingCaveState.completedLevels ? "✓ " : `${index + 1}. `) + t(item.key);
+    li.textContent = (index < typingCaveState.completedLevels ? "✓ " : "") + t("dungeon.typingRound",{number:index+1});
     li.classList.toggle("complete", index < typingCaveState.completedLevels);
     if (index === round) li.setAttribute("aria-current", "step");
     return li;
@@ -1510,6 +1539,7 @@ function setTypingMessage(text, kind = "") {
 
 async function openTypingCave() {
   if (world.typingCaveOpen) return;
+  if(!dungeonReady("ruins")) {showDungeonLocked(true);return;}
   playSound("cave");
   world.typingCaveOpen = true;
   world.player.vx = 0;
@@ -1936,11 +1966,22 @@ function currentGuidance() {
   return questGuidance({ chapter: world.questStep, realm: world.currentRealmId,
     x: world.player.x, insideCave: world.insideCave, tutorial: world.tutorial,
     slimeX: tutorialActive(world.tutorial) ? tutorialSlimeX(world.tutorial) : 1435,
-    defeatedIds: defeatedEnemyIds() });
+    defeatedIds: defeatedEnemyIds(),rooms:currentDungeonRooms(),dungeonAccess:world.dungeonAccess });
 }
 
 function guideIsOpen() {
   return !document.getElementById("questGuideScreen").classList.contains("hidden");
+}
+
+function renderDungeonGuide() {
+  const root=document.getElementById("questGuideDungeons");if(!root)return;
+  root.replaceChildren(...Object.entries(dungeonSpecs).map(([realm,spec])=>{
+    const card=document.createElement("section"),heading=document.createElement("h3"),detail=document.createElement("p"),status=document.createElement("p");
+    heading.textContent=getLocalizedRealmName(realm)+" · "+t(spec.nameKey);
+    detail.textContent=t("dungeon.guide",{enemy:t("dungeon.gate."+spec.gate),count:spec.enemies.length});
+    status.textContent=t(world.dungeonAccess===null?"dungeon.checking":dungeonReady(realm)?"dungeon.open":"dungeon.sealed");
+    card.className="dungeon-guide-card";card.classList.toggle("unlocked",dungeonReady(realm));card.append(heading,detail,status);return card;
+  }));
 }
 
 let lastGuidanceText = "";
@@ -1949,7 +1990,7 @@ function updateQuestGuidance() {
   const targetName = t(guide.target.nameKey);
   const target = t("guide.nextTarget", { name: targetName, realm: getLocalizedRealmName(guide.target.realm) });
   let route = t(guide.routeKey, { realm: getLocalizedRealmName(guide.target.realm) });
-  if (world.insideCave) route = t("guide.echo.progress", { count: guide.echo.cleared }) + " · " + route;
+  if (world.insideCave) route = t("dungeon.progress", { count: guide.echo.cleared,total:currentDungeonRooms().length }) + " · " + route;
   const signature = target + route + world.questStep + getLanguage();
   if (signature === lastGuidanceText) return;
   lastGuidanceText = signature;
@@ -1961,7 +2002,8 @@ function updateQuestGuidance() {
   main.classList.toggle("hidden", !world.insideCave);
   main.textContent = t("guide.mainAfterCave", { name: t(guide.mainTarget.nameKey), realm: getLocalizedRealmName(guide.mainTarget.realm) });
   document.getElementById("questGuideEchoProgress").textContent = world.insideCave
-    ? t("guide.echo.progress", { count: guide.echo.cleared }) : t("guide.echo.replay");
+    ? t("dungeon.progress", { count: guide.echo.cleared,total:currentDungeonRooms().length }) : t("guide.echo.replay");
+  renderDungeonGuide();
   const chapters = document.getElementById("questGuideChapters");
   chapters.replaceChildren(...storyTargets.map((item, index) => {
     const li = document.createElement("li");
@@ -1998,7 +2040,7 @@ window.addEventListener("keydown", event => {
 
 
 function updateLocation() {
-  ui.location.textContent = world.insideCave ? t("location.cave") : getLocalizedRealmName();
+  ui.location.textContent = world.insideCave ? currentDungeonName() : getLocalizedRealmName();
 }
 
 function refreshWorldLanguage() {
@@ -2013,8 +2055,11 @@ function refreshWorldLanguage() {
       ui.dialogueName.textContent = t("npc.sign.name") + " · " + getLocalizedRealmName();
       ui.dialogueText.textContent = t(getRealmSignDialogueKey());
     } else if (world.currentDialogueNpcId === "caveEntry") {
-      ui.dialogueName.textContent = t("cave.title");
-      ui.dialogueText.textContent = t("cave.entered");
+      ui.dialogueName.textContent = currentDungeonName();
+      ui.dialogueText.textContent = t("dungeon.entered",{count:currentDungeonRooms().length});
+    } else if(world.currentDialogueNpcId === "dungeonLocked") {
+      ui.dialogueName.textContent=world.lockedDoorTyping?t("guide.typing.name"):currentDungeonName();
+      ui.dialogueText.textContent=t("dungeon.locked",{enemy:t("dungeon.gate."+dungeonSpecs[world.currentRealmId]?.gate)});
     } else {
       const npc = npcs.find(item => item.id === world.currentDialogueNpcId);
       if (npc) {
@@ -2070,6 +2115,12 @@ async function loadServerPlayer() {
     world.coins = Number(data.player.coins || 0);
     world.power = Number(data.player.englishPowerTotal || 0);
     world.levelProgress=data.player.levelProgress;
+    world.dungeonAccess=data.dungeonAccess || null;
+    if(world.dungeonAccess)for(const [realm,spec] of Object.entries(dungeonSpecs)) {
+      const gate=enemies.find(enemy=>enemy.id===spec.gate);
+      if(gate)gate.defeated=dungeonReady(realm);
+    }
+    lastGuidanceText="";
     const seen = document.getElementById("questionsSeenText");
     if (seen) seen.textContent = Number.isSafeInteger(data.learning?.questionsSeen) ? String(data.learning.questionsSeen) : "—";
     const journal = document.querySelector(".pixel-learning-link");
@@ -2128,7 +2179,7 @@ function update(dt) {
     return;
   }
 
-  if (!world.battle && !world.interacting && !world.travelMenu && !settingsIsOpen()) {
+  if (!world.battle && !world.interacting && !world.travelMenu && !world.dungeonPending && !settingsIsOpen()) {
     const left = keys.has("arrowleft") || keys.has("a") || touch.left;
     const right = keys.has("arrowright") || keys.has("d") || touch.right;
     const direction = (right ? 1 : 0) - (left ? 1 : 0);
@@ -2316,16 +2367,27 @@ function drawLandmarks() {
 }
 
 function drawCaveEntrance(x, ground, nearby) {
-  drawPixelLandmark(ctx,"cave",x,ground);
+  drawDungeonStructure(x,ground);
+  const size=dungeonSpecs[world.currentRealmId]?.kind==="tower"?384:256;
+  const labelY=Math.max((world.hudBottom||0)+8,ground-size-46);
   ctx.save();ctx.textAlign="center";ctx.font="bold 12px system-ui";ctx.fillStyle="#c5e3eb";
-  ctx.fillText(t("cave.entranceName"),x,ground-150);ctx.font="bold 10px system-ui";
-  ctx.fillText(t("guide.echo.short"),x,ground-134);
-  if(nearby){ctx.fillStyle="#142631";ctx.fillRect(Math.round(x-105),ground-180,210,22);ctx.fillStyle="#e9ddba";ctx.fillText(t("cave.enterPrompt"),x,ground-165);}
+  ctx.fillStyle="#142631";ctx.fillRect(Math.round(x-125),labelY,250,38);ctx.fillStyle="#c5e3eb";
+  ctx.fillText(currentDungeonName(),x,labelY+15);ctx.font="bold 10px system-ui";
+  ctx.fillStyle=dungeonReady()?"#bde4aa":"#e3bc8c";
+  ctx.fillText(t(world.dungeonAccess===null?"dungeon.checking":dungeonReady()?"dungeon.open":"dungeon.sealed"),x,labelY+31);
+  if(nearby){ctx.fillStyle="#142631";ctx.fillRect(Math.round(x-125),labelY+40,250,22);ctx.fillStyle="#e9ddba";ctx.fillText(t(dungeonReady()?"cave.enterPrompt":"dungeon.firstGuard"),x,labelY+55);}
   ctx.restore();
 }
 
+function drawDungeonStructure(x,ground,size=dungeonSpecs[world.currentRealmId]?.kind==="tower"?384:256) {
+  const image=dungeonArt[world.currentRealmId]?.entrance;
+  if(image?.complete && image.naturalWidth) {
+    ctx.imageSmoothingEnabled=false;ctx.drawImage(image,Math.round(x-size/2),Math.round(ground-size),size,size);
+  } else drawPixelLandmark(ctx,dungeonSpecs[world.currentRealmId]?.kind==="tower"?"tower":"cave",x,ground);
+}
+
 function drawTypingCaveEntrance(x, ground, nearby) {
-  drawPixelLandmark(ctx,"typingCave",x,ground);
+  drawDungeonStructure(x,ground,256);
   ctx.save();ctx.textAlign="center";ctx.font="bold 12px system-ui";ctx.fillStyle="#d5c7eb";
   ctx.fillText(t("guide.typing.name"),x,ground-150);ctx.font="bold 10px system-ui";
   ctx.fillText(t("guide.typing.short"),x,ground-134);
@@ -2334,24 +2396,24 @@ function drawTypingCaveEntrance(x, ground, nearby) {
 }
 
 function drawCaveScene(w, h) {
-  drawPixelCave(ctx,{width:w,height:h,ground:world.groundY,camera:world.cameraX});
+  drawDungeonBackdrop(ctx,dungeonArt[world.currentRealmId]?.background,{width:w,height:h,ground:world.groundY,camera:world.cameraX,realm:world.currentRealmId});
 }
 
 function drawCaveExit() {
   const x=worldToScreen(260);if(x < -120 || x > window.innerWidth+120)return;
-  drawPixelLandmark(ctx,"cave",x,world.groundY);
+  drawDungeonStructure(x,world.groundY,256);
   ctx.save();ctx.textAlign="center";ctx.fillStyle="#c5e3eb";ctx.font="bold 12px system-ui";
-  ctx.fillText(t("guide.echo.exit"),x,world.groundY-148);
+  ctx.fillText(t("dungeon.exit"),x,world.groundY-148);
   if(Math.abs(world.player.x-260)<125){ctx.fillStyle="#142631";ctx.fillRect(Math.round(x-105),world.groundY-180,210,22);ctx.fillStyle="#e9ddba";ctx.font="bold 10px system-ui";ctx.fillText(t("cave.exitPrompt"),x,world.groundY-165);}
   ctx.restore();
 }
 
 function drawCaveDetails() {
-  for(const room of echoRooms){const x=Math.round(worldToScreen(room.x));if(x < -160 || x > window.innerWidth+160)continue;
+  for(const room of currentDungeonRooms()){const x=Math.round(worldToScreen(room.x));if(x < -160 || x > window.innerWidth+160)continue;
     ctx.save();ctx.textAlign="center";ctx.font="bold 12px system-ui";
     const label=t(room.roomKey),w=ctx.measureText(label).width+16;
     ctx.fillStyle="#182735";ctx.fillRect(Math.round(x-w/2),world.groundY-248,Math.ceil(w),24);
-    ctx.fillStyle=echoEnemyAvailable(room.id,defeatedEnemyIds())?"#ecd49c":"#8194a7";ctx.fillText(label,x,world.groundY-232);ctx.restore();}
+    ctx.fillStyle=echoEnemyAvailable(room.id,defeatedEnemyIds(),currentDungeonRooms())?"#ecd49c":"#8194a7";ctx.fillText(label,x,world.groundY-232);ctx.restore();}
   for(const worldX of [510,1060,1550,2040]){const x=Math.round(worldToScreen(worldX));if(x < -40 || x > window.innerWidth+40)continue;
     ctx.fillStyle="#417789";ctx.fillRect(x,world.groundY-24,12,24);ctx.fillRect(x+4,world.groundY-32,4,8);
     ctx.fillStyle="#86bcc5";ctx.fillRect(x+4,world.groundY-28,4,24);}
@@ -2961,7 +3023,7 @@ function drawEnemies() {
     if (enemy.defeated) continue;
     if (enemy.id === "slime-01" && !tutorialSlimeVisible(world.tutorial)) continue;
     if (Boolean(enemy.caveOnly) !== world.insideCave) continue;
-    if (enemy.caveOnly && !echoEnemyAvailable(enemy.id, defeatedEnemyIds())) continue;
+    if (enemy.caveOnly && (!dungeonReady() || !echoEnemyAvailable(enemy.id, defeatedEnemyIds(),currentDungeonRooms()))) continue;
     const x = worldToScreen(enemy.x);
     if (x < -100 || x > window.innerWidth + 100) continue;
     const dedicatedSprite = mapEnemyArtById[enemy.id];
@@ -2981,7 +3043,7 @@ function drawEnemies() {
         "road-guardian-01": [192, 192],
         "guardian-01": [192, 192],
         "cave-wraith-01": [154, 174],
-        "echo-slime-01": [115, 105],
+        "echo-slime-01": [160, 160],
         "echo-dragon-01": [210, 200]
       };
       const [maxWidth, maxHeight] = dimensionsByEnemy[enemy.id] || [154, 158];
@@ -3210,12 +3272,14 @@ window.render_game_to_text = () => JSON.stringify({
     title:ui.storyIntroTitle.textContent,speaker:ui.storyboardSpeaker.textContent,
     portrait:ui.storyIntroPortraitImage.getAttribute("src") } : null,
   portalX: world.portalX,
+  dungeon: { inside:world.insideCave,unlocked:world.dungeonAccess===null?null:dungeonReady(),entryX:dungeonSpecs[world.currentRealmId]?.x,
+    name:currentDungeonName(),rooms:currentDungeonRooms().length,pending:world.dungeonPending },
   landmarks: landmarks.filter(item=>item.realmId===world.currentRealmId).map(item=>({type:item.type,x:item.x})),
   guidance: currentGuidance(),
   typing: world.typingCaveOpen ? { round: typingCaveState.completedLevels + 1, monsterLeft: typingCaveState.monsterLeft,
     hintHiddenLetters: document.querySelectorAll(".typing-cave-letter:not(.revealed)").length } : null,
   enemies: enemies.filter(enemy => enemy.realmId === world.currentRealmId && !enemy.defeated
-    && Boolean(enemy.caveOnly) === world.insideCave && (!enemy.caveOnly || echoEnemyAvailable(enemy.id, defeatedEnemyIds()))
+    && Boolean(enemy.caveOnly) === world.insideCave && (!enemy.caveOnly || dungeonReady() && echoEnemyAvailable(enemy.id, defeatedEnemyIds(),currentDungeonRooms()))
     && (enemy.id !== "slime-01" || tutorialSlimeVisible(world.tutorial)))
     .map(enemy => ({ name: enemy.name, x: enemy.x })),
   npcs: npcs.filter(npc => npc.realmId === world.currentRealmId && !world.insideCave)

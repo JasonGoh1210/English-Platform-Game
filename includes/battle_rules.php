@@ -1,11 +1,12 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/skills.php';
+require_once __DIR__.'/dungeons.php';
 
 // Live encounters in the four realms, including the optional Echo Cave rooms.
 // data/enemies.json contains older design concepts, not the current encounters.
 function epq_battle_enemies(): array {
-    return [
+    $enemies = [
         'slime-01' => ['realm'=>'maple', 'hp'=>60, 'damage'=>10, 'xp'=>20, 'coins'=>10, 'difficulty'=>'EASY', 'types'=>['TRUE_FALSE','ODD_WORD_OUT']],
         'bat-01' => ['realm'=>'forest', 'hp'=>70, 'damage'=>10, 'xp'=>25, 'coins'=>12, 'difficulty'=>'EASY', 'types'=>['TRUE_FALSE','ODD_WORD_OUT']],
         'road-guardian-01' => ['realm'=>'camp', 'hp'=>85, 'damage'=>11, 'xp'=>28, 'coins'=>14, 'difficulty'=>'MEDIUM', 'types'=>['TRUE_FALSE','SENTENCE_BUILDER']],
@@ -14,6 +15,10 @@ function epq_battle_enemies(): array {
         'echo-slime-01' => ['realm'=>'ruins', 'hp'=>80, 'damage'=>10, 'xp'=>25, 'coins'=>12, 'difficulty'=>'MEDIUM', 'types'=>['TRUE_FALSE']],
         'echo-dragon-01' => ['realm'=>'ruins', 'hp'=>135, 'damage'=>13, 'xp'=>50, 'coins'=>22, 'difficulty'=>'MEDIUM', 'types'=>['SENTENCE_BUILDER']]
     ];
+    foreach (epq_dungeon_specs() as $realm=>$spec) foreach ($spec['enemies'] as $enemy) {
+        $enemies[$enemy['id']]=array_merge($enemy,['realm'=>$realm,'dungeon'=>$realm]);
+    }
+    return $enemies;
 }
 
 function epq_question_bank(): array {

@@ -1,5 +1,5 @@
-import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261014-skills1";
-import { formatReviewAnswer } from "./battle-review.js?v=20261014-skills1";
+import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261014-dungeons1";
+import { formatReviewAnswer } from "./battle-review.js?v=20261014-dungeons1";
 
 const types = { TRUE_FALSE:"battle.trueFalse", ODD_WORD_OUT:"battle.oddOneOut", SENTENCE_BUILDER:"battle.sentenceBuilder" };
 export function validLearningReceipt(data) {

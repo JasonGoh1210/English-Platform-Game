@@ -60,6 +60,14 @@ function validAnswer(array $question): mixed {
     foreach (epq_question_bank() as $q) if ($q['id'] === $question['id']) return $q['type'] === 'SENTENCE_BUILDER' ? $q['answerOrder'] : $q['answer'];
     throw new RuntimeException('Unknown issued question.');
 }
+function fixtureDungeonAccess(mysqli $db,array $actor,string $realm): void {
+    // Isolated fixture for unrelated regression scenarios; the dedicated dungeon
+    // flow below separately verifies access through actual graded outdoor wins.
+    $id=token();$gate=epq_dungeon_specs()[$realm]['gate'];
+    $json=json_encode(['status'=>'VICTORY','enemyHp'=>0,'playerHp'=>100,'focusUsed'=>false,'question'=>null,'used'=>[],'startedAt'=>0],JSON_THROW_ON_ERROR);
+    $stmt=$db->prepare('INSERT INTO verified_battles (battle_id,player_id,enemy_code,state_json) VALUES (?,?,?,?)');
+    $stmt->bind_param('siss',$id,$actor[2],$gate,$json);$stmt->execute();
+}
 $db = epq_db();
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $actor = guest('BattleSmoke'); $other = guest('OtherBattleSmoke');
@@ -160,6 +168,7 @@ verify((int)$stats['attempts'] === $answers && (int)$stats['correct'] === $answe
 
 // Herbs, timeouts, rollback and retry all use a second real battle.
 $battle2 = token();
+fixtureDungeonAccess($db,$actor,'ruins');
 action($actor, $battle2, 'START', ['enemyId'=>'cave-wraith-01']);
 [, $issued] = action($actor, $battle2, 'QUESTION');
 [, $timeout] = action($actor, $battle2, 'ANSWER', ['questionToken'=>$issued['battle']['questionToken'],'answer'=>validAnswer($issued['battle']['question']),'timedOut'=>true]);

@@ -105,3 +105,17 @@ export function drawPixelCave(ctx,{width,height,ground,camera=0}) {
   }
   drawPixelGround(ctx,{width,height,ground,realm:"ruins",camera});
 }
+
+export function drawDungeonBackdrop(ctx,image,{width,height,ground,camera=0,realm="ruins"}) {
+  if(!image?.complete || !image.naturalWidth) {drawPixelCave(ctx,{width,height,ground,camera});return;}
+  const scale=Math.max(1,Math.ceil(Math.max(width/image.naturalWidth,ground/(image.naturalHeight*.75))));
+  const w=image.naturalWidth*scale,h=image.naturalHeight*scale;
+  ctx.fillStyle=palettes[realm]?.soil || "#131b2b";ctx.fillRect(0,0,width,height);
+  ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(image,Math.round((width-w)/2-Math.min((w-width)/2,camera*.06)),Math.round(ground-h*.75),w,h);
+  // Retain the artwork's stone floor beneath the actor instead of painting outdoor grass over it.
+  const floorBottom=Math.round(ground+h*.25),base={maple:"#23262d",forest:"#183430",camp:"#302420",ruins:"#182138"}[realm];
+  if(floorBottom<height){ctx.fillStyle=base;ctx.fillRect(0,floorBottom,width,height-floorBottom);
+    for(let y=floorBottom;y<height;y+=32){ctx.fillStyle="#111b26";ctx.fillRect(0,y,width,1);}}
+  ctx.fillStyle={maple:"#ae9570",forest:"#698970",camp:"#bb8a59",ruins:"#879dc0"}[realm];ctx.fillRect(0,Math.round(ground),width,3);
+}

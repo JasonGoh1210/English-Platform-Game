@@ -63,6 +63,12 @@ try {
         if (!is_string($enemyCode)) throw new InvalidArgumentException('Invalid enemy.');
         $enemy = epq_battle_enemies()[$enemyCode] ?? null;
         if (!$enemy) throw new InvalidArgumentException('Unknown enemy.');
+        if (isset($enemy['dungeon'])) {
+            // Keep an already-started encounter resumable across this update.
+            $existingBattle=$db->prepare('SELECT battle_id FROM verified_battles WHERE battle_id=? AND player_id=?');
+            $existingBattle->bind_param('si',$battleId,$playerId);$existingBattle->execute();
+            if (!$existingBattle->get_result()->fetch_assoc()) epq_require_dungeon_access($db,$playerId,$enemy['dungeon']);
+        }
         $initial = json_encode(['status'=>'ACTIVE', 'enemyHp'=>$enemy['hp'], 'playerHp'=>100, 'focusUsed'=>false,
             'wordStrikeLevel'=>epq_word_strike_level($db,$playerId),
             'question'=>null, 'used'=>[], 'startedAt'=>0], JSON_THROW_ON_ERROR);
@@ -115,9 +121,9 @@ try {
         $recent = epq_recent_question_ids($db, $playerId, $enemy['realm']);
         $pool = epq_question_pool($enemy, $state['used'], $recent);
         $state['question'] = epq_prepare_question($pool[random_int(0, count($pool)-1)]);
-        // Ordinary map fights are self-paced; the optional Echo Cave keeps its timed challenges.
+        // Ordinary map fights are self-paced; unlocked realm dungeons use timed challenges.
         // An already issued old question retains its original timer across an update/reload.
-        $state['question']['timed'] = in_array($row['enemy_code'], ['cave-wraith-01','echo-slime-01','echo-dragon-01'], true);
+        $state['question']['timed'] = isset($enemy['dungeon']);
         $state['used'][] = $state['question']['id'];
         $state['questionToken'] = bin2hex(random_bytes(16));
         $state['startedAt'] = microtime(true);
@@ -176,7 +182,7 @@ try {
         try { $db->rollback(); }
         catch (Throwable $rollbackError) { error_log('[English Power Quest battle rollback] '.$rollbackError->getMessage()); }
     }
-    if ($e instanceof DomainException) epq_json(['ok'=>false, 'error'=>$e->getMessage()], 409);
+    if ($e instanceof DomainException) epq_json(['ok'=>false, 'error'=>$e->getMessage(), 'errorCode'=>$e->getMessage()==='DUNGEON_LOCKED'?'DUNGEON_LOCKED':null], 409);
     if ($e instanceof InvalidArgumentException || $e instanceof JsonException) epq_json(['ok'=>false, 'error'=>'Invalid battle request.'], 400);
     error_log('[English Power Quest battle] '.$e->getMessage());
     $missing = $e instanceof mysqli_sql_exception && $e->getCode() === 1146;

@@ -14,10 +14,24 @@ test("Next NPC follows the saved chapter, and cross-world directions point at th
   const toForest = questGuidance({chapter:1,realm:"maple",x:880});
   assert.equal(toForest.target.id,"mira"); assert.equal(toForest.routeX,220); assert.equal(toForest.direction,"left");
   const fromRuins = questGuidance({chapter:1,realm:"ruins",x:870});
-  assert.equal(fromRuins.routeX,1510); assert.equal(fromRuins.direction,"right");
-  assert.equal(questGuidance({chapter:1,realm:"ruins",x:1500}).routeKey,"guide.route.portal.near");
+  assert.equal(fromRuins.routeX,220); assert.equal(fromRuins.direction,"left");
+  assert.equal(questGuidance({chapter:1,realm:"ruins",x:210}).routeKey,"guide.route.portal.near");
   assert.equal(questGuidance({chapter:3,realm:"ruins",x:1100}).direction,"left");
   assert.equal(questGuidance({chapter:4,realm:"ruins",x:1930}).routeKey,"guide.route.near");
+  const sealed=questGuidance({chapter:4,realm:"ruins",x:1940,dungeonAccess:{ruins:false}});
+  assert.equal(sealed.target.id,"guardian-01");assert.equal(sealed.direction,"left");assert.equal(sealed.mainTarget.id,"typing");
+});
+
+test('Each world interior guides to its own guardian and exit without overwriting the main quest',async()=>{
+  const {questGuidance,echoEnemyAvailable}=await moduleReady;
+  const specs=JSON.parse(fs.readFileSync(path.join(__dirname,'../data/dungeons.json'),'utf8'));
+  for(const [realm,spec] of Object.entries(specs)) {
+    const guide=questGuidance({realm,chapter:4,insideCave:true,x:440,rooms:spec.enemies});
+    assert.equal(guide.target.id,spec.enemies[0].id);assert.equal(guide.target.realm,realm);assert.equal(guide.mainTarget.id,'typing');
+    const complete=questGuidance({realm,insideCave:true,x:1000,rooms:spec.enemies,defeatedIds:spec.enemies.map(e=>e.id)});
+    assert.equal(complete.target.id,'exit');assert.equal(complete.target.realm,realm);assert.equal(complete.direction,'left');
+    assert.equal(echoEnemyAvailable('unknown-monster',[],spec.enemies),false);
+  }
 });
 
 test("Tutorial battle and return override the next chapter without altering it", async () => {

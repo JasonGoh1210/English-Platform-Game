@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__.'/includes/dungeons.php';
 epq_require_login_page();
 
 $epqIsGuest = epq_is_guest();
@@ -31,9 +32,10 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261014-skills1">
-  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261014-skills1">
-  <link rel="stylesheet" href="/FYP/css/story-pixel.css?v=20261014-skills1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261014-dungeons1">
+  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261014-dungeons1">
+  <link rel="stylesheet" href="/FYP/css/story-pixel.css?v=20261014-dungeons1">
+  <link rel="stylesheet" href="/FYP/css/dungeon-pixel.css?v=20261014-dungeons1">
 </head>
 <body>
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -236,7 +238,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
           <img data-character-sprite src="/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-assetpaths1" alt="Player character">
         </div>
         <div class="typing-cave-monster" id="typingCaveMonster">
-          <img src="/FYP/images/world/monsters/cave-wraith.svg?v=20261010-monsterart2" alt="Approaching monster">
+          <img src="/FYP/images/world/monsters/cave-wraith-64.png" alt="Approaching monster">
           <span id="typingGuardianName" class="typing-guardian-name"></span>
         </div>
         <div class="typing-cave-threat">
@@ -260,8 +262,8 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
 
       <div class="typing-cave-lose-overlay hidden" id="typingCaveLoseOverlay" role="alertdialog" aria-modal="true" aria-labelledby="typingCaveLoseTitle" aria-describedby="typingCaveLoseMessage">
         <section class="typing-cave-lose-panel">
-          <div class="typing-cave-lose-icon" aria-hidden="true">☠</div>
-          <p class="typing-cave-lose-kicker">TYPING CAVERN · FAILED</p>
+          <div class="typing-cave-lose-icon" aria-hidden="true">×</div>
+          <p class="typing-cave-lose-kicker" data-i18n="dungeon.typingFailed">TYPING CAVERN · FAILED</p>
           <h2 id="typingCaveLoseTitle">YOU LOSE</h2>
           <p id="typingCaveLoseMessage">The monster caught you. Review the word, then try again.</p>
           <div class="typing-cave-lose-review" aria-live="polite">
@@ -280,7 +282,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
       <div class="typing-cave-win-overlay hidden" id="typingCaveWinOverlay" role="alertdialog" aria-modal="true" aria-labelledby="typingCaveWinTitle" aria-describedby="typingCaveWinMessage">
         <section class="typing-cave-win-panel">
           <div class="typing-cave-win-icon" aria-hidden="true">✦</div>
-          <p class="typing-cave-win-kicker">TYPING CAVERN · COMPLETE</p>
+          <p class="typing-cave-win-kicker" data-i18n="dungeon.typingComplete">TYPING CAVERN · COMPLETE</p>
           <h2 id="typingCaveWinTitle">CAVE CLEARED!</h2>
           <p id="typingCaveWinMessage">You completed all three levels and pushed the monster away!</p>
           <div class="typing-cave-win-actions">
@@ -329,6 +331,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
       'showStoryIntro' => $epqShowStoryIntro,
       'csrfToken' => $epqCsrfToken,
       'worldBackgrounds' => $epqWorldBackgrounds,
+      'dungeonSpecs' => epq_dungeon_specs(),
       'character' => $_SESSION['character'] ?? epq_character_profile(epq_db(), $epqPlayerId)
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
 
@@ -343,7 +346,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261014-skills1").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261014-dungeons1").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");

@@ -23,6 +23,7 @@ verify($status===200&&$earned['player']['xp']===25&&$earned['chapterStep']===1,'
 verify(claim($hero,'NPC',['npcId'=>'mira'],$id)[0]===409,'Receipt inputs cannot change');
 [, $again]=claim($hero,'NPC',['npcId'=>'elder']);verify(!$again['outcome']['rewardClaimed']&&$again['player']['xp']===25,'Fresh request cannot reclaim NPC');
 foreach([['mira','forest',790],['tala','camp',900],['kai','ruins',870]] as [$npc,$realm,$x]) {placeQuest($hero,$realm,$x);verify(claim($hero,'NPC',['npcId'=>$npc])[0]===200,'Original NPC chapter reward');}
+fixtureDungeonAccess($db,$hero,'ruins');
 placeQuest($hero,'ruins',1940);[, $start]=claim($hero,'TYPING_START');$run=$start['outcome']['typing'];
 verify(claim($stranger,'TYPING_ANSWER',['runId'=>$run['runId'],'questionToken'=>$run['questionToken'],'answer'=>$run['word']['answer']])[0]===409,'Typing belongs to session player');
 [, $wrong]=claim($hero,'TYPING_ANSWER',['runId'=>$run['runId'],'questionToken'=>$run['questionToken'],'answer'=>'wrong']);

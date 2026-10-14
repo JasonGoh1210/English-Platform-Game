@@ -9,8 +9,8 @@ epq_require_login_page();
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="icon" href="data:,">
   <title>技能树 · English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/learning.css?v=20261014-skills1">
-  <link rel="stylesheet" href="/FYP/css/skills.css?v=20261014-skills1">
+  <link rel="stylesheet" href="/FYP/css/learning.css?v=20261014-dungeons1">
+  <link rel="stylesheet" href="/FYP/css/skills.css?v=20261014-dungeons1">
 </head>
 <body class="learning-page skills-page">
   <main class="learning-shell">
@@ -42,6 +42,6 @@ epq_require_login_page();
     </dialog>
   </main>
   <script>window.EPQ_SKILLS = <?= json_encode(['csrfToken'=>(string)$_SESSION['csrf_token']], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
-  <script type="module" src="/FYP/js/skills.js?v=20261014-skills1"></script>
+  <script type="module" src="/FYP/js/skills.js?v=20261014-dungeons1"></script>
 </body>
 </html>

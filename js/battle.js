@@ -1,11 +1,11 @@
-import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261014-skills1";
-import { battleToken, createBattleClient } from "./battle-api.js?v=20261014-skills1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-skills1";
-import { playSound } from "./audio.js?v=20261014-skills1";
-import { normalizeTutorial } from "./tutorial.js?v=20261014-skills1";
-import { paintCharacterImages } from "./characters.js?v=20261014-skills1";
-import { createBattleReviewPanel } from "./battle-review.js?v=20261014-skills1";
-import { pixelArtPaths } from "./pixel-world.js?v=20261014-skills1";
+import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261014-dungeons1";
+import { battleToken, createBattleClient } from "./battle-api.js?v=20261014-dungeons1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-dungeons1";
+import { playSound } from "./audio.js?v=20261014-dungeons1";
+import { normalizeTutorial } from "./tutorial.js?v=20261014-dungeons1";
+import { paintCharacterImages } from "./characters.js?v=20261014-dungeons1";
+import { createBattleReviewPanel } from "./battle-review.js?v=20261014-dungeons1";
+import { pixelArtPaths } from "./pixel-world.js?v=20261014-dungeons1";
 
 // Use the same per-player storage namespace as the map. If these keys differ,
 // the battle page cannot find the enemy that the map just stored and redirects back.
@@ -128,6 +128,9 @@ const enemies = {
     questionTypes: ["SENTENCE_BUILDER"], hp: 135, damage: 13, xp: 50, coins: 22, role: "CAVE SPIRIT", roleKey: "battle.caveSpirit"
   }
 };
+for(const [realm,spec] of Object.entries(AUTH_CONTEXT.dungeonSpecs || {}))for(const creature of spec.enemies) {
+  enemies[creature.id]={...creature,realm,dungeon:true,type:"guardian",roleKey:"dungeon.challenge"};
+}
 
 const ui = {
   enemyName: document.getElementById("battleEnemyName"),
@@ -232,7 +235,7 @@ function updateSave(patch) {
 }
 
 function battleFailure(result) {
-  setBattleMessage(result?.errorCode === "MIGRATION_REQUIRED" ? "battle.migrationRequired" : "battle.serverFailed");
+  setBattleMessage(result?.errorCode === "DUNGEON_LOCKED" ? "dungeon.battleLocked" : result?.errorCode === "MIGRATION_REQUIRED" ? "battle.migrationRequired" : "battle.serverFailed");
 }
 
 
@@ -256,6 +259,8 @@ function setBattleMessage(key, values = {}) {
 
 function localizeBattleStaticText() {
   if (!state.enemy) return;
+  const kicker=document.querySelector(".battle-title .battle-kicker");
+  kicker.dataset.i18n=state.enemy.dungeon?"dungeon.kicker":"battle.kicker";kicker.textContent=t(kicker.dataset.i18n);
   renderWordStrike();
   ui.enemyName.textContent = localEnemyName();
   ui.enemyLabel.textContent = localEnemyName().toUpperCase();
@@ -820,8 +825,9 @@ async function init() {
   document.body.classList.add("battle-js-ready");
   setBattleMessage("battle.loading");
   state.enemy = getEnemy();
-  document.body.dataset.realm = state.enemy.id === "slime-01" ? "maple" : state.enemy.id === "bat-01" ? "forest" : state.enemy.id === "road-guardian-01" ? "camp" : "ruins";
-  document.body.dataset.encounter = ["cave-wraith-01","echo-slime-01","echo-dragon-01"].includes(state.enemy.id) ? "cave" : "outdoor";
+  document.body.dataset.realm = state.enemy.realm || (state.enemy.id === "slime-01" ? "maple" : state.enemy.id === "bat-01" ? "forest" : state.enemy.id === "road-guardian-01" ? "camp" : "ruins");
+  document.body.dataset.encounter = state.enemy.dungeon ? "cave" : "outdoor";
+  if(state.enemy.dungeon)document.body.style.setProperty("--battle-scenery",'url("'+AUTH_CONTEXT.dungeonSpecs[state.enemy.realm].background+'")');
   state.enemyHp = state.enemy.hp;
   state.focusUsed = false;
 
@@ -832,7 +838,7 @@ async function init() {
   // Use art matched to the actual enemy. Slime encounters must not show
   // the winged purple monster; other enemies use the available fantasy sprite.
   ui.enemyFigure.textContent = "";
-  ui.enemyFigure.classList.toggle("native-pixel-64", Boolean(pixelArtPaths.monsters[state.enemy.id]));
+  ui.enemyFigure.classList.toggle("native-pixel-64", Boolean(pixelArtPaths.monsters[state.enemy.id]) || /-64\.png/.test(state.enemy.spritePath));
   const monsterArt = document.createElement("img");
   monsterArt.alt = state.enemy.name;
   monsterArt.draggable = false;
@@ -856,6 +862,7 @@ async function init() {
     ui.playerSprite.src = "/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-assetpaths1";
   }
   paintCharacterImages(AUTH_CONTEXT.character);
+  localizeBattleStaticText();
 
   bindBattleEvents();
   document.getElementById("resultLearningLink").addEventListener("click", event => {
