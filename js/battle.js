@@ -1,11 +1,11 @@
-import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261014-learning1";
-import { battleToken, createBattleClient } from "./battle-api.js?v=20261014-learning1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-learning1";
-import { playSound } from "./audio.js?v=20261014-learning1";
-import { normalizeTutorial } from "./tutorial.js?v=20261014-learning1";
-import { paintCharacterImages } from "./characters.js?v=20261014-learning1";
-import { createBattleReviewPanel } from "./battle-review.js?v=20261014-learning1";
-import { pixelArtPaths } from "./pixel-world.js?v=20261014-learning1";
+import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261014-skills1";
+import { battleToken, createBattleClient } from "./battle-api.js?v=20261014-skills1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-skills1";
+import { playSound } from "./audio.js?v=20261014-skills1";
+import { normalizeTutorial } from "./tutorial.js?v=20261014-skills1";
+import { paintCharacterImages } from "./characters.js?v=20261014-skills1";
+import { createBattleReviewPanel } from "./battle-review.js?v=20261014-skills1";
+import { pixelArtPaths } from "./pixel-world.js?v=20261014-skills1";
 
 // Use the same per-player storage namespace as the map. If these keys differ,
 // the battle page cannot find the enemy that the map just stored and redirects back.
@@ -52,6 +52,8 @@ function applyServerBattle(result) {
   state.playerHp = result.battle.playerHp;
   state.enemyHp = result.battle.enemyHp;
   state.focusUsed = result.battle.focusUsed;
+  state.wordStrikeLevel = result.battle.wordStrikeLevel || 0;
+  if (ui.wordStrikeStatus) renderWordStrike();
   if (result.player) updateSave({xp:result.player.xp, coins:result.player.coins, power:result.player.englishPowerTotal, level:result.player.level});
   updateHp();
   return true;
@@ -158,6 +160,7 @@ const ui = {
   activeSkillButton: document.getElementById("activeSkillButton"),
   activeItemButton: document.getElementById("activeItemButton"),
   activeRunButton: document.getElementById("activeRunButton"),
+  wordStrikeStatus: document.getElementById("battleWordStrike"),
   battleResult: document.getElementById("battleResult"),
   resultKicker: document.getElementById("resultKicker"),
   resultTitle: document.getElementById("resultTitle"),
@@ -174,6 +177,7 @@ const state = {
   currentQuestion: null,
   questionToken: null,
   remaining: 0,
+  wordStrikeLevel: 0,
   loadingQuestion: false,
   skillPending: false,
   confirmedEnemyTurn: null,
@@ -252,6 +256,7 @@ function setBattleMessage(key, values = {}) {
 
 function localizeBattleStaticText() {
   if (!state.enemy) return;
+  renderWordStrike();
   ui.enemyName.textContent = localEnemyName();
   ui.enemyLabel.textContent = localEnemyName().toUpperCase();
   ui.enemyRole.textContent = t(state.enemy.roleKey);
@@ -278,11 +283,20 @@ function localizeBattleStaticText() {
     });
     const submit = ui.answerArea.querySelector(".battle-submit");
     if (submit) submit.textContent = t("battle.buildAttack");
+    const clear = ui.answerArea.querySelector(".battle-clear");
+    if (clear) clear.textContent = t("learning.clear");
+    ui.answerArea.querySelectorAll(".battle-sentence button").forEach(button=>button.setAttribute("aria-label",t("battle.removeWord",{word:button.textContent})));
+    ui.timerText.textContent = state.currentQuestion.timed === false ? t("battle.selfPaced") : Math.max(0,state.remaining).toFixed(1)+"s";
   }
   if (state.mode === "MENU") {
     ui.commandPrompt.textContent = t("battle.whatDo");
     ui.menuSubtext.textContent = t("battle.chooseAction");
   }
+}
+
+function renderWordStrike() {
+  ui.wordStrikeStatus.classList.toggle("hidden", !state.wordStrikeLevel);
+  ui.wordStrikeStatus.textContent = state.wordStrikeLevel ? t("battle.wordStrikeActive", {level:state.wordStrikeLevel,bonus:state.wordStrikeLevel*4}) : "";
 }
 
 function localizeQuestionTheme() {
@@ -388,19 +402,30 @@ function renderChoices(question) {
     const bank = document.createElement("div");
     bank.className = "battle-word-bank";
 
-    (question.words || []).forEach(word => {
+    (question.words || []).forEach((word,index) => {
       const button = document.createElement("button");
       button.className = "battle-word-chip";
       button.type = "button";
       button.textContent = word;
+      button.dataset.wordIndex = String(index);
       button.addEventListener("click", () => {
-        if (state.locked || button.classList.contains("selected")) return;
+        if (state.locked || state.itemPending || state.skillPending || state.settingsOpen || state.settingsPending || state.settingsPaused || state.settingsFailed || button.classList.contains("selected")) return;
         button.classList.add("selected");
         state.selectedWords.push(word);
-        const chip = document.createElement("span");
+        const chip = document.createElement("button");
+        chip.type = "button";
         chip.className = "battle-word-chip";
         chip.textContent = word;
+        chip.setAttribute("aria-label",t("battle.removeWord",{word}));
+        chip.addEventListener("click",()=>{
+          if(state.locked || state.itemPending || state.skillPending || state.settingsOpen || state.settingsPending || state.settingsPaused || state.settingsFailed)return;
+          const slot=[...selected.children].indexOf(chip);
+          if(slot<0)return;
+          state.selectedWords.splice(slot,1);chip.remove();button.classList.remove("selected");button.focus();
+          submit.disabled=state.selectedWords.length!==(question.words||[]).length;
+        });
         selected.appendChild(chip);
+        submit.disabled=state.selectedWords.length!==(question.words||[]).length;
       });
       bank.appendChild(button);
     });
@@ -409,9 +434,18 @@ function renderChoices(question) {
     submit.className = "battle-submit";
     submit.type = "button";
     submit.textContent = t("battle.buildAttack");
+    submit.disabled = true;
     submit.addEventListener("click", () => resolve(state.selectedWords.slice(), submit, false));
 
-    ui.answerArea.append(selected, bank, submit);
+    const clear = document.createElement("button");
+    clear.type="button";clear.className="battle-clear battle-action-button";clear.textContent=t("learning.clear");
+    clear.addEventListener("click",()=>{
+      if(state.locked || state.itemPending || state.skillPending || state.settingsOpen || state.settingsPending || state.settingsPaused || state.settingsFailed)return;
+      state.selectedWords=[];selected.replaceChildren();bank.querySelectorAll("button").forEach(button=>button.classList.remove("selected"));submit.disabled=true;
+    });
+    const controls = document.createElement("div");
+    controls.className="battle-sentence-controls";controls.append(submit,clear);
+    ui.answerArea.append(selected, bank, controls);
     return;
   }
 
@@ -466,6 +500,11 @@ async function startQuestion() {
   if (tutorialBattle) coachBattle(q.type === "TRUE_FALSE" ? "tutorial.battle.trueFalse" : "tutorial.battle.oddWord");
   state.remaining = result.battle.remaining;
   ui.timerText.classList.remove("warning");
+  ui.timerText.classList.toggle("self-paced", q.timed === false);
+  if(q.timed === false) {
+    ui.timerText.textContent=t("battle.selfPaced");
+    return;
+  }
   ui.timerText.textContent = state.remaining.toFixed(1) + "s";
   state.timerId = window.setInterval(() => {
     if (state.locked || state.completed || state.itemPending || state.skillPending || state.leaving
@@ -504,7 +543,7 @@ async function resolve(value, button, timedOut) {
   playAttackAnimation();
   playSound("attack");
   if (Number(result.player?.level || 1) > previousLevel) playSound("level");
-  setBattleMessage(result.outcome.usedFocus ? "battle.focusHit" : "battle.directHit", {damage:result.outcome.damage});
+  setBattleMessage(result.outcome.skillBonus ? "battle.wordStrikeHit" : result.outcome.usedFocus ? "battle.focusHit" : "battle.directHit", {damage:result.outcome.damage,bonus:result.outcome.skillBonus});
   if (result.battle.status === "VICTORY") window.setTimeout(finishVictory, 800);
   else window.setTimeout(startQuestion, 900);
 }
@@ -888,7 +927,8 @@ window.render_game_to_text = () => JSON.stringify({
   enemy: state.enemy ? { name: localEnemyName(), hp: state.enemyHp } : null,
   playerHp: state.playerHp,
   focus: state.focusUsed,
-  timer: Math.max(0, Number(state.remaining || 0)),
+  timer: state.currentQuestion?.timed === false ? null : Math.max(0, Number(state.remaining || 0)),
+  wordStrikeLevel: state.wordStrikeLevel,
   paused: Boolean(state.settingsOpen || state.settingsPaused),
   pausePending: Boolean(state.settingsPending),
   question: state.currentQuestion ? { type: state.currentQuestion.type, text: state.currentQuestion.question, realm:state.currentQuestion.realm || null } : null,

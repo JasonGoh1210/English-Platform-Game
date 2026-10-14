@@ -28,6 +28,7 @@ jobs:
           node --check js/pixel-world.js
           node --check js/story-visuals.js
           node --check js/learning.js
+          node --check js/skills.js
       - name: Gameplay regression tests
         run: |
           node --test tests/*.test.cjs

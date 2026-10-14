@@ -1,0 +1,24 @@
+.skills-balances { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.skills-branch { margin:24px 0; padding:24px; border:3px solid #a99a76; background:#142535; }
+.skills-branch h2 { color:#f1dfa9; margin:0; }
+.skills-tree { list-style:none; padding:0; margin:28px 0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
+.skill-node { position:relative; padding:18px; border:2px solid #687d8e; background:#182d3b; display:flex; flex-direction:column; gap:12px; }
+.skill-node + .skill-node::before { content:"›"; position:absolute; left:-18px; top:44%; color:#b9c4c9; font-size:24px; }
+.skill-node.owned { border-color:#91c1a0; background:#203e35; }
+.skill-node.available { border-color:#ecd082; }
+.skill-node h3 { margin:0; font-size:20px; color:#f2dfab; }
+.skill-node p { margin:0; overflow-wrap:anywhere; }
+.skill-node .skill-effect { font-size:22px; color:#badfd5; font-weight:bold; }
+.skill-node .skill-condition { color:#becbd3; font-size:14px; }
+.skill-node button { margin-top:auto; width:100%; }
+#skillsStatus { min-height:26px; color:#f1d697; }
+#skillsConfirm { max-width:min(460px,calc(100% - 24px)); color:#e4e9ed; background:#142535; border:3px solid #d5bd7c; padding:24px; }
+#skillsConfirm::backdrop { background:rgba(3,8,14,.85); }
+#skillsConfirm h2 { color:#f0dfb4; margin-top:0; }
+.skills-confirm-actions { display:flex; gap:12px; }
+.skills-confirm-actions button { flex:1; }
+@media(max-width:650px) {
+  .skills-branch { padding:16px; }
+  .skills-tree { grid-template-columns:1fr; gap:24px; }
+  .skill-node + .skill-node::before { content:"⌄"; top:-29px; left:48%; }
+}

@@ -11,11 +11,13 @@ function epq_battle_key(mixed $key): string {
 
 function epq_battle_view(array $state): array {
     $view = array_intersect_key($state, array_flip(['status','enemyHp','playerHp','focusUsed']));
+    $view['wordStrikeLevel'] = (int)($state['wordStrikeLevel'] ?? 0);
     $view['paused'] = isset($state['pausedAt']) && ($state['pauseReason'] ?? null) === 'settings';
     if ($state['question'] !== null) {
         $view['question'] = epq_public_question($state['question']);
         $view['questionToken'] = $state['questionToken'];
-        $view['remaining'] = max(0, ($state['question']['timeLimit'] ?? 5) - (($state['pausedAt'] ?? microtime(true)) - $state['startedAt']));
+        $view['remaining'] = ($state['question']['timed'] ?? true) === false ? null
+            : max(0, ($state['question']['timeLimit'] ?? 5) - (($state['pausedAt'] ?? microtime(true)) - $state['startedAt']));
     }
     return $view;
 }
@@ -62,6 +64,7 @@ try {
         $enemy = epq_battle_enemies()[$enemyCode] ?? null;
         if (!$enemy) throw new InvalidArgumentException('Unknown enemy.');
         $initial = json_encode(['status'=>'ACTIVE', 'enemyHp'=>$enemy['hp'], 'playerHp'=>100, 'focusUsed'=>false,
+            'wordStrikeLevel'=>epq_word_strike_level($db,$playerId),
             'question'=>null, 'used'=>[], 'startedAt'=>0], JSON_THROW_ON_ERROR);
         $stmt = $db->prepare('INSERT IGNORE INTO verified_battles (battle_id, player_id, enemy_code, state_json) VALUES (?, ?, ?, ?)');
         $stmt->bind_param('siss', $battleId, $playerId, $enemyCode, $initial);
@@ -112,6 +115,9 @@ try {
         $recent = epq_recent_question_ids($db, $playerId, $enemy['realm']);
         $pool = epq_question_pool($enemy, $state['used'], $recent);
         $state['question'] = epq_prepare_question($pool[random_int(0, count($pool)-1)]);
+        // Ordinary map fights are self-paced; the optional Echo Cave keeps its timed challenges.
+        // An already issued old question retains its original timer across an update/reload.
+        $state['question']['timed'] = in_array($row['enemy_code'], ['cave-wraith-01','echo-slime-01','echo-dragon-01'], true);
         $state['used'][] = $state['question']['id'];
         $state['questionToken'] = bin2hex(random_bytes(16));
         $state['startedAt'] = microtime(true);
@@ -119,7 +125,7 @@ try {
         if ($state['question'] === null || ($body['questionToken'] ?? '') !== $state['questionToken']) throw new DomainException('Question is no longer active.');
         $q = $state['question'];
         $elapsed = max(0, microtime(true) - $state['startedAt']);
-        $outcome = epq_grade_attack($q, $body['answer'] ?? null, ($body['timedOut'] ?? false) === true, $elapsed, $state['focusUsed']);
+        $outcome = epq_grade_attack($q, $body['answer'] ?? null, ($body['timedOut'] ?? false) === true, $elapsed, $state['focusUsed'], (int)($state['wordStrikeLevel'] ?? 0));
         $skill = epq_question_skill($q);
         $questionJson = json_encode($q, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
         $answerJson = json_encode($body['answer'] ?? null, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);

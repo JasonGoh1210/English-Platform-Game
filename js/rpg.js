@@ -1,12 +1,12 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261014-learning1";
-import { playSound } from "./audio.js?v=20261014-learning1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-learning1";
-import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261014-learning1";
-import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261014-learning1";
-import { createQuestClient } from "./quest-api.js?v=20261014-learning1";
-import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261014-learning1";
-import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave } from "./pixel-world.js?v=20261014-learning1";
-import { storyPortraitSource } from "./story-visuals.js?v=20261014-learning1";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261014-skills1";
+import { playSound } from "./audio.js?v=20261014-skills1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-skills1";
+import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261014-skills1";
+import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261014-skills1";
+import { createQuestClient } from "./quest-api.js?v=20261014-skills1";
+import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261014-skills1";
+import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave } from "./pixel-world.js?v=20261014-skills1";
+import { storyPortraitSource } from "./story-visuals.js?v=20261014-skills1";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -133,7 +133,7 @@ const worldBackgroundPaths = {
 for (const realmId of Object.keys(worldBackgroundPaths)) {
   const availablePaths = window.EPQ_AUTH?.worldBackgrounds?.[realmId];
   if (Array.isArray(availablePaths)) {
-    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261014-learning1");
+    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261014-skills1");
   }
 }
 
@@ -965,7 +965,7 @@ bindHoldButton("rightButton", "right");
 document.getElementById("interactButton").addEventListener("click", interact);
 
 let journalNavigationPending = false;
-document.querySelectorAll('a[href="/FYP/learning.php"]').forEach(link => {
+document.querySelectorAll('a[href="/FYP/learning.php"], a[href="/FYP/skills.php"]').forEach(link => {
   link.addEventListener("click", async event => {
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
     event.preventDefault();
@@ -974,7 +974,7 @@ document.querySelectorAll('a[href="/FYP/learning.php"]').forEach(link => {
     resetMovementInput();
     try { saveWorldState(); await flushGameSave(); }
     catch (error) { console.warn("[English Power Quest] Journal navigation retains the available save.", error); }
-    window.location.href = "/FYP/learning.php";
+    window.location.href = link.getAttribute("href");
   });
 });
 

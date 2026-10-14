@@ -24,10 +24,15 @@ A mobile-friendly fantasy RPG prototype that teaches English through exploration
 - Post-battle learning summary with saved mistakes, correct answers, bilingual explanations and pagination
 - Learning journal with real question counts, owned historical mistakes and untimed server-graded practice
 - Settings pause freezes the server's battle timer, survives reload and resumes the same question
+- Self-paced ordinary realm battles; optional Echo Cave encounters retain timed challenges
+- Three-level Word Power skill branch with permanent, server-validated Skill Point purchases and vocabulary attack bonuses
+- Sentence Builder supports removing selected words, clearing the sentence and blocking incomplete submissions
 - First-login character creation with saved name, dice, gender and three sprite palettes
 - Google Identity Services sign-in and same-player binding, enabled by a local Client ID
 
 Combat, NPC chapter and typing rewards now use server grading and replay-safe receipts. Map coordinates and exploration snapshots remain browser-reported, with per-player LocalStorage used to recover unconfirmed saves.
+
+See [skill progression and combat pacing](docs/SKILLS_AND_COMBAT_PACING.md) for unlock costs, saved data, verification and remaining GDD priorities.
 
 ## Run locally with XAMPP
 

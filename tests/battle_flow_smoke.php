@@ -92,6 +92,16 @@ verify(action($actor, token(), 'START', ['enemyId'=>'fake-enemy'])[0] === 400, '
 [$status, $issued] = action($actor, $battle, 'QUESTION');
 verify($status === 200 && !isset($issued['battle']['question']['answer']), 'Server-issued public question');
 $question = $issued['battle']['question']; $questionToken = $issued['battle']['questionToken'];
+verify($issued['battle']['remaining']===null && $question['timed']===false, 'Ordinary map combat is self-paced');
+// Simulate an old, already-issued timed question to verify update compatibility
+// and retain the real deadline/pause checks below.
+$legacyState=json_decode($db->query("SELECT state_json FROM verified_battles WHERE battle_id='$battle'")->fetch_assoc()['state_json'],true);
+unset($legacyState['question']['timed']);
+$legacyJson=json_encode($legacyState,JSON_THROW_ON_ERROR);
+$legacyUpdate=$db->prepare('UPDATE verified_battles SET state_json=? WHERE battle_id=?');
+$legacyUpdate->bind_param('ss',$legacyJson,$battle); $legacyUpdate->execute();
+[, $issued]=action($actor,$battle,'QUESTION');
+verify(is_numeric($issued['battle']['remaining']), 'An issued pre-update question retains its timer');
 $pauseRequest = token();
 [, $paused] = action($actor, $battle, 'PAUSE', [], $pauseRequest);
 verify($paused['battle']['paused'] && $paused['battle']['questionToken'] === $questionToken, 'Settings pause keeps the question');
@@ -232,4 +242,53 @@ for ($i=0;$i<2;$i++) {
 verify($db->query('SELECT xp_total,coins_total FROM players WHERE player_id='.(int)$actor[2])->fetch_assoc()===$beforePractice, 'Practice cannot award currency or XP');
 verify((int)$db->query('SELECT COUNT(*) AS n FROM verified_answer_attempts')->fetch_assoc()['n']===$attemptCount, 'Practice never overwrites or adds combat attempts');
 verify(http('api/learning.php?before=invalid',null,$actor[0])[0]===400, 'Learning cursor validation');
+
+// Skill progression is purchased once per requested level with session ownership.
+[, $emptySkills]=http('api/skills.php',null,$other[0]);
+verify($emptySkills['skills']['wordStrikeLevel']===0, 'Skill branch starts locked');
+verify(http('api/skills.php',['skill'=>'word-strike','targetLevel'=>1],$other[0])[0]===403, 'Skill purchase CSRF');
+$purchase=['csrfToken'=>$other[1],'skill'=>'word-strike','targetLevel'=>1,'player_id'=>$actor[2],'cost'=>-999];
+verify(http('api/skills.php',$purchase,$other[0])[0]===409, 'Skill rejects insufficient level');
+$db->query('UPDATE players SET level_no=5,skill_points_total=0 WHERE player_id='.(int)$other[2]);
+verify(http('api/skills.php',$purchase,$other[0])[0]===409, 'Skill rejects insufficient points');
+$db->query('UPDATE players SET skill_points_total=6 WHERE player_id='.(int)$other[2]);
+verify(http('api/skills.php',array_merge($purchase,['targetLevel'=>3]),$other[0])[0]===409, 'Cannot skip the skill branch');
+$activeSkillBattle=token();
+action($other,$activeSkillBattle,'START',['enemyId'=>'slime-01','wordStrikeLevel'=>3]);
+for($target=1;$target<=3;$target++) {
+    $inputs=array_merge($purchase,['targetLevel'=>$target]);
+    [, $bought]=http('api/skills.php',$inputs,$other[0]);
+    [, $replayedBuy]=http('api/skills.php',$inputs,$other[0]);
+    verify($bought['changed'] && !$replayedBuy['changed'] && $bought['skills']===$replayedBuy['skills'], 'Each target skill level is charged once');
+}
+verify($bought['skills']['skillPoints']===0 && $bought['skills']['wordStrikeLevel']===3, 'Exact server-owned skill costs');
+[, $ownSkills]=http('api/skills.php',null,$actor[0]);
+verify($ownSkills['skills']['wordStrikeLevel']===0, 'Forged player ID cannot purchase for another character');
+[, $activeSnapshot]=action($other,$activeSkillBattle,'START',['enemyId'=>'slime-01']);
+verify($activeSnapshot['battle']['wordStrikeLevel']===0, 'Existing fight retains its original skills');
+$newSkillBattle=token();
+[, $skillStart]=action($other,$newSkillBattle,'START',['enemyId'=>'slime-01']);
+verify($skillStart['battle']['wordStrikeLevel']===3, 'New fights use the permanently unlocked skill');
+[, $skillQuestion]=action($other,$newSkillBattle,'QUESTION');
+if (epq_question_skill($skillQuestion['battle']['question'])!=='VOCABULARY') {
+    action($other,$newSkillBattle,'ANSWER',['questionToken'=>$skillQuestion['battle']['questionToken'],'answer'=>validAnswer($skillQuestion['battle']['question'])]);
+    [, $skillQuestion]=action($other,$newSkillBattle,'QUESTION');
+}
+$selfPacedState=json_decode($db->query("SELECT state_json FROM verified_battles WHERE battle_id='$newSkillBattle'")->fetch_assoc()['state_json'],true);
+$selfPacedState['startedAt']-=600;
+$selfPacedJson=json_encode($selfPacedState,JSON_THROW_ON_ERROR);
+$aging=$db->prepare('UPDATE verified_battles SET state_json=? WHERE battle_id=?');
+$aging->bind_param('ss',$selfPacedJson,$newSkillBattle);$aging->execute();
+[, $skillHit]=action($other,$newSkillBattle,'ANSWER',['questionToken'=>$skillQuestion['battle']['questionToken'],'answer'=>validAnswer($skillQuestion['battle']['question']),'timedOut'=>true,'skillBonus'=>999]);
+verify($skillHit['outcome']['correct'] && $skillHit['outcome']['damage']===32 && $skillHit['battle']['playerHp']===100, 'Self-paced correct answer adds only the trusted skill bonus after ten minutes');
+// A ledger failure cannot spend points without retaining its unlock.
+$db->query('UPDATE players SET level_no=2,skill_points_total=1 WHERE player_id='.(int)$actor[2]);
+$db->query("CREATE TRIGGER epq_test_skill_ledger BEFORE INSERT ON player_skill_point_transactions FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Isolated skill rollback'");
+$actorPurchase=['csrfToken'=>$actor[1],'skill'=>'word-strike','targetLevel'=>1];
+try {verify(http('api/skills.php',$actorPurchase,$actor[0])[0]===503, 'Skill ledger failure is reported');}
+finally {$db->query('DROP TRIGGER epq_test_skill_ledger');}
+[, $rolledBackSkill]=http('api/skills.php',null,$actor[0]);
+verify($rolledBackSkill['skills']['wordStrikeLevel']===0 && $rolledBackSkill['skills']['skillPoints']===1, 'Failed skill purchase rolls back all changes');
+[, $retriedSkill]=http('api/skills.php',$actorPurchase,$actor[0]);
+verify($retriedSkill['changed'] && $retriedSkill['skills']['wordStrikeLevel']===1, 'Failed skill purchase can safely retry');
 echo "PASS: verified battle/guest upgrade plus settings pause/reload/replay/ownership, learning stats/history/CSRF/snapshot practice and unchanged rewards\n";

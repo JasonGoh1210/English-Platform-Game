@@ -8,15 +8,15 @@ $epqPlayerId = (int)($_SESSION['player_id'] ?? 0);
 $epqStorageId = (string)$epqPlayerId;
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="battle-document">
 <head>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23101521'/%3E%3Cpath d='M16 4 20 12 28 16 20 20 16 28 12 20 4 16 12 12Z' fill='%23e6ca8b'/%3E%3C/svg%3E">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#101b24">
   <title>English Power Quest · Battle</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261014-learning1">
-  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261014-learning1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261014-skills1">
+  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261014-skills1">
 </head>
 <body class="battle-page">
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -71,6 +71,7 @@ $epqStorageId = (string)$epqPlayerId;
         <button type="button" id="battleTutorialSkip" data-i18n="tutorial.skip">SKIP TUTORIAL</button>
       </aside>
       <div class="battle-message-line" id="battleMessage" data-i18n="battle.initialMessage">A wild opponent appeared!</div>
+      <p class="battle-word-strike hidden" id="battleWordStrike"></p>
 
       <div id="battleMenu" class="battle-menu">
         <div class="command-prompt">
@@ -165,6 +166,6 @@ $epqStorageId = (string)$epqPlayerId;
       'character' => $_SESSION['character'] ?? epq_character_profile(epq_db(), $epqPlayerId)
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   </script>
-  <script type="module" src="/FYP/js/battle.js?v=20261014-learning1"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261014-skills1"></script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/skills.php';
 
 // Live encounters in the four realms, including the optional Echo Cave rooms.
 // data/enemies.json contains older design concepts, not the current encounters.
@@ -65,7 +66,7 @@ function epq_prepare_question(array $question): array {
 function epq_public_question(array $question): array {
     // An allowlist prevents future answer/explanation fields leaking by default.
     return array_intersect_key($question, array_flip([
-        'id','type','skill','difficulty','realm','question','questionZh','prompt','promptZh','words','timeLimit'
+        'id','type','skill','difficulty','realm','question','questionZh','prompt','promptZh','words','timeLimit','timed'
     ]));
 }
 
@@ -91,15 +92,17 @@ function epq_question_skill(array $question): string {
     };
 }
 
-function epq_grade_attack(array $question, mixed $answer, bool $timeout, float $elapsed, bool $focus): array {
+function epq_grade_attack(array $question, mixed $answer, bool $timeout, float $elapsed, bool $focus, int $wordStrikeLevel = 0): array {
     $limit = (float)($question['timeLimit'] ?? 5);
+    $timed = ($question['timed'] ?? true) !== false;
     // One second of transport tolerance; client-sent speed/reward values are ignored.
-    $timedOut = $timeout || $elapsed > $limit + 1;
+    $timedOut = $timed && ($timeout || $elapsed > $limit + 1);
     $correct = !$timedOut && epq_answer_correct($question, $answer);
     $base = match ($question['difficulty']) { 'HARD' => 30, 'MEDIUM' => 25, default => 20 };
     return [
         'correct' => $correct, 'timedOut' => $timedOut,
-        'damage' => $correct ? (int)round($base * ($focus ? 1.5 : 1) * ($elapsed <= $limit * 0.45 ? 1.1 : 1)) : 0,
+        'damage' => $correct ? (int)round($base * ($focus ? 1.5 : 1) * ($timed && $elapsed <= $limit * 0.45 ? 1.1 : 1)) + epq_word_strike_bonus($question,$wordStrikeLevel) : 0,
+        'skillBonus' => $correct ? epq_word_strike_bonus($question,$wordStrikeLevel) : 0,
         'xp' => $correct ? (int)($question['xp'] ?? 10) : 0,
         'coins' => $correct ? (int)($question['coins'] ?? 5) : 0,
         'power' => $correct ? (int)($question['englishPower'] ?? 1) : 0,

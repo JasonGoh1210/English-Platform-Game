@@ -31,9 +31,9 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261014-learning1">
-  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261014-learning1">
-  <link rel="stylesheet" href="/FYP/css/story-pixel.css?v=20261014-learning1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261014-skills1">
+  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261014-skills1">
+  <link rel="stylesheet" href="/FYP/css/story-pixel.css?v=20261014-skills1">
 </head>
 <body>
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -78,6 +78,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
       </section>
       <div class="map-toolbar">
         <div class="location-pill pixel-location" id="locationText">MAPLE TOWN</div>
+        <a class="settings-open-button pixel-skills-link" href="/FYP/skills.php" data-i18n="skills.open">技能树</a>
         <button type="button" class="quest-guide-open" id="questGuideOpen" data-i18n="guide.open" aria-controls="questGuideScreen" aria-expanded="false">Quest & caves</button>
         <button type="button" class="settings-open-button" id="settingsOpenButton" data-i18n="settings.button">⚙ SETTINGS</button>
       </div>
@@ -342,7 +343,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261014-learning1").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261014-skills1").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");
