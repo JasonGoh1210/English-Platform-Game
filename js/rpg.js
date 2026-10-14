@@ -1,12 +1,12 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261014-inputfix";
-import { playSound } from "./audio.js?v=20261014-inputfix";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-inputfix";
-import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261014-inputfix";
-import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261014-inputfix";
-import { createQuestClient } from "./quest-api.js?v=20261014-inputfix";
-import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261014-inputfix";
-import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave } from "./pixel-world.js?v=20261014-inputfix";
-import { storyPortraitSource } from "./story-visuals.js?v=20261014-inputfix";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261014-learning1";
+import { playSound } from "./audio.js?v=20261014-learning1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-learning1";
+import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261014-learning1";
+import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261014-learning1";
+import { createQuestClient } from "./quest-api.js?v=20261014-learning1";
+import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261014-learning1";
+import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave } from "./pixel-world.js?v=20261014-learning1";
+import { storyPortraitSource } from "./story-visuals.js?v=20261014-learning1";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -133,7 +133,7 @@ const worldBackgroundPaths = {
 for (const realmId of Object.keys(worldBackgroundPaths)) {
   const availablePaths = window.EPQ_AUTH?.worldBackgrounds?.[realmId];
   if (Array.isArray(availablePaths)) {
-    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261014-inputfix");
+    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261014-learning1");
   }
 }
 
@@ -963,6 +963,20 @@ function bindHoldButton(id, prop) {
 bindHoldButton("leftButton", "left");
 bindHoldButton("rightButton", "right");
 document.getElementById("interactButton").addEventListener("click", interact);
+
+let journalNavigationPending = false;
+document.querySelectorAll('a[href="/FYP/learning.php"]').forEach(link => {
+  link.addEventListener("click", async event => {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
+    event.preventDefault();
+    if (journalNavigationPending) return;
+    journalNavigationPending = true;
+    resetMovementInput();
+    try { saveWorldState(); await flushGameSave(); }
+    catch (error) { console.warn("[English Power Quest] Journal navigation retains the available save.", error); }
+    window.location.href = "/FYP/learning.php";
+  });
+});
 
 document.getElementById("destinationPrev").addEventListener("click", () => selectDestination(-1));
 document.getElementById("destinationNext").addEventListener("click", () => selectDestination(1));
@@ -1988,6 +2002,8 @@ function updateLocation() {
 }
 
 function refreshWorldLanguage() {
+  const journalLink = document.querySelector(".pixel-learning-link");
+  if (journalLink) journalLink.title = t("learning.seen") + " · " + t("learning.open");
   updateQuest();
   syncHUD();
   updateLocation();
@@ -2054,6 +2070,10 @@ async function loadServerPlayer() {
     world.coins = Number(data.player.coins || 0);
     world.power = Number(data.player.englishPowerTotal || 0);
     world.levelProgress=data.player.levelProgress;
+    const seen = document.getElementById("questionsSeenText");
+    if (seen) seen.textContent = Number.isSafeInteger(data.learning?.questionsSeen) ? String(data.learning.questionsSeen) : "—";
+    const journal = document.querySelector(".pixel-learning-link");
+    if (journal) journal.title = t("learning.seen") + " · " + t("learning.open");
     world.questStep=Number(data.player.chapterStep||0);
     if(world.questStep>=1&&tutorialActive(world.tutorial)&&["MOVE","MEET"].includes(world.tutorial.stage)) {
       world.tutorial={...world.tutorial,stage:"SLIME"};

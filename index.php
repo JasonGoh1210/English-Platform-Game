@@ -31,9 +31,9 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261014-inputfix">
-  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261014-inputfix">
-  <link rel="stylesheet" href="/FYP/css/story-pixel.css?v=20261014-inputfix">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261014-learning1">
+  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261014-learning1">
+  <link rel="stylesheet" href="/FYP/css/story-pixel.css?v=20261014-learning1">
 </head>
 <body>
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -63,7 +63,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         <div class="pixel-currency-list">
           <div><span class="pixel-coin">◉</span><b id="coinsText">0</b></div>
           <div><span class="pixel-star">★</span><b id="powerText">0</b></div>
-          <div><span class="pixel-book">▤</span><b>0</b></div>
+          <div><a class="pixel-learning-link" href="/FYP/learning.php" aria-label="Learning records and mistakes" data-i18n-aria-label="learning.open"><span class="pixel-book" aria-hidden="true">▤</span><b id="questionsSeenText">—</b></a></div>
         </div>
       </section>
 
@@ -304,6 +304,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         </div>
         <?php require __DIR__ . '/includes/sound_settings.php'; ?>
         <p class="settings-saved" data-i18n="settings.saved">Language and sound settings are saved automatically.</p>
+      <a class="settings-account-link" href="/FYP/learning.php" data-i18n="learning.open">LEARNING & MISTAKES</a>
         <a class="settings-account-link" href="/FYP/account.php" data-i18n="account.settings">账号设置</a>
         <form class="game-logout-form" method="post" action="/FYP/logout.php">
           <input type="hidden" name="csrf_token" value="<?= epq_h($epqCsrfToken) ?>">
@@ -341,7 +342,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261014-inputfix").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261014-learning1").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");

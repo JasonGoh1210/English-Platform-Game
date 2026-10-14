@@ -1,5 +1,10 @@
 /* Shared pixel-art presentation; gameplay and saved world coordinates are unchanged. */
 .pixel-world-ui #gameCanvas { image-rendering: pixelated; }
+.pixel-learning-link { display:flex; align-items:center; justify-content:space-between; gap:6px;
+  min-width:44px; min-height:44px; color:inherit; text-decoration:none; pointer-events:auto; }
+.pixel-learning-link:focus-visible { outline:3px solid #f4d68b; outline-offset:2px; }
+.battle-page #resultLearningLink { display:inline-flex; align-items:center; justify-content:center; text-decoration:none;
+  min-height:44px; border:2px solid #899a9f; color:#e8dfc5; background:#304b54; padding:10px 14px; }
 .typing-cave-monster img { image-rendering:pixelated; filter:none; }
 .destination-screen { background: #05070b; overflow-y: auto; padding: 24px 18px; align-items:flex-start; }
 .destination-screen::before, .destination-screen::after, .destination-topbar { display: none; }

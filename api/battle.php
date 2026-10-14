@@ -11,6 +11,7 @@ function epq_battle_key(mixed $key): string {
 
 function epq_battle_view(array $state): array {
     $view = array_intersect_key($state, array_flip(['status','enemyHp','playerHp','focusUsed']));
+    $view['paused'] = isset($state['pausedAt']) && ($state['pauseReason'] ?? null) === 'settings';
     if ($state['question'] !== null) {
         $view['question'] = epq_public_question($state['question']);
         $view['questionToken'] = $state['questionToken'];
@@ -43,7 +44,7 @@ try {
     if (!is_array($body)) throw new InvalidArgumentException('Object required.');
     if (!epq_csrf_is_valid($body['csrfToken'] ?? null)) epq_json(['ok'=>false, 'error'=>'Invalid request token.'], 403);
     $action = $body['action'] ?? '';
-    if (!in_array($action, ['START','QUESTION','ANSWER','FOCUS','HERB','RESUME','RUN'], true)) throw new InvalidArgumentException('Unknown action.');
+    if (!in_array($action, ['START','QUESTION','ANSWER','FOCUS','HERB','PAUSE','RESUME','RUN'], true)) throw new InvalidArgumentException('Unknown action.');
     $battleId = epq_battle_key($body['battleId'] ?? null);
     $requestId = epq_battle_key($body['requestId'] ?? null);
     $db = epq_db();
@@ -85,20 +86,29 @@ try {
         if (!hash_equals($existing['payload_hash'], $payloadHash)) throw new DomainException('Request token already used for different inputs.');
         $replayed = json_decode($existing['response_json'], true, 512, JSON_THROW_ON_ERROR);
         // A retried question response must not restart its countdown at old time.
-        if ($action === 'QUESTION' && isset($replayed['battle']['questionToken'])
+        if (in_array($action, ['QUESTION','PAUSE','RESUME'], true) && isset($replayed['battle']['questionToken'])
             && $state['question'] !== null && $replayed['battle']['questionToken'] === $state['questionToken']) {
             $replayed['battle']['remaining'] = epq_battle_view($state)['remaining'];
+            $replayed['battle']['paused'] = epq_battle_view($state)['paused'];
         }
         $db->commit();
         epq_json($replayed);
     }
     $outcome = null;
     if ($action !== 'START' && $state['status'] !== 'ACTIVE') throw new DomainException('Battle has already ended.');
-    if ($action !== 'START' && isset($state['pausedAt'])) {
-        $state['startedAt'] += microtime(true) - $state['pausedAt'];
-        unset($state['pausedAt']);
+    $settingsPaused = isset($state['pausedAt']) && ($state['pauseReason'] ?? null) === 'settings';
+    if ($settingsPaused && in_array($action, ['ANSWER','FOCUS','HERB'], true)) {
+        throw new DomainException('Close settings before continuing the battle.');
     }
-    if ($action === 'QUESTION' && $state['question'] === null) {
+    if (isset($state['pausedAt']) && (in_array($action, ['RESUME','RUN'], true)
+        || !$settingsPaused && !in_array($action, ['START','PAUSE'], true))) {
+        $state['startedAt'] += microtime(true) - $state['pausedAt'];
+        unset($state['pausedAt'], $state['pauseReason']);
+    }
+    if ($action === 'PAUSE' && $state['question'] !== null) {
+        $state['pausedAt'] = $state['pausedAt'] ?? microtime(true);
+        $state['pauseReason'] = 'settings';
+    } elseif ($action === 'QUESTION' && $state['question'] === null) {
         $recent = epq_recent_question_ids($db, $playerId, $enemy['realm']);
         $pool = epq_question_pool($enemy, $state['used'], $recent);
         $state['question'] = epq_prepare_question($pool[random_int(0, count($pool)-1)]);

@@ -22,6 +22,8 @@ A mobile-friendly fantasy RPG prototype that teaches English through exploration
 - Server-issued battle questions, server grading/damage/rewards, durable HP and idempotent action receipts
 - Persisted correct/wrong/timeout attempts and per-skill accuracy
 - Post-battle learning summary with saved mistakes, correct answers, bilingual explanations and pagination
+- Learning journal with real question counts, owned historical mistakes and untimed server-graded practice
+- Settings pause freezes the server's battle timer, survives reload and resumes the same question
 - First-login character creation with saved name, dice, gender and three sprite palettes
 - Google Identity Services sign-in and same-player binding, enabled by a local Client ID
 
@@ -69,7 +71,7 @@ Latest reproduced issues and input fixes: [Project check, 2026-10-14](docs/PROJE
 
 - Map coordinates and local monster approach remain browser-reported; server quest validation does not prove movement.
 - Keep the server's JSON question bank authoritative; any future MySQL content import must remain consistent with issued questions and historical review snapshots.
-- Add a map entry for historical mistakes, independent practice and mastery calculations; the current review is for the finished battle.
+- Add mastery calculations and a dedicated skill progression view; the journal currently tracks battle records and untimed historical practice.
 - NPC and typing rewards now use server grading, chapter order and replay-safe receipts; the legacy arbitrary reward endpoint is closed.
 - Use a restricted MySQL account and avoid returning raw exception messages outside local development.
 
@@ -95,3 +97,5 @@ Core emotional outcome: **I GOT STRONGER.**
 [Pixel story UI and building scale](docs/PIXEL_STORY_UI.md) documents matching dialogue/story NPC portraits, larger pixel architecture and the refreshed opening/chapter UI. No SQL migration or player reset is required.
 
 [Layout review and NPC portraits](docs/LAYOUT_REVIEW_AND_PORTRAITS.md) lists the four native 256x256 upper-body portraits, smaller unobstructed signs and centered battle questions. Map sprites, portal coordinates, saved positions and combat rules remain intact.
+
+[Learning journal and settings pause](docs/LEARNING_JOURNAL_AND_PAUSE.md) connects the map book to real recorded question counts, historical mistakes and three practice types, and adds server-backed battle pause/resume. No SQL migration or player reset is required.

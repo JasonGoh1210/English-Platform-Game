@@ -92,6 +92,26 @@ verify(action($actor, token(), 'START', ['enemyId'=>'fake-enemy'])[0] === 400, '
 [$status, $issued] = action($actor, $battle, 'QUESTION');
 verify($status === 200 && !isset($issued['battle']['question']['answer']), 'Server-issued public question');
 $question = $issued['battle']['question']; $questionToken = $issued['battle']['questionToken'];
+$pauseRequest = token();
+[, $paused] = action($actor, $battle, 'PAUSE', [], $pauseRequest);
+verify($paused['battle']['paused'] && $paused['battle']['questionToken'] === $questionToken, 'Settings pause keeps the question');
+$heldState = json_decode($db->query("SELECT state_json FROM verified_battles WHERE battle_id='$battle'")->fetch_assoc()['state_json'], true);
+// Simulate a long pause without adding a slow CI sleep; elapsed answering time is unchanged.
+$heldState['startedAt'] -= 30; $heldState['pausedAt'] -= 30;
+$heldJson = json_encode($heldState, JSON_THROW_ON_ERROR);
+$hold = $db->prepare('UPDATE verified_battles SET state_json=? WHERE battle_id=?');
+$hold->bind_param('ss',$heldJson,$battle); $hold->execute();
+[, $pauseReplay] = action($actor,$battle,'PAUSE',[],$pauseRequest);
+verify(abs($paused['battle']['remaining']-$pauseReplay['battle']['remaining'])<0.05, 'Pause replay preserves remaining time');
+[, $pausedReload] = action($actor,$battle,'START',['enemyId'=>'slime-01']);
+verify($pausedReload['battle']['paused'] && abs($pausedReload['battle']['remaining']-$paused['battle']['remaining'])<0.05, 'Reload does not resume settings pause');
+verify(action($other,$battle,'PAUSE')[0]===404, 'Pause ownership');
+verify(action($actor,$battle,'ANSWER',['questionToken'=>$questionToken,'answer'=>validAnswer($question)])[0]===409, 'Cannot answer behind settings');
+verify(action($actor,$battle,'FOCUS')[0]===409 && action($actor,$battle,'HERB')[0]===409, 'Paused actions cannot consume items or skills');
+[, $stillPaused] = action($actor,$battle,'QUESTION');
+verify($stillPaused['battle']['paused'] && $stillPaused['battle']['questionToken']===$questionToken, 'Question requests do not unpause settings');
+[, $resumedSettings] = action($actor,$battle,'RESUME');
+verify(!$resumedSettings['battle']['paused'] && abs($resumedSettings['battle']['remaining']-$paused['battle']['remaining'])<0.2, 'Resume excludes a long pause');
 $wrong = $question['type'] === 'TRUE_FALSE' ? !validAnswer($question) : 'incorrect';
 $request = token();
 $wrongInputs = ['questionToken'=>$questionToken,'answer'=>$wrong,'xpDelta'=>99999,'englishPowerDelta'=>99999];
@@ -194,4 +214,22 @@ verify($account['player']['playerId'] === $actor[2], 'Upgrade preserves battle p
 verify($upgradedMap['state']['tutorial']['stage'] === 'MOVE', 'Guest upgrade preserves tutorial checkpoint');
 [, $oldBattle] = action($actor, $battle, 'START', ['enemyId'=>'slime-01']);
 verify($oldBattle['battle']['status'] === 'VICTORY' && $oldBattle['player']['xp'] === $xp+20, 'Upgrade preserves battle outcome, attempts and rewards');
-echo "PASS: battle ownership, CSRF, grading, combat, metrics, focus, victory, reload, replay conflicts, Herb, pause, rollback, Run, legacy rejection and guest upgrade\n";
+// Learning records are owned, paginated, snapshot-based and practice is read-only.
+[, $journal] = http('api/learning.php',null,$actor[0]);
+verify($journal['ok'] && $journal['stats']['total']>0 && $journal['stats']['questionsSeen']>0 && count($journal['mistakes'])>0, 'Persisted learning journal');
+verify($account['learning']===$journal['stats'], 'Book statistics match learning journal');
+[, $otherJournal] = http('api/learning.php',null,$other[0]);
+verify($otherJournal['mistakes']===[], 'Other player cannot see historical mistakes');
+$mistake = $journal['mistakes'][0]; $attemptId = $mistake['attemptId'];
+$beforePractice = $db->query('SELECT xp_total,coins_total FROM players WHERE player_id='.(int)$actor[2])->fetch_assoc();
+$attemptCount = (int)$db->query('SELECT COUNT(*) AS n FROM verified_answer_attempts')->fetch_assoc()['n'];
+verify(http('api/learning.php',['attemptId'=>$attemptId,'answer'=>null],$actor[0])[0]===403, 'Practice CSRF');
+verify(http('api/learning.php',['csrfToken'=>$other[1],'attemptId'=>$attemptId,'answer'=>$mistake['correctAnswer']],$other[0])[0]===404, 'Practice ownership');
+for ($i=0;$i<2;$i++) {
+    [, $practice] = http('api/learning.php',['csrfToken'=>$actor[1],'attemptId'=>$attemptId,'answer'=>$mistake['correctAnswer'],'xpDelta'=>99999],$actor[0]);
+    verify($practice['practice']['correct'], 'Historical practice grades original answer');
+}
+verify($db->query('SELECT xp_total,coins_total FROM players WHERE player_id='.(int)$actor[2])->fetch_assoc()===$beforePractice, 'Practice cannot award currency or XP');
+verify((int)$db->query('SELECT COUNT(*) AS n FROM verified_answer_attempts')->fetch_assoc()['n']===$attemptCount, 'Practice never overwrites or adds combat attempts');
+verify(http('api/learning.php?before=invalid',null,$actor[0])[0]===400, 'Learning cursor validation');
+echo "PASS: verified battle/guest upgrade plus settings pause/reload/replay/ownership, learning stats/history/CSRF/snapshot practice and unchanged rewards\n";

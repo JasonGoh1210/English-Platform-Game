@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__.'/../includes/quests.php';
+require_once __DIR__.'/../includes/learning.php';
 
 try {
     $db = epq_db();
@@ -60,7 +61,8 @@ try {
             'levelProgress' => epq_level_progress($db,(int)$player['level_no'],(int)$player['xp_total']),
             'character' => epq_character_profile($db, $playerId)
         ],
-        'englishPower' => $stats
+        'englishPower' => $stats,
+        'learning' => epq_learning_stats($db, $playerId)
     ]);
 } catch (Throwable $e) {
     error_log('[English Power Quest player] ' . $e->getMessage());

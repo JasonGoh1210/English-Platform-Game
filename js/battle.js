@@ -1,11 +1,11 @@
-import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261014-inputfix";
-import { battleToken, createBattleClient } from "./battle-api.js?v=20261014-inputfix";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-inputfix";
-import { playSound } from "./audio.js?v=20261014-inputfix";
-import { normalizeTutorial } from "./tutorial.js?v=20261014-inputfix";
-import { paintCharacterImages } from "./characters.js?v=20261014-inputfix";
-import { createBattleReviewPanel } from "./battle-review.js?v=20261014-inputfix";
-import { pixelArtPaths } from "./pixel-world.js?v=20261014-inputfix";
+import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261014-learning1";
+import { battleToken, createBattleClient } from "./battle-api.js?v=20261014-learning1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-learning1";
+import { playSound } from "./audio.js?v=20261014-learning1";
+import { normalizeTutorial } from "./tutorial.js?v=20261014-learning1";
+import { paintCharacterImages } from "./characters.js?v=20261014-learning1";
+import { createBattleReviewPanel } from "./battle-review.js?v=20261014-learning1";
+import { pixelArtPaths } from "./pixel-world.js?v=20261014-learning1";
 
 // Use the same per-player storage namespace as the map. If these keys differ,
 // the battle page cannot find the enemy that the map just stored and redirects back.
@@ -23,6 +23,8 @@ let pendingAnswer = Promise.resolve();
 let pendingItemUse = Promise.resolve();
 let tutorialBattle = false;
 let reviewPanel;
+let settingsTransition = Promise.resolve();
+let settingsRevision = 0;
 
 function coachBattle(key, values = {}) {
   if (!tutorialBattle) return;
@@ -184,6 +186,11 @@ const state = {
   turnLocked: false,
   itemPending: false,
   leaving: false,
+  settingsOpen: false,
+  settingsPending: false,
+  settingsPaused: false,
+  settingsFailed: false,
+  needsQuestion: false,
   resultType: null,
   battleMessageTranslation: null
 };
@@ -286,6 +293,7 @@ function localizeQuestionTheme() {
 }
 
 onLanguageChange(() => {
+  renderSettingsPause();
   localizeBattleStaticText();
   if (state.battleMessageTranslation) {
     const messageValues = { ...state.battleMessageTranslation.values };
@@ -301,6 +309,48 @@ onLanguageChange(() => {
   if (tutorialBattle && state.coachMessage) coachBattle(state.coachMessage.key, state.coachMessage.values);
 });
 
+function renderSettingsPause() {
+  const notice = document.getElementById("battlePauseStatus");
+  if (notice) notice.textContent = state.completed ? "" : t(state.settingsFailed ? "battle.pauseFailed"
+    : state.settingsPending ? (state.settingsOpen ? "battle.pausing" : "battle.resuming") : "battle.paused");
+  document.getElementById("battlePauseRetry")?.classList.toggle("hidden", !state.settingsFailed || state.settingsPending);
+}
+
+function synchronizeSettingsPause(open) {
+  state.settingsOpen = open;
+  if (!serverReady || state.completed || state.leaving) { renderSettingsPause(); return settingsTransition; }
+  const revision = ++settingsRevision;
+  state.settingsPending = true;
+  state.settingsFailed = false;
+  setSaveWarning("pause", open ? "battle.pausing" : "battle.resuming");
+  renderSettingsPause();
+  settingsTransition = settingsTransition.catch(() => {}).then(async () => {
+    if (state.completed || state.leaving) return;
+    const result = await battleRequest(open ? "PAUSE" : "RESUME");
+    if (state.completed || state.leaving) return;
+    if (result.status === 409 && result.error === "Battle has already ended.") return;
+    if (!applyServerBattle(result)) throw new Error("Pause unavailable");
+    state.settingsPaused = Boolean(result.battle.paused);
+    if (Number.isFinite(result.battle.remaining)) {
+      state.remaining = result.battle.remaining;
+      ui.timerText.textContent = Math.max(0,state.remaining).toFixed(1)+"s";
+    }
+  }).catch(() => {
+    if (revision !== settingsRevision || state.completed || state.leaving) return;
+    state.settingsFailed = true;
+    setSaveWarning("pause", "battle.pauseFailed");
+  }).finally(() => {
+    if (revision !== settingsRevision) return;
+    state.settingsPending = false;
+    if (!state.settingsFailed) clearSaveWarning("pause");
+    renderSettingsPause();
+    if (!state.settingsOpen && !state.settingsPaused && !state.settingsFailed && state.needsQuestion) void startQuestion();
+  });
+  return settingsTransition;
+}
+
+window.addEventListener("epq-settings-change", event => void synchronizeSettingsPause(Boolean(event.detail.open)));
+document.getElementById("battlePauseRetry")?.addEventListener("click", () => void synchronizeSettingsPause(state.settingsOpen));
 
 
 
@@ -384,7 +434,12 @@ function renderChoices(question) {
 }
 
 async function startQuestion() {
+  if (state.settingsOpen || state.settingsPending || state.settingsPaused || state.settingsFailed) {
+    state.needsQuestion = true;
+    return;
+  }
   if (state.completed || state.leaving || state.loadingQuestion || !serverReady) return;
+  state.needsQuestion = false;
   state.loadingQuestion = true;
   state.locked = true;
   window.clearInterval(state.timerId);
@@ -413,7 +468,8 @@ async function startQuestion() {
   ui.timerText.classList.remove("warning");
   ui.timerText.textContent = state.remaining.toFixed(1) + "s";
   state.timerId = window.setInterval(() => {
-    if (state.locked || state.completed || state.itemPending || state.skillPending || state.leaving) return;
+    if (state.locked || state.completed || state.itemPending || state.skillPending || state.leaving
+      || state.settingsOpen || state.settingsPending || state.settingsPaused || state.settingsFailed) return;
     state.remaining -= 0.1;
     ui.timerText.textContent = Math.max(0, state.remaining).toFixed(1) + "s";
     if (state.remaining <= 2) ui.timerText.classList.add("warning");
@@ -422,6 +478,7 @@ async function startQuestion() {
 }
 
 async function resolve(value, button, timedOut) {
+  if (state.settingsOpen || state.settingsPending || state.settingsPaused || state.settingsFailed) return;
   if (state.locked || state.completed || state.itemPending || state.skillPending || state.leaving) return;
   state.locked = true;
   window.clearInterval(state.timerId);
@@ -469,6 +526,7 @@ function showBattleMenu() {
 }
 
 async function useSkill() {
+  if (state.settingsOpen || state.settingsPending || state.settingsPaused || state.settingsFailed) return;
   if (state.completed || state.locked || state.itemPending || state.skillPending || state.leaving || !serverReady) return;
   if (state.focusUsed) { setBattleMessage("battle.focusAlready"); return; }
   state.skillPending = true;
@@ -483,6 +541,7 @@ async function useSkill() {
   if (ui.questionPanel.classList.contains("hidden")) { showQuestionPanel(); void startQuestion(); }
 }
 function useItem() {
+  if (state.settingsOpen || state.settingsPending || state.settingsPaused || state.settingsFailed) return;
   if (state.completed || state.locked || state.itemPending || state.skillPending || state.leaving || !serverReady) return;
   const questionAlreadyOpen = !ui.questionPanel.classList.contains("hidden");
   if (state.playerHp >= state.playerMaxHp) { setBattleMessage("battle.hpFull"); return; }
@@ -499,7 +558,7 @@ function useItem() {
       applyServerBattle(result);
       playSound("heal");
       if (tutorialBattle) coachBattle("tutorial.battle.heal");
-      if (questionAlreadyOpen && !state.leaving) {
+      if (questionAlreadyOpen && !state.leaving && !state.settingsOpen) {
         const resumed = await battleRequest("RESUME");
         if (resumed.ok) state.remaining = resumed.battle.remaining;
       }
@@ -514,7 +573,7 @@ function useItem() {
   })();
   return pendingItemUse;
 }
-async function returnToMapAfterBattle() {
+async function returnToMapAfterBattle(destination = "/FYP/index.php") {
   if (state.leaving) return;
   state.leaving = true;
   window.clearInterval(state.timerId);
@@ -531,7 +590,7 @@ async function returnToMapAfterBattle() {
   }
   sessionStorage.removeItem(BATTLE_KEY);
   await pendingBattleSave;
-  window.location.href = "/FYP/index.php";
+  window.location.href = destination;
 }
 
 function runAway() {
@@ -633,6 +692,7 @@ function finishConfirmedVictorySave() {
 function finishVictory() {
   if (state.completed || state.leaving) return;
   state.completed = true;
+  clearSaveWarning("pause");
   window.clearInterval(state.timerId);
   finishConfirmedVictorySave();
   playSound("victory");
@@ -643,6 +703,7 @@ function finishVictory() {
 function finishDefeat() {
   if (state.completed || state.leaving) return;
   state.completed = true;
+  clearSaveWarning("pause");
   playSound("defeat");
   window.clearInterval(state.timerId);
 
@@ -716,6 +777,7 @@ function bindBattleEvents() {
 }
 
 async function init() {
+  state.settingsOpen = !document.getElementById("settingsScreen").classList.contains("hidden");
   document.body.classList.add("battle-js-ready");
   setBattleMessage("battle.loading");
   state.enemy = getEnemy();
@@ -757,12 +819,15 @@ async function init() {
   paintCharacterImages(AUTH_CONTEXT.character);
 
   bindBattleEvents();
+  document.getElementById("resultLearningLink").addEventListener("click", event => {
+    event.preventDefault(); void returnToMapAfterBattle("/FYP/learning.php");
+  });
   ui.battleResult.querySelectorAll("[data-set-language]").forEach(button => {
     button.addEventListener("click", () => setLanguage(button.dataset.setLanguage));
   });
   ui.battleResult.addEventListener("keydown", event => {
     if (event.key !== "Tab") return;
-    const controls = [...ui.battleResult.querySelectorAll("button:not(:disabled), summary")].filter(element => element.getClientRects().length);
+    const controls = [...ui.battleResult.querySelectorAll("button:not(:disabled), a[href], summary")].filter(element => element.getClientRects().length);
     const first = controls[0], last = controls[controls.length - 1];
     if (!first) return;
     if (event.shiftKey && (document.activeElement === first || !controls.includes(document.activeElement))) {
@@ -786,6 +851,11 @@ async function init() {
     if (!result.ok) { battleFailure(result); return; }
     serverReady = true;
     applyServerBattle(result);
+    state.settingsPaused = Boolean(result.battle.paused);
+    if (result.battle.status === "ACTIVE") {
+      if (state.settingsPaused && !state.settingsOpen) document.getElementById("settingsOpenButton").click();
+      else if (state.settingsOpen) void synchronizeSettingsPause(true);
+    }
     initializeBattleTutorial();
     setBattleMessage("battle.enemyAppeared", {enemy:localEnemyName()});
     if (result.battle.status === "VICTORY") finishVictory();
@@ -819,6 +889,8 @@ window.render_game_to_text = () => JSON.stringify({
   playerHp: state.playerHp,
   focus: state.focusUsed,
   timer: Math.max(0, Number(state.remaining || 0)),
+  paused: Boolean(state.settingsOpen || state.settingsPaused),
+  pausePending: Boolean(state.settingsPending),
   question: state.currentQuestion ? { type: state.currentQuestion.type, text: state.currentQuestion.question, realm:state.currentQuestion.realm || null } : null,
   review: reviewPanel?.getStats() || null,
   tutorial: tutorialBattle ? normalizeTutorial(getSave().tutorial)?.stage : null,

@@ -1,0 +1,58 @@
+* { box-sizing:border-box; }
+body.learning-page { margin:0; background:#0b141e; color:#dce5eb; font:16px/1.6 system-ui,sans-serif; }
+.learning-shell { width:min(1080px,calc(100% - 32px)); margin:28px auto; }
+.learning-header { display:flex; justify-content:space-between; align-items:start; gap:24px; margin-bottom:24px; }
+.learning-header h1 { font-size:clamp(28px,4vw,42px); line-height:1.2; margin:6px 0 12px; color:#f0e1b9; text-shadow:2px 3px #03080e; }
+.learning-header p { margin:0; }
+.learning-kicker { font:bold 12px "Courier New",monospace; letter-spacing:.12em; color:#bfb18f; }
+.learning-navigation { display:grid; gap:12px; min-width:200px; }
+button,.learning-button { min-height:44px; padding:10px 16px; border:2px solid #91a4b0; border-radius:0;
+  background:#203848; color:#f0e5ca; font:bold 14px/1.4 system-ui; cursor:pointer; text-decoration:none; text-align:center;
+  box-shadow:inset 0 -3px #10232e,2px 3px #03080e; touch-action:manipulation; }
+button:hover,.learning-button:hover { background:#304e60; }
+button:active,.learning-button:active { transform:translateY(2px); box-shadow:inset 0 -1px #10232e; }
+button:disabled { opacity:.55; cursor:default; }
+button:focus-visible,a:focus-visible,summary:focus-visible { outline:3px solid #f2cd78; outline-offset:4px; }
+.learning-languages { display:flex; gap:8px; }
+.learning-languages button { flex:1; }
+.learning-languages button.active { border-color:#efd29a; background:#5b4b2f; }
+.learning-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+.learning-stat { padding:16px; border:2px solid #728995; background:#162937; }
+.learning-stat span { display:block; font-size:14px; color:#bed0da; }
+.learning-stat b { display:block; font-size:30px; color:#e5d2a5; }
+.learning-note { color:#a5bac7; font-size:14px; }
+#learningStatus { min-height:24px; color:#e1d1a7; }
+.learning-history,.learning-practice { border:3px solid #9f8b65; padding:20px; background:#142535; margin:20px 0; }
+.learning-history h2,.learning-practice h2 { margin:0 0 10px; color:#eee1bd; font-size:23px; }
+.learning-history>p { margin:0 0 20px; color:#b7c9d3; }
+.learning-mistake { background:#203746; border:2px solid #627d8c; margin:12px 0; }
+.learning-mistake summary { padding:12px; cursor:pointer; min-height:44px; font-weight:bold; }
+.learning-summary-question { display:block; margin-top:6px; font-weight:normal; font-size:14px; color:#c0d2de; overflow-wrap:anywhere; }
+.learning-mistake-body { border-top:1px solid #627d8c; padding:16px; }
+.learning-mistake-body h3 { margin:0 0 12px; font-size:18px; }
+.learning-answer { padding:10px; background:#102331; overflow-wrap:anywhere; }
+.learning-answer.correct { background:#294b39; }
+.learning-translation { color:#b6cdda; }
+.learning-practice-head { display:flex; justify-content:space-between; gap:12px; align-items:center; }
+.learning-practice h3 { font-size:20px; color:#efdeae; }
+.learning-practice-choices,.learning-word-bank,.learning-selected { display:flex; flex-wrap:wrap; gap:10px; margin:14px 0; }
+.learning-selected { min-height:60px; border:2px dashed #7894a2; padding:10px; }
+.learning-practice-choices button { flex:1; min-width:110px; }
+.learning-word-bank button { flex:none; }
+.learning-practice-actions { display:flex; flex-wrap:wrap; gap:10px; }
+.learning-practice-result { padding:14px; margin-top:18px; border:2px solid #829690; background:#233e37; overflow-wrap:anywhere; }
+.learning-practice-result.wrong { border-color:#b78877; background:#473138; }
+.learning-practice-feedback { min-height:24px; }
+.hidden { display:none !important; }
+@media(max-width:650px) {
+  .learning-shell { width:calc(100% - 24px); margin:16px auto; }
+  .learning-header { flex-direction:column; gap:16px; }
+  .learning-navigation { display:grid; width:100%; min-width:0; }
+  .learning-languages button { white-space:nowrap; }
+  .learning-stats { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .learning-stat { padding:12px; }
+  .learning-history,.learning-practice { padding:12px; }
+  .learning-practice-head { align-items:start; }
+  .learning-practice-head h2 { font-size:20px; }
+}
+@media(prefers-reduced-motion:reduce) { * { scroll-behavior:auto; } }

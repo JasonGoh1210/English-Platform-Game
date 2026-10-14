@@ -15,8 +15,8 @@ $epqStorageId = (string)$epqPlayerId;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#101b24">
   <title>English Power Quest · Battle</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261014-inputfix">
-  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261014-inputfix">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261014-learning1">
+  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261014-learning1">
 </head>
 <body class="battle-page">
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -129,6 +129,7 @@ $epqStorageId = (string)$epqPlayerId;
         <div class="result-rewards" id="resultRewards"></div>
         <section id="battleReview" class="battle-review" aria-labelledby="battleReviewTitle"></section>
         <div class="result-actions">
+          <a id="resultLearningLink" class="battle-action-button" href="/FYP/learning.php" data-i18n="learning.open">LEARNING & MISTAKES</a>
           <button id="resultButton" data-i18n="battle.returnMap">Return to Map</button>
           <button type="button" id="resultMapButton" class="hidden" data-i18n="battle.returnMap">Return to Map</button>
         </div>
@@ -147,6 +148,8 @@ $epqStorageId = (string)$epqPlayerId;
         <button type="button" data-set-language="zh" data-i18n="settings.chinese">简体中文</button>
       </div>
       <?php require __DIR__ . '/includes/sound_settings.php'; ?>
+      <p id="battlePauseStatus" role="status" aria-live="polite"></p>
+      <button type="button" id="battlePauseRetry" class="settings-close-button hidden" data-i18n="review.retry">RETRY</button>
       <p class="settings-saved" data-i18n="settings.saved">Language and sound settings are saved automatically.</p>
       <button type="button" class="settings-close-button" id="settingsCloseButton" data-i18n="settings.close">CLOSE</button>
     </section>
@@ -162,6 +165,6 @@ $epqStorageId = (string)$epqPlayerId;
       'character' => $_SESSION['character'] ?? epq_character_profile(epq_db(), $epqPlayerId)
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   </script>
-  <script type="module" src="/FYP/js/battle.js?v=20261014-inputfix"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261014-learning1"></script>
 </body>
 </html>
