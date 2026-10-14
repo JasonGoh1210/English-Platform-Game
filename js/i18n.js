@@ -1,4 +1,4 @@
-import { setupAudio } from "./audio.js?v=20261014-gatecard";
+import { setupAudio } from "./audio.js?v=20261014-inputfix";
 
 const LANGUAGE_KEY = "englishPowerQuest.language.v1";
 
@@ -619,11 +619,13 @@ export function setupLanguageSettings() {
 
   const open = () => {
     screen.classList.remove("hidden");
+    window.dispatchEvent(new CustomEvent("epq-settings-change", { detail: { open: true } }));
     applyTranslations(screen);
     (screen.querySelector('[data-set-language].active') || screen.querySelector('[data-set-language]') || closeButton).focus();
   };
   const close = () => {
     screen.classList.add("hidden");
+    window.dispatchEvent(new CustomEvent("epq-settings-change", { detail: { open: false } }));
     openButton.focus();
   };
 

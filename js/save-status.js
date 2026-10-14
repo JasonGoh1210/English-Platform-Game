@@ -1,4 +1,4 @@
-import { t, onLanguageChange } from "./i18n.js?v=20261014-gatecard";
+import { t, onLanguageChange } from "./i18n.js?v=20261014-inputfix";
 
 const warnings = new Map();
 

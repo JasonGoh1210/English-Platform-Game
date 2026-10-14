@@ -1,12 +1,12 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261014-gatecard";
-import { playSound } from "./audio.js?v=20261014-gatecard";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-gatecard";
-import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261014-gatecard";
-import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261014-gatecard";
-import { createQuestClient } from "./quest-api.js?v=20261014-gatecard";
-import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261014-gatecard";
-import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave } from "./pixel-world.js?v=20261014-gatecard";
-import { storyPortraitSource } from "./story-visuals.js?v=20261014-gatecard";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261014-inputfix";
+import { playSound } from "./audio.js?v=20261014-inputfix";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261014-inputfix";
+import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261014-inputfix";
+import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261014-inputfix";
+import { createQuestClient } from "./quest-api.js?v=20261014-inputfix";
+import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261014-inputfix";
+import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave } from "./pixel-world.js?v=20261014-inputfix";
+import { storyPortraitSource } from "./story-visuals.js?v=20261014-inputfix";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -133,7 +133,7 @@ const worldBackgroundPaths = {
 for (const realmId of Object.keys(worldBackgroundPaths)) {
   const availablePaths = window.EPQ_AUTH?.worldBackgrounds?.[realmId];
   if (Array.isArray(availablePaths)) {
-    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261014-gatecard");
+    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261014-inputfix");
   }
 }
 
@@ -865,9 +865,26 @@ if (mapHud && typeof ResizeObserver !== "undefined") {
 window.addEventListener("resize", resize);
 resize();
 
+function resetMovementInput() {
+  keys.clear();
+  touch.left = false;
+  touch.right = false;
+  world.player.vx = 0;
+  world.player.walkFrame = 0;
+  world.player.walkTimer = 0;
+}
+
+// A lost key/pointer release must not keep the hero walking behind another window.
+window.addEventListener("blur", resetMovementInput);
+window.addEventListener("epq-settings-change", resetMovementInput);
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) resetMovementInput();
+});
+
 window.addEventListener("keydown", (e) => {
   const k = e.key.toLowerCase();
-  if (guideIsOpen()) return;
+  // Native settings controls own their keys; Escape may already have closed the menu.
+  if (e.defaultPrevented || settingsIsOpen()) return;
 
   if (world.storyIntroOpen) {
     if (k === "tab") {
@@ -923,6 +940,8 @@ window.addEventListener("keydown", (e) => {
     }
     return;
   }
+
+  if (world.interacting) return;
 
   if (["arrowleft","arrowright","a","d"," ","e"].includes(k)) e.preventDefault();
   keys.add(k);
@@ -985,6 +1004,8 @@ ui.dialogueButton.addEventListener("click", () => {
     world.currentDialogueNpcId = null;
     world.currentDialogueKey = null;
     ui.dialogue.classList.add("hidden");
+    resetMovementInput();
+    ui.interactButton.focus();
   }
 });
 
@@ -1012,6 +1033,8 @@ function showDialogue() {
   ui.dialoguePortrait.alt=ui.dialogueName.textContent;
   ui.dialoguePortrait.dataset.portraitKind=pixelArtPaths.npcs[world.currentDialogueNpcId]?"npc":"object";
   ui.dialogue.classList.remove("hidden");
+  resetMovementInput();
+  ui.dialogueButton.focus();
 }
 
 function nearestEnemy() {

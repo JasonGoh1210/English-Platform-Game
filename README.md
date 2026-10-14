@@ -25,7 +25,7 @@ A mobile-friendly fantasy RPG prototype that teaches English through exploration
 - First-login character creation with saved name, dice, gender and three sprite palettes
 - Google Identity Services sign-in and same-player binding, enabled by a local Client ID
 
-> This is still a prototype. Some game APIs/reward flows may still rely on client-supplied values and LocalStorage, so not all progress is server-authoritative. Do not deploy this version as a public multi-user game without a full security and data-persistence audit.
+Combat, NPC chapter and typing rewards now use server grading and replay-safe receipts. Map coordinates and exploration snapshots remain browser-reported, with per-player LocalStorage used to recover unconfirmed saves.
 
 ## Run locally with XAMPP
 
@@ -59,7 +59,7 @@ The quest HUD now names the next NPC/world and points toward the target or the c
 
 Run PHP syntax checks, `node --check js/rpg.js`, `node --check js/battle.js`, and `node --test tests/*.test.cjs` and `php tests/battle_rules_test.php`, `node --test tests/characters.test.cjs`, `php tests/google_token_test.php`. CI checks gameplay regressions and the guest/save/upgrade and verified combat/quest flows on MySQL 8 and MariaDB 10.4. These checks do not verify the actual browser artwork or a complete playthrough.
 
-Latest priorities and reproduced issues: [Optimization review, 2026-10-13](docs/OPTIMIZATION_REVIEW_2026-10-13.md). Account upgrade/logout controls now live in map Settings, leaving quest titles visible. [UI and gameplay follow-up](docs/UI_GAMEPLAY_REVIEW_2026-10-13.md) records responsive HUD/landscape fixes and the original question-bank limitations, now addressed by the themed bank below.
+Latest reproduced issues and input fixes: [Project check, 2026-10-14](docs/PROJECT_CHECK_2026-10-14.md). Settings support native keyboard controls; lost focus releases movement, and dialogue supports Space/Enter with focus restoration. [Optimization review, 2026-10-13](docs/OPTIMIZATION_REVIEW_2026-10-13.md) and [UI and gameplay follow-up](docs/UI_GAMEPLAY_REVIEW_2026-10-13.md) retain historical findings and follow-up progress.
 
 [Battle learning summary](docs/BATTLE_LEARNING_SUMMARY.md) explains the new victory/defeat review, preserved historical records and update steps. No new SQL migration is required.
 
@@ -68,7 +68,7 @@ Latest priorities and reproduced issues: [Optimization review, 2026-10-13](docs/
 ## Known gaps before a final FYP release
 
 - Map coordinates and local monster approach remain browser-reported; server quest validation does not prove movement.
-- Import `data/questions.json` and `data/enemies.json` into MySQL (or establish one authoritative runtime source).
+- Keep the server's JSON question bank authoritative; any future MySQL content import must remain consistent with issued questions and historical review snapshots.
 - Add a map entry for historical mistakes, independent practice and mastery calculations; the current review is for the finished battle.
 - NPC and typing rewards now use server grading, chapter order and replay-safe receipts; the legacy arbitrary reward endpoint is closed.
 - Use a restricted MySQL account and avoid returning raw exception messages outside local development.

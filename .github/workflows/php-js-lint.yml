@@ -29,7 +29,7 @@ jobs:
           node --check js/story-visuals.js
       - name: Gameplay regression tests
         run: |
-          node --test tests/gameplay_regression.test.cjs tests/battle_api.test.cjs tests/audio.test.cjs tests/tutorial.test.cjs tests/characters.test.cjs tests/quest_api.test.cjs tests/battle_review.test.cjs tests/quest_guidance.test.cjs tests/pixel_art.test.cjs tests/story_visuals.test.cjs
+          node --test tests/gameplay_regression.test.cjs tests/battle_api.test.cjs tests/audio.test.cjs tests/tutorial.test.cjs tests/characters.test.cjs tests/quest_api.test.cjs tests/battle_review.test.cjs tests/quest_guidance.test.cjs tests/pixel_art.test.cjs tests/story_visuals.test.cjs tests/map_input.test.cjs
           php tests/battle_rules_test.php
           php tests/tutorial_state_test.php
           php tests/google_token_test.php

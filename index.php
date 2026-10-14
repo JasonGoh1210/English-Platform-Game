@@ -31,9 +31,9 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261014-gatecard">
-  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261014-gatecard">
-  <link rel="stylesheet" href="/FYP/css/story-pixel.css?v=20261014-gatecard">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261014-inputfix">
+  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261014-inputfix">
+  <link rel="stylesheet" href="/FYP/css/story-pixel.css?v=20261014-inputfix">
 </head>
 <body>
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -341,7 +341,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261014-gatecard").catch((error) => {
+      import("/FYP/js/rpg.js?v=20261014-inputfix").catch((error) => {
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");

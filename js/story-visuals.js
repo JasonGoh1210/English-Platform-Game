@@ -1,4 +1,4 @@
-import { pixelArtPaths } from "./pixel-world.js?v=20261014-gatecard";
+import { pixelArtPaths } from "./pixel-world.js?v=20261014-inputfix";
 
 // A single source of portraits for map dialogue, chapters and the opening story.
 export function storyPortraitSource(characterId) {
