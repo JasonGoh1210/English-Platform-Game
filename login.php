@@ -1,15 +1,17 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__.'/includes/account_rules.php';
 epq_auth_page_headers();
 epq_redirect_if_logged_in();
 
 $error = '';
 $username = '';
+$fieldErrors=[];
 
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['guest_mode'] ?? '') === '1') {
-    $csrf = (string)($_POST['csrf_token'] ?? '');
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && epq_form_text($_POST,'guest_mode') === '1') {
+    $csrf = epq_form_text($_POST,'csrf_token');
     if (!epq_csrf_is_valid($csrf)) {
         $error = '页面已过期，请刷新后再试。';
     } else {
@@ -25,14 +27,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['guest_mode'] ?? ''
         }
     }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = strtolower(trim((string)($_POST['username'] ?? '')));
-    $password = (string)($_POST['password'] ?? '');
-    $csrf = (string)($_POST['csrf_token'] ?? '');
+    $username = strtolower(trim(epq_form_text($_POST,'username')));
+    $password = epq_form_text($_POST,'password');
+    $csrf = epq_form_text($_POST,'csrf_token');
 
     if (!epq_csrf_is_valid($csrf)) {
         $error = '页面已过期，请刷新后再试。';
     } elseif ($username === '' || $password === '') {
         $error = '请输入用户名和密码。';
+        if($username==='')$fieldErrors['username']='请输入注册时的用户名。';
+        if($password==='')$fieldErrors['password']='请输入密码。';
+    } elseif(strlen($username)>50||strlen($password)>4096){
+        $error='输入内容过长，请检查用户名或密码。';
     } else {
         try {
             $db = epq_db();
@@ -71,7 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['guest_mode'] ?? ''
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101521">
   <title>登录 · English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/auth.css?v=20261015-google2">
+  <link rel="stylesheet" href="/FYP/css/auth.css?v=20261015-input1">
+  <script src="/FYP/js/auth-form.js?v=20261015-input1" defer></script>
 </head>
 <body class="auth-page">
   <main class="auth-layout">
@@ -97,12 +104,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['guest_mode'] ?? ''
           <div class="auth-alert" role="alert"><?= epq_h($error) ?></div>
         <?php endif; ?>
 
-        <form class="auth-form" method="post" action="/FYP/login.php">
+        <form class="auth-form" data-account-form="login" method="post" action="/FYP/login.php">
           <input type="hidden" name="csrf_token" value="<?= epq_h((string)$_SESSION['csrf_token']) ?>">
           <label for="username">用户名</label>
-          <input id="username" name="username" type="text" autocomplete="username" maxlength="50" value="<?= epq_h($username) ?>" required autofocus>
+          <input id="username" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="50" value="<?= epq_h($username) ?>" placeholder="请输入注册时的用户名" aria-describedby="usernameHint usernameError" aria-invalid="<?= isset($fieldErrors['username'])?'true':'false' ?>" required autofocus>
+          <p class="auth-input-hint" id="usernameHint">使用注册时的用户名；英文字母不区分大小写。</p>
+          <p class="auth-field-error" id="usernameError" <?= isset($fieldErrors['username'])?'':'hidden' ?>><?= epq_h($fieldErrors['username']??'') ?></p>
           <label for="password">密码</label>
-          <input id="password" name="password" type="password" autocomplete="current-password" required>
+          <div class="auth-password-field"><input id="password" name="password" type="password" autocomplete="current-password" maxlength="4096" placeholder="请输入密码，注意大小写" aria-describedby="passwordHint capsLockHint passwordError" aria-invalid="<?= isset($fieldErrors['password'])?'true':'false' ?>" required><button type="button" class="auth-password-toggle" data-password-toggle="password" aria-controls="password" aria-pressed="false" aria-label="显示密码">显示</button></div>
+          <p class="auth-input-hint" id="passwordHint">密码区分大小写，请输入创建账号时设置的密码。</p>
+          <p class="auth-field-status" id="capsLockHint" role="status" aria-live="polite"></p>
+          <p class="auth-field-error" id="passwordError" <?= isset($fieldErrors['password'])?'':'hidden' ?>><?= epq_h($fieldErrors['password']??'') ?></p>
           <button class="auth-submit" type="submit">登录 <span>→</span></button>
         </form>
 

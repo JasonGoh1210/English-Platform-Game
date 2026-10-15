@@ -21,7 +21,7 @@
 
 ## 启用 Google 登录
 
-截至 2026-10-15，本机尚未创建／配置 Client ID，页面显示 Google 按钮和“暂未启用”；账号密码与游客照常可用。程序与隔离测试已完善，真实 Google 授权仍需完成以下配置。
+Google 登录需要每个部署环境配置自己的真实 Client ID。未配置时页面显示“暂未启用”，账号密码与游客照常可用。本机已配置用户提供的 ID，并通过实际 XAMPP 页面验证 Google 官方按钮、手机布局和服务器公钥连接；用户实际选择账号并授权的流程仍需亲自完成。其他部署环境按以下步骤配置。
 
 1. 在 [Google Cloud 客户端页面](https://console.cloud.google.com/auth/clients) 创建／选择项目。
 2. 在 Google Auth Platform 的 Branding 页面填写应用名称和支持邮箱；Audience 按实际使用者选择，面向普通 Google 用户时选 External。若控制台提示需要测试用户，添加实际测试邮箱。
@@ -30,7 +30,7 @@
 5. 将 `config/google.example.php` 复制为 `config/google.local.php`，填写公开的 `client_id`。此文件已被 Git 忽略；也可设置服务器环境变量 `EPQ_GOOGLE_CLIENT_ID`，环境变量优先。
 6. Ctrl+F5 刷新登录页，正式 Google 按钮由 Google SDK 渲染。首次登录创建角色，再次登录进入同一存档；游客先从游戏的账号设置绑定，保留原角色。
 
-创建后只需要把以 `.apps.googleusercontent.com` 结尾的公开 Client ID 填入配置，不需要发送密码或 Client Secret。本次没有写入示例 ID，也没有创建会误启用 Google 的本地配置文件。
+创建后只需要把以 `.apps.googleusercontent.com` 结尾的公开 Client ID 填入配置，不需要发送密码或 Client Secret。正式配置使用自己的真实 ID；示例 ID 仅用于隔离测试。本机 `config/google.local.php` 已被 Git 忽略，不随代码推送。
 
 本项目使用 Google Identity Services 弹窗的 JavaScript callback，将 ID token 发给 PHP 验证；不使用授权码交换，无需配置 Client Secret，也无需为此回调填写 redirect URI。不要把 Secret 放入聊天、JavaScript 或 Git。
 

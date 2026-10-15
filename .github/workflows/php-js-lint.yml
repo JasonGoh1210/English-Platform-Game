@@ -22,6 +22,7 @@ jobs:
           node --check js/characters.js
           node --check js/character-setup.js
           node --check js/google-signin.js
+          node --check js/auth-form.js
           node --check js/quest-api.js
           node --check js/battle-review.js
           node --check js/quest-guidance.js
@@ -35,6 +36,7 @@ jobs:
           php tests/battle_rules_test.php
           php tests/tutorial_state_test.php
           php tests/google_token_test.php
+          php tests/account_rules_test.php
           php tests/progression_test.php
           php tests/battle_review_test.php
           php tests/themed_questions_test.php

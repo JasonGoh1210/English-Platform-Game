@@ -122,3 +122,4 @@ echo "PASS: guest, story, map, XP, CSRF, browser recovery, account upgrade and p
 
 EPQ_BATTLE_TEST_DB=isolated php tests/shop_flow_smoke.php
 EPQ_BATTLE_TEST_DB=isolated php tests/character_flow_smoke.php
+EPQ_BATTLE_TEST_DB=isolated php tests/account_flow_smoke.php
