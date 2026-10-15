@@ -7,9 +7,46 @@ function epq_google_request(string $mode): array {
     $owner = (int)($_SESSION['user_id'] ?? 0);
     if (($mode==='link') !== ($owner>0)) throw new DomainException('请刷新页面后重试。');
     $request = ['nonce'=>bin2hex(random_bytes(32)), 'created'=>time(), 'mode'=>$mode,
-        'user_id'=>$owner, 'player_id'=>(int)($_SESSION['player_id'] ?? 0)];
+        'id'=>bin2hex(random_bytes(16)), 'user_id'=>$owner, 'player_id'=>(int)($_SESSION['player_id'] ?? 0)];
+    $requests=is_array($_SESSION['google_requests']??null)?$_SESSION['google_requests']:[];
+    $requests=array_filter($requests,static fn($row)=>is_array($row)&&is_int($row['created']??null)&&$row['created']>time()-600);
+    $requests=array_slice($requests,-7,null,true);
+    $requests[$request['id']]=$request;
+    $_SESSION['google_requests']=$requests;
+    // Retain the last-page slot for already-open older clients during an update.
     $_SESSION['google_request'] = $request;
     return $request;
+}
+
+function epq_google_pending_request(?string $id,?int $now=null): array {
+    $now=$now??time();
+    if($id!==null&&preg_match('/\A[a-f0-9]{32}\z/D',$id)!==1)throw new DomainException('GOOGLE_PAGE_EXPIRED');
+    $request=$id===null?($_SESSION['google_request']??null):($_SESSION['google_requests'][$id]??null);
+    $owner=(int)($_SESSION['user_id']??0);
+    if(!is_array($request)||!is_int($request['created']??null)||$request['created']>$now+60||$request['created']<=$now-600
+        ||!is_string($request['nonce']??null)||preg_match('/\A[a-f0-9]{64}\z/D',$request['nonce'])!==1
+        ||!in_array($request['mode']??null,['login','link'],true)
+        ||($request['mode']==='link')!==($owner>0)
+        ||($request['user_id']??null)!==$owner||($request['player_id']??null)!==(int)($_SESSION['player_id']??0)){
+        throw new DomainException('GOOGLE_PAGE_EXPIRED');
+    }
+    return $request;
+}
+
+function epq_google_complete_request(array $request): void {
+    // Stored after session regeneration; contains no ID token, email or Google subject.
+    $_SESSION['google_completed']=['id'=>$request['id']??'', 'created'=>time(),
+        'user_id'=>(int)$_SESSION['user_id'],'player_id'=>(int)$_SESSION['player_id']];
+    unset($_SESSION['google_request'],$_SESSION['google_requests']);
+}
+
+function epq_google_completed_request(string $id,?int $now=null): bool {
+    $receipt=$_SESSION['google_completed']??null;$now=$now??time();
+    return preg_match('/\A[a-f0-9]{32}\z/D',$id)===1 && is_array($receipt)
+        && is_string($receipt['id']??null)&&hash_equals($receipt['id'],$id)
+        && is_int($receipt['created']??null)&&$receipt['created']<=$now+60&&$receipt['created']>$now-300
+        && ($receipt['user_id']??0)>0&&($receipt['user_id']??null)===(int)($_SESSION['user_id']??0)
+        && ($receipt['player_id']??null)===(int)($_SESSION['player_id']??0);
 }
 
 function epq_google_decode(string $part): string {
@@ -35,7 +72,8 @@ function epq_verify_google_token(string $token, array $certificates, string $cli
     if (!in_array($claims['iss']??null,['accounts.google.com','https://accounts.google.com'],true)
         || ($claims['aud']??null)!==$clientId || (isset($claims['azp']) && $claims['azp']!==$clientId)
         || !is_int($claims['exp']??null) || $claims['exp']<=$now
-        || !is_int($claims['iat']??null) || $claims['iat']>$now+60
+        || !is_int($claims['iat']??null) || $claims['iat']>$now+60 || $claims['exp']<=$claims['iat']
+        || (isset($claims['nbf'])&&(!is_int($claims['nbf'])||$claims['nbf']>$now+60))
         || !is_string($claims['nonce']??null) || !hash_equals($nonce,$claims['nonce'])
         || !is_string($claims['sub']??null) || $claims['sub']==='' || strlen($claims['sub'])>255) {
         throw new DomainException('Google 登录已过期或不属于当前页面，请刷新后重试。');
@@ -45,12 +83,36 @@ function epq_verify_google_token(string $token, array $certificates, string $cli
     return $claims;
 }
 
-function epq_google_certificates(): array {
+function epq_google_cached_certificates(mixed $cache,?string $keyId=null,?int $now=null): ?array {
+    $now=$now??time();
+    if(!is_array($cache)||!is_int($cache['expires']??null)||!is_int($cache['fetched']??null)
+        ||$cache['expires']<=$now||$cache['expires']>$cache['fetched']+86400||$cache['fetched']>$now+60
+        ||!is_array($cache['keys']??null)||!$cache['keys']||count($cache['keys'])>16)return null;
+    foreach($cache['keys'] as $id=>$pem)if(!is_string($id)||!is_string($pem)||strlen($pem)>16384||openssl_pkey_get_public($pem)===false)return null;
+    // Bound rotation probes for unknown IDs; ordinary failed tokens cannot flood Google.
+    if($keyId!==null&&!isset($cache['keys'][$keyId])&&$now-$cache['fetched']>=60)return null;
+    return $cache['keys'];
+}
+
+function epq_google_cache_seconds(string $control,int $age=0): int {
+    if(preg_match('/(?:^|,)\s*(?:no-store|no-cache)\b/i',$control))return 0;
+    return preg_match('/(?:^|,)\s*max-age\s*=\s*"?(\d+)/i',$control,$match)
+        ?max(0,min(86400,(int)$match[1])-max(0,$age)):0;
+}
+
+function epq_google_certificates(?string $keyId=null): array {
+    $cached=epq_google_cached_certificates($_SESSION['google_certificates']??null,$keyId);
+    if($cached!==null)return $cached;
     // Fixed Google PEM endpoint; never use a token-supplied jku/x5u URL.
     $curl=curl_init('https://www.googleapis.com/oauth2/v1/certs');
-    $body='';
+    $body='';$cacheControl='';$age=0;
     curl_setopt_array($curl,[CURLOPT_CONNECTTIMEOUT=>5,CURLOPT_TIMEOUT=>15,CURLOPT_FOLLOWLOCATION=>false,
         CURLOPT_SSL_VERIFYPEER=>true,CURLOPT_SSL_VERIFYHOST=>2,
+        CURLOPT_HEADERFUNCTION=>static function($handle,string $line)use(&$cacheControl,&$age):int{
+            if(stripos($line,'Cache-Control:')===0)$cacheControl=trim(substr($line,14));
+            if(stripos($line,'Age:')===0)$age=max(0,(int)trim(substr($line,4)));
+            return strlen($line);
+        },
         CURLOPT_WRITEFUNCTION=>static function($handle,string $chunk) use (&$body):int {
             if (strlen($body)+strlen($chunk)>262144) return 0;
             $body.=$chunk;return strlen($chunk);
@@ -58,7 +120,10 @@ function epq_google_certificates(): array {
     $ok=curl_exec($curl);$status=(int)curl_getinfo($curl,CURLINFO_RESPONSE_CODE);curl_close($curl);
     if ($ok===false || $status!==200) throw new RuntimeException('无法连接 Google 验证服务，请稍后重试。');
     $certificates=json_decode($body,true);
-    if (!is_array($certificates) || !$certificates) throw new RuntimeException('Google 验证服务暂时不可用。');
+    $now=time();$cache=['fetched'=>$now,'expires'=>$now+max(1,epq_google_cache_seconds($cacheControl,$age)),'keys'=>$certificates];
+    if(epq_google_cached_certificates($cache,null,$now)===null)throw new RuntimeException('Google 验证服务暂时不可用。');
+    if(epq_google_cache_seconds($cacheControl,$age)>0)$_SESSION['google_certificates']=$cache;
+    else unset($_SESSION['google_certificates']);
     return $certificates;
 }
 

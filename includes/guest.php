@@ -44,6 +44,7 @@ function epq_guest_revoke_tokens(mysqli $db, int $userId): void {
 
 function epq_guest_start_session(array $row): void {
     session_regenerate_id(true);
+    unset($_SESSION['google_request'],$_SESSION['google_requests'],$_SESSION['google_completed']);
     $_SESSION['guest_mode'] = true;
     $_SESSION['guest_id'] = 'db_' . (int)$row['user_id'];
     $_SESSION['user_id'] = (int)$row['user_id'];

@@ -11,10 +11,12 @@ $epqGoogleRequest=$epqGoogleClientId!==''?epq_google_request($epqGoogleMode):nul
       <span><?= $epqGoogleMode==='link'?'绑定 Google，保留当前角色':'使用 Google 登录' ?></span>
     </button>
   </div>
-  <p id="googleStatus" class="google-signin-status" role="status"><?= $epqGoogleClientId===''?'Google 登录暂未启用，你可以先使用账号或游客。':'正在准备 Google 登录……' ?></p>
+  <p id="googleStatus" class="google-signin-status" role="status" aria-live="polite"><?= $epqGoogleClientId===''?'Google 登录暂未启用，你可以先使用账号或游客。':'正在准备 Google 登录……' ?></p>
+  <button id="googleRetry" type="button" class="google-retry" hidden>重试 Google 登录</button>
 </div>
 <?php if ($epqGoogleRequest): ?>
 <script>window.EPQ_GOOGLE = <?= json_encode(['clientId'=>$epqGoogleClientId,'nonce'=>$epqGoogleRequest['nonce'],
+    'requestId'=>$epqGoogleRequest['id'],'expiresAt'=>$epqGoogleRequest['created']+600,'mode'=>$epqGoogleMode,
     'csrfToken'=>(string)$_SESSION['csrf_token']],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;</script>
-<script src="/FYP/js/google-signin.js?v=20261013-female1" defer></script>
+<script src="/FYP/js/google-signin.js?v=20261015-google2" defer></script>
 <?php endif; ?>

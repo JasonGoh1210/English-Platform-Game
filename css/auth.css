@@ -342,6 +342,12 @@ body.auth-page {
 }
 .google-placeholder:disabled { opacity: .85; }
 .google-signin-status { margin: 8px 0 0; color: var(--auth-muted); font-size: .72rem; line-height: 1.5; }
+.google-signin-section { min-width: 0; }
+.google-signin-container[aria-busy="true"] { opacity: .6; pointer-events: none; }
+.google-retry { margin-top: 8px; padding: 8px 12px; border: 1px solid #9ba7b9; background: #263648; color: #f5e4bc; font: inherit; font-size: .78rem; cursor: pointer; }
+.google-retry:active { transform: translateY(2px); }
+.google-retry:focus-visible { outline: 2px solid #ffe2a4; outline-offset: 3px; }
+.google-retry[hidden] { display: none; }
 .account-linked { padding: 18px; border: 1px solid #84b89c; color: #a0dfb6; border-radius: 9px; }
 .character-layout { grid-template-columns: minmax(0, .9fr) minmax(430px, 1fr); }
 .character-stage { display: flex; flex-direction: column; align-items: center; text-align: center; }

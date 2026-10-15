@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/includes/auth.php';
-header('Cross-Origin-Opener-Policy: same-origin-allow-popups');
+epq_auth_page_headers();
 if (!epq_is_guest()) epq_redirect_if_logged_in();
 $isGuestUpgrade = epq_is_guest();
 
@@ -124,12 +124,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="zh-CN">
 <head>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23101521'/%3E%3Cpath d='M16 4 20 12 28 16 20 20 16 28 12 20 4 16 12 12Z' fill='%23e6ca8b'/%3E%3C/svg%3E">
-  <meta name="referrer" content="no-referrer-when-downgrade">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101521">
   <title>创建账号 · English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/auth.css?v=20261013-female1">
+  <link rel="stylesheet" href="/FYP/css/auth.css?v=20261015-google2">
 </head>
 <body class="auth-page">
   <main class="auth-layout auth-layout-register">

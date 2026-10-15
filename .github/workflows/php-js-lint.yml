@@ -96,3 +96,18 @@ jobs:
           EPQ_DB_PASS: testpassword
           EPQ_DB_NAME: english_power_quest
         run: bash tests/guest_flow_smoke.sh
+      - name: Google signed-token HTTP fixtures (not real Google consent)
+        env:
+          EPQ_DB_HOST: 127.0.0.1
+          EPQ_DB_USER: root
+          EPQ_DB_PASS: testpassword
+          EPQ_DB_NAME: english_power_quest
+          EPQ_BATTLE_TEST_DB: isolated
+          EPQ_GOOGLE_CLIENT_ID: 1234567890-fixture.apps.googleusercontent.com
+        run: |
+          export EPQ_GOOGLE_TEST_SESSION_PATH=$(mktemp -d /tmp/epq-google-sessions-XXXXXX)
+          php -d "session.save_path=$EPQ_GOOGLE_TEST_SESSION_PATH" -S 127.0.0.1:8081 -t /tmp/epq_web >/tmp/epq_google_server.log 2>&1 &
+          google_server_pid=$!
+          trap 'kill "$google_server_pid" || true; cat /tmp/epq_google_server.log' EXIT
+          curl --retry 10 --retry-connrefused --retry-delay 1 -fsS http://127.0.0.1:8081/FYP/login.php >/dev/null
+          php -d "session.save_path=$EPQ_GOOGLE_TEST_SESSION_PATH" tests/google_http_smoke.php

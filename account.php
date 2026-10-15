@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/includes/auth.php';
-header('Cross-Origin-Opener-Policy: same-origin-allow-popups');
+epq_auth_page_headers();
 epq_require_login_page();
 $stmt=epq_db()->prepare('SELECT google_sub FROM users WHERE user_id=?');
 $userId=(int)$_SESSION['user_id'];$stmt->bind_param('i',$userId);$stmt->execute();$account=$stmt->get_result()->fetch_assoc();
@@ -9,9 +9,8 @@ $linked=!empty($account['google_sub']);
 ?>
 <!DOCTYPE html><html lang="zh-CN"><head>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23101521'/%3E%3Cpath d='M16 4 20 12 28 16 20 20 16 28 12 20 4 16 12 12Z' fill='%23e6ca8b'/%3E%3C/svg%3E">
-  <meta name="referrer" content="no-referrer-when-downgrade">
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>账号设置 · English Power Quest</title><link rel="stylesheet" href="/FYP/css/auth.css?v=20261013-female1">
+  <title>账号设置 · English Power Quest</title><link rel="stylesheet" href="/FYP/css/auth.css?v=20261015-google2">
 </head><body class="auth-page"><main class="auth-layout">
   <section class="auth-art"><div class="auth-brand"><span class="auth-brand-mark">✦</span> ENGLISH POWER QUEST</div>
     <div class="auth-art-copy"><p class="auth-kicker">KEEP YOUR ADVENTURE</p><h1>你的角色，<br><em>一直陪着你。</em></h1><p>绑定登录方式，继续同一个角色的旅程。</p></div>

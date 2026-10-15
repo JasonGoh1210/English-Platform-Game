@@ -25,6 +25,13 @@ function epq_h(string $value): string {
     return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+function epq_auth_page_headers(): void {
+    $secure=!empty($_SERVER['HTTPS'])&&strtolower((string)$_SERVER['HTTPS'])!=='off';
+    header('Cross-Origin-Opener-Policy: same-origin-allow-popups');
+    header('Referrer-Policy: '.($secure?'strict-origin-when-cross-origin':'no-referrer-when-downgrade'));
+    header('Cache-Control: no-store');
+}
+
 function epq_is_guest(): bool {
     return !empty($_SESSION['guest_mode']) && !empty($_SESSION['guest_id'])
         && !empty($_SESSION['user_id']) && !empty($_SESSION['player_id']);
@@ -61,6 +68,7 @@ function epq_csrf_is_valid(?string $token): bool {
 function epq_authenticate_session(array $row, bool $showStory): void {
     session_regenerate_id(true);
     unset($_SESSION['guest_mode'], $_SESSION['guest_id']);
+    unset($_SESSION['google_request'],$_SESSION['google_requests'],$_SESSION['google_completed']);
     $_SESSION['user_id'] = (int)$row['user_id'];
     $_SESSION['player_id'] = (int)$row['player_id'];
     $_SESSION['username'] = (string)$row['username'];
