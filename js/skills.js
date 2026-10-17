@@ -1,4 +1,4 @@
-import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261017-castleroad2";
+import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261017-particles1";
 
 const nodes = [{level:1,cost:1,requiredLevel:2,bonus:4},{level:2,cost:2,requiredLevel:3,bonus:8},{level:3,cost:3,requiredLevel:5,bonus:12}];
 const byId = id=>document.getElementById(id);

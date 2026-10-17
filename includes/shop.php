@@ -19,15 +19,20 @@ function epq_shop_events(mysqli $db,int $playerId): array {
     return $events;
 }
 function epq_shop_inventory(array $events): array {
-    $owned=['owl'];$potions=0;$equipped='owl';
+    $owned=['owl'];$potions=0;$hintPotions=0;$equipped='owl';$ownedEffects=['none'];$equippedEffect='none';
     foreach($events as $event) {
         $item=$event['item']??'';$action=$event['action']??'';
         if($action==='BUY' && $item==='potion') $potions++;
         elseif($action==='USE' && $item==='potion') $potions--;
+        elseif($action==='BUY' && $item==='hint_potion') $hintPotions++;
+        elseif($action==='USE' && $item==='hint_potion') $hintPotions--;
         elseif($action==='BUY' && (epq_shop_catalog()[$item]['kind']??null)==='companion') $owned[]=$item;
+        elseif($action==='BUY' && (epq_shop_catalog()[$item]['kind']??null)==='effect') $ownedEffects[]=$item;
         elseif($action==='EQUIP' && in_array($item,$owned,true)) $equipped=$item;
+        elseif($action==='EQUIP' && in_array($item,$ownedEffects,true)) $equippedEffect=$item;
     }
-    return ['potions'=>max(0,$potions),'owned'=>array_values(array_unique($owned)),'equipped'=>$equipped];
+    return ['potions'=>max(0,$potions),'hintPotions'=>max(0,$hintPotions),'owned'=>array_values(array_unique($owned)),'equipped'=>$equipped,
+        'ownedEffects'=>array_values(array_unique($ownedEffects)),'equippedEffect'=>$equippedEffect];
 }
 function epq_shop_view(mysqli $db,int $playerId): array {
     $stmt=$db->prepare('SELECT coins_total FROM players WHERE player_id=?');$stmt->bind_param('i',$playerId);$stmt->execute();
@@ -50,11 +55,13 @@ function epq_shop_mutate(mysqli $db,int $playerId,string $action,string $item,st
         return epq_shop_view($db,$playerId);
     }
     $inventory=epq_shop_inventory($events);$product=$catalog[$item];$amount=0;
+    $ownedItems=$product['kind']==='effect'?$inventory['ownedEffects']:$inventory['owned'];
     if($action==='EQUIP') {
-        if($product['kind']!=='companion' || !in_array($item,$inventory['owned'],true)) throw new DomainException('SKIN_NOT_OWNED');
+        if(!in_array($product['kind'],['companion','effect'],true) || !in_array($item,$ownedItems,true)) throw new DomainException('SKIN_NOT_OWNED');
     } else {
-        if($product['kind']==='companion' && in_array($item,$inventory['owned'],true)) throw new DomainException('SKIN_ALREADY_OWNED');
+        if(in_array($product['kind'],['companion','effect'],true) && in_array($item,$ownedItems,true)) throw new DomainException('SKIN_ALREADY_OWNED');
         if($item==='potion' && $inventory['potions']>=99) throw new DomainException('POTION_LIMIT');
+        if($item==='hint_potion' && $inventory['hintPotions']>=99) throw new DomainException('POTION_LIMIT');
         $price=$product['price'];$amount=-$price;
         $pay=$db->prepare('UPDATE players SET coins_total=coins_total-? WHERE player_id=? AND coins_total>=?');
         $pay->bind_param('iii',$price,$playerId,$price);$pay->execute();
@@ -66,4 +73,8 @@ function epq_shop_mutate(mysqli $db,int $playerId,string $action,string $item,st
 function epq_use_potion(mysqli $db,int $playerId,string $requestId): void {
     if(epq_shop_view($db,$playerId)['potions']<1) throw new DomainException('NO_POTIONS');
     epq_shop_record($db,$playerId,['id'=>$requestId,'action'=>'USE','item'=>'potion']);
+}
+function epq_use_hint_potion(mysqli $db,int $playerId,string $requestId): void {
+    if(epq_shop_view($db,$playerId)['hintPotions']<1) throw new DomainException('NO_HINT_POTIONS');
+    epq_shop_record($db,$playerId,['id'=>$requestId,'action'=>'USE','item'=>'hint_potion']);
 }

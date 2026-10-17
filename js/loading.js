@@ -2,6 +2,24 @@
 (() => {
   'use strict';
   const mode = document.currentScript?.dataset.loadingMode || 'page';
+  const menuModes = new Set(['skills','backpack','learning']);
+  const menuPaths = new Set(['/FYP/skills.php','/FYP/backpack.php','/FYP/learning.php']);
+  const quietKey = 'englishPowerQuest.menuArrival.v1';
+  let quietArrival = menuModes.has(mode);
+  try {
+    const next=JSON.parse(sessionStorage.getItem(quietKey)||'null');
+    sessionStorage.removeItem(quietKey);
+    quietArrival ||= Boolean(next&&next.path===location.pathname&&next.expires>Date.now());
+  }catch{}
+  // Same-origin referrer also covers browsers with unavailable session storage.
+  try {const from=new URL(document.referrer);quietArrival ||= mode==='map'&&from.origin===location.origin&&menuPaths.has(from.pathname);}catch{}
+  function prepareMenuNavigation(destination) {
+    try {
+      const next=new URL(destination,location.href);
+      if(next.origin===location.origin&&(menuPaths.has(next.pathname)||next.pathname==='/FYP/index.php'))
+        sessionStorage.setItem(quietKey,JSON.stringify({path:next.pathname,expires:Date.now()+30000}));
+    }catch{}
+  }
   const copy = {
     zh: {title:'准备好下一段冒险', opening:'正在打开页面…', map:'正在读取冒险进度…', battle:'正在准备战斗…', skills:'正在读取技能…', shop:'正在打开商店…', backpack:'正在打开背包…', learning:'正在读取学习记录…', character:'正在准备角色…', assets:'正在准备像素场景…', travel:'正在前往下一页…', hint:'小提示：答对英语题，让你的冒险者变得更强。', failed:'加载暂时遇到问题', failedText:'等待时间较长，请检查连接后重试，或返回页面查看提示。', retry:'重新打开', back:'返回页面'},
     en: {title:'Your next adventure awaits', opening:'Opening the page…', map:'Reading your adventure…', battle:'Preparing your battle…', skills:'Reading your skills…', shop:'Opening the shop…', backpack:'Opening your backpack…', learning:'Reading your learning records…', character:'Preparing your character…', assets:'Preparing pixel scenery…', travel:'Traveling to the next page…', hint:'Adventure tip: correct English answers make your hero stronger.', failed:'Loading needs a little help', failedText:'This is taking longer than expected. Check your connection and retry, or return to the page for details.', retry:'Open again', back:'Return to page'}
@@ -9,7 +27,7 @@
   let language = 'zh';
   try { language = localStorage.getItem('englishPowerQuest.language.v1') === 'en' ? 'en' : 'zh'; } catch {}
   const layer = document.createElement('section');
-  layer.id = 'epqLoading'; layer.className = 'epq-loading'; layer.tabIndex = -1;
+  layer.id = 'epqLoading'; layer.className = 'epq-loading'; layer.tabIndex = -1; layer.hidden = true;
   layer.setAttribute('role', 'dialog'); layer.setAttribute('aria-modal', 'true');
   layer.setAttribute('aria-labelledby', 'epqLoadingTitle');
   layer.setAttribute('aria-describedby', 'epqLoadingStatus');
@@ -88,7 +106,7 @@
   }
   // Battle calls this before START, so presentation time cannot consume a new question's timer.
   function waitForMinimum() { return new Promise(resolve => setTimeout(resolve, Math.max(0, visibleUntil - performance.now()))); }
-  window.EPQLoading = {begin, ready, fail, step, waitForImages, waitForMinimum, get active() {return active;}};
+  window.EPQLoading = {begin, ready, fail, step, waitForImages, waitForMinimum, prepareMenuNavigation, get active() {return active;}};
   retry.addEventListener('click', () => { window.location.assign(window.location.href); }); // GET, never replay a form POST.
   back.addEventListener('click', () => ready(true));
   window.addEventListener('epq-language-change', event => {language = event.detail?.language === 'en' ? 'en' : 'zh'; render();});
@@ -112,13 +130,16 @@
     const link = event.target.closest('a[href]');
     if (!link || link.hasAttribute('download') || (link.target && link.target !== '_self')) return;
     const url = localPage(link.href);
-    if (url && !(url.pathname === location.pathname && url.search === location.search && url.hash)) begin('travel');
+    if (url && !(url.pathname === location.pathname && url.search === location.search && url.hash)) {
+      if(menuPaths.has(url.pathname)||(menuModes.has(mode)&&url.pathname==='/FYP/index.php'))prepareMenuNavigation(url.href);
+      else begin('travel');
+    }
   });
   document.addEventListener('submit', event => {
     const form = event.target;
     if (!event.defaultPrevented && (!form.target || form.target === '_self') && localPage(form.action)) begin('travel');
   });
-  begin(mode);
+  if(!quietArrival)begin(mode);
   // Forms need only their own DOM and art; Google/analytics are optional services.
   if (mode === 'page') {
     const complete = () => { step('assets'); void waitForImages(document.querySelectorAll('main img, .auth-shell img'), 3000).then(()=>ready()); };

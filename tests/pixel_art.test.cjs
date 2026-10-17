@@ -8,7 +8,7 @@ const root=path.resolve(__dirname,'..');
 test('Portal, cave, tower and doorway visible bases touch the ground despite PNG padding',()=>{
   const source=fs.readFileSync(path.join(root,'js/pixel-world.js'),'utf8').replaceAll('export ','');
   const c={document:{createElement(){let source;return {getContext:()=>({drawImage(image){source=image;},getImageData:()=>({data:source.pixels})})};}}};vm.createContext(c);vm.runInContext(source,c);
-  for(const [file,size] of [['images/castle/castle-gate-128.png',248],['images/castle/castle-gate-open-128.png',248],['images/castle/withered-tree-96.png',192],['images/castle/hollow-treant-96.png',240],['images/castle/gate-warden-96.png',192],['images/castle/final-castle-192.png',384],['images/castle/wordless-king-128.png',240],['images/world/pixel/realm_portal_64.png',192],['images/dungeons/forest-entrance-128.png',256],['images/dungeons/maple-entrance-128.png',384],['images/dungeons/exit-door-128.png',256],['assets/player/png_frames/Player_Stand.png',144],['assets/player/png_frames/player_walk_right_3.png',144],['images/npc/npc_elder_rowan_64.png',128],['images/dungeons/moss-sentinel-64.png',128]]){
+  for(const [file,size] of [['images/castle/castle-gate-128.png',248],['images/castle/castle-gate-open-128.png',248],['images/castle/withered-tree-96.png',192],['images/castle/hollow-treant-96.png',240],['images/castle/gate-warden-96.png',192],['images/castle/restored-sakura-192.png',384],['images/castle/final-castle-192.png',465],['images/castle/wordless-king-128.png',240],['images/world/pixel/realm_portal_64.png',192],['images/dungeons/forest-entrance-128.png',256],['images/dungeons/maple-entrance-128.png',384],['images/dungeons/exit-door-128.png',256],['assets/player/png_frames/Player_Stand.png',144],['assets/player/png_frames/player_walk_right_3.png',144],['images/npc/npc_elder_rowan_64.png',128],['images/dungeons/moss-sentinel-64.png',128]]){
     const data=png(file),image={...data,naturalWidth:data.width,naturalHeight:data.height,complete:true};let args;
     const context={drawImage:(image,...a)=>args=a};assert.ok(c.drawGroundedSprite(context,image,500,520,size));const bounds=c.spriteBounds(image),scale=size/data.height;
     assert.ok(Math.abs(args[1]+(bounds.bottom+1)*scale-520)<=.5,'Visible threshold sits on the walking plane');
@@ -16,7 +16,7 @@ test('Portal, cave, tower and doorway visible bases touch the ground despite PNG
   }
 });
 test('Final castle and boss use native pixel cutouts; throne hall is an opaque pixel scene',()=>{
-  for(const [file,size] of [['images/castle/final-castle-192.png',192],['images/castle/wordless-king-128.png',128],['images/castle/castle-gate-128.png',128],['images/castle/castle-gate-open-128.png',128],['images/castle/withered-tree-96.png',96],['images/castle/hollow-treant-96.png',96],['images/castle/gate-warden-96.png',96]]){
+  for(const [file,size] of [['images/castle/restored-sakura-192.png',192],['images/castle/final-castle-192.png',192],['images/castle/wordless-king-128.png',128],['images/castle/castle-gate-128.png',128],['images/castle/castle-gate-open-128.png',128],['images/castle/withered-tree-96.png',96],['images/castle/hollow-treant-96.png',96],['images/castle/gate-warden-96.png',96]]){
     const image=png(file),colors=new Set();assert.equal(image.width,size);assert.equal(image.height,size);assert.equal(image.channels,4);let visible=0;
     for(let y=0;y<size;y++)for(let x=0;x<size;x++){const i=(y*size+x)*4,a=image.pixels[i+3];assert.ok(a===0||a===255);if(a){visible++;colors.add(image.pixels.subarray(i,i+3).toString('hex'));}if(x<4||y<4||x>=size-4||y>=size-4)assert.equal(a,0);}
     assert.ok(visible>size*size*.15&&visible<size*size*.85);assert.ok(colors.size<=64);
@@ -25,12 +25,24 @@ test('Final castle and boss use native pixel cutouts; throne hall is an opaque p
   for(let i=3;i<hall.pixels.length;i+=4)assert.equal(hall.pixels[i],255);
 });
 
-test('Six companion skins, potion and doorway are binary-alpha pixel sprites with transparent margins',()=>{
-  const files=['owl','fox','cat','dragon','wisp','bunny'].map(id=>['images/companions/'+id+'-64.png',64]);files.push(['images/dungeons/exit-door-128.png',128],['images/shop/ruby-potion-32.png',32]);
+test('Ten companion skins, both potions and doorway have binary alpha and transparent margins',()=>{
+  const files=['owl','fox','cat','dragon','wisp','bunny','slime','penguin','turtle','bat'].map(id=>['images/companions/'+id+'-64.png',64]);files.push(['images/dungeons/exit-door-128.png',128],['images/shop/ruby-potion-32.png',32],['images/shop/insight-potion-32.png',32]);
   const signatures=new Set();for(const [file,size] of files){const image=png(file);assert.equal(image.width,size);assert.equal(image.height,size);assert.equal(image.channels,4);let visible=0;
     for(let y=0;y<size;y++)for(let x=0;x<size;x++){const alpha=image.pixels[(y*size+x)*4+3];assert.ok(alpha===0||alpha===255);if(alpha)visible++;if(x<2||y<2||x>=size-2||y>=size-2)assert.equal(alpha,0);}
     assert.ok(visible>size*size*.15);signatures.add(image.pixels.toString('base64'));
-  }assert.equal(signatures.size,8);
+  }assert.equal(signatures.size,13);
+});
+
+test('The shopkeeper has a separate transparent pixel sprite and centered 256px bust',()=>{
+  for(const [file,size,margin,maxColors] of [['images/npc/npc_merchant_64.png',64,2,128],['images/npc/portraits/merchant_256.png',256,8,256]]){
+    const image=png(file),colors=new Set();assert.equal(image.width,size);assert.equal(image.height,size);assert.equal(image.channels,4);let visible=0;
+    for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+      const i=(y*size+x)*4,a=image.pixels[i+3];assert.ok(a===0||a===255);
+      if(a){visible++;colors.add(image.pixels.subarray(i,i+3).toString('hex'));}
+      if(x<margin||y<margin||x>=size-margin||y>=size-margin)assert.equal(a,0);
+    }
+    assert.ok(visible>size*size*.15&&visible<size*size*.9);assert.ok(colors.size<=maxColors);
+  }
 });
 test('Four new hero sheets contain seven distinct complete walking frames with aligned boots',()=>{
   const silhouettes=[];
@@ -59,7 +71,7 @@ function png(relative){
 }
 
 test('Companion sheets contain real limb/wing animation and the village shop is transparent native pixel art',()=>{
-  for(const id of ['owl','fox','cat','dragon','wisp','bunny']){
+  for(const id of ['owl','fox','cat','dragon','wisp','bunny','slime','penguin','turtle','bat']){
     const image=png('images/companions/'+id+'-motion-64.png');assert.equal(image.width,256);assert.equal(image.height,128);assert.equal(image.channels,4);
     const moving=new Set(),colors=new Set(),bottoms=[];
     for(let frame=0;frame<8;frame++){
@@ -73,8 +85,8 @@ test('Companion sheets contain real limb/wing animation and the village shop is 
       assert.ok(visible>200,id+' frame '+frame);bottoms.push(bottom);if(frame>=4)moving.add(alpha.join(','));
     }
     assert.ok(moving.size>=3,id+' must change its actual silhouette while moving');assert.ok(colors.size<=128);
-    if(id==='fox'||id==='cat')assert.ok(bottoms.every(bottom=>bottom===60),'Paws stay aligned to the walking plane');
-    if(id==='bunny')assert.ok(bottoms[6]<bottoms[4]-4,'Rabbit hop actually lifts its feet');
+    if(['fox','cat','penguin','turtle'].includes(id))assert.ok(bottoms.every(bottom=>bottom===60),'Feet stay aligned to the walking plane');
+    if(['bunny','slime'].includes(id))assert.ok(bottoms[6]<bottoms[4]-4,'Hop actually lifts the creature');
   }
   const shop=png('images/shop/village-apothecary-192.png');assert.equal(shop.width,192);assert.equal(shop.height,128);assert.equal(shop.channels,4);
   let visible=0,transparent=0;for(let i=0;i<shop.pixels.length;i+=4){const alpha=shop.pixels[i+3];assert.ok(alpha===0||alpha===255);if(alpha)visible++;else transparent++;}

@@ -1,16 +1,17 @@
 .shop-page {background:#101c28;color:#e9e1c8}
-.shop-balances {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:24px 0}
+.shop-balances {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:24px 0}
 .shop-balances>div,.shop-card {background:#1b3040;border:3px solid #7e939e;box-shadow:inset 0 0 0 2px #101c28,4px 4px 0 #080f17;padding:18px}
 .shop-balances span {display:block;font-size:13px;color:#b2c7ce}.shop-balances b {display:block;font-size:24px;color:#f1d79d;margin-top:8px;overflow-wrap:anywhere}
 .shop-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:20px 0 36px}
 .shop-card {display:flex;flex-direction:column;text-align:center;align-items:center;gap:12px;min-width:0}
 .shop-card.owned {border-color:#b3c695}.shop-card.equipped {border-color:#ddbe79}
 .shop-card h3 {margin:0;font-size:18px;overflow-wrap:anywhere}.shop-card img {width:128px;height:128px;object-fit:contain;image-rendering:pixelated}
+.shop-card canvas {width:128px;height:128px;image-rendering:pixelated;border:2px solid #536c72;box-shadow:inset 0 0 0 2px #101c28}
 .shop-card.potion img {width:96px;height:96px;margin:16px}.shop-card p {margin:0;line-height:1.6;min-height:26px}.shop-card .shop-price {color:#f1d79d;font-weight:bold}
 .shop-page button,.shop-page .learning-button {border-radius:0;min-height:48px;border:2px solid #dbc287;background:#38505b;color:#f7edcf;box-shadow:3px 4px 0 #080f17,inset 2px 2px 0 #77909a;padding:10px 18px;font-weight:bold;cursor:pointer;transition:transform .08s,box-shadow .08s}
 .shop-page button:active {transform:translate(2px,3px);box-shadow:1px 1px 0 #080f17}.shop-page button:disabled {opacity:.6;cursor:default}.shop-page button:focus-visible,.shop-page a:focus-visible {outline:3px solid #91e7da;outline-offset:4px}
 .shop-card button {margin-top:auto;width:100%}.shop-page dialog {border-radius:0;background:#1b3040;color:#f7edcf;border:3px solid #dbc287;width:min(480px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;box-sizing:border-box;padding:24px;box-shadow:5px 5px 0 #080f17}.shop-page dialog::backdrop {background:#070f17cc}.shop-actions {display:flex;gap:12px;flex-wrap:wrap}.shop-actions button {flex:1}
 #shopStatus {min-height:24px;line-height:1.6;color:#edd599}.shop-page h2 {font-size:24px}
-@media(max-width:700px){.shop-grid {grid-template-columns:repeat(2,minmax(0,1fr))}.shop-balances {gap:8px}.shop-balances>div {padding:12px}.shop-balances b {font-size:20px}}
-@media(max-width:420px){.shop-grid {grid-template-columns:1fr}.shop-balances {grid-template-columns:1fr 1fr}.shop-balances>div:last-child {grid-column:1/-1}.shop-card {padding:18px}}
+@media(max-width:700px){.shop-grid {grid-template-columns:repeat(2,minmax(0,1fr))}.shop-balances {gap:8px;grid-template-columns:repeat(2,minmax(0,1fr))}.shop-balances>div {padding:12px}.shop-balances b {font-size:20px}}
+@media(max-width:420px){.shop-grid {grid-template-columns:1fr}.shop-balances>div:last-child {grid-column:auto}.shop-card {padding:18px}}
 @media(prefers-reduced-motion:reduce){.shop-page button {transition:none}}

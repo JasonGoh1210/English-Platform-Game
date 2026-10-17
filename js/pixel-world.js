@@ -19,8 +19,8 @@ export function drawGroundedSprite(ctx,image,x,ground,size) {
 }
 export const pixelArtPaths = {
   portraits: { elder:"/FYP/images/npc/portraits/elder_256.png", mira:"/FYP/images/npc/portraits/mira_256.png",
-    tala:"/FYP/images/npc/portraits/tala_256.png", kai:"/FYP/images/npc/portraits/kai_256.png" },
-  npcs: { elder:"/FYP/images/npc/npc_elder_rowan_64.png", mira:"/FYP/images/npc/npc_mira_64.png", tala:"/FYP/images/npc/npc_tala_64.png", kai:"/FYP/images/npc/npc_kai_64.png" },
+    tala:"/FYP/images/npc/portraits/tala_256.png", kai:"/FYP/images/npc/portraits/kai_256.png", merchant:"/FYP/images/npc/portraits/merchant_256.png" },
+  npcs: { elder:"/FYP/images/npc/npc_elder_rowan_64.png", mira:"/FYP/images/npc/npc_mira_64.png", tala:"/FYP/images/npc/npc_tala_64.png", kai:"/FYP/images/npc/npc_kai_64.png", merchant:"/FYP/images/npc/npc_merchant_64.png" },
   monsters: { "bat-01":"/FYP/images/world/monsters/confusion-bat-64.png", "road-guardian-01":"/FYP/images/world/monsters/road-guardian-64.png",
     "guardian-01":"/FYP/images/world/monsters/grammar-guardian-64.png", "cave-wraith-01":"/FYP/images/world/monsters/cave-wraith-64.png" },
   portal:"/FYP/images/world/pixel/realm_portal_64.png",

@@ -1,5 +1,5 @@
 /* Pixel story presentation on the existing storyboard flow. */
-.pixel-world-ui .dialogue { border:3px solid #b99a65; border-radius:0; background:#142534;
+.pixel-world-ui .dialogue { z-index:40; border:3px solid #b99a65; border-radius:0; background:#142534;
   box-shadow:4px 4px #080e17; grid-template-columns:144px minmax(0,1fr); align-items:center; gap:16px; padding:16px; }
 .pixel-world-ui .dialogue-portrait { display:grid; place-items:center; width:144px; height:144px; min-height:144px;
   border:2px solid #8296a2; background:#223848; overflow:hidden; }
@@ -9,6 +9,7 @@
 .pixel-world-ui .dialogue-body p { color:#d3e0e5; font-size:16px; line-height:1.6; }
 .pixel-world-ui .dialogue button { min-height:44px; border:2px solid #a38d67; border-radius:0;
   color:#eee0be; background:#304957; padding:9px 18px; }
+.pixel-world-ui #dialogueCloseButton { background:#213540; border-color:#8296a2; }
 .story-intro-overlay { background:#090f19; padding:16px; gap:12px; }
 .story-intro-overlay::before,.story-intro-overlay::after { display:none; }
 .storyboard-screen { display:grid; grid-template-rows:auto minmax(0,1fr) auto; width:min(1200px,100%);

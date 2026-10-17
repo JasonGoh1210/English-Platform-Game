@@ -248,3 +248,11 @@ body.battle-page { height:auto; min-height:100dvh; }
   .destination-screen *, .battle-page * { scroll-behavior:auto; }
   .destination-arrow, .destination-back { transition:none; }
 }
+/* Confirmed, per-question potion clues remain readable in short battles. */
+.battle-hint {margin:8px 0;padding:10px 12px;border:2px solid #69bdb8;background:#173b45;color:#d8f4e9;font:14px/1.55 system-ui;max-height:112px;overflow:auto;overflow-wrap:anywhere}
+.battle-answer-button.hint-ruled-out {text-decoration:line-through;opacity:.42}
+#activeHintPotionButton {border-color:#7dcac3;color:#c4fff0;background:#294950}
+@media(max-width:480px){
+  .question-battle-actions {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .question-battle-actions .battle-action-button {min-height:44px;padding:9px 6px;font-size:11px;line-height:1.4}
+}

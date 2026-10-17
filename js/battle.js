@@ -1,11 +1,11 @@
-import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261017-castleroad2";
-import { battleToken, createBattleClient } from "./battle-api.js?v=20261017-castleroad2";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261017-castleroad2";
-import { playSound } from "./audio.js?v=20261017-castleroad2";
-import { normalizeTutorial } from "./tutorial.js?v=20261017-castleroad2";
-import { paintCharacterImages } from "./characters.js?v=20261017-castleroad2";
-import { createBattleReviewPanel } from "./battle-review.js?v=20261017-castleroad2";
-import { pixelArtPaths } from "./pixel-world.js?v=20261017-castleroad2";
+import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261017-particles1";
+import { battleToken, createBattleClient } from "./battle-api.js?v=20261017-particles1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261017-particles1";
+import { playSound } from "./audio.js?v=20261017-particles1";
+import { normalizeTutorial } from "./tutorial.js?v=20261017-particles1";
+import { paintCharacterImages } from "./characters.js?v=20261017-particles1";
+import { createBattleReviewPanel } from "./battle-review.js?v=20261017-particles1";
+import { pixelArtPaths } from "./pixel-world.js?v=20261017-particles1";
 
 // Use the same per-player storage namespace as the map. If these keys differ,
 // the battle page cannot find the enemy that the map just stored and redirects back.
@@ -26,6 +26,7 @@ let reviewPanel;
 let settingsTransition = Promise.resolve();
 let settingsRevision = 0;
 let potionStock=0;
+let hintPotionStock=0;
 
 function coachBattle(key, values = {}) {
   if (!tutorialBattle) return;
@@ -54,7 +55,10 @@ function applyServerBattle(result) {
   state.enemyHp = result.battle.enemyHp;
   state.focusUsed = result.battle.focusUsed;
   state.wordStrikeLevel = result.battle.wordStrikeLevel || 0;
-  if(result.shop){potionStock=result.shop.potions;renderPotions();}
+  if(result.shop){potionStock=result.shop.potions;hintPotionStock=result.shop.hintPotions||0;renderPotions();}
+  state.questionHint=result.battle.hint||null;
+  state.hintQuestionToken=result.battle.questionToken||null;
+  renderBattleHint();
   if (ui.wordStrikeStatus) renderWordStrike();
   if (result.player) updateSave({xp:result.player.xp, coins:result.player.coins, power:result.player.englishPowerTotal, level:result.player.level});
   updateHp();
@@ -155,6 +159,7 @@ const ui = {
   skillButton: document.getElementById("skillButton"),
   itemButton: document.getElementById("itemButton"),
   activePotionButton:document.getElementById('activePotionButton'),
+  activeHintPotionButton:document.getElementById('activeHintPotionButton'),
   runButton: document.getElementById("runButton"),
   questionPanel: document.getElementById("questionPanel"),
   questionType: document.getElementById("questionType"),
@@ -318,6 +323,7 @@ function localizeQuestionTheme() {
 
 onLanguageChange(() => {
   renderPotions();
+  renderBattleHint();
   renderSettingsPause();
   localizeBattleStaticText();
   if (state.battleMessageTranslation) {
@@ -508,6 +514,7 @@ async function startQuestion() {
     ? (q.promptZh || (q.type === "TRUE_FALSE" ? t("battle.answerPrompt") : q.prompt || ""))
     : (q.prompt || t("battle.answerPrompt"));
   renderChoices(q);
+  renderBattleHint();
   if (tutorialBattle) coachBattle(q.type === "TRUE_FALSE" ? "tutorial.battle.trueFalse" : "tutorial.battle.oddWord");
   state.remaining = result.battle.remaining;
   ui.timerText.classList.remove("warning");
@@ -590,36 +597,60 @@ async function useSkill() {
   playSound("focus");
   if (ui.questionPanel.classList.contains("hidden")) { showQuestionPanel(); void startQuestion(); }
 }
-function renderPotions(){const button=document.getElementById('activePotionButton');if(button){button.textContent=t('battle.potion',{count:potionStock});button.classList.toggle('hidden',potionStock===0);}}
+function renderPotions(){
+  const button=document.getElementById('activePotionButton');if(button){button.textContent=t('battle.potion',{count:potionStock});button.classList.toggle('hidden',potionStock===0);}
+  const hint=document.getElementById('activeHintPotionButton');if(hint){hint.textContent=t('hint.potion',{count:hintPotionStock});hint.classList.toggle('hidden',hintPotionStock===0);}
+}
+function renderBattleHint(){
+  const panel=document.getElementById('battleHint');if(!panel)return;
+  const hint=state.hintQuestionToken===state.questionToken?state.questionHint:null;
+  panel.classList.toggle('hidden',!hint);panel.textContent='';
+  if(hint){
+    panel.textContent=t('hint.title')+' '+(getLanguage()==='zh'?hint.zh:hint.en);
+    if(hint.leadWords?.length)panel.textContent+=' '+hint.leadWords.join(' ')+' …';
+    for(const button of ui.answerArea.querySelectorAll('[data-answer-value]')){
+      const removed=button.dataset.answerValue===hint.removedWord;
+      if(removed){button.disabled=true;button.classList.add('hint-ruled-out');button.setAttribute('aria-label',t('hint.ruledOut',{word:button.textContent}));}
+    }
+  }
+  const button=document.getElementById('activeHintPotionButton');if(button)button.disabled=Boolean(hint)||state.itemPending||state.locked||!state.questionToken;
+}
 function useItem(action='HERB') {
   if (state.settingsOpen || state.settingsPending || state.settingsPaused || state.settingsFailed) return;
   if (state.completed || state.locked || state.itemPending || state.skillPending || state.leaving || !serverReady) return;
   const questionAlreadyOpen = !ui.questionPanel.classList.contains("hidden");
-  if (state.playerHp >= state.playerMaxHp) { setBattleMessage("battle.hpFull"); return; }
+  if (action!=='HINT' && state.playerHp >= state.playerMaxHp) { setBattleMessage("battle.hpFull"); return; }
+  if(action==='HINT'){
+    if(hintPotionStock<1){setBattleMessage('hint.noStock');return;}
+    if(!questionAlreadyOpen||!state.questionToken){setBattleMessage('hint.noQuestion');return;}
+    if(state.questionHint){setBattleMessage('hint.used');return;}
+  }
   if(action==='POTION' && potionStock<1){setBattleMessage('battle.noPotions');return;}
   if (action==='HERB' && Number(getSave().coins || 0) < 5) { setBattleMessage("battle.notEnoughCoins"); return; }
   state.itemPending = true;
-  const buttons = [...ui.answerArea.querySelectorAll("button"), ui.itemButton, ui.activeItemButton,ui.activePotionButton].filter(Boolean);
+  const buttons = [...ui.answerArea.querySelectorAll("button"), ui.itemButton, ui.activeItemButton,ui.activePotionButton,ui.activeHintPotionButton].filter(Boolean);
   const disabledBefore = buttons.map(button => button.disabled);
   buttons.forEach(button => { button.disabled = true; });
   setBattleMessage("battle.itemPending");
   pendingItemUse = (async () => {
     try {
-      const result = await battleRequest(action);
-      if (!result.ok) { setBattleMessage(result.status === 409 ? "battle.notEnoughCoins" : "battle.itemFailed"); return false; }
+      const result = await battleRequest(action,action==='HINT'?{questionToken:state.questionToken}:{});
+      if (!result.ok) { const hintError={NO_HINT_POTIONS:'hint.noStock',HINT_ALREADY_USED:'hint.used',HINT_NO_QUESTION:'hint.noQuestion',HINT_EXPIRED:'hint.expired'};
+        setBattleMessage(action==='HINT'?(hintError[result.error]||'hint.failed'):result.status === 409 ? "battle.notEnoughCoins" : "battle.itemFailed");return false; }
       applyServerBattle(result);
-      playSound("heal");
-      if (tutorialBattle) coachBattle("tutorial.battle.heal");
+      playSound(action==='HINT'?'focus':'heal');
+      if (tutorialBattle && action!=='HINT') coachBattle("tutorial.battle.heal");
       if (questionAlreadyOpen && !state.leaving && !state.settingsOpen) {
         const resumed = await battleRequest("RESUME");
         if (resumed.ok) state.remaining = resumed.battle.remaining;
       }
-      setBattleMessage(action==='POTION'?"battle.potionHealed":"battle.healed");
+      setBattleMessage(action==='HINT'?'hint.ready':action==='POTION'?"battle.potionHealed":"battle.healed");
       return true;
     } catch { setBattleMessage("battle.itemFailed"); return false; }
     finally {
       state.itemPending = false;
       buttons.forEach((button, index) => { button.disabled = disabledBefore[index]; });
+      renderBattleHint();
       if (!questionAlreadyOpen && !state.leaving) { showQuestionPanel(); void startQuestion(); }
     }
   })();
@@ -794,6 +825,7 @@ function bindBattleEvents() {
     useItem();
   });
   document.getElementById('activePotionButton')?.addEventListener('click',()=>useItem('POTION'));
+  document.getElementById('activeHintPotionButton')?.addEventListener('click',()=>useItem('HINT'));
 
   ui.runButton.addEventListener("click", (event) => {
     event.preventDefault();
@@ -953,6 +985,7 @@ window.render_game_to_text = () => JSON.stringify({
   enemy: state.enemy ? { name: localEnemyName(), hp: state.enemyHp } : null,
   playerHp: state.playerHp,
   focus: state.focusUsed,
+  hint:{stock:hintPotionStock,used:Boolean(state.questionHint)},
   timer: state.currentQuestion?.timed === false ? null : Math.max(0, Number(state.remaining || 0)),
   wordStrikeLevel: state.wordStrikeLevel,
   paused: Boolean(state.settingsOpen || state.settingsPaused),

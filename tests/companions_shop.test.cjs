@@ -4,7 +4,8 @@ test('Shop receipts require valid inventory, balances and an owned equipped comp
   const source=fs.readFileSync(path.join(root,'js/shop.js'),'utf8').match(/export function validShopView[\s\S]+?\n}/)[0].replace('export ','');
   const c={};vm.createContext(c);vm.runInContext(source,c);const products=JSON.parse(fs.readFileSync(path.join(root,'data/shop.json')));
   const valid={coins:48,potions:2,owned:['owl','fox'],equipped:'fox'};assert.ok(c.validShopView(valid,products));
-  for(const bad of [{coins:-1},{coins:'48'},{potions:100},{potions:1.5},{owned:['owl','owl']},{owned:['fox']},{equipped:'dragon'},{owned:['owl','potion']}])assert.ok(!c.validShopView({...valid,...bad},products));
+  assert.ok(c.validShopView({...valid,ownedEffects:['none','sakura_trail'],equippedEffect:'sakura_trail'},products));
+  for(const bad of [{ownedEffects:null},{ownedEffects:['none','none']},{ownedEffects:['none','fox']},{ownedEffects:[]},{equippedEffect:'star_trail'},{equippedEffect:null},{coins:-1},{coins:'48'},{potions:100},{potions:1.5},{hintPotions:100},{hintPotions:-1},{hintPotions:null},{hintPotions:1.5},{owned:['owl','owl']},{owned:['fox']},{equipped:'dragon'},{owned:['owl','potion']}])assert.ok(!c.validShopView({...valid,...bad},products));
 });
 test('A guiding companion points towards the actual route, stays close and resets across worlds',()=>{
   const source=fs.readFileSync(path.join(root,'js/companions.js'),'utf8').replace(/^import .+;\r?\n/,'').replaceAll('export function','function');
@@ -33,13 +34,13 @@ test('Winged companions hover and flap while ground companions walk or hop throu
   const source=fs.readFileSync(path.join(root,'js/companions.js'),'utf8').replace(/^import .+;\r?\n/,'').replaceAll('export function','function');
   const c={Image:class{}};vm.createContext(c);vm.runInContext(source,c);
   const products=JSON.parse(fs.readFileSync(path.join(root,'data/shop.json')));
-  for(const id of ['owl','fox','cat','dragon','wisp','bunny']){
+  for(const id of Object.keys(products).filter(id=>products[id].kind==='companion')){
     const buddy=c.createCompanion(products),fields={playerX:700,playerFacing:1,routeX:880,width:1800,realm:'maple',inside:false,equipped:id};
-    buddy.update(0,fields);const first=buddy.state(id),flying=['owl','dragon','wisp'].includes(id);
+    buddy.update(0,fields);const first=buddy.state(id),flying=products[id].animation.motion==='fly';
     assert.equal(first.airborne,flying);assert.equal(first.motion,flying?'hover':'idle');assert.equal(first.altitude>40,flying);
     const idle=new Set(),moving=new Set();for(let i=0;i<12;i++){buddy.update(.15,fields);idle.add(buddy.state(id).frame);}
     assert.ok(idle.size>1,'Idle or wing animation advances');
-    for(let i=0;i<12;i++){buddy.update(.08,{...fields,playerX:710+i*5});const pose=buddy.state(id);moving.add(pose.frame);assert.equal(pose.motion,flying?'fly':id==='bunny'?'hop':'walk');}
+    for(let i=0;i<12;i++){buddy.update(.08,{...fields,playerX:710+i*5});const pose=buddy.state(id);moving.add(pose.frame);assert.equal(pose.motion,flying?'fly':products[id].animation.motion==='hop'?'hop':'walk');}
     assert.ok(moving.size>=3,'Movement changes actual pose indices');assert.ok([...moving].every(frame=>frame>=4&&frame<8));
   }
 });

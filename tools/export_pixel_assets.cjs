@@ -6,11 +6,11 @@ const { chromium } = require(process.env.EPQ_PLAYWRIGHT_MODULE || 'playwright');
 const root = path.resolve(__dirname, '..');
 const manifest = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 const spriteNames = { rowan:'images/npc/npc_elder_rowan_64.png', mira:'images/npc/npc_mira_64.png', tala:'images/npc/npc_tala_64.png',
-  kai:'images/npc/npc_kai_64.png', portal:'images/world/pixel/realm_portal_64.png',
+  kai:'images/npc/npc_kai_64.png', merchant:'images/npc/npc_merchant_64.png', portal:'images/world/pixel/realm_portal_64.png',
   wraith:'images/world/monsters/cave-wraith-64.png', bat:'images/world/monsters/confusion-bat-64.png',
   road_guardian:'images/world/monsters/road-guardian-64.png', grammar_guardian:'images/world/monsters/grammar-guardian-64.png' };
 const portraitNames={portrait_elder:'images/npc/portraits/elder_256.png',portrait_mira:'images/npc/portraits/mira_256.png',
-  portrait_tala:'images/npc/portraits/tala_256.png',portrait_kai:'images/npc/portraits/kai_256.png'};
+  portrait_tala:'images/npc/portraits/tala_256.png',portrait_kai:'images/npc/portraits/kai_256.png',portrait_merchant:'images/npc/portraits/merchant_256.png'};
 const dungeonNames={owl:'clockwork-owl-64.png',moss:'moss-sentinel-64.png',scorpion:'ember-scorpion-64.png',beetle:'crystal-beetle-64.png'};
 const companionNames=Object.fromEntries(['owl','fox','cat','dragon','wisp','bunny'].map(id=>['companion_'+id,'images/companions/'+id+'-64.png']));
 const heroNames=Object.fromEntries(['male_forest','female_forest','male_arcane','female_arcane'].map(id=>['hero_'+id,'assets/player/looks/'+id.replaceAll('_','-')+'-sheet.png']));
@@ -22,19 +22,25 @@ async function main() {
   try {
     const page=await browser.newPage();
     for (const item of manifest) {
-      const castleAsset = ({final_castle:'final-castle-192.png',final_boss:'wordless-king-128.png',castle_hall:'throne-hall.png',withered_tree:'withered-tree-96.png',hollow_treant:'hollow-treant-96.png',gate_warden:'gate-warden-96.png',castle_gate:'castle-gate-128.png',castle_gate_open:'castle-gate-open-128.png'})[item.key];
+      const castleAsset = ({restored_sakura:'restored-sakura-192.png',final_castle:'final-castle-192.png',final_boss:'wordless-king-128.png',castle_hall:'throne-hall.png',withered_tree:'withered-tree-96.png',hollow_treant:'hollow-treant-96.png',gate_warden:'gate-warden-96.png',castle_gate:'castle-gate-128.png',castle_gate_open:'castle-gate-open-128.png'})[item.key];
       const dungeonKey=item.key.startsWith('dungeon_')?item.key.slice(8):null;
       const background=['maple','forest','camp','ruins'].includes(item.key) || Boolean(dungeonKey?.endsWith('_interior')) || item.key==='castle_hall';
       const entrance=Boolean(dungeonKey?.endsWith('_entrance')) || item.key==='exit_door';
-      const sheet=Boolean(heroNames[item.key]),potion=item.key==='potion';
+      const sheet=Boolean(heroNames[item.key]),potion=['potion','hint_potion'].includes(item.key);
       const portrait=Boolean(portraitNames[item.key]);
       const relative=castleAsset?'images/castle/'+castleAsset:dungeonKey && dungeonNames[dungeonKey]?'images/dungeons/'+dungeonNames[dungeonKey]
         :background?'images/world/pixel/'+item.key+'.png':portraitNames[item.key] || spriteNames[item.key] || companionNames[item.key] || heroNames[item.key]
-        || (item.key==='exit_door'?'images/dungeons/exit-door-128.png':potion?'images/shop/ruby-potion-32.png':null);
+        || (item.key==='exit_door'?'images/dungeons/exit-door-128.png':potion?(item.key==='hint_potion'?'images/shop/insight-potion-32.png':'images/shop/ruby-potion-32.png'):null);
       if (!relative) throw new Error('Unknown export key: '+item.key);
       const source='data:image/png;base64,'+fs.readFileSync(item.source).toString('base64');
-      const result=await page.evaluate(async({source,background,portrait,entrance,floorFraction,dungeonKey,sheet,potion,castleKey})=>{
-        const img=new Image();img.src=source;await img.decode();
+      const result=await page.evaluate(async({source,background,portrait,entrance,floorFraction,dungeonKey,sheet,potion,castleKey,crop})=>{
+        let img=new Image();img.src=source;await img.decode();
+        if(crop){
+          if(!Array.isArray(crop)||crop.length!==4||!crop.every(Number.isFinite)||crop.some(v=>v<0||v>1)||crop[2]<=0||crop[3]<=0||crop[0]+crop[2]>1||crop[1]+crop[3]>1)throw Error('Invalid atlas crop');
+          const region=document.createElement('canvas');region.width=Math.round(img.width*crop[2]);region.height=Math.round(img.height*crop[3]);
+          region.getContext('2d').drawImage(img,Math.round(img.width*crop[0]),Math.round(img.height*crop[1]),region.width,region.height,0,0,region.width,region.height);
+          img=new Image();img.src=region.toDataURL('image/png');await img.decode();
+        }
         const sourceCanvas=document.createElement('canvas');sourceCanvas.width=img.width;sourceCanvas.height=img.height;
         const src=sourceCanvas.getContext('2d',{willReadFrequently:true});src.drawImage(img,0,0);
         const pixels=src.getImageData(0,0,img.width,img.height).data;
@@ -44,7 +50,7 @@ async function main() {
           else{left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x);bottom=Math.max(bottom,y);}
         }
         if(!background && (right<left || transparent===0))throw Error('Sprite needs actual alpha and a visible silhouette');
-        const size=castleKey==='final_castle'?192:['final_boss','castle_gate','castle_gate_open'].includes(castleKey)?128:['withered_tree','hollow_treant','gate_warden'].includes(castleKey)?96:portrait?256:entrance?128:potion?32:64,margin=portrait?8:entrance||castleKey?4:2;
+        const size=['final_castle','restored_sakura'].includes(castleKey)?192:['final_boss','castle_gate','castle_gate_open'].includes(castleKey)?128:['withered_tree','hollow_treant','gate_warden'].includes(castleKey)?96:portrait?256:entrance?128:potion?32:64,margin=portrait?8:entrance||castleKey?4:2;
         const canvas=document.createElement('canvas');canvas.width=sheet?320:background?384:size;canvas.height=sheet?160:castleKey==='castle_hall'?216:background?192:size;
         const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
         if(sheet){
@@ -83,7 +89,7 @@ async function main() {
           data.data.set(best,i);}
         ctx.putImageData(data,0,0);
         return {base64:canvas.toDataURL('image/png').split(',')[1],width:canvas.width,height:canvas.height,palette:palette.length};
-      },{source,background,portrait,entrance,floorFraction:item.floorFraction,dungeonKey,sheet,potion,castleKey:castleAsset?item.key:null});
+      },{source,background,portrait,entrance,floorFraction:item.floorFraction,dungeonKey,sheet,potion,castleKey:castleAsset?item.key:null,crop:item.crop});
       const destination=path.join(root,relative);fs.mkdirSync(path.dirname(destination),{recursive:true});fs.writeFileSync(destination,Buffer.from(result.base64,'base64'));
       console.log(relative,result.width+'x'+result.height,'colors='+result.palette);
     }

@@ -1,13 +1,15 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261017-castleroad2";
-import { playSound } from "./audio.js?v=20261017-castleroad2";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261017-castleroad2";
-import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261017-castleroad2";
-import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText, loadCharacterAssets } from "./characters.js?v=20261017-castleroad2";
-import { createQuestClient } from "./quest-api.js?v=20261017-castleroad2";
-import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261017-castleroad2";
-import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave, drawDungeonBackdrop, drawGroundedSprite } from "./pixel-world.js?v=20261017-castleroad2";
-import {createCompanion} from './companions.js?v=20261017-castleroad2';
-import { storyPortraitSource } from "./story-visuals.js?v=20261017-castleroad2";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261017-particles1";
+import { playSound } from "./audio.js?v=20261017-particles1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261017-particles1";
+import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261017-particles1";
+import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText, loadCharacterAssets } from "./characters.js?v=20261017-particles1";
+import { createQuestClient } from "./quest-api.js?v=20261017-particles1";
+import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261017-particles1";
+import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave, drawDungeonBackdrop, drawGroundedSprite } from "./pixel-world.js?v=20261017-particles1";
+import {createCompanion} from './companions.js?v=20261017-particles1';
+import { storyPortraitSource } from "./story-visuals.js?v=20261017-particles1";
+import { drawVillageCrossing } from "./village-river.js?v=20261017-particles1";
+import {createParticleEffect} from './particle-effects.js?v=20261017-particles1';
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -106,7 +108,8 @@ const typingCaveState = {
 };
 
 const world = {
-  currentRealmId: "maple", realmPositions: {}, width: 1800, groundY: 520, waterY: 650,
+  ready: false,
+  currentRealmId: "maple", realmPositions: {}, width: window.EPQ_AUTH?.worldLayout?.widths?.maple || 2800, groundY: 520, waterY: 650,
   player: { x: 440, y: 0, vx: 0, facing: 1, speed: 250, width: 34, height: 58, onGround: true, bob: 0, walkFrame: 0, walkTimer: 0 },
   cameraX: 0, time: 0, questStep: 0, coins: 0, xp: 0, power: 0, level: 1,
   interacting: false, travelMenu: false, storyIntroOpen: false, selectedDestinationIndex: 0, portalX: 220, caveReturnX: 0,
@@ -114,17 +117,21 @@ const world = {
   tutorial: null
 };
 const companion=createCompanion(window.EPQ_AUTH?.shopCatalog||{});
-world.shop={equipped:'owl',owned:['owl'],potions:0};
+world.shop={equipped:'owl',owned:['owl'],potions:0,hintPotions:0,ownedEffects:['none'],equippedEffect:'none'};
+const cosmeticParticles=createParticleEffect(),particleMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
 world.castle=null;
 const castleLayout=window.EPQ_AUTH?.worldLayout || {treantX:2700,castleWardenX:3580,castleGateX:3820};
+const villageLayout={bridgeX:window.EPQ_AUTH?.worldLayout?.mapleBridgeX||1740,bridgeWidth:window.EPQ_AUTH?.worldLayout?.mapleBridgeWidth||440,
+  shopX:window.EPQ_AUTH?.worldLayout?.mapleShopX||2360,merchantX:window.EPQ_AUTH?.worldLayout?.mapleMerchantX||2120};
 const deadTreeSprite=new Image();deadTreeSprite.src='/FYP/images/castle/withered-tree-96.png';
+const sakuraTreeSprite=new Image();sakuraTreeSprite.src='/FYP/images/castle/restored-sakura-192.png';
 const castleGateSprite=new Image();castleGateSprite.src='/FYP/images/castle/castle-gate-128.png';
 const castleGateOpenSprite=new Image();castleGateOpenSprite.src='/FYP/images/castle/castle-gate-open-128.png';
-const exitDoorSprite=new Image();exitDoorSprite.src='/FYP/images/dungeons/exit-door-128.png?v=20261017-castleroad2';
-const villageShopSprite=new Image();villageShopSprite.src='/FYP/images/shop/village-apothecary-192.png?v=20261017-castleroad2';
-const finalCastleSprite=new Image();finalCastleSprite.src='/FYP/images/castle/final-castle-192.png?v=20261017-castleroad2';
-const finalBossSprite=new Image();finalBossSprite.src='/FYP/images/castle/wordless-king-128.png?v=20261017-castleroad2';
-const finalCastleHall=new Image();finalCastleHall.src='/FYP/images/castle/throne-hall.png?v=20261017-castleroad2';
+const exitDoorSprite=new Image();exitDoorSprite.src='/FYP/images/dungeons/exit-door-128.png?v=20261017-particles1';
+const villageShopSprite=new Image();villageShopSprite.src='/FYP/images/shop/village-apothecary-192.png?v=20261017-particles1';
+const finalCastleSprite=new Image();finalCastleSprite.src='/FYP/images/castle/final-castle-192.png?v=20261017-particles1';
+const finalBossSprite=new Image();finalBossSprite.src='/FYP/images/castle/wordless-king-128.png?v=20261017-particles1';
+const finalCastleHall=new Image();finalCastleHall.src='/FYP/images/castle/throne-hall.png?v=20261017-particles1';
 const companionHint=document.createElement('p');companionHint.className='companion-hint hidden';document.querySelector('.game-shell').appendChild(companionHint);
 document.getElementById('companionLead')?.addEventListener('click',()=>{
   const leading=companion.toggle();document.getElementById('companionLead').setAttribute('aria-pressed',String(leading));
@@ -161,7 +168,7 @@ const worldBackgroundPaths = {
 for (const realmId of Object.keys(worldBackgroundPaths)) {
   const availablePaths = window.EPQ_AUTH?.worldBackgrounds?.[realmId];
   if (Array.isArray(availablePaths)) {
-    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261017-castleroad2");
+    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261017-particles1");
   }
 }
 
@@ -223,6 +230,7 @@ function personalizePlayerName(value) {
 }
 const WORLD_SAVE_KEY = `englishPowerQuest.world.v2.player.${AUTH_PLAYER_ID}`;
 const WORLD_PENDING_KEY = `${WORLD_SAVE_KEY}.pending`;
+const WORLD_START_KEY = `${WORLD_SAVE_KEY}.start`;
 const STORY_INTRO_SEEN_KEY = `englishPowerQuest.storyIntro.seen.v2.player.${AUTH_PLAYER_ID}`;
 const NEW_ADVENTURE_TUTORIAL = Boolean(AUTH_CONTEXT.showStoryIntro);
 let tutorialReady = false;
@@ -338,7 +346,22 @@ async function loadServerGame() {
     const response = await fetch("/FYP/api/game_state.php", { credentials: "same-origin", cache: "no-store", signal: controller.signal });
     const result = await response.json();
     if (!response.ok || !result?.ok) throw new Error(result?.error || "Game state unavailable");
-    const hasPendingLocalSave = localStorage.getItem(WORLD_PENDING_KEY) === "1"
+    // A newly created server checkpoint wins over stale local data, even a
+    // pending write belonging to a previous database's reused player number.
+    const freshStartId = result.state?.freshStartId;
+    const freshStart = result.state?.freshStart === true
+      && (typeof freshStartId !== "string" || localStorage.getItem(WORLD_START_KEY) !== freshStartId);
+    if (freshStart) {
+      clearTimeout(saveDelayHandle);
+      pendingSaveData = null;
+      saveRevision += 1;
+      localStorage.removeItem(WORLD_SAVE_KEY);
+      localStorage.removeItem(WORLD_PENDING_KEY);
+      localStorage.removeItem(STORY_INTRO_SEEN_KEY);
+      sessionStorage.removeItem(BATTLE_KEY);
+      sessionStorage.removeItem(ESCAPE_KEY);
+    }
+    const hasPendingLocalSave = !freshStart && localStorage.getItem(WORLD_PENDING_KEY) === "1"
       && localStorage.getItem(WORLD_SAVE_KEY) !== null;
     if (!hasPendingLocalSave && result.state && typeof result.state === "object") {
       const cached = (() => {
@@ -351,10 +374,16 @@ async function loadServerGame() {
       updateQuest();
       syncHUD();
     }
+    if (freshStart) {
+      // Remember adoption before the first write is confirmed: if that write
+      // fails, a reload must retain this new character's own pending movement.
+      if (typeof freshStartId === "string") localStorage.setItem(WORLD_START_KEY, freshStartId);
+      if (!world.storyIntroOpen) openStoryIntroIfNew();
+    }
     dbSaveReady = true;
     // Import an existing personal browser save into MySQL on first use.
     const local = localStorage.getItem(WORLD_SAVE_KEY);
-    if (local && (hasPendingLocalSave || !result.state)) {
+    if (local && (freshStart || hasPendingLocalSave || !result.state)) {
       queueGameSave(JSON.parse(local));
       void flushGameSave();
     }
@@ -807,6 +836,7 @@ function elderRowanSpriteReady() {
 }
 
 const npcs = [
+  { id:'merchant',realmId:'maple',x:villageLayout.merchantX,name:'Bram',nameKey:'npc.merchant.name',titleKey:'npc.merchant.title',dialogueKeys:['npc.merchant.welcome'],color:'#a67d51' },
   { id: "elder", realmId: "maple", x: 880, name: "Elder Rowan", title: "Village Elder", titleKey: "npc.elder.title", nameKey: "npc.elder.name", dialogueKeys: ["npc.elder.1","npc.elder.2","npc.elder.3"], color: "#c79b6d", dialogue: ["Welcome to Maple Town, traveller.","The old road beyond the forest has gone silent.","If you want to help, follow the lanterns and learn the words of the road."] },
   { id: "mira", realmId: "forest", x: 790, name: "Mira", title: "Wandering Merchant", titleKey: "npc.mira.title", nameKey: "npc.mira.name", dialogueKeys: ["npc.mira.1","npc.mira.2","npc.mira.3"], color: "#c57f62", dialogue: ["You are heading into Whispering Forest, aren't you?","Remember: understanding a message can be more useful than a sharp sword.","I will wait here until you return."] },
   { id: "tala", realmId: "camp", x: 900, name: "Tala", title: "Camp Guide", titleKey: "npc.tala.title", nameKey: "npc.tala.name", dialogueKeys: ["npc.tala.1","npc.tala.2","npc.tala.3"], color: "#8c9d68", dialogue: ["The old road is safest when you read every sign.","Listen for the wind and watch the firelight; the trail changes after sunset.","Rest here, then carry what you have learned into the ruins."] },
@@ -818,8 +848,8 @@ const landmarks = [
   { realmId: "maple", x: 600, type: "house", variant: "cottage" },
   { realmId: "maple", x: 835, type: "house", variant: "elder" },
   { realmId: "maple", x: 1080, type: "house", variant: "cottage" },
-  { realmId: "maple", x: 1430, type: "bridge" },
-  { realmId: "maple", x: 1580, type: "shop" },
+  { realmId: "maple", x: villageLayout.bridgeX, type: "bridge" },
+  { realmId: "maple", x: villageLayout.shopX, type: "shop" },
   { realmId: "forest", x: 420, type: "sign" },
   { realmId: "forest", x: 620, type: "house", variant: "cottage" },
   { realmId: "forest", x: 990, type: "bridge" },
@@ -833,12 +863,13 @@ const landmarks = [
   { realmId: "ruins", x: 1060, type: "ruins" },
   { realmId: "ruins", x: 1680, type: "cave" },
   ...[2080,2390,2960,3270,4110].map((x,i)=>({realmId:'ruins',x,type:'deadTree',variant:i})),
+  { realmId:'ruins',x:castleLayout.treantX,type:'sakuraTree' },
   { realmId:'ruins',x:castleLayout.castleGateX,type:'castleGate' },
   { realmId: "ruins", x: storyTargets[4].x, type: "typingCave" }
 ];
 
 const destinations = [
-  { id: "maple", name: "Maple Town", nameKey: "destination.maple.name", category: "SAFE HAVEN", categoryKey: "destination.safe", description: "A peaceful village where your adventure and first words begin.", descriptionKey: "destination.maple.description", scene: "maple", width: 1800, spawnX: 440, portalX: 220 },
+  { id: "maple", name: "Maple Town", nameKey: "destination.maple.name", category: "SAFE HAVEN", categoryKey: "destination.safe", description: "A peaceful village where your adventure and first words begin.", descriptionKey: "destination.maple.description", scene: "maple", width: AUTH_CONTEXT.worldLayout?.widths.maple || 2800, spawnX: 440, portalX: 220 },
   { id: "forest", name: "Whispering Forest", nameKey: "destination.forest.name", category: "VOCABULARY TRAIL", categoryKey: "destination.vocab", description: "A standalone enchanted forest with lantern paths and hidden words.", descriptionKey: "destination.forest.description", scene: "forest", width: 2100, spawnX: 440, portalX: 220 },
   { id: "camp", name: "Old Camp Road", nameKey: "destination.camp.name", category: "SURVIVAL ROUTE", categoryKey: "destination.survival", description: "A separate sunset wilderness with a campfire, pine trees and a guide.", descriptionKey: "destination.camp.description", scene: "camp", width: 1950, spawnX: 440, portalX: 220 },
   { id: "ruins", name: "Ancient Ruins", nameKey: "destination.ruins.name", category: "ANCIENT CHALLENGE", categoryKey: "destination.challenge", description: "Ruins, the Cave of Echoes, and a distant final castle.", descriptionKey: "destination.ruins.description", scene: "ruins", width: AUTH_CONTEXT.worldLayout?.widths.ruins || 4600, spawnX: 440, portalX: 220 }
@@ -917,14 +948,14 @@ function resize() {
   canvas.width = Math.floor(window.innerWidth * dpr);
   canvas.height = Math.floor(window.innerHeight * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  // Screen-space ground adapts to short windows; saved world X positions stay the same.
+  // Give the sky a little more room; compact screens keep the hero below the HUD.
   const shortLandscape=window.innerHeight<=540&&window.innerWidth>=560;
-  const groundDepth = Math.min(180, Math.max(shortLandscape ? 42 : 70, window.innerHeight * .2));
-  world.groundY = Math.round(Math.max(160, window.innerHeight - groundDepth));
-  if(window.innerWidth<600&&window.innerHeight>window.innerWidth){
-    world.groundY=Math.min(window.innerHeight-70,Math.max(world.groundY,(world.hudBottom||0)+300));
+  world.groundY = Math.round(window.innerHeight * .55);
+  if(shortLandscape||(window.innerWidth<600&&window.innerHeight>window.innerWidth)){
+    world.groundY=Math.round(Math.min(window.innerHeight-70,Math.max(world.groundY,(world.hudBottom||0)+160)));
   }
   world.waterY = world.groundY + 130;
+  recenterCamera();
   if(world.typingCaveOpen)updateTypingCaveVisuals();
 }
 
@@ -990,6 +1021,10 @@ window.addEventListener("keydown", (e) => {
     return;
   }
 
+  if(world.interacting&&world.currentDialogueNpcId==='merchant'&&k==='escape'){
+    e.preventDefault();if(!e.repeat)closeDialogue();return;
+  }
+
   if (world.travelMenu) {
     if (k === "tab") {
       const buttons=[...ui.destinationScreen.querySelectorAll("button")].filter(button=>!button.disabled&&button.getClientRects().length);
@@ -1050,7 +1085,8 @@ let journalNavigationPending = false;
 async function navigateFromMap(destination) {
     if (journalNavigationPending) return;
     journalNavigationPending = true;
-    window.EPQLoading?.begin('travel');
+    if(['/FYP/skills.php','/FYP/backpack.php','/FYP/learning.php'].includes(destination))window.EPQLoading?.prepareMenuNavigation(destination);
+    else window.EPQLoading?.begin('travel');
     resetMovementInput();
     try { saveWorldState(); await flushGameSave(); }
     catch (error) { console.warn("[English Power Quest] Journal navigation retains the available save.", error); }
@@ -1098,7 +1134,7 @@ document.querySelectorAll("[data-destination-index]").forEach((button) => {
   });
 });
 
-ui.dialogueButton.addEventListener("click", () => {
+function closeDialogue() {
   if (world.interacting) {
     world.interacting = false;
     world.currentDialogueNpcId = null;
@@ -1107,7 +1143,12 @@ ui.dialogueButton.addEventListener("click", () => {
     resetMovementInput();
     ui.interactButton.focus();
   }
+}
+ui.dialogueButton.addEventListener("click", () => {
+  if(world.interacting&&world.currentDialogueNpcId==='merchant') {void navigateFromMap('/FYP/shop.php');return;}
+  closeDialogue();
 });
+document.getElementById('dialogueCloseButton').addEventListener('click',closeDialogue);
 
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
@@ -1128,6 +1169,10 @@ function nearestNPC() {
 }
 
 function showDialogue() {
+  const merchant=world.currentDialogueNpcId==='merchant';
+  ui.dialogueButton.dataset.i18n=merchant?'shop.browse':'dialogue.continue';
+  ui.dialogueButton.textContent=t(ui.dialogueButton.dataset.i18n);
+  document.getElementById('dialogueCloseButton').classList.toggle('hidden',!merchant);
   const portrait=storyPortraitSource(world.currentDialogueNpcId);
   ui.dialoguePortrait.src=portrait.src;
   ui.dialoguePortrait.alt=ui.dialogueName.textContent;
@@ -1377,7 +1422,7 @@ function finishStoryIntro() {
 
 let npcQuestPending=false;
 async function interact() {
-  if (window.EPQLoading?.active) return;
+  if (!world.ready || window.EPQLoading?.active || journalNavigationPending) return;
   if(npcQuestPending || world.dungeonPending)return;
   if (world.interacting || world.battle || world.travelMenu || settingsIsOpen()) return;
 
@@ -1501,8 +1546,9 @@ async function unlockCastleGate() {
   finally{world.dungeonPending=false;}
 }
 function recenterCamera() {
+  const compactLandscape=window.innerHeight<=540&&window.innerWidth>=560&&window.innerWidth<=780;
   world.cameraX = clamp(
-    world.player.x - window.innerWidth * 0.5,
+    world.player.x - window.innerWidth * (compactLandscape?0.4:0.5),
     0,
     Math.max(0, world.width - window.innerWidth)
   );
@@ -1662,7 +1708,7 @@ async function openTypingCave() {
   const generation=typingCaveState.roundToken;
   saveWorldState();
   if(await flushGameSave()===false){window.EPQLoading?.ready(true);typingUi.retry.classList.remove("hidden");setTypingMessage(getLanguage()==="zh"?"存档尚未确认，请检查连接后重试。":"Save not confirmed. Check your connection and retry.");return;}
-  for(const art of [finalBossSprite,finalCastleHall])if(art.complete&&!art.naturalWidth)art.src=art.src.split('?')[0]+'?v=20261017-castleroad2&retry='+Date.now();
+  for(const art of [finalBossSprite,finalCastleHall])if(art.complete&&!art.naturalWidth)art.src=art.src.split('?')[0]+'?v=20261017-particles1&retry='+Date.now();
   await window.EPQLoading?.waitForImages([finalBossSprite,finalCastleHall]);
   await window.EPQLoading?.waitForMinimum();
   if(!finalBossSprite.naturalWidth||!finalCastleHall.naturalWidth){window.EPQLoading?.ready(true);typingUi.retry.classList.remove('hidden');setTypingMessage(t('castle.artFailed'));return;}
@@ -2304,7 +2350,7 @@ async function startBattle(enemy) {
 }
 
 function update(dt) {
-  if (window.EPQLoading?.active) return;
+  if (!world.ready || window.EPQLoading?.active || journalNavigationPending) return;
   world.time += dt;
   updateMapTutorial();
 
@@ -2361,6 +2407,10 @@ function update(dt) {
   const guidance=currentGuidance();companion.update(dt,{playerX:world.player.x,playerFacing:world.player.facing,routeX:guidance.routeX,width:world.width,realm:world.currentRealmId,inside:world.insideCave,equipped:world.shop.equipped,
     camera:world.cameraX,safeScreenLeft:window.innerHeight<=540&&window.innerWidth>=560?240:0});
   updateCompanionHint();
+  const effect=window.EPQ_AUTH?.shopCatalog?.[world.shop.equippedEffect];
+  cosmeticParticles.update(dt,{x:world.player.x,ground:world.groundY,effect:effect?.kind==='effect'?effect.pattern:'none',
+    realm:world.currentRealmId,inside:world.insideCave,reducedMotion:particleMotion.matches,
+    active:!world.interacting&&!world.travelMenu&&!world.battle&&!settingsIsOpen()&&!guideIsOpen()});
 }
 
 function draw() {
@@ -2507,7 +2557,9 @@ function drawGround(w, h, scene = "maple") {
 function drawLandmarks() {
   for (const l of landmarks) {
     if(l.realmId!==world.currentRealmId)continue;
-    const x=worldToScreen(l.x);if(x < -220 || x > window.innerWidth+220)continue;
+    if(l.type==='sakuraTree'&&!world.castle?.treeCleared)continue;
+    const margin=l.type==='typingCave'?320:l.type==='sakuraTree'?240:220;
+    const x=worldToScreen(l.x);if(x < -margin || x > window.innerWidth+margin)continue;
     if(l.type==="sign")drawSign(x,world.groundY,l.realmId);
     else if(l.type==="cave")drawCaveEntrance(x,world.groundY,Math.abs(l.x-world.player.x)<125);
     else if(l.type==="typingCave")drawTypingCaveEntrance(x,world.groundY,Math.abs(l.x-world.player.x)<135);
@@ -2516,7 +2568,9 @@ function drawLandmarks() {
       ctx.save();ctx.translate(x,0);ctx.scale(l.variant%2?-1:1,1);
       drawGroundedSprite(ctx,deadTreeSprite,0,world.groundY,156+(l.variant%3)*24);ctx.restore();
     }
+    else if(l.type==='sakuraTree')drawRestoredTree(x,world.groundY);
     else if(l.type==='castleGate')drawCastleGate(x,world.groundY);
+    else if(l.type==='bridge'&&l.realmId==='maple')drawVillageCrossing(ctx,{x,ground:world.groundY,height:window.innerHeight,time:world.time,width:villageLayout.bridgeWidth});
     else {
       drawPixelLandmark(ctx,l.type,x,world.groundY,l.variant);
       if(l.type==='house'&&l.variant==='shop'){ctx.save();ctx.textAlign='center';ctx.font='bold 12px system-ui';ctx.fillStyle='#f2d28c';ctx.fillText(t('shop.open'),x,world.groundY-158);ctx.restore();}
@@ -2555,12 +2609,25 @@ function drawDungeonStructure(x,ground,size=dungeonSpecs[world.currentRealmId]?.
   } else drawPixelLandmark(ctx,dungeonSpecs[world.currentRealmId]?.kind==="tower"?"tower":"cave",x,ground);
 }
 
+function finalCastleHeight(){return Math.min(512,Math.max(280,world.groundY-80));}
+function restoredTreeHeight(){return Math.min(384,Math.max(256,world.groundY-145));}
+function drawRestoredTree(x,ground) {
+  const height=restoredTreeHeight();drawGroundedSprite(ctx,sakuraTreeSprite,x,ground,height);
+  ctx.save();ctx.fillStyle='#efafc6';
+  for(let i=0;i<10;i++){
+    const fall=(world.time*17+i*31)%(height*.7);
+    const px=x+Math.sin(world.time*.7+i*2.3)*height*.3;
+    ctx.fillRect(Math.round(px),Math.round(ground-height+48+fall),3,3);
+  }
+  ctx.restore();
+}
 function drawTypingCaveEntrance(x, ground, nearby) {
-  const castleHeight=Math.min(384,Math.max(210,ground-135));
+  const castleHeight=finalCastleHeight();
+  const labelY=Math.max((world.hudBottom||0)+14,ground-castleHeight-30);
   drawGroundedSprite(ctx,finalCastleSprite,x,ground,castleHeight);
   ctx.save();ctx.textAlign="center";ctx.font="bold 14px system-ui";ctx.fillStyle="#efdbaf";
-  ctx.fillText(t("guide.typing.name"),x,ground-castleHeight-30);ctx.font="bold 11px system-ui";
-  ctx.fillText(t("guide.typing.short"),x,ground-castleHeight-12);
+  ctx.fillText(t("guide.typing.name"),x,labelY);ctx.font="bold 11px system-ui";
+  ctx.fillText(t("guide.typing.short"),x,labelY+18);
   if(nearby){ctx.fillStyle="#221d33";ctx.fillRect(Math.round(x-130),ground-108,260,24);ctx.fillStyle="#e9ddba";ctx.fillText(t(dungeonReady()?"castle.enter":"dungeon.firstGuard"),x,ground-91);}
   ctx.restore();
 }
@@ -3151,13 +3218,17 @@ function drawNPCs() {
     if (npc.realmId !== world.currentRealmId) continue;
     const x = worldToScreen(npc.x);
     if (x < -120 || x > window.innerWidth + 120) continue;
-    const bob = Math.sin(world.time * 2.4 + npc.x) * 1.3;
+    const bob = npc.id==='merchant'?0:Math.sin(world.time * 2.4 + npc.x) * 1.3;
     drawStyledNPC(x, world.groundY + bob, npc);
+    if(npc.id==='merchant'){
+      ctx.save();ctx.textAlign='center';ctx.font='bold 12px system-ui';ctx.fillStyle='#142631';ctx.fillRect(Math.round(x-98),world.groundY-158,196,22);
+      ctx.fillStyle='#f2d28c';ctx.fillText(t(npc.nameKey)+' · '+t(npc.titleKey),x,world.groundY-143);ctx.restore();
+    }
 
     const nearby = Math.abs(npc.x - world.player.x) < 105;
     // The new elder's staff is taller than the procedural NPC; move the E
     // prompt above the staff while retaining the existing interaction radius.
-    const promptLift = npc.id === "elder" && elderRowanSpriteReady() ? 18 : 0;
+    const promptLift = npc.id==='merchant'?44:npc.id === "elder" && elderRowanSpriteReady() ? 18 : 0;
     if (nearby) {
       const glow = .72 + Math.sin(world.time * 5) * .18;
       ctx.save();
@@ -3190,7 +3261,10 @@ function drawNPCs() {
 function drawStyledNPC(x, ground, npc) {
   const image=npc.id==="elder"?elderRowanSprite:npcPixelSprites[npc.id];
   ctx.save();ctx.imageSmoothingEnabled=false;ctx.fillStyle="#18252a";ctx.fillRect(Math.round(x-22),Math.round(ground-2),44,4);
-  if(image?.complete&&image.naturalWidth){drawGroundedSprite(ctx,image,x,ground,128);}
+  if(image?.complete&&image.naturalWidth){
+    if(npc.id==='merchant'){ctx.translate(x,0);ctx.scale(world.player.x<npc.x?1:-1,1);drawGroundedSprite(ctx,image,0,ground,128);}
+    else drawGroundedSprite(ctx,image,x,ground,128);
+  }
   else{ctx.fillStyle=npc.color;ctx.fillRect(Math.round(x-16),Math.round(ground-72),32,64);ctx.fillStyle="#d3ad85";ctx.fillRect(Math.round(x-12),Math.round(ground-92),24,24);ctx.fillStyle="#25313b";ctx.fillRect(Math.round(x-16),Math.round(ground-12),12,12);ctx.fillRect(Math.round(x+4),Math.round(ground-12),12,12);}
   ctx.restore();
 }
@@ -3371,13 +3445,16 @@ function drawCharacter(x, ground, coat, skin, player) {
 }
 function drawPlayer() {
   const x = worldToScreen(world.player.x);
+  cosmeticParticles.draw(ctx,{camera:world.cameraX,ground:world.groundY});
   drawCharacter(x, world.groundY, "#3f7181", "#d8b08b", true);
 }
 
 function drawForeground(w, h) {
   // The tile layer already defines the ground; keep foreground decoration sparse.
   const offset=-Math.floor(world.cameraX)%128;
-  for(let x=offset;x<w;x+=128){ctx.fillStyle="#536957";if(world.currentRealmId!=="ruins"&&world.currentRealmId!=="camp")ctx.fillRect(x+20,world.groundY-4,4,4);}
+  for(let x=offset;x<w;x+=128){const wx=x+20+world.cameraX;
+    if(world.currentRealmId==='maple'&&Math.abs(wx-villageLayout.bridgeX)<villageLayout.bridgeWidth/2)continue;
+    ctx.fillStyle="#536957";if(world.currentRealmId!=="ruins"&&world.currentRealmId!=="camp")ctx.fillRect(x+20,world.groundY-4,4,4);}
 }
 
 async function loadQuestions() {
@@ -3438,6 +3515,7 @@ window.advanceTime = ms => {
 window.render_game_to_text = () => JSON.stringify({
   coordinates: "World origin at the left; x increases right; groundY is screen pixels downward.",
   realm: world.currentRealmId,
+  ready: world.ready,
   loading: Boolean(window.EPQLoading?.active),
   mode: world.storyIntroOpen ? "STORY" : world.interacting ? "DIALOGUE" : world.typingCaveOpen ? "TYPING"
     : guideIsOpen() ? "QUEST_GUIDE" : world.travelMenu ? "TRAVEL" : world.battle ? "BATTLE_TRANSITION" : "MAP",
@@ -3448,12 +3526,16 @@ window.render_game_to_text = () => JSON.stringify({
     title:ui.storyIntroTitle.textContent,speaker:ui.storyboardSpeaker.textContent,
     portrait:ui.storyIntroPortraitImage.getAttribute("src") } : null,
   portalX: world.portalX,
+  village:world.currentRealmId==='maple'?{...villageLayout,width:world.width,onBridge:Math.abs(world.player.x-villageLayout.bridgeX)<villageLayout.bridgeWidth/2,
+    merchantNearby:Math.abs(world.player.x-villageLayout.merchantX)<95,dialogue:world.currentDialogueNpcId==='merchant'}:null,
   dungeon: { available:!dungeonSpecs[world.currentRealmId]?.legacyOnly,inside:world.insideCave,unlocked:world.dungeonAccess===null?null:dungeonReady(),entryX:dungeonSpecs[world.currentRealmId]?.legacyOnly?null:dungeonSpecs[world.currentRealmId]?.x,
     name:dungeonSpecs[world.currentRealmId]?.legacyOnly&&!world.insideCave?null:currentDungeonName(),rooms:currentDungeonRooms().length,pending:world.dungeonPending },
   landmarks: landmarks.filter(item=>item.realmId===world.currentRealmId).map(item=>({type:item.type,x:item.x})),
   guidance: currentGuidance(),
   companion:companion.state(world.shop.equipped),
-  finalCastle: {x:storyTargets[4].x,gateX:castleLayout.castleGateX,treantX:castleLayout.treantX,wardenX:castleLayout.castleWardenX,...world.castle,visible:world.currentRealmId==='ruins'&&!world.insideCave&&worldToScreen(storyTargets[4].x)>-220&&worldToScreen(storyTargets[4].x)<window.innerWidth+220},
+  particleEffect:{equipped:world.shop.equippedEffect||'none',...cosmeticParticles.state()},
+  restoredTree:{restored:Boolean(world.castle?.treeCleared),x:castleLayout.treantX,height:restoredTreeHeight(),visible:world.currentRealmId==='ruins'&&!world.insideCave&&Boolean(world.castle?.treeCleared)&&worldToScreen(castleLayout.treantX)>-240&&worldToScreen(castleLayout.treantX)<window.innerWidth+240},
+  finalCastle: {x:storyTargets[4].x,height:finalCastleHeight(),gateX:castleLayout.castleGateX,treantX:castleLayout.treantX,wardenX:castleLayout.castleWardenX,...world.castle,visible:world.currentRealmId==='ruins'&&!world.insideCave&&worldToScreen(storyTargets[4].x)>-320&&worldToScreen(storyTargets[4].x)<window.innerWidth+320},
   typing: world.typingCaveOpen ? { round: Math.min(3,typingCaveState.completedLevels + 1), boss:'wordless-king',sealsRemaining:Math.max(0,3-typingCaveState.completedLevels), monsterLeft: typingCaveState.monsterLeft,
     hintHiddenLetters: document.querySelectorAll(".typing-cave-letter:not(.revealed)").length } : null,
   enemies: enemies.filter(enemy => enemy.realmId === world.currentRealmId && !enemy.defeated
@@ -3493,8 +3575,9 @@ void (async () => {
   window.EPQLoading?.step('assets');
   await Promise.all([
     loadCharacterAssets(AUTH_CONTEXT.character),
-    window.EPQLoading?.waitForImages([worldBackgrounds[world.currentRealmId], playerStandSprite, realmPortalSprite, ...Object.values(npcPixelSprites), ...(world.currentRealmId==='ruins'?[deadTreeSprite,castleGateSprite,finalCastleSprite,...Object.values(mapEnemyArtById)]:[])])
+    window.EPQLoading?.waitForImages([worldBackgrounds[world.currentRealmId], playerStandSprite, realmPortalSprite, ...Object.values(npcPixelSprites), ...(world.currentRealmId==='maple'?[villageShopSprite]:[]), ...(world.currentRealmId==='ruins'?[deadTreeSprite,sakuraTreeSprite,castleGateSprite,finalCastleSprite,...Object.values(mapEnemyArtById)]:[])])
   ]);
+  world.ready=Boolean(restored&&playerReady);
   draw();
   if (restored && playerReady) window.EPQLoading?.ready();
   else window.EPQLoading?.fail();

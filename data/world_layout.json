@@ -1,8 +1,12 @@
 {
-  "widths": {"maple": 1800, "forest": 2100, "camp": 1950, "ruins": 5200},
+  "widths": {"maple": 2800, "forest": 2100, "camp": 1950, "ruins": 5200},
   "interiorWidths": {"maple": 1800, "forest": 2100, "camp": 1950, "ruins": 2200},
   "finalCastleX": 4480,
   "castleGateX": 3820,
   "castleWardenX": 3580,
-  "treantX": 2700
+  "treantX": 2700,
+  "mapleBridgeX": 1740,
+  "mapleBridgeWidth": 440,
+  "mapleShopX": 2360,
+  "mapleMerchantX": 2120
 }

@@ -16,8 +16,8 @@ $epqStorageId = (string)$epqPlayerId;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#101b24">
   <title>English Power Quest · Battle</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261017-castleroad2">
-  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261017-castleroad2">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261017-particles1">
+  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261017-hints2">
   <?php $epqLoadingMode = 'battle'; require __DIR__.'/includes/loading_screen.php'; ?>
 </head>
 <body class="battle-page">
@@ -111,11 +111,13 @@ $epqStorageId = (string)$epqPlayerId;
         <h2 id="questionText" data-i18n="battle.loadingQuestion">Loading question...</h2>
         <p class="question-translation hidden" id="questionTranslation"></p>
         <p id="questionPrompt" data-i18n="battle.answerPrompt">Answer correctly to attack.</p>
+        <aside id="battleHint" class="battle-hint hidden" role="status" aria-live="polite"></aside>
         <div id="answerArea" class="battle-answers"></div>
         <div class="question-battle-actions" aria-label="Battle actions" data-i18n-aria-label="battle.actions">
           <button type="button" id="activeSkillButton" class="battle-action-button"><span>✦ </span><span data-i18n="battle.skill">SKILL</span></button>
           <button type="button" id="activeItemButton" class="battle-action-button"><span>◈ </span><span data-i18n="battle.item">ITEM</span></button>
           <button type="button" id="activePotionButton" class="battle-action-button hidden"></button>
+          <button type="button" id="activeHintPotionButton" class="battle-action-button hidden"></button>
           <button type="button" id="activeRunButton" class="battle-action-button danger"><span>↩ </span><span data-i18n="battle.run">RUN</span></button>
         </div>
       </div>
@@ -170,6 +172,6 @@ $epqStorageId = (string)$epqPlayerId;
       'character' => $_SESSION['character'] ?? epq_character_profile(epq_db(), $epqPlayerId)
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   </script>
-  <script type="module" src="/FYP/js/battle.js?v=20261017-castleroad2"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261017-particles1"></script>
 </body>
 </html>

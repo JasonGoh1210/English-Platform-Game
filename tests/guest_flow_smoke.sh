@@ -120,6 +120,6 @@ printf '%s' "$logged_in" | jq -e --argjson pid "$player_id" '.ok == true and .pl
 
 echo "PASS: guest, story, map, XP, CSRF, browser recovery, account upgrade and password login"
 
-EPQ_BATTLE_TEST_DB=isolated php tests/shop_flow_smoke.php
+EPQ_BATTLE_TEST_DB=isolated php tests/particle_effects_flow_smoke.php
 EPQ_BATTLE_TEST_DB=isolated php tests/character_flow_smoke.php
 EPQ_BATTLE_TEST_DB=isolated php tests/account_flow_smoke.php

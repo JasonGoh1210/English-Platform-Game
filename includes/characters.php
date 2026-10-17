@@ -62,7 +62,7 @@ function epq_sync_character_session(): void {
 
 function epq_new_player(mysqli $db, int $userId): int {
     if (!epq_character_table_ready($db)) throw new RuntimeException('Apply migration 006 before creating new characters.');
-    $worldResult = $db->query('SELECT world_id FROM worlds WHERE is_active = 1 ORDER BY world_order LIMIT 1');
+    $worldResult = $db->query('SELECT world_id FROM worlds WHERE is_active = 1 AND world_order = 1 LIMIT 1');
     $world = $worldResult ? $worldResult->fetch_assoc() : null;
     if (!$world) throw new RuntimeException('No active starting world.');
     $worldId = (int)$world['world_id'];
@@ -84,6 +84,18 @@ function epq_new_player(mysqli $db, int $userId): int {
     $character = $db->prepare('INSERT INTO player_character_profiles (player_id) VALUES (?)');
     $character->bind_param('i', $playerId);
     if (!$character->execute()) throw new RuntimeException('Unable to initialize character setup.');
+    // Persist the starting checkpoint in the same creation transaction. After a
+    // database restore, a numeric player ID can collide with an old browser cache.
+    // Only this never-played checkpoint may discard that cache, never a returner's save.
+    $initialState = json_encode([
+        'storyVersion'=>1, 'freshStart'=>true, 'freshStartId'=>bin2hex(random_bytes(16)), 'currentRealmId'=>'maple',
+        'realmPositions'=>['maple'=>['playerX'=>440, 'insideCave'=>false, 'caveReturnX'=>0]],
+        'playerX'=>440, 'insideCave'=>false, 'caveReturnX'=>0, 'questStep'=>0,
+        'defeatedEnemyIds'=>[], 'tutorial'=>null
+    ], JSON_THROW_ON_ERROR);
+    $save = $db->prepare('INSERT INTO player_game_saves (player_id, save_json) VALUES (?, ?)');
+    $save->bind_param('is', $playerId, $initialState);
+    if (!$save->execute()) throw new RuntimeException('Unable to initialize the starting map.');
     return $playerId;
 }
 

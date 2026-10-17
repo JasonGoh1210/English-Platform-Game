@@ -1,9 +1,21 @@
 {
   "potion": {"kind":"potion","nameZh":"红宝石药水","name":"Ruby Potion","price":12,"heal":40,"sprite":"/FYP/images/shop/ruby-potion-32.png"},
+  "hint_potion": {"kind":"potion","effect":"hint","nameZh":"星光提示药水","name":"Starlight Hint Potion","price":15,"sprite":"/FYP/images/shop/insight-potion-32.png"},
   "owl": {"kind":"companion","nameZh":"向导猫头鹰","name":"Scout Owl","price":0,"sprite":"/FYP/images/companions/owl-64.png","animation":{"sheet":"/FYP/images/companions/owl-motion-64.png?v=20261015-village2","motion":"fly","hover":76}},
   "fox": {"kind":"companion","nameZh":"枫叶小狐","name":"Maple Fox","price":40,"sprite":"/FYP/images/companions/fox-64.png","animation":{"sheet":"/FYP/images/companions/fox-motion-64.png?v=20261015-village2","motion":"walk"}},
   "cat": {"kind":"companion","nameZh":"星月灵猫","name":"Moon Cat","price":55,"sprite":"/FYP/images/companions/cat-64.png","animation":{"sheet":"/FYP/images/companions/cat-motion-64.png?v=20261015-village2","motion":"walk"}},
   "dragon": {"kind":"companion","nameZh":"青晶幼龙","name":"Crystal Drake","price":65,"sprite":"/FYP/images/companions/dragon-64.png","animation":{"sheet":"/FYP/images/companions/dragon-motion-64.png?v=20261015-village2","motion":"fly","hover":84}},
   "wisp": {"kind":"companion","nameZh":"萤灯精灵","name":"Lantern Wisp","price":80,"sprite":"/FYP/images/companions/wisp-64.png","animation":{"sheet":"/FYP/images/companions/wisp-motion-64.png?v=20261015-village2","motion":"fly","hover":68}},
-  "bunny": {"kind":"companion","nameZh":"信使白兔","name":"Courier Bunny","price":100,"sprite":"/FYP/images/companions/bunny-64.png","animation":{"sheet":"/FYP/images/companions/bunny-motion-64.png?v=20261015-village2","motion":"hop"}}
+  "bunny": {"kind":"companion","nameZh":"信使白兔","name":"Courier Bunny","price":100,"sprite":"/FYP/images/companions/bunny-64.png","animation":{"sheet":"/FYP/images/companions/bunny-motion-64.png?v=20261015-village2","motion":"hop"}},
+  "slime": {"kind":"companion","nameZh":"蜂蜜史莱姆","name":"Honey Slime","price":35,"sprite":"/FYP/images/companions/slime-64.png","animation":{"sheet":"/FYP/images/companions/slime-motion-64.png?v=20261017-hints1","motion":"hop"}},
+  "penguin": {"kind":"companion","nameZh":"星帽企鹅","name":"Starcap Penguin","price":45,"sprite":"/FYP/images/companions/penguin-64.png","animation":{"sheet":"/FYP/images/companions/penguin-motion-64.png?v=20261017-hints1","motion":"walk"}},
+  "turtle": {"kind":"companion","nameZh":"苔石小龟","name":"Mossback Turtle","price":50,"sprite":"/FYP/images/companions/turtle-64.png","animation":{"sheet":"/FYP/images/companions/turtle-motion-64.png?v=20261017-hints1","motion":"walk"}},
+  "bat": {"kind":"companion","nameZh":"月翼蝙蝠","name":"Moonwing Bat","price":60,"sprite":"/FYP/images/companions/bat-64.png","animation":{"sheet":"/FYP/images/companions/bat-motion-64.png?v=20261017-hints1","motion":"fly","hover":80}},
+  "none": {"kind":"effect","nameZh":"关闭粒子特效","name":"No particle effect","price":0,"pattern":"none"},
+  "sakura_trail": {"kind":"effect","nameZh":"樱花飘落","name":"Sakura Petals","price":30,"pattern":"petal"},
+  "star_trail": {"kind":"effect","nameZh":"金色星光","name":"Golden Starlight","price":40,"pattern":"star"},
+  "firefly_trail": {"kind":"effect","nameZh":"森林萤火","name":"Forest Fireflies","price":45,"pattern":"firefly"},
+  "frost_trail": {"kind":"effect","nameZh":"冰晶足迹","name":"Frost Footsteps","price":50,"pattern":"frost"},
+  "ember_trail": {"kind":"effect","nameZh":"余烬火花","name":"Ember Sparks","price":55,"pattern":"ember"},
+  "rainbow_trail": {"kind":"effect","nameZh":"彩虹光尘","name":"Rainbow Dust","price":70,"pattern":"rainbow"}
 }

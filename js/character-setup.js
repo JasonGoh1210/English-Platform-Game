@@ -1,4 +1,4 @@
-import { characterSprite, randomCharacterName, loadCharacterAssets } from "./characters.js?v=20261017-castleroad2";
+import { characterSprite, randomCharacterName, loadCharacterAssets } from "./characters.js?v=20261017-particles1";
 
 const config = window.EPQ_CHARACTER_SETUP;
 const name = document.getElementById("characterName");

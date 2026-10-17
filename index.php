@@ -34,13 +34,13 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261017-castleroad2">
-  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261017-castleroad2">
-  <link rel="stylesheet" href="/FYP/css/story-pixel.css?v=20261017-castleroad2">
-  <link rel="stylesheet" href="/FYP/css/dungeon-pixel.css?v=20261017-castleroad2">
-  <link rel="stylesheet" href="/FYP/css/companions.css?v=20261017-castleroad2">
-  <link rel="stylesheet" href="/FYP/css/quest-guide.css?v=20261017-castleroad2">
-  <link rel="stylesheet" href="/FYP/css/map-toolbar.css?v=20261017-castleroad2">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261017-particles1">
+  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261017-particles1">
+  <link rel="stylesheet" href="/FYP/css/story-pixel.css?v=20261017-particles1">
+  <link rel="stylesheet" href="/FYP/css/dungeon-pixel.css?v=20261017-particles1">
+  <link rel="stylesheet" href="/FYP/css/companions.css?v=20261017-particles1">
+  <link rel="stylesheet" href="/FYP/css/quest-guide.css?v=20261017-particles1">
+  <link rel="stylesheet" href="/FYP/css/map-toolbar.css?v=20261017-particles1">
   <?php $epqLoadingMode = 'map'; require __DIR__.'/includes/loading_screen.php'; ?>
 </head>
 <body>
@@ -144,6 +144,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         <div class="dialogue-name" id="dialogueName">Elder Rowan</div>
         <p id="dialogueText">Welcome, traveller.</p>
         <button id="dialogueButton" data-i18n="dialogue.continue">Continue ▸</button>
+        <button id="dialogueCloseButton" type="button" class="hidden" data-i18n="shop.later">Maybe later</button>
       </div>
     </div>
 
@@ -354,7 +355,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         canvas.style.backgroundSize = "cover";
       }
 
-      const startGame = () => import("/FYP/js/rpg.js?v=20261017-castleroad2").catch((error) => {
+      const startGame = () => import("/FYP/js/rpg.js?v=20261017-particles1").catch((error) => {
         window.EPQLoading?.fail();
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");

@@ -55,7 +55,7 @@ function fixture() {
     t: key => key, localEnemyName: () => "Word Slime", questionSkillCode: () => "VOCABULARY",
     messages: [], setBattleMessage: key => c.messages.push(key),
     sounds: [], playSound: name => c.sounds.push(name),
-    updateHp() {}, playAttackAnimation() {}, playEnemyAttackAnimation() {},
+    updateHp() {}, playAttackAnimation() {}, playEnemyAttackAnimation() {}, renderBattleHint() {},
     disableAnswers() {}, showQuestionPanel() {}, startQuestion() {},
     showResult() {}, finishDefeat() {}, battleFailure() {},
     state: {
@@ -189,6 +189,16 @@ test("Full HP and insufficient local Coins never issue a purchase", () => {
   }
 });
 
+test("Hint potions work at full HP, bind the current question and block duplicate clicks", async () => {
+  const f=fixture(),receipt=deferred(),requests=[];
+  f.c.state.playerHp=100;f.c.state.questionToken='active-q';f.c.hintPotionStock=1;f.c.renderPotions=()=>{};
+  f.c.battleRequest=(action,inputs)=>{requests.push({action,inputs});return action==='RESUME'?Promise.resolve({ok:true,battle:{remaining:null}}):receipt.promise;};
+  f.load(battleSource,["useItem","applyServerBattle"]);
+  const pending=f.c.useItem('HINT');f.c.useItem('HINT');assert.equal(requests.length,1);assert.equal(requests[0].inputs.questionToken,'active-q');assert.equal(f.c.state.itemPending,true);
+  receipt.resolve({ok:true,battle:{playerHp:100,enemyHp:60,focusUsed:false,questionToken:'active-q',hint:{en:'Think of a library.',zh:'想一想图书馆。'}},shop:{potions:0,hintPotions:0},player:{coins:10,xp:0,englishPowerTotal:0,level:1}});
+  assert.equal(await pending,true);assert.equal(f.c.state.playerHp,100);assert.equal(f.c.saved.coins,10);assert.equal(f.c.hintPotionStock,0);assert.equal(f.c.state.questionHint.zh,'想一想图书馆。');assert.equal(requests.map(r=>r.action).join(','),'HINT,RESUME');
+});
+
 test("Combat balances and HP are copied from confirmed server state", () => {
   const f = fixture();
   f.load(battleSource, ["applyServerBattle"]);
@@ -267,6 +277,44 @@ test("Reload restores an unconfirmed browser save instead of older online progre
   assert.equal(await f.c.loadServerGame(), true);
   assert.deepEqual(JSON.parse(f.storage.get(f.c.WORLD_SAVE_KEY)), local);
   await f.c.saveChain;
+});
+
+test("A never-played server checkpoint rejects a reused ID's stale pending map and battle", async () => {
+  const f=fixture(),writes=[],home={storyVersion:1,freshStart:true,freshStartId:"new-character-checkpoint",currentRealmId:"maple",playerX:440,realmPositions:{maple:{playerX:440}},insideCave:false,questStep:0,tutorial:null};
+  f.c.WORLD_START_KEY="start.7";
+  f.c.world={storyIntroOpen:false};
+  f.c.STORY_INTRO_SEEN_KEY="intro.7";
+  f.c.openStoryIntroIfNew=()=>{f.c.introOpened=true;};
+  f.c.dbSaveReady=false;
+  f.c.pendingSaveData={currentRealmId:"ruins",playerX:3000};
+  f.c.saveDelayHandle=f.c.setTimeout(()=>{},700);
+  const staleTimer=f.c.saveDelayHandle;
+  f.storage.set(f.c.WORLD_SAVE_KEY,JSON.stringify(f.c.pendingSaveData));
+  f.storage.set(f.c.WORLD_PENDING_KEY,"1");
+  for(const key of [f.c.BATTLE_KEY,f.c.ESCAPE_KEY,f.c.STORY_INTRO_SEEN_KEY])f.storage.set(key,"old-player");
+  f.storage.set("another.player.world","KEEP");
+  f.c.fetch=async()=>({ok:true,json:async()=>({ok:true,state:home})});
+  f.c.gameSaveRequest=async snapshot=>writes.push(snapshot);
+  f.load(mapSource,["loadServerGame","queueGameSave","flushGameSave"]);
+  assert.equal(await f.c.loadServerGame(),true);await f.c.saveChain;
+  assert.deepEqual(JSON.parse(f.storage.get(f.c.WORLD_SAVE_KEY)),home);
+  assert.equal(writes.length,1);assert.equal(writes[0].currentRealmId,"maple");assert.equal(writes[0].playerX,440);
+  assert.equal(staleTimer.cancelled,true);assert.equal(f.c.introOpened,true);
+  for(const key of [f.c.BATTLE_KEY,f.c.ESCAPE_KEY,f.c.STORY_INTRO_SEEN_KEY,f.c.WORLD_PENDING_KEY])assert.equal(f.storage.has(key),false);
+  assert.equal(f.storage.get("another.player.world"),"KEEP");
+  assert.equal(f.storage.get(f.c.WORLD_START_KEY),home.freshStartId);
+});
+
+test("A retry after a new character's first write fails keeps its own pending movement", async () => {
+  const f=fixture(),local={storyVersion:1,currentRealmId:"forest",playerX:620};
+  f.c.WORLD_START_KEY="start.7";
+  f.storage.set(f.c.WORLD_START_KEY,"already-adopted-checkpoint");
+  f.storage.set(f.c.WORLD_SAVE_KEY,JSON.stringify(local));f.storage.set(f.c.WORLD_PENDING_KEY,"1");
+  f.c.fetch=async()=>({ok:true,json:async()=>({ok:true,state:{freshStart:true,freshStartId:"already-adopted-checkpoint",currentRealmId:"maple",playerX:440}})});
+  f.c.gameSaveRequest=async()=>{};
+  f.load(mapSource,["loadServerGame","queueGameSave","flushGameSave"]);
+  assert.equal(await f.c.loadServerGame(),true);await f.c.saveChain;
+  assert.deepEqual(JSON.parse(f.storage.get(f.c.WORLD_SAVE_KEY)),local);
 });
 
 test("Failed initial map reads do not enable writes that overwrite server progress", async () => {

@@ -1,4 +1,4 @@
-import {drawGroundedSprite} from './pixel-world.js?v=20261017-castleroad2';
+import {drawGroundedSprite} from './pixel-world.js?v=20261017-particles1';
 
 export function companionDestination(playerX,routeX,width,leading,playerFacing=1) {
   const direction=Math.sign(routeX-playerX)||1;

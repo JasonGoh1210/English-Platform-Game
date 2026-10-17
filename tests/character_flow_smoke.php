@@ -28,15 +28,28 @@ ccheck(chhttp('character_setup.php',['csrf_token'=>$csrf,'display_name'=>'Fixtur
 ccheck(chhttp('character_setup.php',['csrf_token'=>$csrf,'display_name'=>'星澜','appearance'=>'forest','gender'=>'female','player_id'=>999999],$cookie)[0]===302,'Character setup ignores client player ID');
 [, $player]=chhttp('api/player.php',null,$cookie);$p=$player['player'];$playerId=(int)$p['playerId'];
 ccheck($p['displayName']==='星澜'&&$p['character']['appearance']==='forest'&&$p['character']['gender']==='female'&&$p['xp']===0&&$p['coins']===0,'Chosen profile persists without free balances');
+[, $initialMap]=chhttp('api/game_state.php',null,$cookie);
+ccheck($p['worldName']===$db->query('SELECT world_name FROM worlds WHERE world_order=1')->fetch_assoc()['world_name']
+    && $initialMap['state']['currentRealmId']==='maple' && $initialMap['state']['playerX']===440
+    && $initialMap['state']['freshStart']===true && !$initialMap['state']['insideCave']
+    && $initialMap['state']['defeatedEnemyIds']===[], 'New guest has a durable clean Maple starting checkpoint before any map visit');
 $userId=(int)$db->query('SELECT user_id FROM players WHERE player_id='.$playerId)->fetch_assoc()['user_id'];
 epq_complete_character($db,$userId,$playerId,'Overwrite','arcane','male');
 ccheck($db->query('SELECT display_name FROM players WHERE player_id='.$playerId)->fetch_assoc()['display_name']==='星澜','Setup replay keeps name');
 [, $page]=chhttp('index.php',null,$cookie);$csrf=chcsrf($page);
+ccheck(chhttp('api/game_state.php',['csrfToken'=>$csrf,'state'=>[
+    'storyVersion'=>1,'freshStart'=>true,'currentRealmId'=>'forest','playerX'=>555
+]],$cookie)[0]===200,'First normal save succeeds');
+[, $continuedMap]=chhttp('api/game_state.php',null,$cookie);
+ccheck(!isset($continuedMap['state']['freshStart'])&&$continuedMap['state']['currentRealmId']==='forest'
+    &&$continuedMap['state']['playerX']===555,'Normal saves consume the initial checkpoint and cannot re-arm it');
 ccheck(chhttp('api/google_login.php',['credential'=>'fake','csrfToken'=>'wrong'],$cookie)[0]===403,'Google CSRF');
 if(epq_google_client_id()==='')ccheck(chhttp('api/google_login.php',['credential'=>'fake','csrfToken'=>$csrf],$cookie)[0]===503,'Unconfigured Google cannot fake success');
 // Database identity decisions use trusted fixture identities, separately covered by RSA tests.
 $subject='fixture-'.bin2hex(random_bytes(12));$identity=['sub'=>$subject,'email'=>$subject.'@example.com','email_verified'=>true];
 $new=epq_google_identity_account($db,$identity,null);ccheck(!epq_character_profile($db,(int)$new['player_id'])['complete'],'First Google login creates pending character');
+$googleMap=json_decode($db->query('SELECT save_json FROM player_game_saves WHERE player_id='.(int)$new['player_id'])->fetch_assoc()['save_json'],true);
+ccheck($googleMap['currentRealmId']==='maple'&&$googleMap['playerX']===440&&$googleMap['freshStart']===true,'First Google player gets the same Maple checkpoint');
 $repeat=epq_google_identity_account($db,$identity,null);ccheck($new['player_id']===$repeat['player_id'],'Returning Google identity keeps player');
 $db->query('UPDATE players SET xp_total=55,coins_total=17 WHERE player_id='.$playerId);
 $linked=epq_google_identity_account($db,['sub'=>'linked-'.$subject,'email'=>'linked-'.$subject.'@example.com','email_verified'=>true],['user_id'=>$userId,'player_id'=>$playerId]);
@@ -55,6 +68,8 @@ ccheck(chhttp('api/player.php',null,$newCookie)[0]===409,'Password signup awaits
 [, $form]=chhttp('character_setup.php',null,$newCookie);
 chhttp('character_setup.php',['csrf_token'=>chcsrf($form),'display_name'=>'Mira Dawn','appearance'=>'arcane','gender'=>'female'],$newCookie);
 [, $created]=chhttp('api/player.php',null,$newCookie);$createdId=(int)$created['player']['playerId'];
+[, $passwordMap]=chhttp('api/game_state.php',null,$newCookie);
+ccheck($passwordMap['state']['currentRealmId']==='maple'&&$passwordMap['state']['freshStart']===true,'Password signup starts in Maple too');
 [, $map]=chhttp('index.php',null,$newCookie);chhttp('logout.php',['csrf_token'=>chcsrf($map)],$newCookie);
 [, $form]=chhttp('login.php',null,$newCookie);
 chhttp('login.php',['csrf_token'=>chcsrf($form),'username'=>$username,'password'=>'Profile-Passw0rd!'],$newCookie);

@@ -1,0 +1,16 @@
+# Village shop across the bridge
+
+The Traveler's Shop is now farther east of Maple Town. The village exterior expands to2800 world pixels; existing spawn440, portal220, Rowan880, tutorial and saved positions stay compatible. The shared data/world_layout.json defines a440px timber bridge centered1740, Bram the shopkeeper at2120 and the shop at2360. The old village houses remain on the near bank. The bridge's planks share the ordinary feet anchor; a pixel river, stone banks and animated rectangular ripples replace the ground below it. Other realms retain their bridges and widths.
+
+Walk right, cross the bridge, then press E or the touch interaction button beside Bram. His bilingual dialogue identifies him as the shop's owner. Browse goods enters the existing shop after saving map position; Maybe later or Escape closes his dialogue. The shop doorway still works directly. Bram does not advance a story chapter or grant rewards. Buying potions/companions, inventory ownership and transaction replay protection use the existing shop API. Purchases are not triggered by dialogue. Back from the shop returns to the saved position beside him.
+
+Runtime: js/rpg.js, js/village-river.js, js/pixel-world.js, js/i18n.js, index.php and data/world_layout.json. Common runtime cache20261017-merchant1. No database migration, production database changes or manual asset installation.
+
+## New artwork
+
+Generated using the built-in imagegen tool as one transparent two-panel atlas. Exported with tools/export_pixel_assets.cjs using normalized crop regions: left `[0,0,0.46,1]`, right `[0.47,0,0.53,1]`. The exporter retains transparency, applies binary alpha, bounds the palette and scales without smoothing.
+
+- images/npc/npc_merchant_64.png:64x64,128 colors, transparent margins, grounded full-body NPC.
+- images/npc/portraits/merchant_256.png:256x256,256 colors, transparent margins, centered upper-body portrait.
+
+Prompt: "Create a transparent pixel-art character asset atlas for a cozy fantasy side-scrolling RPG. Two completely separate equal-width panels side by side, no borders or labels. LEFT HALF: exactly ONE full body shopkeeper, feet fully visible, standing three-quarter view facing left, short stocky friendly middle-aged man with auburn beard and swept brown hair, cream shirt with rolled sleeves, dark teal waistcoat, ochre brown leather apron with a small gold coin pouch, brown boots. One hand welcoming, the other holding a small ruby potion. No hat, no weapons, no surrounding scenery. RIGHT HALF: exactly the SAME shopkeeper as a larger centered head-and-upper-torso portrait, waist-up, smiling, same auburn beard, teal waistcoat and leather apron, potion visible near chest. Keep each depiction completely inside its own half with generous transparent margins and empty separation. Style: detailed but crisp classic 16-bit JRPG pixel art, clear stepped pixel edges, small limited warm natural palette, dark brown outlines, readable expressive face. No antialiasing, blur, gradients, ground, shadow, text, logo, frame, background, UI, or extra characters. Atlas composition only these two views of the same one shop merchant. The full-body figure's proportions should match a village NPC, and the portrait is a distinct enlarged upper-body illustration, not a duplicated full body."

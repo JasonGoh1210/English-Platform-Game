@@ -86,7 +86,9 @@ verify($mapState['state']['tutorial']['stage'] === 'MOVE'
 verify($legacyMapStatus === 200 && $retainedMap['state']['tutorial']['stage'] === 'MOVE',
     'Older cached clients cannot erase a tutorial checkpoint');
 [, $otherMap] = http('api/game_state.php', null, $other[0]);
-verify($otherMap['state'] === null, 'Tutorial checkpoints belong to the session player');
+verify($otherMap['state']['currentRealmId']==='maple' && $otherMap['state']['playerX']===440
+    && $otherMap['state']['tutorial']===null && $otherMap['state']['freshStart']===true,
+    'Other player keeps their own clean starting checkpoint without the actor tutorial');
 [$questStatus, $quest] = http('api/save_progress.php', ['csrfToken'=>$other[1],'sourceType'=>'QUEST','xpDelta'=>20,'coinDelta'=>10,'englishPowerDelta'=>1], $other[0]);
 verify($questStatus === 400, 'Legacy client-computed QUEST rewards are rejected');
 // Give this disposable rollback actor known balances without using the removed reward API.

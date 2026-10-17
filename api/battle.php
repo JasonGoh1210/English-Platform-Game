@@ -5,6 +5,7 @@ require_once __DIR__ . '/../includes/battle_rules.php';
 require_once __DIR__ . '/../includes/rewards.php';
 require_once __DIR__.'/../includes/shop.php';
 require_once __DIR__.'/../includes/castle.php';
+require_once __DIR__.'/../includes/question_hints.php';
 
 function epq_battle_key(mixed $key): string {
     if (!is_string($key) || !preg_match('/\A[a-f0-9]{32}\z/', $key)) throw new InvalidArgumentException('Invalid battle/request token.');
@@ -18,6 +19,7 @@ function epq_battle_view(array $state): array {
     if ($state['question'] !== null) {
         $view['question'] = epq_public_question($state['question']);
         $view['questionToken'] = $state['questionToken'];
+        if(isset($state['questionHint']))$view['hint']=$state['questionHint'];
         $view['remaining'] = ($state['question']['timed'] ?? true) === false ? null
             : max(0, ($state['question']['timeLimit'] ?? 5) - (($state['pausedAt'] ?? microtime(true)) - $state['startedAt']));
     }
@@ -48,7 +50,7 @@ try {
     if (!is_array($body)) throw new InvalidArgumentException('Object required.');
     if (!epq_csrf_is_valid($body['csrfToken'] ?? null)) epq_json(['ok'=>false, 'error'=>'Invalid request token.'], 403);
     $action = $body['action'] ?? '';
-    if (!in_array($action, ['START','QUESTION','ANSWER','FOCUS','HERB','POTION','PAUSE','RESUME','RUN'], true)) throw new InvalidArgumentException('Unknown action.');
+    if (!in_array($action, ['START','QUESTION','ANSWER','FOCUS','HERB','POTION','HINT','PAUSE','RESUME','RUN'], true)) throw new InvalidArgumentException('Unknown action.');
     $battleId = epq_battle_key($body['battleId'] ?? null);
     $requestId = epq_battle_key($body['requestId'] ?? null);
     $db = epq_db();
@@ -102,7 +104,7 @@ try {
         if (!hash_equals($existing['payload_hash'], $payloadHash)) throw new DomainException('Request token already used for different inputs.');
         $replayed = json_decode($existing['response_json'], true, 512, JSON_THROW_ON_ERROR);
         // A retried question response must not restart its countdown at old time.
-        if (in_array($action, ['QUESTION','PAUSE','RESUME'], true) && isset($replayed['battle']['questionToken'])
+        if (in_array($action, ['QUESTION','HINT','PAUSE','RESUME'], true) && isset($replayed['battle']['questionToken'])
             && $state['question'] !== null && $replayed['battle']['questionToken'] === $state['questionToken']) {
             $replayed['battle']['remaining'] = epq_battle_view($state)['remaining'];
             $replayed['battle']['paused'] = epq_battle_view($state)['paused'];
@@ -113,7 +115,7 @@ try {
     $outcome = null;
     if ($action !== 'START' && $state['status'] !== 'ACTIVE') throw new DomainException('Battle has already ended.');
     $settingsPaused = isset($state['pausedAt']) && ($state['pauseReason'] ?? null) === 'settings';
-    if ($settingsPaused && in_array($action, ['ANSWER','FOCUS','HERB','POTION'], true)) {
+    if ($settingsPaused && in_array($action, ['ANSWER','FOCUS','HERB','POTION','HINT'], true)) {
         throw new DomainException('Close settings before continuing the battle.');
     }
     if (isset($state['pausedAt']) && (in_array($action, ['RESUME','RUN'], true)
@@ -134,6 +136,7 @@ try {
         $state['used'][] = $state['question']['id'];
         $state['questionToken'] = bin2hex(random_bytes(16));
         $state['startedAt'] = microtime(true);
+        unset($state['questionHint']);
     } elseif ($action === 'ANSWER') {
         if ($state['question'] === null || ($body['questionToken'] ?? '') !== $state['questionToken']) throw new DomainException('Question is no longer active.');
         $q = $state['question'];
@@ -162,8 +165,16 @@ try {
             if ($state['playerHp'] === 0) $state['status'] = 'DEFEAT';
         }
         $state['question'] = null;
+        unset($state['questionHint']);
     } elseif ($action === 'FOCUS') {
         $state['focusUsed'] = true;
+    } elseif ($action === 'HINT') {
+        if($state['question']===null || ($body['questionToken']??'')!==$state['questionToken'])throw new DomainException('HINT_NO_QUESTION');
+        if(isset($state['questionHint']))throw new DomainException('HINT_ALREADY_USED');
+        if(($state['question']['timed']??true)!==false && microtime(true)-$state['startedAt']>=($state['question']['timeLimit']??5))throw new DomainException('HINT_EXPIRED');
+        epq_use_hint_potion($db,$playerId,$requestId);
+        $state['questionHint']=epq_question_hint($state['question']);
+        $state['pausedAt']=microtime(true);
     } elseif ($action === 'POTION') {
         if ($state['playerHp'] >= 100) throw new DomainException('HP is full.');
         epq_use_potion($db,$playerId,$requestId);

@@ -8,7 +8,7 @@ async function main(){
   try{
     const page=await browser.newPage();
     for(const item of manifest){
-      const expected=item.key==='village-shop'?'images/shop/village-apothecary-192.png':/^(owl|fox|cat|dragon|wisp|bunny)$/.test(item.key)?'images/companions/'+item.key+'-motion-64.png':null;
+      const expected=item.key==='village-shop'?'images/shop/village-apothecary-192.png':/^(owl|fox|cat|dragon|wisp|bunny|slime|penguin|turtle|bat)$/.test(item.key)?'images/companions/'+item.key+'-motion-64.png':null;
       if(!expected||item.output!==expected)throw Error('Unknown motion export destination');
       const source='data:image/png;base64,'+fs.readFileSync(item.source).toString('base64');
       const result=await page.evaluate(async({source,key})=>{
@@ -16,7 +16,7 @@ async function main(){
         const original=document.createElement('canvas');original.width=image.width;original.height=image.height;
         const originalContext=original.getContext('2d',{willReadFrequently:true});originalContext.drawImage(image,0,0);
         const pixels=originalContext.getImageData(0,0,image.width,image.height).data;
-        const shop=key==='village-shop',airborne=['owl','dragon','wisp'].includes(key);
+        const shop=key==='village-shop',airborne=['owl','dragon','wisp','bat'].includes(key);
         const cellWidth=image.width/(shop?1:4),cellHeight=image.height/(shop?1:2),bounds=[];
         for(let frame=0;frame<(shop?1:8);frame++){
           const sx=Math.floor(frame%4*cellWidth),sy=Math.floor(Math.floor(frame/4)*cellHeight);
@@ -37,11 +37,17 @@ async function main(){
           const dx=(shop?0:i%4*64)+Math.floor(((shop?192:64)-drawWidth)/2);
           let dy=shop?124-drawHeight:Math.floor(i/4)*64+Math.floor((64-drawHeight)/2);
           if(!shop&&!airborne){
-            const hop=key==='bunny'?(i===5?4:i===6?8:0):0;
+            const hop=['bunny','slime'].includes(key)?(i===5?4:i===6?8:0):0;
             dy=Math.floor(i/4)*64+61-Math.round((b.bottom-top+1)*scale)-hop;
           }
           ctx.drawImage(image,b.sx+left,b.sy+top,width,height,dx,dy,drawWidth,drawHeight);
         });
+        if(!shop&&!airborne)for(let frame=0;frame<8;frame++){
+          const sx=frame%4*64,sy=Math.floor(frame/4)*64,cell=ctx.getImageData(sx,sy,64,64);
+          let foot=-1;for(let y=0;y<64;y++)for(let x=0;x<64;x++)if(cell.data[(y*64+x)*4+3]>=128)foot=Math.max(foot,y);
+          const hop=['bunny','slime'].includes(key)?(frame===5?4:frame===6?8:0):0,shift=60-hop-foot;
+          if(shift){const pose=document.createElement('canvas');pose.width=pose.height=64;pose.getContext('2d').putImageData(cell,0,0);ctx.clearRect(sx,sy,64,64);ctx.drawImage(pose,sx,sy+shift);}
+        }
         const output=ctx.getImageData(0,0,canvas.width,canvas.height),colors=new Map();
         for(let i=0;i<output.data.length;i+=4){output.data[i+3]=output.data[i+3]>=128?255:0;if(output.data[i+3]){const rgb=output.data.slice(i,i+3).join(',');colors.set(rgb,(colors.get(rgb)||0)+1);}}
         // Preserve small eye/scarf highlights as well as frequent coat colors.
@@ -60,9 +66,11 @@ async function main(){
           output.data.set(best,i);
         }
         ctx.putImageData(output,0,0);
-        return {base64:canvas.toDataURL('image/png').split(',')[1],width:canvas.width,height:canvas.height};
+        const icon=document.createElement('canvas');icon.width=icon.height=64;icon.getContext('2d').drawImage(canvas,0,0,64,64,0,0,64,64);
+        return {base64:canvas.toDataURL('image/png').split(',')[1],icon:icon.toDataURL('image/png').split(',')[1],width:canvas.width,height:canvas.height};
       },{source,key:item.key});
       const destination=path.join(root,expected);fs.mkdirSync(path.dirname(destination),{recursive:true});fs.writeFileSync(destination,Buffer.from(result.base64,'base64'));
+      if(['slime','penguin','turtle','bat'].includes(item.key))fs.writeFileSync(path.join(root,'images/companions/'+item.key+'-64.png'),Buffer.from(result.icon,'base64'));
       console.log(expected+' '+result.width+'x'+result.height);
     }
   }finally{await browser.close();}

@@ -31,6 +31,8 @@ function epq_safe_map_state(array $input): array {
     $enemyIds = is_array($input['defeatedEnemyIds'] ?? null) ? $input['defeatedEnemyIds'] : [];
     $defeated = array_values(array_unique(array_filter($enemyIds, static fn($id) => is_string($id) && in_array($id, $allowedEnemies, true))));
     $activeWidth = !empty($input['insideCave']) ? epq_world_layout()['interiorWidths'][$realm] : $realms[$realm];
+    // freshStart belongs only to the server-created, never-played checkpoint.
+    // A normal save consumes it; clients cannot re-arm it and reset a returner.
     return [
         'storyVersion' => 1,
         'currentRealmId' => $realm,
