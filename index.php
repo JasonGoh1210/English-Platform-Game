@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__.'/includes/dungeons.php';
 require_once __DIR__.'/includes/shop.php';
+require_once __DIR__.'/includes/world_layout.php';
 epq_require_login_page();
 
 $epqIsGuest = epq_is_guest();
@@ -33,11 +34,14 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261015-village2">
-  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261015-village2">
-  <link rel="stylesheet" href="/FYP/css/story-pixel.css?v=20261015-village2">
-  <link rel="stylesheet" href="/FYP/css/dungeon-pixel.css?v=20261015-village2">
-  <link rel="stylesheet" href="/FYP/css/companions.css?v=20261015-village2">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261017-castleroad2">
+  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261017-castleroad2">
+  <link rel="stylesheet" href="/FYP/css/story-pixel.css?v=20261017-castleroad2">
+  <link rel="stylesheet" href="/FYP/css/dungeon-pixel.css?v=20261017-castleroad2">
+  <link rel="stylesheet" href="/FYP/css/companions.css?v=20261017-castleroad2">
+  <link rel="stylesheet" href="/FYP/css/quest-guide.css?v=20261017-castleroad2">
+  <link rel="stylesheet" href="/FYP/css/map-toolbar.css?v=20261017-castleroad2">
+  <?php $epqLoadingMode = 'map'; require __DIR__.'/includes/loading_screen.php'; ?>
 </head>
 <body>
   <p id="saveStatus" class="save-status hidden" role="status" aria-live="polite"></p>
@@ -80,14 +84,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
           <p class="quest-direction" id="questDirection"></p>
         </div>
       </section>
-      <div class="map-toolbar">
-        <div class="location-pill pixel-location" id="locationText">MAPLE TOWN</div>
-        <a class="settings-open-button pixel-skills-link" href="/FYP/skills.php" data-i18n="skills.open">技能树</a>
-        <a class="settings-open-button pixel-shop-link" href="/FYP/shop.php" data-i18n="shop.open">商店</a>
-        <button type="button" class="settings-open-button" id="companionLead" aria-pressed="false" data-i18n="companion.lead">随从带路</button>
-        <button type="button" class="quest-guide-open" id="questGuideOpen" data-i18n="guide.open" aria-controls="questGuideScreen" aria-expanded="false">Quest & caves</button>
-        <button type="button" class="settings-open-button" id="settingsOpenButton" data-i18n="settings.button">⚙ SETTINGS</button>
-      </div>
+      <?php require __DIR__.'/includes/map_toolbar.php'; ?>
     </div>
 
     <?php require __DIR__ . '/includes/tutorial_guide.php'; ?>
@@ -213,11 +210,11 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         <p class="destination-help" data-i18n="destination.help">CLICK THE CARD TO TRAVEL · ← / → CHANGE · ENTER CONFIRM · ESC BACK</p>
       </div>
     </div>
-    <section class="typing-cave-screen hidden" id="typingCaveScreen" role="dialog" aria-modal="true" aria-labelledby="typingCaveTitle">
+    <section class="typing-cave-screen castle-boss-arena hidden" id="typingCaveScreen" role="dialog" aria-modal="true" aria-labelledby="typingCaveTitle">
       <header class="typing-cave-header">
         <div class="typing-cave-heading">
-          <span class="typing-cave-kicker" id="typingCaveKicker">BEYOND THE ECHO · TYPING CHALLENGE</span>
-          <h1 id="typingCaveTitle">Word Cavern</h1>
+          <span class="typing-cave-kicker" id="typingCaveKicker">FINAL BOSS · THREE SEALS</span>
+          <h1 id="typingCaveTitle">终焉城堡</h1>
           <p id="typingCaveInstructions">Type the English word that matches the definition. The monster is getting closer!</p>
         </div>
         <button type="button" class="typing-cave-exit" id="typingCaveExit">↩ BACK TO MAP</button>
@@ -236,13 +233,18 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
       </section>
 
       <div class="typing-cave-stage" id="typingCaveStage" aria-label="Monster approach scene">
+        <div class="castle-boss-status">
+          <div><strong data-i18n="castle.boss">无言魔王</strong><span id="castleBossPhase"></span></div>
+          <div id="castleBossSeals" class="castle-boss-seals" role="progressbar" aria-label="Boss seals remaining" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3"><i></i><i></i><i></i></div>
+          <span id="castleBossSealText"></span>
+        </div>
         <div class="typing-cave-rocks"></div>
         <div class="typing-cave-ground"></div>
         <div class="typing-cave-player">
           <img data-character-sprite src="/FYP/assets/player/png_frames/Player_Stand.png?v=20261010-assetpaths1" alt="Player character">
         </div>
         <div class="typing-cave-monster" id="typingCaveMonster">
-          <img src="/FYP/images/world/monsters/cave-wraith-64.png" alt="Approaching monster">
+          <img src="/FYP/images/castle/wordless-king-128.png" alt="Wordless King">
           <span id="typingGuardianName" class="typing-guardian-name"></span>
         </div>
         <div class="typing-cave-threat">
@@ -335,6 +337,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
       'showStoryIntro' => $epqShowStoryIntro,
       'csrfToken' => $epqCsrfToken,
       'worldBackgrounds' => $epqWorldBackgrounds,
+      'worldLayout' => epq_world_layout(),
       'dungeonSpecs' => epq_dungeon_specs(),
       'shopCatalog' => epq_shop_catalog(),
       'character' => $_SESSION['character'] ?? epq_character_profile(epq_db(), $epqPlayerId)
@@ -351,7 +354,8 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         canvas.style.backgroundSize = "cover";
       }
 
-      import("/FYP/js/rpg.js?v=20261015-village2").catch((error) => {
+      const startGame = () => import("/FYP/js/rpg.js?v=20261017-castleroad2").catch((error) => {
+        window.EPQLoading?.fail();
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");
         notice.setAttribute("role", "alert");
@@ -367,6 +371,8 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         notice.append(title, detail, help);
         document.querySelector(".game-shell")?.appendChild(notice);
       });
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startGame, {once:true});
+      else startGame();
     })();
   </script>
 </body>

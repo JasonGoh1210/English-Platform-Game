@@ -1,0 +1,7 @@
+.backpack-summary-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.backpack-summary-items>section{display:flex;flex-direction:column;min-width:0}
+.backpack-summary-items h2{margin:12px 0 0}
+.backpack-summary-items .shop-grid{grid-template-columns:1fr;flex:1}
+.backpack-summary-items svg{width:96px;height:96px;margin:16px}
+.backpack-page .shop-card:focus-visible{outline:3px solid #91e7da;outline-offset:4px}
+@media(max-width:600px){.backpack-summary-items{grid-template-columns:1fr;gap:0}}

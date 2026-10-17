@@ -1,7 +1,7 @@
 <section class="quest-guide-screen hidden" id="questGuideScreen" role="dialog" aria-modal="true" aria-labelledby="questGuideTitle">
   <div class="quest-guide-panel">
     <header class="quest-guide-header">
-      <h2 id="questGuideTitle" data-i18n="guide.title">Your next adventure</h2>
+      <h2 id="questGuideTitle"><span class="quest-guide-icon" aria-hidden="true">!</span><span data-i18n="guide.title">Your next adventure</span></h2>
       <button type="button" id="questGuideClose" data-i18n="guide.close">Back to map</button>
     </header>
     <section class="quest-guide-next">
@@ -11,9 +11,16 @@
       <p id="questGuideMain" class="hidden"></p>
     </section>
     <ol class="quest-guide-chapters" id="questGuideChapters" aria-label="Story route" data-i18n-aria-label="guide.storyRoute"></ol>
-    <h3 data-i18n="dungeon.guideTitle">四世界挑战</h3>
+    <h3 class="quest-guide-section-title" data-i18n="guide.challenges">Optional challenges</h3>
     <div id="questGuideDungeons" class="dungeon-guide-grid"></div>
-    <div class="quest-guide-caves">
+    <section class="quest-guide-finale">
+      <span class="quest-guide-icon" aria-hidden="true">★</span>
+      <div><h3 data-i18n="guide.typing.name">Castle of the Last Word</h3><p data-i18n="guide.finaleShort">Story finale · 3 spelling rounds</p></div>
+      <span class="quest-guide-finale-location" data-i18n="guide.typing.location">Ancient Ruins · beyond Echo Cave</span>
+    </section>
+    <details class="quest-guide-help">
+      <summary data-i18n="guide.help">How to play</summary>
+      <div class="quest-guide-caves">
       <section>
         <span class="quest-guide-badge" data-i18n="guide.optional">OPTIONAL EXPLORATION</span>
         <h3 data-i18n="cave.title">Cave of Echoes</h3>
@@ -28,11 +35,12 @@
       </section>
       <section>
         <span class="quest-guide-badge" data-i18n="guide.finale">STORY FINALE · 3 ROUNDS</span>
-        <h3 data-i18n="guide.typing.name">Word Cavern</h3>
+        <h3 data-i18n="guide.typing.name">Castle of the Last Word</h3>
         <p data-i18n="guide.typing.purpose">Type English words from their meanings and push back the monsters. Finish Kai's chapter first to unlock the ending.</p>
         <p data-i18n="guide.typing.rules">Wrong answers or delays bring the monster closer. Correct answers push it back. The last two letters stay hidden.</p>
-        <p data-i18n="guide.typing.location">Ancient Ruins · right cave entrance</p>
+        <p data-i18n="guide.typing.location">Ancient Ruins · beyond Echo Cave</p>
       </section>
-    </div>
+      </div>
+    </details>
   </div>
 </section>

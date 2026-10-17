@@ -25,8 +25,8 @@ function fixture() {
   return {
     c,
     emit: (scope, name) => handlers.get(scope + ':' + name)(),
-    key: (key, defaultPrevented = false) => {
-      const event = { key, defaultPrevented, repeat: false, preventDefault() { this.defaultPrevented = true; } };
+    key: (key, defaultPrevented = false, target = null) => {
+      const event = { key, target, defaultPrevented, repeat: false, preventDefault() { this.defaultPrevented = true; } };
       handlers.get('window:keydown')(event);
       return event;
     }
@@ -42,14 +42,20 @@ test('Map settings keep native Space and arrow actions and never accept movement
   assert.equal(f.c.interactions, 0);
 });
 
+test('Focused toolbar controls keep native Space and Enter without triggering world interactions', () => {
+  const f=fixture(),target={closest:selector=>selector==='.map-tool-icons'?{}:null};
+  for(const key of [' ','Enter','ArrowRight'])assert.equal(f.key(key,false,target).defaultPrevented,false);
+  assert.equal(f.c.interactions,0);assert.equal(f.c.keys.size,0);
+});
+
 test('An Escape consumed by settings does not skip the underlying story', () => {
   const f = fixture(); f.c.world.storyIntroOpen = true;
   f.key('Escape', true);
   assert.equal(f.c.storyFinishes, 0);
 });
 
-test('Lost focus and opening or closing settings release both keyboard and touch movement', () => {
-  for (const event of ['blur', 'epq-settings-change']) {
+test('Lost focus, settings and loading transitions release both keyboard and touch movement', () => {
+  for (const event of ['blur', 'epq-settings-change', 'epq-loading-change']) {
     const f = fixture(); f.key('ArrowRight');
     f.c.touch.left = true; f.c.touch.right = true;
     Object.assign(f.c.world.player, { vx: 240, walkFrame: 3, walkTimer: 0.15 });

@@ -2,6 +2,8 @@
 declare(strict_types=1);
 require_once __DIR__.'/rewards.php';
 require_once __DIR__.'/dungeons.php';
+require_once __DIR__.'/world_layout.php';
+require_once __DIR__.'/castle.php';
 
 function epq_story_beats(): array {
     return [
@@ -42,7 +44,7 @@ function epq_quest_location(mysqli $db, int $playerId, int $realm, float $x): vo
     $realms=[1=>'maple',2=>'forest',3=>'camp',4=>'ruins'];
     if (!is_array($state) || ($state['currentRealmId']??null)!==$realms[$realm] || !empty($state['insideCave'])
         || !is_numeric($state['playerX']??null) || abs((float)$state['playerX']-$x)>125) {
-        throw new DomainException('请先走到对应角色或打字洞穴旁边。');
+        throw new DomainException('请先走到对应角色或终焉城堡入口旁边。');
     }
 }
 
@@ -84,9 +86,18 @@ function epq_quest_action(mysqli $db,int $playerId,array $body): array {
             $outcome['rewardClaimed']=epq_quest_reward($db,$playerId,'npc:'.$npc,$beat['xp'],$beat['coins'],$beat['power'],$beat['skill']);
             epq_story_advance($db,$playerId,$beat['next']);$step=$beat['next'];
         }
+    } elseif ($action==='CASTLE_OPEN') {
+        epq_quest_location($db,$playerId,4,(float)epq_world_layout()['castleGateX']);
+        $castle=epq_castle_progress($db,$playerId);
+        if(!$castle['gateOpen']) {
+            if(!$castle['hasKey']) throw new DomainException('CASTLE_KEY_REQUIRED');
+            $stmt=$db->prepare("INSERT IGNORE INTO verified_quest_claims (player_id,claim_key) VALUES (?,'castle:gate-open')");
+            $stmt->bind_param('i',$playerId);$stmt->execute();
+        }
     } elseif ($action==='TYPING_START') {
         epq_require_dungeon_access($db,$playerId,'ruins');
-        epq_quest_location($db,$playerId,4,1940);
+        epq_quest_location($db,$playerId,4,(float)epq_world_layout()['finalCastleX']);
+        if(!epq_castle_progress($db,$playerId)['gateOpen']) throw new DomainException('CASTLE_KEY_REQUIRED');
         $close=$db->prepare("UPDATE verified_typing_runs SET state_json=JSON_SET(state_json,'$.status','CLOSED') WHERE player_id=? AND JSON_UNQUOTE(JSON_EXTRACT(state_json,'$.status'))='ACTIVE'");
         $close->bind_param('i',$playerId);$close->execute();
         $runId=bin2hex(random_bytes(16));
@@ -125,5 +136,5 @@ function epq_quest_action(mysqli $db,int $playerId,array $body): array {
         $stmt->bind_param('ss',$json,$runId);$stmt->execute();
         $outcome['typing']=epq_typing_view($runId,$state);
     } else throw new InvalidArgumentException('Unknown quest action.');
-    return ['ok'=>true,'chapterStep'=>$step,'player'=>epq_reward_balance($db,$playerId),'outcome'=>$outcome];
+    return ['ok'=>true,'chapterStep'=>$step,'player'=>epq_reward_balance($db,$playerId),'outcome'=>$outcome,'castle'=>epq_castle_progress($db,$playerId)];
 }

@@ -1,0 +1,8 @@
+{
+  "widths": {"maple": 1800, "forest": 2100, "camp": 1950, "ruins": 5200},
+  "interiorWidths": {"maple": 1800, "forest": 2100, "camp": 1950, "ruins": 2200},
+  "finalCastleX": 4480,
+  "castleGateX": 3820,
+  "castleWardenX": 3580,
+  "treantX": 2700
+}

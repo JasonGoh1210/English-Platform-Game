@@ -11,7 +11,7 @@ function epq_map_number(mixed $value, float $min, float $max, float $fallback): 
 }
 
 function epq_safe_map_state(array $input): array {
-    $realms = ['maple' => 1800, 'forest' => 2100, 'camp' => 1950, 'ruins' => 2200];
+    $realms = epq_world_layout()['widths'];
     $realm = (string)($input['currentRealmId'] ?? 'maple');
     if (!isset($realms[$realm])) $realm = 'maple';
     $positions = [];
@@ -19,21 +19,23 @@ function epq_safe_map_state(array $input): array {
     foreach ($realms as $id => $width) {
         if (!isset($rawPositions[$id]) || !is_array($rawPositions[$id])) continue;
         $row = $rawPositions[$id];
+        $positionWidth = !empty($row['insideCave']) ? epq_world_layout()['interiorWidths'][$id] : $width;
         $positions[$id] = [
-            'playerX' => epq_map_number($row['playerX'] ?? null, 70, $width - 90, 440),
+            'playerX' => epq_map_number($row['playerX'] ?? null, 70, $positionWidth - 90, 440),
             'insideCave' => !empty($row['insideCave']),
             'caveReturnX' => epq_map_number($row['caveReturnX'] ?? null, 0, $width, 0)
         ];
     }
-    $allowedEnemies = ['slime-01','bat-01','road-guardian-01','guardian-01'];
+    $allowedEnemies = ['slime-01','bat-01','road-guardian-01','guardian-01','hollow-treant-01','castle-warden-01'];
     foreach (epq_dungeon_specs() as $spec) $allowedEnemies=array_merge($allowedEnemies,array_column($spec['enemies'],'id'));
     $enemyIds = is_array($input['defeatedEnemyIds'] ?? null) ? $input['defeatedEnemyIds'] : [];
     $defeated = array_values(array_unique(array_filter($enemyIds, static fn($id) => is_string($id) && in_array($id, $allowedEnemies, true))));
+    $activeWidth = !empty($input['insideCave']) ? epq_world_layout()['interiorWidths'][$realm] : $realms[$realm];
     return [
         'storyVersion' => 1,
         'currentRealmId' => $realm,
         'realmPositions' => $positions,
-        'playerX' => epq_map_number($input['playerX'] ?? null, 70, $realms[$realm] - 90, 440),
+        'playerX' => epq_map_number($input['playerX'] ?? null, 70, $activeWidth - 90, 440),
         'insideCave' => !empty($input['insideCave']),
         'caveReturnX' => epq_map_number($input['caveReturnX'] ?? null, 0, $realms[$realm], 0),
         'questStep' => (int)epq_map_number($input['questStep'] ?? null, 0, 5, 0),

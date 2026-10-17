@@ -78,6 +78,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   <title>创建账号 · English Power Quest</title>
   <link rel="stylesheet" href="/FYP/css/auth.css?v=20261015-input1">
   <script src="/FYP/js/auth-form.js?v=20261015-input1" defer></script>
+  <?php require __DIR__.'/includes/loading_screen.php'; ?>
 </head>
 <body class="auth-page">
   <main class="auth-layout auth-layout-register">

@@ -1,13 +1,13 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261015-village2";
-import { playSound } from "./audio.js?v=20261015-village2";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261015-village2";
-import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261015-village2";
-import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText } from "./characters.js?v=20261015-village2";
-import { createQuestClient } from "./quest-api.js?v=20261015-village2";
-import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261015-village2";
-import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave, drawDungeonBackdrop, drawGroundedSprite } from "./pixel-world.js?v=20261015-village2";
-import {createCompanion} from './companions.js?v=20261015-village2';
-import { storyPortraitSource } from "./story-visuals.js?v=20261015-village2";
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261017-castleroad2";
+import { playSound } from "./audio.js?v=20261017-castleroad2";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261017-castleroad2";
+import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261017-castleroad2";
+import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText, loadCharacterAssets } from "./characters.js?v=20261017-castleroad2";
+import { createQuestClient } from "./quest-api.js?v=20261017-castleroad2";
+import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261017-castleroad2";
+import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave, drawDungeonBackdrop, drawGroundedSprite } from "./pixel-world.js?v=20261017-castleroad2";
+import {createCompanion} from './companions.js?v=20261017-castleroad2';
+import { storyPortraitSource } from "./story-visuals.js?v=20261017-castleroad2";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -115,17 +115,29 @@ const world = {
 };
 const companion=createCompanion(window.EPQ_AUTH?.shopCatalog||{});
 world.shop={equipped:'owl',owned:['owl'],potions:0};
-const exitDoorSprite=new Image();exitDoorSprite.src='/FYP/images/dungeons/exit-door-128.png?v=20261015-village2';
-const villageShopSprite=new Image();villageShopSprite.src='/FYP/images/shop/village-apothecary-192.png?v=20261015-village2';
+world.castle=null;
+const castleLayout=window.EPQ_AUTH?.worldLayout || {treantX:2700,castleWardenX:3580,castleGateX:3820};
+const deadTreeSprite=new Image();deadTreeSprite.src='/FYP/images/castle/withered-tree-96.png';
+const castleGateSprite=new Image();castleGateSprite.src='/FYP/images/castle/castle-gate-128.png';
+const castleGateOpenSprite=new Image();castleGateOpenSprite.src='/FYP/images/castle/castle-gate-open-128.png';
+const exitDoorSprite=new Image();exitDoorSprite.src='/FYP/images/dungeons/exit-door-128.png?v=20261017-castleroad2';
+const villageShopSprite=new Image();villageShopSprite.src='/FYP/images/shop/village-apothecary-192.png?v=20261017-castleroad2';
+const finalCastleSprite=new Image();finalCastleSprite.src='/FYP/images/castle/final-castle-192.png?v=20261017-castleroad2';
+const finalBossSprite=new Image();finalBossSprite.src='/FYP/images/castle/wordless-king-128.png?v=20261017-castleroad2';
+const finalCastleHall=new Image();finalCastleHall.src='/FYP/images/castle/throne-hall.png?v=20261017-castleroad2';
 const companionHint=document.createElement('p');companionHint.className='companion-hint hidden';document.querySelector('.game-shell').appendChild(companionHint);
 document.getElementById('companionLead')?.addEventListener('click',()=>{
   const leading=companion.toggle();document.getElementById('companionLead').setAttribute('aria-pressed',String(leading));
-  document.getElementById('companionLead').textContent=t(leading?'companion.follow':'companion.lead');
+  updateCompanionButton(leading);
   companionHint.classList.toggle('hidden',!leading);updateCompanionHint();
 });
 function updateCompanionHint(){
   const guide=currentGuidance();companionHint.textContent=t('companion.hint',{name:t(guide.target.nameKey),realm:getLocalizedRealmName(guide.target.realm),route:t(guide.routeKey,{realm:getLocalizedRealmName(guide.target.realm)})});
   const state=companion.state(world.shop.equipped);companionHint.classList.toggle('hidden',!state.leading||world.storyIntroOpen||world.interacting||world.travelMenu||world.typingCaveOpen||settingsIsOpen()||guideIsOpen());
+}
+function updateCompanionButton(leading) {
+  const label=document.getElementById('companionLeadLabel');
+  if(label){label.dataset.i18n=leading?'companion.follow':'companion.lead';label.textContent=t(label.dataset.i18n);}
 }
 function drawCompanion(){companion.draw(ctx,{camera:world.cameraX,ground:world.groundY,equipped:world.shop.equipped,playerX:world.player.x,routeX:currentGuidance().routeX,time:world.time});}
 
@@ -149,7 +161,7 @@ const worldBackgroundPaths = {
 for (const realmId of Object.keys(worldBackgroundPaths)) {
   const availablePaths = window.EPQ_AUTH?.worldBackgrounds?.[realmId];
   if (Array.isArray(availablePaths)) {
-    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261015-village2");
+    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261017-castleroad2");
   }
 }
 
@@ -455,6 +467,7 @@ function loadWorldState() {
     world.caveReturnX = Number(savedPosition?.caveReturnX || saved.caveReturnX) || 0;
 
     if (world.insideCave) {
+      world.width = AUTH_CONTEXT.worldLayout?.interiorWidths?.[world.currentRealmId] || destination.width;
       const cave = landmarks.find(item => item.realmId === world.currentRealmId && item.type === "cave");
       if (!world.caveReturnX && cave) world.caveReturnX = cave.x + 120;
       world.player.x = clamp(hasLocalPosition ? Number(savedPosition.playerX) : migratedX,70,world.width-90);
@@ -544,6 +557,8 @@ loadImageFromCandidates(
 
 const mapEnemyArtPaths = {
   ...pixelArtPaths.monsters,
+  'hollow-treant-01':'/FYP/images/castle/hollow-treant-96.png',
+  'castle-warden-01':'/FYP/images/castle/gate-warden-96.png',
   "echo-slime-01": "/FYP/assets/enemies/monster/Shrim.png?v=20261010-enemyart1",
   "echo-dragon-01": "/FYP/assets/enemies/monster/Monster.png?v=20261010-enemyart1"
 };
@@ -815,17 +830,18 @@ const landmarks = [
   { realmId: "camp", x: 1580, type: "cave" },
   { realmId: "ruins", x: 420, type: "sign" },
   { realmId: "ruins", x: 630, type: "tower" },
-  { realmId: "ruins", x: 930, type: "ruins" },
-  { realmId: "ruins", x: 1250, type: "gate" },
+  { realmId: "ruins", x: 1060, type: "ruins" },
   { realmId: "ruins", x: 1680, type: "cave" },
-  { realmId: "ruins", x: 1940, type: "typingCave" }
+  ...[2080,2390,2960,3270,4110].map((x,i)=>({realmId:'ruins',x,type:'deadTree',variant:i})),
+  { realmId:'ruins',x:castleLayout.castleGateX,type:'castleGate' },
+  { realmId: "ruins", x: storyTargets[4].x, type: "typingCave" }
 ];
 
 const destinations = [
   { id: "maple", name: "Maple Town", nameKey: "destination.maple.name", category: "SAFE HAVEN", categoryKey: "destination.safe", description: "A peaceful village where your adventure and first words begin.", descriptionKey: "destination.maple.description", scene: "maple", width: 1800, spawnX: 440, portalX: 220 },
   { id: "forest", name: "Whispering Forest", nameKey: "destination.forest.name", category: "VOCABULARY TRAIL", categoryKey: "destination.vocab", description: "A standalone enchanted forest with lantern paths and hidden words.", descriptionKey: "destination.forest.description", scene: "forest", width: 2100, spawnX: 440, portalX: 220 },
   { id: "camp", name: "Old Camp Road", nameKey: "destination.camp.name", category: "SURVIVAL ROUTE", categoryKey: "destination.survival", description: "A separate sunset wilderness with a campfire, pine trees and a guide.", descriptionKey: "destination.camp.description", scene: "camp", width: 1950, spawnX: 440, portalX: 220 },
-  { id: "ruins", name: "Ancient Ruins", nameKey: "destination.ruins.name", category: "ANCIENT CHALLENGE", categoryKey: "destination.challenge", description: "A separate ancient realm with stone towers, a sealed gate and two caves.", descriptionKey: "destination.ruins.description", scene: "ruins", width: 2200, spawnX: 440, portalX: 220 }
+  { id: "ruins", name: "Ancient Ruins", nameKey: "destination.ruins.name", category: "ANCIENT CHALLENGE", categoryKey: "destination.challenge", description: "Ruins, the Cave of Echoes, and a distant final castle.", descriptionKey: "destination.ruins.description", scene: "ruins", width: AUTH_CONTEXT.worldLayout?.widths.ruins || 4600, spawnX: 440, portalX: 220 }
 ];
 
 // Single source of truth for localized names across HUD, wooden signposts,
@@ -844,6 +860,8 @@ const enemies = [
   { id: "bat-01", realmId: "forest", x: 1290, type: "bat", name: "Confusion Bat", difficulty: "EASY", hp: 70, damage: 10, xp: 25, coins: 12, defeated: false },
   { id: "road-guardian-01", realmId: "camp", x: 1370, type: "guardian", name: "Road Guardian", difficulty: "MEDIUM", hp: 85, damage: 11, xp: 28, coins: 14, defeated: false },
   { id: "guardian-01", realmId: "ruins", x: 1150, type: "guardian", name: "Grammar Guardian", difficulty: "MEDIUM", hp: 100, damage: 12, xp: 30, coins: 15, defeated: false },
+  { id:'hollow-treant-01',realmId:'ruins',x:castleLayout.treantX,type:'treant',name:'Hollow Treant',nameKey:'castle.treant',difficulty:'MEDIUM',hp:110,damage:12,xp:35,coins:18,defeated:false },
+  { id:'castle-warden-01',realmId:'ruins',x:castleLayout.castleWardenX,type:'warden',name:'Castle Warden',nameKey:'castle.warden',difficulty:'MEDIUM',hp:140,damage:14,xp:45,coins:25,defeated:false },
   { id: "cave-wraith-01", realmId: "ruins", x: 810, type: "wraith", name: "Cave Wraith", difficulty: "MEDIUM", hp: 110, damage: 14, xp: 45, coins: 20, defeated: false, caveOnly: true },
   { id: "echo-slime-01", realmId: "ruins", x: 1350, type: "slime", name: "Rune Slime", nameKey: "guide.echo.slime", difficulty: "MEDIUM", hp: 80, damage: 10, xp: 25, coins: 12, defeated: false, caveOnly: true },
   { id: "echo-dragon-01", realmId: "ruins", x: 1870, type: "wraith", name: "Echo Dragon", nameKey: "guide.echo.dragon", difficulty: "MEDIUM", hp: 135, damage: 13, xp: 50, coins: 22, defeated: false, caveOnly: true }
@@ -901,11 +919,13 @@ function resize() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   // Screen-space ground adapts to short windows; saved world X positions stay the same.
   const shortLandscape=window.innerHeight<=540&&window.innerWidth>=560;
-  world.groundY = Math.min(520, Math.max(160, window.innerHeight - (shortLandscape?42:70)));
+  const groundDepth = Math.min(180, Math.max(shortLandscape ? 42 : 70, window.innerHeight * .2));
+  world.groundY = Math.round(Math.max(160, window.innerHeight - groundDepth));
   if(window.innerWidth<600&&window.innerHeight>window.innerWidth){
     world.groundY=Math.min(window.innerHeight-70,Math.max(world.groundY,(world.hudBottom||0)+300));
   }
   world.waterY = world.groundY + 130;
+  if(world.typingCaveOpen)updateTypingCaveVisuals();
 }
 
 const mapHud = document.querySelector(".pixel-world-ui .hud");
@@ -931,6 +951,7 @@ function resetMovementInput() {
 // A lost key/pointer release must not keep the hero walking behind another window.
 window.addEventListener("blur", resetMovementInput);
 window.addEventListener("epq-settings-change", resetMovementInput);
+window.addEventListener("epq-loading-change", resetMovementInput);
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) resetMovementInput();
 });
@@ -955,6 +976,13 @@ window.addEventListener("keydown", (e) => {
   }
 
   if (world.typingCaveOpen) {
+    if(k==='tab'){
+      const root=!typingUi.loseOverlay.classList.contains('hidden')?typingUi.loseOverlay:!typingUi.winOverlay.classList.contains('hidden')?typingUi.winOverlay:typingUi.screen;
+      const controls=[...root.querySelectorAll('button:not(:disabled),input:not(:disabled)')].filter(node=>node.getClientRects().length);
+      const first=controls[0],last=controls[controls.length-1];
+      if(first&&((e.shiftKey&&(document.activeElement===first||!controls.includes(document.activeElement)))||(!e.shiftKey&&(document.activeElement===last||!controls.includes(document.activeElement))))){e.preventDefault();(e.shiftKey?last:first).focus();}
+      return;
+    }
     if (k === "escape") {
       e.preventDefault();
       if (!e.repeat) closeTypingCave();
@@ -995,7 +1023,7 @@ window.addEventListener("keydown", (e) => {
     return;
   }
 
-  if (world.interacting) return;
+  if (world.interacting || e.target?.closest?.('.map-tool-icons')) return;
 
   if (["arrowleft","arrowright","a","d"," ","e"].includes(k)) e.preventDefault();
   keys.add(k);
@@ -1019,16 +1047,20 @@ bindHoldButton("rightButton", "right");
 document.getElementById("interactButton").addEventListener("click", interact);
 
 let journalNavigationPending = false;
-document.querySelectorAll('a[href="/FYP/learning.php"], a[href="/FYP/skills.php"], a[href="/FYP/shop.php"]').forEach(link => {
-  link.addEventListener("click", async event => {
-    if (event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
-    event.preventDefault();
+async function navigateFromMap(destination) {
     if (journalNavigationPending) return;
     journalNavigationPending = true;
+    window.EPQLoading?.begin('travel');
     resetMovementInput();
     try { saveWorldState(); await flushGameSave(); }
     catch (error) { console.warn("[English Power Quest] Journal navigation retains the available save.", error); }
-    window.location.href = link.getAttribute("href");
+    window.location.href = destination;
+}
+document.querySelectorAll('a[href="/FYP/learning.php"], a[href="/FYP/skills.php"], a[href="/FYP/backpack.php"]').forEach(link => {
+  link.addEventListener("click", event => {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
+    event.preventDefault();
+    void navigateFromMap(link.getAttribute("href"));
   });
 });
 
@@ -1113,6 +1145,8 @@ function nearestEnemy() {
   for (const enemy of enemies) {
     if (enemy.realmId !== world.currentRealmId) continue;
     if (enemy.defeated) continue;
+    if(['hollow-treant-01','castle-warden-01'].includes(enemy.id)&&!dungeonReady('ruins'))continue;
+    if(enemy.id==='castle-warden-01'&&!world.castle?.treeCleared)continue;
     if (enemy.id === "slime-01" && !tutorialSlimeVisible(world.tutorial)) continue;
     if (Boolean(enemy.caveOnly) !== world.insideCave) continue;
     if (enemy.caveOnly && (!dungeonReady() || !echoEnemyAvailable(enemy.id, defeatedEnemyIds(),currentDungeonRooms()))) continue;
@@ -1343,6 +1377,7 @@ function finishStoryIntro() {
 
 let npcQuestPending=false;
 async function interact() {
+  if (window.EPQLoading?.active) return;
   if(npcQuestPending || world.dungeonPending)return;
   if (world.interacting || world.battle || world.travelMenu || settingsIsOpen()) return;
 
@@ -1353,11 +1388,15 @@ async function interact() {
   }
 
   if (!world.insideCave) {
+    if(world.currentRealmId==='ruins'&&!world.castle?.gateOpen&&Math.abs(world.player.x-castleLayout.castleGateX)<180) {
+      void unlockCastleGate();return;
+    }
     const shop=landmarks.find(item=>item.realmId===world.currentRealmId&&item.type==='shop');
-    if(shop&&Math.abs(shop.x-world.player.x)<105){document.querySelector('.pixel-shop-link')?.click();return;}
+    if(shop&&Math.abs(shop.x-world.player.x)<105){void navigateFromMap('/FYP/shop.php');return;}
     const typingCave = landmarks.find(item => item.realmId === world.currentRealmId && item.type === "typingCave");
     if (typingCave && Math.abs(typingCave.x - world.player.x) < 118) {
       if(!dungeonReady()) {showDungeonLocked(true);return;}
+      if(!world.castle?.gateOpen){showCastleMessage('castle.needKey');return;}
       openTypingCave();
       return;
     }
@@ -1444,6 +1483,23 @@ async function interact() {
   }
 }
 
+function showCastleMessage(key) {
+  world.interacting=true;world.currentDialogueNpcId='castleGate';world.currentDialogueKey=key;
+  ui.dialogueName.textContent=t('castle.gate');ui.dialogueText.textContent=t(key);showDialogue();
+}
+async function unlockCastleGate() {
+  if(world.dungeonPending)return;
+  world.dungeonPending=true;resetMovementInput();
+  try {
+    await loadServerPlayer();
+    if(!world.castle?.hasKey&&!world.castle?.gateOpen){showCastleMessage('castle.needKey');return;}
+    saveWorldState();await flushGameSave();
+    const result=await questClient.request('CASTLE_OPEN');
+    if(result?.ok){playSound('portal');showCastleMessage('castle.opened');}
+    else showCastleMessage('castle.unlockFailed');
+  }catch{showCastleMessage('castle.unlockFailed');}
+  finally{world.dungeonPending=false;}
+}
 function recenterCamera() {
   world.cameraX = clamp(
     world.player.x - window.innerWidth * 0.5,
@@ -1461,6 +1517,7 @@ async function enterCave() {
   playSound("cave");
   world.caveReturnX = cave.x + 120;
   world.insideCave = true;
+  world.width = AUTH_CONTEXT.worldLayout?.interiorWidths?.[world.currentRealmId] || world.width;
   // Cave monsters respawn when the player enters the cave again.
   enemies.forEach(enemy => {
     if (enemy.realmId === world.currentRealmId && enemy.caveOnly) enemy.defeated = false;
@@ -1483,6 +1540,7 @@ async function enterCave() {
 function leaveCave() {
   playSound("portal");
   world.insideCave = false;
+  world.width = destinations.find(item=>item.id===world.currentRealmId).width;
   const cave = landmarks.find(item => item.realmId === world.currentRealmId && item.type === "cave");
   world.player.x = clamp(world.caveReturnX || (cave ? cave.x + 120 : 440), 70, world.width - 90);
   world.player.vx = 0;
@@ -1502,10 +1560,10 @@ function renderTypingQuestion() {
   if (!typingUi.screen || !word) return;
   const isChinese = getLanguage() === "zh";
 
-  typingUi.kicker.textContent = isChinese ? "回声之外 · 英语打字挑战" : "BEYOND THE ECHO · TYPING CHALLENGE";
+  typingUi.kicker.textContent = t('castle.kicker');
   typingUi.title.textContent = t("guide.typing.name");
   const round = Math.min(typingCaveState.completedLevels, 2);
-  const guardian = {key:"guide.echo.wraith",src:pixelArtPaths.monsters["cave-wraith-01"]};
+  const guardian = {key:"castle.boss",src:finalBossSprite.src};
   const monsterImage = typingUi.monster.querySelector("img");
   if (monsterImage.getAttribute("src") !== guardian.src) monsterImage.src = guardian.src;
   monsterImage.alt = t(guardian.key);
@@ -1513,17 +1571,15 @@ function renderTypingQuestion() {
   const rounds = document.getElementById("typingRounds");
   rounds.replaceChildren(...Array.from({length:3},(_,index) => {
     const li = document.createElement("li");
-    li.textContent = (index < typingCaveState.completedLevels ? "✓ " : "") + t("dungeon.typingRound",{number:index+1});
+    li.textContent = (index < typingCaveState.completedLevels ? "✓ " : "") + t("castle.seal",{number:index+1});
     li.classList.toggle("complete", index < typingCaveState.completedLevels);
     if (index === round) li.setAttribute("aria-current", "step");
     return li;
   }));
   typingUi.stageLabel.textContent = isChinese
-    ? `第 ${Math.min(typingCaveState.completedLevels + 1, TYPING_CAVE_TOTAL_LEVELS)} / ${TYPING_CAVE_TOTAL_LEVELS} 关`
-    : `LEVEL ${Math.min(typingCaveState.completedLevels + 1, TYPING_CAVE_TOTAL_LEVELS)} / ${TYPING_CAVE_TOTAL_LEVELS}`;
-  typingUi.instructions.textContent = isChinese
-    ? "根据上方解释输入正确的英文单词。怪物会慢慢靠近！"
-    : "Type the English word that matches the definition. The monster is getting closer!";
+    ? `封印 ${Math.min(typingCaveState.completedLevels + 1, TYPING_CAVE_TOTAL_LEVELS)} / ${TYPING_CAVE_TOTAL_LEVELS}`
+    : `SEAL ${Math.min(typingCaveState.completedLevels + 1, TYPING_CAVE_TOTAL_LEVELS)} / ${TYPING_CAVE_TOTAL_LEVELS}`;
+  typingUi.instructions.textContent = t('castle.instructions');
   typingUi.questionLabel.textContent = isChinese ? "输入符合以下解释的单词" : "TYPE THE WORD THAT MEANS";
   typingUi.question.textContent = word.definition;
   typingUi.translation.textContent = word.definitionZh || "";
@@ -1552,7 +1608,15 @@ function renderTypingQuestion() {
 }
 
 function updateTypingCaveVisuals() {
-  typingUi.monster.style.left = typingCaveState.monsterLeft + "%";
+  typingUi.monster.style.left = (Math.min(84,typingCaveState.monsterLeft) - (window.innerWidth<600?6:0)) + "%";
+  const remaining=Math.max(0,3-typingCaveState.completedLevels), phase=Math.min(3,typingCaveState.completedLevels+1);
+  typingUi.screen.dataset.phase=String(phase);
+  document.getElementById('castleBossPhase').textContent=t(remaining?'castle.phase'+phase:'castle.defeated');
+  const seals=document.getElementById('castleBossSeals');
+  seals.setAttribute('aria-valuenow',String(remaining));
+  seals.setAttribute('aria-label',t('castle.remaining',{count:remaining}));
+  [...seals.children].forEach((pip,index)=>pip.classList.toggle('broken',index<typingCaveState.completedLevels));
+  document.getElementById('castleBossSealText').textContent=t('castle.remaining',{count:remaining});
   const threat = Math.max(0, Math.min(100, (TYPING_CAVE_START_POSITION - typingCaveState.monsterLeft) / (TYPING_CAVE_START_POSITION - 32) * 100));
   typingUi.threatBar.style.width = threat + "%";
 }
@@ -1566,7 +1630,9 @@ function setTypingMessage(text, kind = "") {
 async function openTypingCave() {
   if (world.typingCaveOpen) return;
   if(!dungeonReady("ruins")) {showDungeonLocked(true);return;}
+  if(!world.castle?.gateOpen){showCastleMessage('castle.needKey');return;}
   playSound("cave");
+  window.EPQLoading?.begin('assets');
   world.typingCaveOpen = true;
   world.player.vx = 0;
   keys.clear();
@@ -1595,8 +1661,13 @@ async function openTypingCave() {
 
   const generation=typingCaveState.roundToken;
   saveWorldState();
-  if(await flushGameSave()===false){typingUi.retry.classList.remove("hidden");setTypingMessage(getLanguage()==="zh"?"存档尚未确认，请检查连接后重试。":"Save not confirmed. Check your connection and retry.");return;}
+  if(await flushGameSave()===false){window.EPQLoading?.ready(true);typingUi.retry.classList.remove("hidden");setTypingMessage(getLanguage()==="zh"?"存档尚未确认，请检查连接后重试。":"Save not confirmed. Check your connection and retry.");return;}
+  for(const art of [finalBossSprite,finalCastleHall])if(art.complete&&!art.naturalWidth)art.src=art.src.split('?')[0]+'?v=20261017-castleroad2&retry='+Date.now();
+  await window.EPQLoading?.waitForImages([finalBossSprite,finalCastleHall]);
+  await window.EPQLoading?.waitForMinimum();
+  if(!finalBossSprite.naturalWidth||!finalCastleHall.naturalWidth){window.EPQLoading?.ready(true);typingUi.retry.classList.remove('hidden');setTypingMessage(t('castle.artFailed'));return;}
   const result=await questClient.request("TYPING_START");
+  window.EPQLoading?.ready(true);
   if(!result.ok){typingUi.retry.classList.remove("hidden");setTypingMessage(getLanguage()==="zh"?"挑战暂时无法开始，请检查数据库更新与连接后重试。":"Challenge unavailable. Check the database update and connection, then retry.");return;}
   if(!world.typingCaveOpen||generation!==typingCaveState.roundToken){void questClient.request("TYPING_CLOSE",{runId:result.outcome.typing.runId});return;}
   const run=result.outcome.typing;
@@ -1623,12 +1694,14 @@ function closeTypingCave() {
   typingUi.input.disabled = false;
   typingUi.input.value = "";
   updateLocation();
+  ui.interactButton.focus();
 }
 
 function advanceTypingMonster(reason) {
   if (!world.typingCaveOpen || typingCaveState.busy || typingCaveState.gameOver) return;
   playSound(reason === "wrong" ? "wrong" : "hurt");
   typingCaveState.approachSteps += 1;
+  typingUi.monster.classList.remove('boss-struck');
   typingCaveState.monsterLeft = Math.max(27, typingCaveState.monsterLeft - TYPING_CAVE_STEP);
   typingCaveState.passiveTimer = 0;
   renderTypingQuestion();
@@ -1784,6 +1857,9 @@ async function submitTypingAnswer() {
   const word = typingCaveState.currentWord;
   const isChinese = getLanguage() === "zh";
   typingCaveState.completedLevels = verified.outcome.typing.completedLevels;
+  typingUi.monster.classList.remove('boss-struck');
+  void typingUi.monster.offsetWidth;
+  typingUi.monster.classList.add('boss-struck');
   typingCaveState.monsterLeft = Math.min(
     TYPING_CAVE_RIGHT_LIMIT,
     typingCaveState.monsterLeft + TYPING_CAVE_STEP
@@ -1793,8 +1869,8 @@ async function submitTypingAnswer() {
   renderTypingQuestion();
   // During the short success pause, show the level just completed.
   typingUi.stageLabel.textContent = isChinese
-    ? `第 ${typingCaveState.completedLevels} / ${TYPING_CAVE_TOTAL_LEVELS} 关`
-    : `LEVEL ${typingCaveState.completedLevels} / ${TYPING_CAVE_TOTAL_LEVELS}`;
+    ? `已击碎 ${typingCaveState.completedLevels} / ${TYPING_CAVE_TOTAL_LEVELS} 道封印`
+    : `SEALS BROKEN ${typingCaveState.completedLevels} / ${TYPING_CAVE_TOTAL_LEVELS}`;
 
   typingUi.input.disabled = true;
   typingUi.submit.disabled = true;
@@ -1820,14 +1896,14 @@ async function submitTypingAnswer() {
         playSound("victory");
         typingUi.winTitle.textContent = storyEnding
           ? t("story.ending.title")
-          : (isChinese ? "挑战成功！" : "CAVE CLEARED!");
+          : t('castle.defeated');
         typingUi.winMessage.textContent = storyEnding
           ? (isChinese
-            ? "你完成了全部三关，也走完了英语力量任务的主线旅程。带着学会的词语，回去开启新的生活吧。"
-            : "You completed all three levels and the main story. Take your new words back to campus and begin a new chapter.")
+            ? "你击碎了三道封印，击败了无言魔王，也走完了英语力量任务的主线旅程。带着学会的词语，回去开启新的生活吧。"
+            : "You broke all three seals, defeated the Wordless King and completed the main story. Take your new words back to campus.")
           : (isChinese
-            ? "三关全部完成！你成功把怪物击退，获得了全部奖励。"
-            : "You completed all three levels and pushed the monster away. All rewards have been earned!");
+            ? "三道封印全部击碎！无言魔王已被击败，城堡重归平静。奖励已确认。"
+            : "All three seals are broken! The Wordless King is defeated and the castle is quiet. Rewards are confirmed.");
         typingUi.winReplay.textContent = isChinese ? "再玩一次" : "PLAY AGAIN";
         typingUi.winExit.textContent = isChinese ? "返回地图" : "BACK TO MAP";
         typingUi.winOverlay.classList.remove("hidden");
@@ -1924,10 +2000,11 @@ function closeDestinationMenu() {
   document.getElementById("interactButton").focus();
 }
 
-function travelToSelectedDestination() {
-  if (!world.travelMenu) return;
+async function travelToSelectedDestination() {
+  if (!world.travelMenu || window.EPQLoading?.active) return;
   playSound("portal");
   const destination = destinations[world.selectedDestinationIndex] || destinations[0];
+  window.EPQLoading?.begin('portal', {destination: () => getLocalizedRealmName(destination.id)});
 
   world.realmPositions[world.currentRealmId] = {
     playerX: world.player.x,
@@ -1966,6 +2043,19 @@ function travelToSelectedDestination() {
   world.travelMenu = false;
   ui.destinationScreen.classList.add("hidden");
   saveWorldState({ playerX: world.player.x, portalX: world.portalX });
+  try {
+    await window.EPQLoading?.waitForImages([
+      worldBackgrounds[destination.id], realmPortalSprite,
+      ...enemies.filter(enemy => enemy.realmId === destination.id && !enemy.caveOnly).map(enemy => mapEnemyArtById[enemy.id]),
+      ...npcs.filter(npc => npc.realmId === destination.id).map(npc => npc.id === 'elder' ? elderRowanSprite : npcPixelSprites[npc.id]),
+      dungeonArt[destination.id]?.entrance
+    ]);
+    draw();
+    window.EPQLoading?.ready();
+  } catch (error) {
+    window.EPQLoading?.fail();
+    console.warn('[English Power Quest] Portal scenery could not be prepared.', error);
+  }
 }
 
 function updateQuest() {
@@ -1992,7 +2082,7 @@ function currentGuidance() {
   return questGuidance({ chapter: world.questStep, realm: world.currentRealmId,
     x: world.player.x, insideCave: world.insideCave, tutorial: world.tutorial,
     slimeX: tutorialActive(world.tutorial) ? tutorialSlimeX(world.tutorial) : 1435,
-    defeatedIds: defeatedEnemyIds(),rooms:currentDungeonRooms(),dungeonAccess:world.dungeonAccess });
+    defeatedIds: defeatedEnemyIds(),rooms:currentDungeonRooms(),dungeonAccess:world.dungeonAccess,castle:world.castle });
 }
 
 function guideIsOpen() {
@@ -2003,10 +2093,15 @@ function renderDungeonGuide() {
   const root=document.getElementById("questGuideDungeons");if(!root)return;
   root.replaceChildren(...Object.entries(dungeonSpecs).filter(([,spec])=>!spec.legacyOnly).map(([realm,spec])=>{
     const card=document.createElement("section"),heading=document.createElement("h3"),detail=document.createElement("p"),status=document.createElement("p");
-    heading.textContent=getLocalizedRealmName(realm)+" · "+t(spec.nameKey);
-    detail.textContent=t("dungeon.guide",{enemy:t("dungeon.gate."+spec.gate),count:spec.enemies.length});
-    status.textContent=t(world.dungeonAccess===null?"dungeon.checking":dungeonReady(realm)?"dungeon.open":"dungeon.sealed");
-    card.className="dungeon-guide-card";card.classList.toggle("unlocked",dungeonReady(realm));card.append(heading,detail,status);return card;
+    const ready=dungeonReady(realm),checking=world.dungeonAccess===null;
+    const icon=document.createElement("span"),copy=document.createElement("div");
+    icon.className="dungeon-guide-icon";icon.setAttribute("aria-hidden","true");icon.textContent=ready?"✓":"◇";
+    heading.textContent=t(spec.nameKey);
+    detail.textContent=getLocalizedRealmName(realm)+" · "+t(ready?"guide.guardians":"guide.unlockWith",{count:spec.enemies.length,enemy:t("dungeon.gate."+spec.gate)});
+    status.textContent=t(checking?"guide.checking":ready?"guide.ready":"guide.locked");
+    status.className="dungeon-guide-status";
+    copy.className="dungeon-guide-copy";copy.append(heading,detail);
+    card.className="dungeon-guide-card";card.classList.toggle("unlocked",ready);card.append(icon,copy,status);return card;
   }));
 }
 
@@ -2035,6 +2130,7 @@ function updateQuestGuidance() {
   chapters.replaceChildren(...storyTargets.map((item, index) => {
     const li = document.createElement("li");
     li.textContent = (index < world.questStep ? "✓ " : `${index + 1}. `) + t(item.nameKey);
+    li.classList.toggle("complete",index < world.questStep);
     if (index === world.questStep) li.setAttribute("aria-current", "step");
     return li;
   }));
@@ -2051,6 +2147,7 @@ document.getElementById("questGuideOpen").addEventListener("click", () => {
   if (world.storyIntroOpen || world.interacting || world.typingCaveOpen || world.travelMenu || world.battle) return;
   keys.clear(); touch.left = false; touch.right = false; world.player.vx = 0;
   updateQuestGuidance();
+  document.querySelector(".quest-guide-help").open = false;
   document.getElementById("questGuideScreen").classList.remove("hidden");
   document.getElementById("questGuideOpen").setAttribute("aria-expanded", "true");
   document.getElementById("questGuideClose").focus();
@@ -2062,7 +2159,15 @@ document.getElementById("questGuideScreen").addEventListener("click", event => {
 window.addEventListener("keydown", event => {
   if (!guideIsOpen()) return;
   if (event.key === "Escape") { event.preventDefault(); closeQuestGuide(); }
-  if (event.key === "Tab") { event.preventDefault(); document.getElementById("questGuideClose").focus(); }
+  if (event.key === "Tab") {
+    const controls=[...document.getElementById("questGuideScreen").querySelectorAll("button, summary")]
+      .filter(control=>!control.disabled&&control.getClientRects().length);
+    const first=controls[0],last=controls[controls.length-1];
+    if (!document.getElementById("questGuideScreen").contains(document.activeElement)
+      || (!event.shiftKey&&document.activeElement===last) || (event.shiftKey&&document.activeElement===first)) {
+      event.preventDefault();(event.shiftKey?last:first).focus();
+    }
+  }
 });
 
 
@@ -2071,7 +2176,7 @@ function updateLocation() {
 }
 
 function refreshWorldLanguage() {
-  const leadButton=document.getElementById('companionLead');if(leadButton)leadButton.textContent=t(companion.state(world.shop.equipped).leading?'companion.follow':'companion.lead');
+  updateCompanionButton(companion.state(world.shop.equipped).leading);
   const journalLink = document.querySelector(".pixel-learning-link");
   if (journalLink) journalLink.title = t("learning.seen") + " · " + t("learning.open");
   updateQuest();
@@ -2121,6 +2226,7 @@ function applyConfirmedQuest(result) {
   world.level=Number(player.level);world.xp=Number(player.xp);world.coins=Number(player.coins);
   world.power=Number(player.englishPowerTotal);world.levelProgress=player.levelProgress;
   world.questStep=Number(result.chapterStep);
+  if(result.castle)world.castle=result.castle;
   if(result.outcome?.npcId==="elder"&&tutorialActive(world.tutorial)&&["MOVE","MEET"].includes(world.tutorial.stage)) {
     world.tutorial={...world.tutorial,stage:"SLIME"};
   }
@@ -2144,6 +2250,10 @@ async function loadServerPlayer() {
     world.power = Number(data.player.englishPowerTotal || 0);
     world.levelProgress=data.player.levelProgress;
     world.dungeonAccess=data.dungeonAccess || null;
+    world.castle=data.castle || null;
+    for(const [id,cleared] of [['hollow-treant-01',world.castle?.treeCleared],['castle-warden-01',world.castle?.wardenDefeated]]) {
+      const enemy=enemies.find(item=>item.id===id);if(enemy)enemy.defeated=Boolean(cleared);
+    }
     if(data.shop)world.shop=data.shop;
     if(world.dungeonAccess)for(const [realm,spec] of Object.entries(dungeonSpecs)) {
       const gate=enemies.find(enemy=>enemy.id===spec.gate);
@@ -2188,11 +2298,13 @@ async function startBattle(enemy) {
 
   sessionStorage.setItem(BATTLE_KEY, JSON.stringify({ enemyId: enemy.id }));
   sessionStorage.removeItem(ESCAPE_KEY);
+  window.EPQLoading?.begin('battle');
   await flushGameSave();
   window.location.href = "/FYP/battle.php";
 }
 
 function update(dt) {
+  if (window.EPQLoading?.active) return;
   world.time += dt;
   updateMapTutorial();
 
@@ -2218,6 +2330,9 @@ function update(dt) {
 
     world.player.x += world.player.vx * dt;
     world.player.x = clamp(world.player.x, 70, world.width - 90);
+    if(world.currentRealmId==='ruins'&&!world.insideCave&&!world.castle?.gateOpen) {
+      world.player.x=Math.min(world.player.x,castleLayout.castleGateX-115);
+    }
 
     if (Math.abs(world.player.vx) > 1) {
       world.player.walkTimer += dt;
@@ -2397,6 +2512,11 @@ function drawLandmarks() {
     else if(l.type==="cave")drawCaveEntrance(x,world.groundY,Math.abs(l.x-world.player.x)<125);
     else if(l.type==="typingCave")drawTypingCaveEntrance(x,world.groundY,Math.abs(l.x-world.player.x)<135);
     else if(l.type==="shop")drawVillageShop(x,world.groundY,Math.abs(l.x-world.player.x)<105);
+    else if(l.type==='deadTree'){
+      ctx.save();ctx.translate(x,0);ctx.scale(l.variant%2?-1:1,1);
+      drawGroundedSprite(ctx,deadTreeSprite,0,world.groundY,156+(l.variant%3)*24);ctx.restore();
+    }
+    else if(l.type==='castleGate')drawCastleGate(x,world.groundY);
     else {
       drawPixelLandmark(ctx,l.type,x,world.groundY,l.variant);
       if(l.type==='house'&&l.variant==='shop'){ctx.save();ctx.textAlign='center';ctx.font='bold 12px system-ui';ctx.fillStyle='#f2d28c';ctx.fillText(t('shop.open'),x,world.groundY-158);ctx.restore();}
@@ -2436,11 +2556,21 @@ function drawDungeonStructure(x,ground,size=dungeonSpecs[world.currentRealmId]?.
 }
 
 function drawTypingCaveEntrance(x, ground, nearby) {
-  drawGroundedSprite(ctx,exitDoorSprite,x,ground,256);
-  ctx.save();ctx.textAlign="center";ctx.font="bold 12px system-ui";ctx.fillStyle="#d5c7eb";
-  ctx.fillText(t("guide.typing.name"),x,ground-248);ctx.font="bold 10px system-ui";
-  ctx.fillText(t("guide.typing.short"),x,ground-232);
-  if(nearby){ctx.fillStyle="#221d33";ctx.fillRect(Math.round(x-110),ground-226,220,22);ctx.fillStyle="#e9ddba";ctx.fillText(getLanguage()==="zh"?"按 E / 互动开始三关拼写":"E / INTERACT · SPELLING",x,ground-211);}
+  const castleHeight=Math.min(384,Math.max(210,ground-135));
+  drawGroundedSprite(ctx,finalCastleSprite,x,ground,castleHeight);
+  ctx.save();ctx.textAlign="center";ctx.font="bold 14px system-ui";ctx.fillStyle="#efdbaf";
+  ctx.fillText(t("guide.typing.name"),x,ground-castleHeight-30);ctx.font="bold 11px system-ui";
+  ctx.fillText(t("guide.typing.short"),x,ground-castleHeight-12);
+  if(nearby){ctx.fillStyle="#221d33";ctx.fillRect(Math.round(x-130),ground-108,260,24);ctx.fillStyle="#e9ddba";ctx.fillText(t(dungeonReady()?"castle.enter":"dungeon.firstGuard"),x,ground-91);}
+  ctx.restore();
+}
+
+function drawCastleGate(x,ground) {
+  const open=world.castle?.gateOpen;
+  drawGroundedSprite(ctx,open?castleGateOpenSprite:castleGateSprite,x,ground,248);
+  ctx.save();ctx.textAlign='center';ctx.font='bold 12px system-ui';ctx.fillStyle='#f0d79d';
+  ctx.fillText(t(open?'castle.gateOpen':'castle.gate'),x,ground-266);
+  if(!open){ctx.font='bold 11px system-ui';ctx.fillText(t(world.castle?.hasKey?'castle.useKey':'castle.keyGuard'),x,ground-288);}
   ctx.restore();
 }
 
@@ -3091,6 +3221,8 @@ function drawEnemies() {
         "bat-01": [145, 132],
         "road-guardian-01": [192, 192],
         "guardian-01": [192, 192],
+        "hollow-treant-01": [240,240],
+        "castle-warden-01": [192,192],
         "cave-wraith-01": [154, 174],
         "echo-slime-01": [160, 160],
         "echo-dragon-01": [210, 200]
@@ -3306,6 +3438,7 @@ window.advanceTime = ms => {
 window.render_game_to_text = () => JSON.stringify({
   coordinates: "World origin at the left; x increases right; groundY is screen pixels downward.",
   realm: world.currentRealmId,
+  loading: Boolean(window.EPQLoading?.active),
   mode: world.storyIntroOpen ? "STORY" : world.interacting ? "DIALOGUE" : world.typingCaveOpen ? "TYPING"
     : guideIsOpen() ? "QUEST_GUIDE" : world.travelMenu ? "TRAVEL" : world.battle ? "BATTLE_TRANSITION" : "MAP",
   player: { x: Math.round(world.player.x), vx: world.player.vx, groundY: world.groundY },
@@ -3320,7 +3453,8 @@ window.render_game_to_text = () => JSON.stringify({
   landmarks: landmarks.filter(item=>item.realmId===world.currentRealmId).map(item=>({type:item.type,x:item.x})),
   guidance: currentGuidance(),
   companion:companion.state(world.shop.equipped),
-  typing: world.typingCaveOpen ? { round: typingCaveState.completedLevels + 1, monsterLeft: typingCaveState.monsterLeft,
+  finalCastle: {x:storyTargets[4].x,gateX:castleLayout.castleGateX,treantX:castleLayout.treantX,wardenX:castleLayout.castleWardenX,...world.castle,visible:world.currentRealmId==='ruins'&&!world.insideCave&&worldToScreen(storyTargets[4].x)>-220&&worldToScreen(storyTargets[4].x)<window.innerWidth+220},
+  typing: world.typingCaveOpen ? { round: Math.min(3,typingCaveState.completedLevels + 1), boss:'wordless-king',sealsRemaining:Math.max(0,3-typingCaveState.completedLevels), monsterLeft: typingCaveState.monsterLeft,
     hintHiddenLetters: document.querySelectorAll(".typing-cave-letter:not(.revealed)").length } : null,
   enemies: enemies.filter(enemy => enemy.realmId === world.currentRealmId && !enemy.defeated
     && Boolean(enemy.caveOnly) === world.insideCave && (!enemy.caveOnly || dungeonReady() && echoEnemyAvailable(enemy.id, defeatedEnemyIds(),currentDungeonRooms()))
@@ -3352,9 +3486,19 @@ runStartupStep("openStoryIntroIfNew", openStoryIntroIfNew);
 
 void (async () => {
   const restored = await loadServerGame();
-  if (restored) await Promise.all([loadServerPlayer(), loadQuestions()]);
+  let playerReady = false;
+  if (restored) [playerReady] = await Promise.all([loadServerPlayer(), loadQuestions()]);
   else await loadQuestions();
   if (restored) {await questClient.recover();initializeMapTutorial();}
+  window.EPQLoading?.step('assets');
+  await Promise.all([
+    loadCharacterAssets(AUTH_CONTEXT.character),
+    window.EPQLoading?.waitForImages([worldBackgrounds[world.currentRealmId], playerStandSprite, realmPortalSprite, ...Object.values(npcPixelSprites), ...(world.currentRealmId==='ruins'?[deadTreeSprite,castleGateSprite,finalCastleSprite,...Object.values(mapEnemyArtById)]:[])])
+  ]);
+  draw();
+  if (restored && playerReady) window.EPQLoading?.ready();
+  else window.EPQLoading?.fail();
 })().catch(error => {
+  window.EPQLoading?.fail();
   console.warn("[English Power Quest] Startup data could not be loaded.", error);
 });

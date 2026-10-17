@@ -88,7 +88,7 @@ test("Word Slime victory UI preserves every story chapter without re-granting se
   for (let chapter = 0; chapter <= 5; chapter++) {
     const f = fixture();
     f.c.saved.questStep = chapter;
-    f.load(battleSource, ["finishVictory", "finishConfirmedVictorySave"]);
+    f.load(battleSource, ["finishVictory", "finishConfirmedVictorySave", "victoryDetail"]);
     f.c.finishVictory();
     assert.equal(f.c.saved.questStep, chapter);
     assert.equal(f.c.saved.xp, 0);
@@ -104,7 +104,7 @@ test("Tutorial victory advances only its guide and preserves quest steps and con
   vm.runInContext(fs.readFileSync(path.join(root,"js/tutorial.js"),"utf8").replaceAll("export function","function"),f.c);
   f.c.tutorialBattle = true;
   f.c.saved.tutorial = {version:1,stage:"BATTLE",moveStartX:440};
-  f.load(battleSource,["finishVictory","finishConfirmedVictorySave"]);
+  f.load(battleSource,["finishVictory","finishConfirmedVictorySave","victoryDetail"]);
   f.c.finishVictory();f.c.finishVictory();
   assert.equal(f.c.saved.tutorial.stage,"RETURN");
   assert.equal(f.c.saved.questStep,1);assert.equal(f.c.saved.coins,10);assert.equal(f.c.rewards.length,0);
@@ -203,7 +203,7 @@ test("Running waits for pending purchases/saves and suppresses delayed combat ca
   const f = fixture(), purchase = deferred(), save = deferred();
   f.c.pendingItemUse = purchase.promise;
   f.c.pendingBattleSave = save.promise;
-  f.load(battleSource, ["returnToMapAfterBattle", "finishVictory", "finishConfirmedVictorySave", "enemyTurn"]);
+  f.load(battleSource, ["returnToMapAfterBattle", "finishVictory", "finishConfirmedVictorySave", "victoryDetail", "enemyTurn"]);
   const leave = f.c.returnToMapAfterBattle();
   f.c.finishVictory(); f.c.enemyTurn();
   assert.equal(f.c.rewards.length, 0);

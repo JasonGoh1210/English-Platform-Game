@@ -1,0 +1,53 @@
+/* A compact pixel quest log. Detailed rules remain available on demand. */
+.quest-guide-screen { padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); background: #07101bd9; }
+.quest-guide-panel { width: min(640px, 100%); max-height: 100%; padding: 22px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #879691 #14232d; border: 3px solid #c2ae7b; background: #14232d; color: #e8e5d4; box-shadow: inset 0 0 0 3px #253e49, 6px 6px 0 #050c14; font: 15px/1.5 "Courier New", "Microsoft YaHei", monospace; }
+.quest-guide-header { padding-bottom: 16px; border-bottom: 2px solid #334651; }
+.quest-guide-header h2 { display: flex; align-items: center; gap: 12px; font-size: 21px; color: #f1e3bb; text-shadow: 2px 2px #060f18; }
+.quest-guide-icon { display: inline-grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border: 2px solid #b69e68; background: #35423c; color: #f3d88e; font: bold 20px/1 monospace; box-shadow: 2px 2px #08121b; }
+.quest-guide-header button { padding: 8px 12px; border: 2px solid #b5a173; border-radius: 0; background: #344b54; color: #fff0c7; box-shadow: inset 2px 2px #53666a, inset -2px -2px #1a303c, 3px 3px #07121b; font-family: inherit; font-size: 14px; font-weight: bold; line-height: 1.3; }
+.quest-guide-header button:active { transform: translate(2px, 2px); box-shadow: inset 2px 2px #1a303c; }
+.quest-guide-next { margin: 18px 0 14px; padding: 14px 16px; border: 2px solid #657969; border-left: 4px solid #ddc183; background: #20363d; box-shadow: inset 0 0 0 2px #142831; }
+.quest-guide-next > span { color: #bac8bd; font-size: 14px; }
+.quest-guide-next h3 { margin: 5px 0; font-size: 20px; color: #fff0bf; }
+.quest-guide-next p { margin: 5px 0 0; color: #c4d8db; overflow-wrap: anywhere; }
+.quest-guide-chapters { margin: 0 0 20px; gap: 6px; }
+.quest-guide-chapters li { padding: 5px 8px; border: 1px solid #40515b; color: #a8b8c1; background: #11202a; font-size: 14px; }
+.quest-guide-chapters li.complete { color: #b4ceb1; }
+.quest-guide-chapters [aria-current] { border: 2px solid #e2c58b; padding: 4px 7px; background: #35453f; color: #ffe7b0; box-shadow: 2px 2px #07121b; }
+.quest-guide-section-title { margin: 0 0 9px; font-size: 15px; color: #becac7; }
+.quest-guide-panel .dungeon-guide-grid { display: grid; grid-template-columns: 1fr; gap: 7px; margin: 0; }
+.quest-guide-panel .dungeon-guide-card { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; align-items: center; gap: 11px; padding: 11px 12px; border: 1px solid #3d525c; background: #192c37; }
+.quest-guide-panel .dungeon-guide-card.unlocked { border-color: #5b786a; }
+.dungeon-guide-icon { color: #a6b4c1; text-align: center; font: bold 23px/1 monospace; }
+.unlocked .dungeon-guide-icon { color: #b1d3ab; }
+.dungeon-guide-copy { min-width: 0; }
+.quest-guide-panel .dungeon-guide-card h3 { margin: 0; color: #ece3c8; font-size: 16px; overflow-wrap: anywhere; }
+.quest-guide-panel .dungeon-guide-copy p { margin: 3px 0 0; color: #b5c5ce; font-size: 14px; overflow-wrap: anywhere; }
+.quest-guide-panel .dungeon-guide-status { margin: 0; padding: 3px 6px; border: 1px solid #655d4d; background: #302e2a; color: #e2c996; font-size: 14px; white-space: nowrap; }
+.quest-guide-panel .unlocked .dungeon-guide-status { border-color: #557261; background: #233e36; color: #c0deba; }
+.quest-guide-finale { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 5px 12px; align-items: center; padding: 13px 12px; margin-top: 14px; border: 2px solid #96805d; background: #302f32; }
+.quest-guide-finale .quest-guide-icon { grid-row: span 2; border: 0; background: transparent; box-shadow: none; }
+.quest-guide-finale h3 { margin: 0; color: #f4dfad; font-size: 16px; }
+.quest-guide-finale p { margin: 2px 0 0; color: #d3c8b3; font-size: 14px; }
+.quest-guide-finale-location { grid-column: 2; color: #b5c4cb; font-size: 14px; }
+.quest-guide-help { margin-top: 14px; border-top: 1px solid #354955; }
+.quest-guide-help summary { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 2px; color: #c6d1d4; font-size: 14px; cursor: pointer; list-style: none; }
+.quest-guide-help summary::-webkit-details-marker { display: none; }
+.quest-guide-help summary::before { content: "+"; color: #ead099; font: bold 20px/1 monospace; }
+.quest-guide-help[open] summary::before { content: "−"; }
+.quest-guide-help summary:focus-visible { outline: 3px solid #fff0b1; outline-offset: 2px; }
+.quest-guide-help .quest-guide-caves { display: block; }
+.quest-guide-help .quest-guide-caves > section { padding: 12px 0; border: 0; border-top: 1px solid #354955; background: transparent; }
+.quest-guide-help .quest-guide-caves p, .quest-guide-help .quest-guide-caves ol { font-size: 14px; color: #c3cdd1; }
+@media (max-width: 520px) {
+  .quest-guide-panel { padding: 14px; }
+  .quest-guide-header { gap: 8px; padding-bottom: 12px; }
+  .quest-guide-header h2 { gap: 8px; font-size: 18px; }
+  .quest-guide-header .quest-guide-icon { width: 24px; height: 24px; }
+  .quest-guide-header button { padding: 8px; font-size: 14px; }
+  .quest-guide-next { margin-top: 14px; padding: 11px 12px; }
+  .quest-guide-next h3 { font-size: 18px; }
+  .quest-guide-chapters { margin-bottom: 15px; }
+  .quest-guide-panel .dungeon-guide-card { grid-template-columns: 20px minmax(0, 1fr) auto; gap: 7px; padding: 10px 8px; }
+  .quest-guide-panel .dungeon-guide-status { padding: 3px 4px; }
+}

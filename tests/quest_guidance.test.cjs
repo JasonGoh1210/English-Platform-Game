@@ -17,9 +17,23 @@ test("Next NPC follows the saved chapter, and cross-world directions point at th
   assert.equal(fromRuins.routeX,220); assert.equal(fromRuins.direction,"left");
   assert.equal(questGuidance({chapter:1,realm:"ruins",x:210}).routeKey,"guide.route.portal.near");
   assert.equal(questGuidance({chapter:3,realm:"ruins",x:1100}).direction,"left");
-  assert.equal(questGuidance({chapter:4,realm:"ruins",x:1930}).routeKey,"guide.route.near");
+  const layout=JSON.parse(fs.readFileSync(path.join(__dirname,'../data/world_layout.json'),'utf8'));
+  assert.equal(questGuidance({chapter:4,realm:"ruins",x:1930}).direction,"right");
+  assert.equal(questGuidance({chapter:4,realm:"ruins",x:layout.finalCastleX-10}).routeKey,"guide.route.near");
+  assert.equal(questGuidance({chapter:4,realm:"ruins",x:1680}).target.x,layout.finalCastleX);
+  assert.ok(layout.finalCastleX-1680>1920,'Castle is beyond an entire desktop viewport from Echo Cave');
   const sealed=questGuidance({chapter:4,realm:"ruins",x:1940,dungeonAccess:{ruins:false}});
   assert.equal(sealed.target.id,"guardian-01");assert.equal(sealed.direction,"left");assert.equal(sealed.mainTarget.id,"typing");
+});
+
+test('Castle guidance follows the saved tree, warden, key and open-gate progression',async()=>{
+  const {questGuidance}=await moduleReady;
+  const base={chapter:4,realm:'ruins',x:2000,dungeonAccess:{ruins:true}};
+  for(const [castle,id] of [[{treeCleared:false},'hollow-treant-01'],[{treeCleared:true,hasKey:false},'castle-warden-01'],[{treeCleared:true,hasKey:true},'castle-gate'],[{gateOpen:true},'typing']]) {
+    const guide=questGuidance({...base,castle});assert.equal(guide.target.id,id);assert.equal(guide.mainTarget.id,'typing');
+    assert.equal(questGuidance({...base,realm:'forest',castle}).routeX,220);
+  }
+  assert.equal(questGuidance({...base,x:3705,castle:{treeCleared:true,hasKey:true}}).direction,'near');
 });
 
 test('Each world interior guides to its own guardian and exit without overwriting the main quest',async()=>{

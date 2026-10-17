@@ -4,6 +4,7 @@ require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/../includes/battle_rules.php';
 require_once __DIR__ . '/../includes/rewards.php';
 require_once __DIR__.'/../includes/shop.php';
+require_once __DIR__.'/../includes/castle.php';
 
 function epq_battle_key(mixed $key): string {
     if (!is_string($key) || !preg_match('/\A[a-f0-9]{32}\z/', $key)) throw new InvalidArgumentException('Invalid battle/request token.');
@@ -64,6 +65,11 @@ try {
         if (!is_string($enemyCode)) throw new InvalidArgumentException('Invalid enemy.');
         $enemy = epq_battle_enemies()[$enemyCode] ?? null;
         if (!$enemy) throw new InvalidArgumentException('Unknown enemy.');
+        if(in_array($enemyCode,['hollow-treant-01','castle-warden-01'],true)) {
+            $existing=$db->prepare('SELECT battle_id FROM verified_battles WHERE battle_id=? AND player_id=?');
+            $existing->bind_param('si',$battleId,$playerId);$existing->execute();
+            if(!$existing->get_result()->fetch_assoc()) epq_require_castle_encounter($db,$playerId,$enemyCode);
+        }
         if (isset($enemy['dungeon'])) {
             // Keep an already-started encounter resumable across this update.
             $existingBattle=$db->prepare('SELECT battle_id FROM verified_battles WHERE battle_id=? AND player_id=?');

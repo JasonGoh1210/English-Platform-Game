@@ -24,7 +24,21 @@ verify(claim($hero,'NPC',['npcId'=>'mira'],$id)[0]===409,'Receipt inputs cannot 
 [, $again]=claim($hero,'NPC',['npcId'=>'elder']);verify(!$again['outcome']['rewardClaimed']&&$again['player']['xp']===25,'Fresh request cannot reclaim NPC');
 foreach([['mira','forest',790],['tala','camp',900],['kai','ruins',870]] as [$npc,$realm,$x]) {placeQuest($hero,$realm,$x);verify(claim($hero,'NPC',['npcId'=>$npc])[0]===200,'Original NPC chapter reward');}
 fixtureDungeonAccess($db,$hero,'ruins');
-placeQuest($hero,'ruins',1940);[, $start]=claim($hero,'TYPING_START');$run=$start['outcome']['typing'];
+http('api/game_state.php',['csrfToken'=>$hero[1],'state'=>['currentRealmId'=>'ruins','insideCave'=>true,'playerX'=>3700,
+    'realmPositions'=>['ruins'=>['insideCave'=>true,'playerX'=>3700]]]],$hero[0]);
+[, $interiorSave]=http('api/game_state.php',null,$hero[0]);
+verify($interiorSave['state']['playerX']===2110&&$interiorSave['state']['realmPositions']['ruins']['playerX']===2110,'Extended outdoor road does not enlarge the original Echo Cave');
+placeQuest($hero,'ruins',1940);
+verify(claim($hero,'TYPING_START')[0]===409,'Former doorway position cannot start the distant castle boss');
+placeQuest($hero,'ruins',(int)epq_world_layout()['finalCastleX']);
+verify(claim($hero,'TYPING_START')[0]===409,'An outdoor victory alone cannot bypass the castle key');
+// The dedicated castle flow exercises the actual two fights and keyed opening.
+// Keep this story reward regression isolated from the new encounter rewards.
+$fixture=$db->prepare("INSERT INTO verified_quest_claims(player_id,claim_key) VALUES (?,'castle:gate-open')");
+$fixture->bind_param('i',$hero[2]);$fixture->execute();
+[, $castleSave]=http('api/game_state.php',null,$hero[0]);
+verify($castleSave['state']['playerX']===epq_world_layout()['finalCastleX'],'Extended ruins position is saved without old-map clamping');
+[, $start]=claim($hero,'TYPING_START');$run=$start['outcome']['typing'];
 verify(claim($stranger,'TYPING_ANSWER',['runId'=>$run['runId'],'questionToken'=>$run['questionToken'],'answer'=>$run['word']['answer']])[0]===409,'Typing belongs to session player');
 [, $wrong]=claim($hero,'TYPING_ANSWER',['runId'=>$run['runId'],'questionToken'=>$run['questionToken'],'answer'=>'wrong']);
 verify(!$wrong['outcome']['correct']&&$wrong['player']['xp']===125,'Wrong spelling has no reward');

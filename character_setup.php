@@ -44,6 +44,7 @@ if (!in_array($gender,['male','female'],true)) $gender = 'male';
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101521"><title>创建你的角色 · English Power Quest</title>
   <link rel="stylesheet" href="/FYP/css/auth.css?v=20261013-female1">
+  <?php $epqLoadingMode = 'character'; require __DIR__.'/includes/loading_screen.php'; ?>
 </head>
 <body class="auth-page character-page">
   <main class="auth-layout character-layout">
@@ -89,6 +90,6 @@ if (!in_array($gender,['male','female'],true)) $gender = 'male';
     </div></section>
   </main>
   <script>window.EPQ_CHARACTER_SETUP = <?= json_encode(['catalog'=>$catalog,'names'=>epq_character_names()],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;</script>
-  <script type="module" src="/FYP/js/character-setup.js?v=20261015-village2"></script>
+  <script type="module" src="/FYP/js/character-setup.js?v=20261017-castleroad2"></script>
 </body>
 </html>

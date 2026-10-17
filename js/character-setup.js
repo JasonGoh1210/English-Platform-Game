@@ -1,4 +1,4 @@
-import { characterSprite, randomCharacterName, loadCharacterAssets } from "./characters.js?v=20261015-village2";
+import { characterSprite, randomCharacterName, loadCharacterAssets } from "./characters.js?v=20261017-castleroad2";
 
 const config = window.EPQ_CHARACTER_SETUP;
 const name = document.getElementById("characterName");
@@ -26,7 +26,8 @@ function render() {
 }
 sprite.onload = render;
 function loadLooks(){const gender=selectedProfile().gender;return Promise.all(Object.keys(config.catalog).map(appearance=>loadCharacterAssets({gender,appearance}))).then(render);}
-void loadLooks();
+window.EPQLoading?.step('assets');
+void Promise.all([loadLooks(), window.EPQLoading?.waitForImages([sprite])]).then(()=>window.EPQLoading?.ready()).catch(()=>window.EPQLoading?.fail());
 document.querySelectorAll('[name="appearance"], [name="gender"]').forEach(input => input.addEventListener("change",()=>{render();void loadLooks();}));
 name.addEventListener("input",render);
 dice.addEventListener("click", () => {

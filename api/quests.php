@@ -25,6 +25,7 @@ try {
         $response=json_decode($old['response_json'],true,512,JSON_THROW_ON_ERROR);
         // Preserve the outcome while reporting current balances/chapter, never stale receipt balances.
         $response['player']=epq_reward_balance($db,$playerId);$response['chapterStep']=epq_story_step($db,$playerId);
+        $response['castle']=epq_castle_progress($db,$playerId);
     } else {
         $response=epq_quest_action($db,$playerId,$body);
         $json=json_encode($response,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE);

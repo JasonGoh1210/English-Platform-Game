@@ -66,6 +66,7 @@ try {
         'englishPower' => $stats,
         'learning' => epq_learning_stats($db, $playerId),
         'dungeonAccess' => epq_dungeon_access($db,$playerId),
+        'castle' => epq_castle_progress($db,$playerId),
         'shop' => epq_shop_view($db,$playerId)
     ]);
 } catch (Throwable $e) {

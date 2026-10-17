@@ -4,7 +4,7 @@ export const storyTargets = [
   { id: "mira", realm: "forest", x: 790, nameKey: "npc.mira.name" },
   { id: "tala", realm: "camp", x: 900, nameKey: "npc.tala.name" },
   { id: "kai", realm: "ruins", x: 870, nameKey: "npc.kai.name" },
-  { id: "typing", realm: "ruins", x: 1940, nameKey: "guide.typing.name" }
+  { id: "typing", realm: "ruins", x: globalThis.window?.EPQ_AUTH?.worldLayout?.finalCastleX || 4480, nameKey: "guide.typing.name" }
 ];
 
 export const echoRooms = [
@@ -25,7 +25,7 @@ export function echoEnemyAvailable(id, defeatedIds = [], rooms = echoRooms) {
 }
 
 export function questGuidance({ chapter = 0, realm = "maple", x = 440, insideCave = false,
-  tutorial = null, slimeX = 1140, defeatedIds = [], rooms = echoRooms, dungeonAccess = null } = {}) {
+  tutorial = null, slimeX = 1140, defeatedIds = [], rooms = echoRooms, dungeonAccess = null, castle = null } = {}) {
   const step = Number.isFinite(chapter) ? Math.max(0, Math.min(5, Math.floor(chapter))) : 0;
   let target = storyTargets[Math.min(step, 4)];
   if (step >= 5) target = storyTargets[3]; // Kai has the existing post-ending dialogue.
@@ -36,6 +36,11 @@ export function questGuidance({ chapter = 0, realm = "maple", x = 440, insideCav
   const mainTarget = target;
   if (target.id === "typing" && dungeonAccess?.ruins === false) {
     target={id:"guardian-01",realm:"ruins",x:1150,nameKey:"dungeon.gate.guardian-01"};
+  } else if(target.id==='typing'&&castle&&!castle.gateOpen) {
+    const layout=globalThis.window?.EPQ_AUTH?.worldLayout;
+    target=!castle.treeCleared?{id:'hollow-treant-01',realm:'ruins',x:layout?.treantX||2700,nameKey:'castle.treant'}
+      :!castle.hasKey?{id:'castle-warden-01',realm:'ruins',x:layout?.castleWardenX||3580,nameKey:'castle.warden'}
+      :{id:'castle-gate',realm:'ruins',x:layout?.castleGateX||3820,nameKey:'castle.unlock'};
   }
   const echo = echoProgress(defeatedIds,rooms);
   if (insideCave) target = echo.next
@@ -43,7 +48,7 @@ export function questGuidance({ chapter = 0, realm = "maple", x = 440, insideCav
     : { id: "exit", realm, x: 260, nameKey: "dungeon.exit" };
   const viaPortal = !insideCave && target.realm !== realm;
   const routeX = viaPortal ? 220 : target.x;
-  const radius = viaPortal ? 112 : target.id === "typing" ? 118 : target.id === "exit" ? 112
+  const radius = viaPortal ? 112 : target.id==='castle-gate'?180 : target.id === "typing" ? 118 : target.id === "exit" ? 112
     : target.id.endsWith("-01") ? 72 : 95;
   const direction = Math.abs(routeX - x) < radius ? "near" : routeX < x ? "left" : "right";
   return { target, mainTarget, routeX, viaPortal, direction, echo,

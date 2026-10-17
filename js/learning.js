@@ -1,5 +1,5 @@
-import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261015-village2";
-import { formatReviewAnswer } from "./battle-review.js?v=20261015-village2";
+import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261017-castleroad2";
+import { formatReviewAnswer } from "./battle-review.js?v=20261017-castleroad2";
 
 const types = { TRUE_FALSE:"battle.trueFalse", ODD_WORD_OUT:"battle.oddOneOut", SENTENCE_BUILDER:"battle.sentenceBuilder" };
 export function validLearningReceipt(data) {
@@ -72,7 +72,7 @@ async function load() {
     if(data) receipt.mistakes=[...data.mistakes,...receipt.mistakes.filter(item=>!data.mistakes.some(old=>old.attemptId===item.attemptId))];
     data=receipt;
   } catch { failed=true; }
-  finally { clearTimeout(timeout);loading=false;render(); }
+  finally { clearTimeout(timeout);loading=false;render();window.EPQLoading?.ready(); }
 }
 
 function openPractice(item) {

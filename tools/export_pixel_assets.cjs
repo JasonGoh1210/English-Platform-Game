@@ -22,17 +22,18 @@ async function main() {
   try {
     const page=await browser.newPage();
     for (const item of manifest) {
+      const castleAsset = ({final_castle:'final-castle-192.png',final_boss:'wordless-king-128.png',castle_hall:'throne-hall.png',withered_tree:'withered-tree-96.png',hollow_treant:'hollow-treant-96.png',gate_warden:'gate-warden-96.png',castle_gate:'castle-gate-128.png',castle_gate_open:'castle-gate-open-128.png'})[item.key];
       const dungeonKey=item.key.startsWith('dungeon_')?item.key.slice(8):null;
-      const background=['maple','forest','camp','ruins'].includes(item.key) || Boolean(dungeonKey?.endsWith('_interior'));
+      const background=['maple','forest','camp','ruins'].includes(item.key) || Boolean(dungeonKey?.endsWith('_interior')) || item.key==='castle_hall';
       const entrance=Boolean(dungeonKey?.endsWith('_entrance')) || item.key==='exit_door';
       const sheet=Boolean(heroNames[item.key]),potion=item.key==='potion';
       const portrait=Boolean(portraitNames[item.key]);
-      const relative=dungeonKey && dungeonNames[dungeonKey]?'images/dungeons/'+dungeonNames[dungeonKey]
+      const relative=castleAsset?'images/castle/'+castleAsset:dungeonKey && dungeonNames[dungeonKey]?'images/dungeons/'+dungeonNames[dungeonKey]
         :background?'images/world/pixel/'+item.key+'.png':portraitNames[item.key] || spriteNames[item.key] || companionNames[item.key] || heroNames[item.key]
         || (item.key==='exit_door'?'images/dungeons/exit-door-128.png':potion?'images/shop/ruby-potion-32.png':null);
       if (!relative) throw new Error('Unknown export key: '+item.key);
       const source='data:image/png;base64,'+fs.readFileSync(item.source).toString('base64');
-      const result=await page.evaluate(async({source,background,portrait,entrance,floorFraction,dungeonKey,sheet,potion})=>{
+      const result=await page.evaluate(async({source,background,portrait,entrance,floorFraction,dungeonKey,sheet,potion,castleKey})=>{
         const img=new Image();img.src=source;await img.decode();
         const sourceCanvas=document.createElement('canvas');sourceCanvas.width=img.width;sourceCanvas.height=img.height;
         const src=sourceCanvas.getContext('2d',{willReadFrequently:true});src.drawImage(img,0,0);
@@ -43,8 +44,8 @@ async function main() {
           else{left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x);bottom=Math.max(bottom,y);}
         }
         if(!background && (right<left || transparent===0))throw Error('Sprite needs actual alpha and a visible silhouette');
-        const size=portrait?256:entrance?128:potion?32:64,margin=portrait?8:entrance?4:2;
-        const canvas=document.createElement('canvas');canvas.width=sheet?320:background?384:size;canvas.height=sheet?160:background?192:size;
+        const size=castleKey==='final_castle'?192:['final_boss','castle_gate','castle_gate_open'].includes(castleKey)?128:['withered_tree','hollow_treant','gate_warden'].includes(castleKey)?96:portrait?256:entrance?128:potion?32:64,margin=portrait?8:entrance||castleKey?4:2;
+        const canvas=document.createElement('canvas');canvas.width=sheet?320:background?384:size;canvas.height=sheet?160:castleKey==='castle_hall'?216:background?192:size;
         const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
         if(sheet){
           const cellW=img.width/4,cellH=img.height/2,frames=[];
@@ -64,8 +65,8 @@ async function main() {
         // Frequency-only palettes can discard small gold runes and cyan eyes.
         // Select distant colors with frequency weighting so those accents survive.
         const entries=[...colors.entries()].sort((a,b)=>b[1]-a[1]).map(([key,count])=>({rgb:key.split(',').map(Number),count,distance:Infinity}));
-        const limit=background?(dungeonKey?96:48):portrait?256:128,palette=[];
-        if(background && !dungeonKey || entries.length<=limit)palette.push(...entries.slice(0,limit).map(e=>e.rgb));
+        const limit=castleKey?64:background?(dungeonKey?96:48):portrait?256:128,palette=[];
+        if(background && !dungeonKey && !castleKey || entries.length<=limit)palette.push(...entries.slice(0,limit).map(e=>e.rgb));
         else {
           let next=entries[0];
           for(let n=0;n<limit;n++){
@@ -82,7 +83,7 @@ async function main() {
           data.data.set(best,i);}
         ctx.putImageData(data,0,0);
         return {base64:canvas.toDataURL('image/png').split(',')[1],width:canvas.width,height:canvas.height,palette:palette.length};
-      },{source,background,portrait,entrance,floorFraction:item.floorFraction,dungeonKey,sheet,potion});
+      },{source,background,portrait,entrance,floorFraction:item.floorFraction,dungeonKey,sheet,potion,castleKey:castleAsset?item.key:null});
       const destination=path.join(root,relative);fs.mkdirSync(path.dirname(destination),{recursive:true});fs.writeFileSync(destination,Buffer.from(result.base64,'base64'));
       console.log(relative,result.width+'x'+result.height,'colors='+result.palette);
     }

@@ -42,3 +42,27 @@
 @keyframes pixel-result-appear { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
 @media(max-width:520px) { .dungeon-guide-grid { grid-template-columns:1fr; } .typing-cave-win-panel,.typing-cave-lose-panel { padding:18px 14px; } }
 @media(prefers-reduced-motion:reduce) { .typing-cave-win-panel,.typing-cave-lose-panel { animation:none; } .typing-cave-monster { transition:none; } }
+
+/* The story finale lives in the distant castle; Echo Cave keeps its own guardians. */
+.castle-boss-arena { grid-template-rows:auto auto minmax(260px,1fr) auto auto; }
+.castle-boss-arena .typing-cave-stage { min-height:260px; background:#101b29 url('../images/castle/throne-hall.png') center 79.167% / cover; border-color:#a89170; }
+.castle-boss-arena .typing-cave-ground { height:20.833%; background:#25313d; border-color:#857e72; }
+.castle-boss-arena .typing-cave-player,.castle-boss-arena .typing-cave-monster { bottom:20.833%; }
+.castle-boss-arena .typing-cave-monster { width:clamp(160px,18vw,240px); height:clamp(160px,27vh,240px); }
+.castle-boss-arena .typing-cave-monster img { animation:none; margin-bottom:-8px; }
+.castle-boss-arena .typing-cave-threat { left:12px; right:auto; bottom:8px; width:min(225px,calc(100% - 24px)); font-size:12px; letter-spacing:0; }
+.castle-boss-arena .typing-cave-heading p { font-size:14px; line-height:1.6; max-width:1000px; }
+.castle-boss-status { position:absolute; z-index:2; top:12px; left:50%; transform:translateX(-50%); width:min(420px,calc(100% - 24px)); padding:8px 12px; background:#111923ee; border:2px solid #a58c68; box-shadow:3px 3px #050b12; color:#edddbd; font:12px/1.5 system-ui; }
+.castle-boss-status>div:first-child { display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; }
+.castle-boss-status strong { font-size:14px; color:#f1c9b7; }
+.castle-boss-status>span { display:block; text-align:center; color:#b8cbd3; margin-top:3px; }
+.castle-boss-seals { display:flex; gap:5px; margin-top:6px; }
+.castle-boss-seals i { height:9px; flex:1; background:#c27365; border:1px solid #e5ad7d; box-shadow:inset 0 -2px #794652; }
+.castle-boss-seals i.broken { background:#24313b; border-color:#52616c; box-shadow:none; }
+.castle-boss-arena[data-phase='3'] .castle-boss-status { border-color:#d48b73; }
+.castle-boss-arena .typing-rounds li { border-radius:0; }
+.castle-boss-arena .boss-struck img { animation:castle-boss-hit 360ms steps(3,end); }
+@keyframes castle-boss-hit { 0%,70% { transform:translateX(6px); opacity:.45; } 40%,100% { transform:translateX(0); opacity:1; } }
+@media(max-width:600px) { .castle-boss-arena { grid-template-rows:auto auto minmax(280px,1fr) auto auto; } .castle-boss-arena .typing-cave-monster { width:128px; height:160px; } .castle-boss-arena .typing-cave-monster img { margin-bottom:-4px; } .castle-boss-status { top:8px; padding:6px 9px; } .castle-boss-arena .typing-cave-stage { min-height:280px; } .castle-boss-arena .typing-cave-player { left:7%; width:90px; } }
+@media(max-height:540px) and (min-width:560px) { .castle-boss-arena .typing-cave-stage { min-height:260px; } .castle-boss-arena .typing-cave-monster { width:160px; height:170px; } .castle-boss-arena .typing-cave-monster img { margin-bottom:-5px; } }
+@media(prefers-reduced-motion:reduce) { .castle-boss-arena .boss-struck img { animation:none; } }

@@ -1,0 +1,12 @@
+.map-tool-icons{display:flex;align-items:center;gap:8px;margin-left:auto;pointer-events:auto}
+.map-toolbar .map-icon{position:relative;inset:auto;margin:0;display:grid;place-items:center;width:48px;height:48px;min-height:48px;padding:8px;flex:0 0 48px;border:2px solid #c7aa68;background:#213640;box-shadow:inset 2px 2px #72848a,inset -2px -3px #111e29,3px 4px #090f18;text-decoration:none;transition:transform .08s,box-shadow .08s}
+.map-icon svg{display:block;width:28px;height:28px;pointer-events:none}
+.map-toolbar .map-icon:active{transform:translate(2px,3px);box-shadow:inset 2px 2px #111e29,1px 1px #090f18}
+.map-toolbar .map-icon:focus-visible{outline:3px solid #a0e9df;outline-offset:3px}
+.map-icon[aria-pressed="true"],.map-icon[aria-expanded="true"]{background:#4d4934;border-color:#ffe096}
+.toolbar-label{position:absolute;top:calc(100% + 10px);right:0;width:max-content;max-width:190px;padding:7px 10px;background:#14232f;border:2px solid #c7aa68;box-shadow:3px 3px #080f18;color:#f7e5b8;font:700 12px/1.5 system-ui;opacity:0;pointer-events:none;z-index:20}
+.map-icon:first-child .toolbar-label,.map-icon:nth-child(2) .toolbar-label{right:auto;left:0}
+.map-icon:hover .toolbar-label,.map-icon:focus-visible .toolbar-label{opacity:1}
+@media(max-width:780px){.map-toolbar{display:flex;flex-wrap:wrap}.map-toolbar .pixel-location{width:auto;flex:0 1 auto}}
+@media(max-width:400px){.map-tool-icons{gap:6px}.map-toolbar .map-icon{width:44px;height:44px;min-height:44px;flex-basis:44px;padding:6px}}
+@media(prefers-reduced-motion:reduce){.map-toolbar .map-icon{transition:none}}

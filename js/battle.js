@@ -1,11 +1,11 @@
-import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261015-village2";
-import { battleToken, createBattleClient } from "./battle-api.js?v=20261015-village2";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261015-village2";
-import { playSound } from "./audio.js?v=20261015-village2";
-import { normalizeTutorial } from "./tutorial.js?v=20261015-village2";
-import { paintCharacterImages } from "./characters.js?v=20261015-village2";
-import { createBattleReviewPanel } from "./battle-review.js?v=20261015-village2";
-import { pixelArtPaths } from "./pixel-world.js?v=20261015-village2";
+import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261017-castleroad2";
+import { battleToken, createBattleClient } from "./battle-api.js?v=20261017-castleroad2";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261017-castleroad2";
+import { playSound } from "./audio.js?v=20261017-castleroad2";
+import { normalizeTutorial } from "./tutorial.js?v=20261017-castleroad2";
+import { paintCharacterImages } from "./characters.js?v=20261017-castleroad2";
+import { createBattleReviewPanel } from "./battle-review.js?v=20261017-castleroad2";
+import { pixelArtPaths } from "./pixel-world.js?v=20261017-castleroad2";
 
 // Use the same per-player storage namespace as the map. If these keys differ,
 // the battle page cannot find the enemy that the map just stored and redirects back.
@@ -89,6 +89,8 @@ async function saveBattleState(snapshot, revision) {
 }
 
 const enemies = {
+  'hollow-treant-01': {id:'hollow-treant-01',name:'Hollow Treant',nameZh:'枯木树怪',type:'treant',difficulty:'MEDIUM',spritePath:'/FYP/images/castle/hollow-treant-96.png',questionTypes:['TRUE_FALSE','SENTENCE_BUILDER'],hp:110,damage:12,xp:35,coins:18,roleKey:'castle.roadEnemy'},
+  'castle-warden-01': {id:'castle-warden-01',name:'Castle Warden',nameZh:'城门侍卫',type:'warden',difficulty:'MEDIUM',spritePath:'/FYP/images/castle/gate-warden-96.png',questionTypes:['TRUE_FALSE','SENTENCE_BUILDER'],hp:140,damage:14,xp:45,coins:25,roleKey:'castle.keyKeeper'},
   "slime-01": {
     id: "slime-01", name: "Word Slime", nameZh: "单词史莱姆", type: "slime", difficulty: "EASY",
     spritePath: "/FYP/assets/enemies/monster/Shrim.png?v=20261010-enemyart1",
@@ -640,6 +642,7 @@ async function returnToMapAfterBattle(destination = "/FYP/index.php") {
   }
   sessionStorage.removeItem(BATTLE_KEY);
   await pendingBattleSave;
+  window.EPQLoading?.begin('travel');
   window.location.href = destination;
 }
 
@@ -711,13 +714,16 @@ function showResult(victory, title, text, rewards) {
   };
 }
 
+function victoryDetail() {
+  return t(state.enemy.id==='castle-warden-01'?'castle.keyWon':state.enemy.id==='hollow-treant-01'?'castle.treeWon':'battle.victoryText');
+}
 function renderStoredResult() {
   if (!state.resultType) return;
   if (state.resultType === "VICTORY") {
     showResult(
       true,
       t("battle.victoryTitle", { enemy: localEnemyName() }),
-      t("battle.victoryText"),
+      victoryDetail(),
       [[t("battle.rewardXp"), "+" + state.enemy.xp], [t("battle.rewardCoins"), "+" + state.enemy.coins]]
     );
   } else {
@@ -746,7 +752,7 @@ function finishVictory() {
   window.clearInterval(state.timerId);
   finishConfirmedVictorySave();
   playSound("victory");
-  showResult(true, t("battle.victoryTitle", {enemy:localEnemyName()}), t("battle.victoryText"),
+  showResult(true, t("battle.victoryTitle", {enemy:localEnemyName()}), victoryDetail(),
     [[t("battle.rewardXp"), "+" + state.enemy.xp], [t("battle.rewardCoins"), "+" + state.enemy.coins]]);
 }
 
@@ -891,6 +897,11 @@ async function init() {
   });
   updateHp();
 
+  // Finish initial art before START: timed encounters must not tick behind loading.
+  window.EPQLoading?.step('assets');
+  await window.EPQLoading?.waitForImages([monsterArt, ui.playerSprite]);
+  await window.EPQLoading?.waitForMinimum();
+  window.EPQLoading?.step('battle');
   try {
     const entry = JSON.parse(sessionStorage.getItem(BATTLE_KEY) || "{}");
     if (!entry.battleId) entry.battleId = battleToken();
@@ -901,7 +912,7 @@ async function init() {
       else clearSaveWarning("battle");
     });
     const result = await battleRequest("START", {enemyId:state.enemy.id});
-    if (!result.ok) { battleFailure(result); return; }
+    if (!result.ok) { battleFailure(result); window.EPQLoading?.ready(); return; }
     serverReady = true;
     applyServerBattle(result);
     state.settingsPaused = Boolean(result.battle.paused);
@@ -917,6 +928,7 @@ async function init() {
     else if (result.battle.question) { showQuestionPanel(); void startQuestion(); }
     else showBattleMenu();
   } catch (error) {
+    window.EPQLoading?.ready();
     setBattleMessage("battle.battleError", { error: error.message });
     console.error("English Power Quest battle error:", error);
   }
@@ -951,4 +963,4 @@ window.render_game_to_text = () => JSON.stringify({
   coach: tutorialBattle && state.coachMessage ? t(state.coachMessage.key, state.coachMessage.values) : null
 });
 
-init();
+void init().then(()=>window.EPQLoading?.ready()).catch(()=>window.EPQLoading?.fail());

@@ -1,0 +1,37 @@
+.epq-loading[hidden], .epq-loading [hidden] { display: none !important; }
+html.epq-is-loading { overflow: hidden; }
+.epq-loading {
+  position: fixed; inset: 0; z-index: 2147483000; display: grid; place-items: safe center;
+  box-sizing: border-box; padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  overflow: auto; color: #f5e6bc; background: #0b1620;
+  background-image: linear-gradient(180deg, #0a1526e8, #0d2026ed), url('/FYP/images/world/pixel/maple.png');
+  background-position: center; background-size: cover; image-rendering: pixelated;
+  font-family: 'Microsoft YaHei', system-ui, sans-serif; line-height: 1.6;
+}
+.epq-loading *, .epq-loading *::before, .epq-loading *::after { box-sizing: border-box; }
+.epq-loading-card {
+  width: min(100%, 520px); padding: clamp(22px, 5vw, 42px); text-align: center;
+  border: 3px solid #bca373; outline: 1px solid #263d4b; outline-offset: 4px;
+  background: #142632f5; box-shadow: inset 2px 2px #526774, inset -3px -3px #08121a, 8px 8px #050d16aa;
+}
+.epq-loading-brand { margin: 0 0 26px; color: #c9b781; font: bold 11px/1.6 Georgia, serif; letter-spacing: 2px; }
+.epq-loading-portal { width: 96px; height: 96px; margin: 0 auto 18px; position: relative; }
+.epq-loading-portal img { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.epq-loading-spark { position: absolute; top: 42%; left: 46%; width: 8px; height: 8px; background: #b3fff0; box-shadow: 0 0 0 4px #299b9a55; animation: epq-pixel-spark 1.5s steps(4, end) infinite; }
+.epq-loading h1 { margin: 0 0 8px; font-size: clamp(24px, 5vw, 30px); line-height: 1.4; color: #f5e6bc; text-shadow: 2px 2px #070f17; }
+.epq-loading-status { min-height: 26px; margin: 0; font-size: 15px; color: #b6d7de; }
+.epq-loading-track { height: 15px; margin: 24px 0 18px; padding: 3px; overflow: hidden; border: 1px solid #637e8b; background: #091721; box-shadow: inset 2px 2px #050d14; }
+.epq-loading-track span { display: block; height: 7px; width: 28%; background: #a7e1ce; box-shadow: inset 0 -2px #4d9f9c; animation: epq-loading-travel 1.6s steps(12, end) infinite alternate; }
+.epq-loading-hint { margin: 0; font-size: 14px; color: #9bafbb; }
+.epq-loading-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px; }
+.epq-loading-actions button { flex: 1 1 140px; min-height: 48px; padding: 10px 14px; border: 2px solid #79919c; border-radius: 0; background: #223c49; box-shadow: inset 2px 2px #405969, inset -2px -2px #12212d, 3px 4px #050e17; color: #f4e6c5; font: inherit; font-size: 14px; font-weight: bold; cursor: pointer; }
+.epq-loading-actions button:first-child { background: #e8c984; border-color: #ffe2a3; color: #302615; box-shadow: inset 2px 2px #fff0c3, inset -2px -2px #a17c40, 3px 4px #050e17; }
+.epq-loading-actions button:active { transform: translate(2px, 3px); box-shadow: inset 2px 2px #1a2936, 1px 1px #050e17; }
+.epq-loading-actions button:focus-visible { outline: 3px solid #9ee7dd; outline-offset: 4px; }
+.epq-loading[data-state='error'] .epq-loading-track span { animation: none; width: 100%; background: #d5ac77; }
+.epq-loading[data-state='error'] .epq-loading-spark { animation: none; background: #e8c984; }
+@keyframes epq-loading-travel { from { transform: translateX(0); } to { transform: translateX(255%); } }
+@keyframes epq-pixel-spark { 0%, 100% { transform: translate(0, 0); opacity: .65; } 50% { transform: translate(0, -12px); opacity: 1; } }
+@media (max-height: 450px) { .epq-loading-card { padding: 16px 24px; } .epq-loading-brand { margin-bottom: 8px; } .epq-loading-portal { width: 56px; height: 56px; margin-bottom: 8px; } .epq-loading-track { margin: 12px 0; } .epq-loading-actions { margin-top: 12px; } }
+@media (max-height: 450px) { .epq-loading[data-state='error'] .epq-loading-portal, .epq-loading[data-state='error'] .epq-loading-hint { display: none; } }
+@media (prefers-reduced-motion: reduce) { .epq-loading-track span, .epq-loading-spark { animation: none; } .epq-loading-track span { width: 100%; } }
