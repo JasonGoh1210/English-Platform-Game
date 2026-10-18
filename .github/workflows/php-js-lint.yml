@@ -30,10 +30,13 @@ jobs:
           node --check js/story-visuals.js
           node --check js/learning.js
           node --check js/skills.js
+          node --check js/adventure.js
       - name: Gameplay regression tests
         run: |
           node --test tests/*.test.cjs
           php tests/battle_rules_test.php
+          php tests/combat_depth_test.php
+          php tests/memory_context_test.php
           php tests/tutorial_state_test.php
           php tests/google_token_test.php
           php tests/account_rules_test.php

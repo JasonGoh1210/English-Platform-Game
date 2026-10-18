@@ -5,7 +5,7 @@ require_once __DIR__.'/../includes/question_hints.php';
 $hintActor=guest('HintHero');$hintOther=guest('HintOther');
 $db->query('UPDATE players SET coins_total=150 WHERE player_id='.(int)$hintActor[2]);
 $buyHint=token();[, $hintBought]=shopAction($hintActor,'BUY','hint_potion',$buyHint);
-verify($hintBought['shop']['hintPotions']===1&&$hintBought['shop']['potions']===0&&$hintBought['shop']['coins']===135,'Hint stock has a separate trusted price and quantity');
+verify($hintBought['shop']['hintPotions']===1&&$hintBought['shop']['potions']===0&&$hintBought['shop']['coins']===120,'Hint stock has a separate trusted price and quantity');
 [, $hintBuyReplay]=shopAction($hintActor,'BUY','hint_potion',$buyHint);verify($hintBuyReplay['shop']===$hintBought['shop'],'Hint purchase replay charges once');
 $hintBattle=token();action($hintActor,$hintBattle,'START',['enemyId'=>'slime-01']);
 verify(action($hintActor,$hintBattle,'HINT',['questionToken'=>token()])[0]===409,'Hint requires an active question');
@@ -16,7 +16,7 @@ action($hintActor,$hintBattle,'PAUSE');verify(action($hintActor,$hintBattle,'HIN
 verify(action($hintOther,$hintBattle,'HINT',['questionToken'=>$qt])[0]===404,'Hint battle ownership');
 verify(http('api/battle.php',['csrfToken'=>'invalid','action'=>'HINT','battleId'=>$hintBattle,'requestId'=>token(),'questionToken'=>$qt],$hintActor[0])[0]===403,'Hint CSRF');
 $hintUse=token();[$status,$hintReceipt]=action($hintActor,$hintBattle,'HINT',['questionToken'=>$qt],$hintUse);
-verify($status===200&&$hintReceipt['shop']['hintPotions']===0&&$hintReceipt['shop']['coins']===135&&$hintReceipt['battle']['playerHp']===100,'Hint works at full HP, consumes one owned bottle, no extra Coin charge');
+verify($status===200&&$hintReceipt['shop']['hintPotions']===0&&$hintReceipt['shop']['coins']===120&&$hintReceipt['battle']['playerHp']===100,'Hint works at full HP, consumes one owned bottle, no extra Coin charge');
 verify(isset($hintReceipt['battle']['hint']['en'],$hintReceipt['battle']['hint']['zh'])&&!isset($hintReceipt['battle']['hint']['answer']),'Hint is bilingual and never a grading receipt');
 [, $hintReplay]=action($hintActor,$hintBattle,'HINT',['questionToken'=>$qt],$hintUse);verify(sameReceipt($hintReceipt,$hintReplay),'Lost hint response replays once');
 verify(action($hintActor,$hintBattle,'HINT',['questionToken'=>$qt])[0]===409,'One hint per question with different request IDs');

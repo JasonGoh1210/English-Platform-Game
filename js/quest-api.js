@@ -1,6 +1,6 @@
 export function createQuestClient(csrfToken, storageId, confirmed = () => {}, pending = () => {}) {
   const key=`englishPowerQuest.quest.pending.player.${storageId}`;
-  const actions=["NPC","CASTLE_OPEN","TYPING_START","TYPING_ANSWER","TYPING_CLOSE"];
+  const actions=["NPC","CASTLE_OPEN","TYPING_START","TYPING_ANSWER","TYPING_CLOSE","MEMORY_START","ACTIVITY_ANSWER","COMPANION_CLAIM","WORLD_COMPLETE"];
   let entries=[];
   try {
     const saved=JSON.parse(localStorage.getItem(key)||"[]");

@@ -23,12 +23,12 @@ function loadDistinctCharacter(key,path) {
           if(bottom<top)throw Error('Empty hero frame');cells.push(cell);bounds.push({left,top,width:right-left+1,height:bottom-top+1});
         }
         const scale=Math.min(46/Math.max(...bounds.map(b=>b.width)),68/Math.max(...bounds.map(b=>b.height)));
-        const frames=cells.map((cell,i)=>{const c=document.createElement('canvas');c.width=i===0?72:48;c.height=72;const ctx=c.getContext('2d');ctx.imageSmoothingEnabled=false;
+        const frames=cells.map((cell,i)=>{const c=document.createElement('canvas');c.width=i===0?72:48;c.height=72;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.imageSmoothingEnabled=false;
           const b=bounds[i],w=Math.round(b.width*scale),h=Math.round(b.height*scale);ctx.drawImage(cell,b.left,b.top,b.width,b.height,Math.round((c.width-w)/2),72-h,w,h);return c;});
-        const right=frames.slice(1),left=right.map(frame=>{const c=document.createElement('canvas');c.width=48;c.height=72;const ctx=c.getContext('2d');ctx.translate(48,0);ctx.scale(-1,1);ctx.drawImage(frame,0,0);return c;});
+        const right=frames.slice(1),left=right.map(frame=>{const c=document.createElement('canvas');c.width=48;c.height=72;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.translate(48,0);ctx.scale(-1,1);ctx.drawImage(frame,0,0);return c;});
         characterFrames.set(key,{idle:frames[0],right,left});
       }catch(error){console.warn('[EPQ] Hero frames unavailable; using original sprites.',error);}resolve();
-    };sheet.onerror=()=>{console.warn('[EPQ] Hero sheet unavailable; using original sprites.');resolve();};sheet.src=path+'?v=20261017-particles1';
+    };sheet.onerror=()=>{console.warn('[EPQ] Hero sheet unavailable; using original sprites.');resolve();};sheet.src=path+'?v=20261018-newbie1';
   });characterLoads.set(key,loading);return loading;
 }
 
@@ -60,14 +60,14 @@ export function loadCharacterAssets(profile) {
         const scale = Math.min(46/Math.max(...bounds.map(b=>b.width)),68/Math.max(...bounds.map(b=>b.height)));
         const rightFrames=cells.map((cell,i)=>{
           const canvas=document.createElement("canvas");canvas.width=i===0?72:48;canvas.height=72;
-          const ctx=canvas.getContext("2d");ctx.imageSmoothingEnabled=false;
+          const ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.imageSmoothingEnabled=false;
           const b=bounds[i], width=Math.round(b.width*scale),height=Math.round(b.height*scale);
           ctx.drawImage(cell,b.left,b.top,b.width,b.height,Math.round((canvas.width-width)/2),72-height,width,height);
           return canvas;
         });
         const leftFrames=rightFrames.slice(1).map(frame=>{
           const canvas=document.createElement("canvas");canvas.width=frame.width;canvas.height=frame.height;
-          const ctx=canvas.getContext("2d");ctx.translate(canvas.width,0);ctx.scale(-1,1);ctx.drawImage(frame,0,0);return canvas;
+          const ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.translate(canvas.width,0);ctx.scale(-1,1);ctx.drawImage(frame,0,0);return canvas;
         });
         femaleFrames={idle:rightFrames[0],right:rightFrames.slice(1),left:leftFrames};
       } catch(error) {console.warn("[English Power Quest] Female sprite unavailable; using original player art.",error);}

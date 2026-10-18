@@ -7,7 +7,7 @@ test('Skill receipts reject forged points, unsupported levels and missing charac
   assert.ok(c.validSkillsReceipt(good));
   for(const patch of [{skillPoints:-1},{skillPoints:'1'},{wordStrikeLevel:4},{characterLevel:0}])assert.ok(!c.validSkillsReceipt({...good,skills:{...good.skills,...patch}}));
 });
-function fixture(request){const calls=[],c={skills:null,busy:false,errorKey:null,noticeKey:null,pendingTarget:null,
+function fixture(request){const calls=[],c={branch:'word-strike',skills:null,busy:false,errorKey:null,noticeKey:null,pendingTarget:null,
   window:{EPQ_SKILLS:{csrfToken:'csrf'}},render(){},byId:()=>({focus(){}}),request:async body=>{calls.push(body);return request(body);}};
   vm.createContext(c);vm.runInContext(fn('validSkillsReceipt')+'\n'+fn('unlock'),c);return {c,calls};}
 test('An uncertain purchase retains its exact target and retries without buying the next level',async()=>{

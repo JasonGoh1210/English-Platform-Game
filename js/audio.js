@@ -17,6 +17,8 @@ const effects = {
   victory: [[523, 0.09], [659, 0.09], [784, 0.09], [659, 0.09], [1047, 0.25]],
   defeat: [[330, 0.13, "triangle"], [262, 0.13, "triangle"], [196, 0.24, "triangle"]]
 };
+effects.seal=[[220,.07,'square'],[440,.08,'square'],[880,.15,'triangle']];
+effects.bossDefeat=[[330,.12,'triangle'],[247,.12,'triangle'],[165,.18,'triangle'],[110,.35,'triangle']];
 let settings = readSettings();
 let context = null;
 let master = null;
@@ -25,6 +27,32 @@ let initialized = false;
 let resuming = null;
 const voices = new Set();
 const lastPlayed = new Map();
+const musicThemes={
+  boss1:{tempo:88,notes:[196,0,294,0,220,0,262,0],bass:[98,98,110,87]},
+  boss2:{tempo:112,notes:[220,330,294,220,262,392,330,294],bass:[110,110,131,98]},
+  boss3:{tempo:136,notes:[247,370,330,294,247,440,392,330],bass:[123,110,98,110]},
+  festival:{tempo:92,notes:[262,330,392,330,294,349,440,392],bass:[131,165,147,196]}
+};
+let musicScene=null,musicTimer=null,musicBeat=0,musicAt=0;const musicVoices=new Set();
+function clearMusicVoices(){for(const v of musicVoices){try{v.stop();}catch{}}musicVoices.clear();musicAt=0;}
+function musicNote(frequency,at,duration,type,strength){
+  if(!frequency||musicVoices.size>10)return;const oscillator=context.createOscillator(),envelope=context.createGain();oscillator.type=type;oscillator.frequency.setValueAtTime(frequency,at);
+  envelope.gain.setValueAtTime(0,at);envelope.gain.linearRampToValueAtTime(strength,at+.015);envelope.gain.exponentialRampToValueAtTime(.0001,at+duration);oscillator.connect(envelope);envelope.connect(master);
+  oscillator.onended=()=>{musicVoices.delete(oscillator);oscillator.disconnect();envelope.disconnect();};musicVoices.add(oscillator);oscillator.start(at);oscillator.stop(at+duration+.02);
+}
+function tickMusic(){
+  if(!musicScene||!musicThemes[musicScene]||!unlocked||!settings.enabled||!settings.volume||document.hidden||!context||context.state!=='running'){if(musicVoices.size)clearMusicVoices();return;}
+  const theme=musicThemes[musicScene],beat=60/theme.tempo;if(!musicAt||musicAt<context.currentTime-.2)musicAt=context.currentTime+.025;
+  if(musicAt>context.currentTime+.15)return;
+  musicNote(theme.notes[musicBeat%theme.notes.length],musicAt,beat*.65,'triangle',.055);
+  if(musicBeat%2===0)musicNote(theme.bass[Math.floor(musicBeat/2)%4],musicAt,beat*1.5,'square',.022);
+  musicAt+=beat;musicBeat++;
+}
+export function setMusicScene(scene){
+  const next=musicThemes[scene]?scene:null;if(next===musicScene)return;clearMusicVoices();musicScene=next;musicBeat=0;
+  if(musicTimer){clearInterval(musicTimer);musicTimer=null;}if(next){tickMusic();musicTimer=setInterval(tickMusic,120);}
+}
+export function getMusicState(){return {scene:musicScene,audible:!!(musicScene&&unlocked&&settings.enabled&&settings.volume&&!document.hidden&&context?.state==='running')};}
 
 function readSettings() {
   try {
@@ -40,6 +68,7 @@ function readSettings() {
 export function getAudioSettings() { return { ...settings }; }
 
 function stopSounds() {
+  clearMusicVoices();
   for (const voice of voices) {
     try { voice.stop(); } catch { /* Already ended. */ }
   }
@@ -131,6 +160,7 @@ export function setupAudio() {
   }, true);
   document.addEventListener("visibilitychange", () => { if (document.hidden) stopSounds(); });
   window.addEventListener("pagehide", stopSounds);
+  window.addEventListener("pagehide",()=>setMusicScene(null));
   window.addEventListener("storage", event => {
     if (event.key !== STORAGE_KEY) return;
     settings = readSettings();

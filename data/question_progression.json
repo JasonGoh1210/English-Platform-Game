@@ -1,0 +1,6 @@
+{
+  "maple":{"levels":["EASY"],"advanceAfter":0},
+  "forest":{"levels":["EASY","MEDIUM"],"advanceAfter":2},
+  "camp":{"levels":["MEDIUM","HARD"],"advanceAfter":2},
+  "ruins":{"levels":["HARD"],"advanceAfter":0}
+}

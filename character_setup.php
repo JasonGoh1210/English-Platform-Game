@@ -90,6 +90,6 @@ if (!in_array($gender,['male','female'],true)) $gender = 'male';
     </div></section>
   </main>
   <script>window.EPQ_CHARACTER_SETUP = <?= json_encode(['catalog'=>$catalog,'names'=>epq_character_names()],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;</script>
-  <script type="module" src="/FYP/js/character-setup.js?v=20261017-particles1"></script>
+  <script type="module" src="/FYP/js/character-setup.js?v=20261018-newbie1"></script>
 </body>
 </html>

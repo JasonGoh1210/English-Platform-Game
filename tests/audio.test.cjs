@@ -30,12 +30,25 @@ function fixture({ saved = null, blocked = false, unsupported = false, rejectRes
     },
     document: { hidden: false, getElementById: id => controls.get(id), addEventListener: (name, fn) => listen("document:" + name, fn) },
     window: { AudioContext: unsupported ? undefined : AudioContext, addEventListener: (name, fn) => listen("window:" + name, fn) },
-    Promise, console
+    Promise, console, setInterval:()=>1,clearInterval:()=>{}
   };
   vm.createContext(c); vm.runInContext(source, c); c.setupAudio();
   const fire = (key, event = {}) => { for (const fn of listeners.get(key) || []) fn(event); };
   return { c, contexts, tones, storage, controls, listeners, fire, unlock: () => fire("document:pointerdown", {isTrusted:true,type:"pointerdown"}) };
 }
+
+test('Boss and festival themes respect trusted input, mute, scene changes and page exit',()=>{
+  const f=fixture();f.c.setMusicScene('boss1');assert.equal(f.tones.length,0,'Music never bypasses gesture permission');
+  f.unlock();f.c.tickMusic();assert.equal(f.c.getMusicState().audible,true);const phaseOne=f.tones.filter(t=>t.started);assert.ok(phaseOne.length>0);
+  f.c.setMusicScene('boss2');assert.ok(phaseOne.every(t=>t.stops>=2),'Switching phases cancels scheduled notes');
+  const count=f.tones.length;f.c.setMusicScene('boss2');assert.equal(f.tones.length,count,'Rendering the same phase cannot restart the tune');
+  f.c.setAudioSettings({enabled:false});f.c.tickMusic();assert.equal(f.c.getMusicState().audible,false);assert.equal(f.tones.length,count);
+  f.c.setAudioSettings({enabled:true});f.c.setMusicScene('boss3');assert.equal(f.c.getMusicState().scene,'boss3');
+  f.c.document.hidden=true;f.fire('document:visibilitychange');assert.equal(f.c.getMusicState().audible,false);
+  f.c.document.hidden=false;f.c.setMusicScene('festival');assert.equal(f.c.getMusicState().scene,'festival');
+  f.fire('window:pagehide');assert.equal(f.c.getMusicState().scene,null,'Leaving the map releases the music scene');
+  const unsupported=fixture({unsupported:true});unsupported.unlock();unsupported.c.setMusicScene('boss1');assert.equal(unsupported.c.getMusicState().audible,false);
+});
 
 test("Page load and synthetic input stay silent; real gestures share one context", () => {
   const f = fixture();

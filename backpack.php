@@ -8,9 +8,9 @@ epq_require_login_page();
 <html lang="zh-CN"><head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
   <title>冒险背包 · English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/learning.css?v=20261017-particles1">
-  <link rel="stylesheet" href="/FYP/css/shop.css?v=20261017-particles1">
-  <link rel="stylesheet" href="/FYP/css/backpack.css?v=20261017-particles1">
+  <link rel="stylesheet" href="/FYP/css/learning.css?v=20261018-newbie1">
+  <link rel="stylesheet" href="/FYP/css/shop.css?v=20261018-newbie1">
+  <link rel="stylesheet" href="/FYP/css/backpack.css?v=20261018-newbie1">
 <?php $epqLoadingMode = 'backpack'; require __DIR__.'/includes/loading_screen.php'; ?>
 </head><body class="learning-page shop-page backpack-page">
 <main class="learning-shell">
@@ -29,5 +29,5 @@ epq_require_login_page();
   <section class="shop-grid" id="shopSkins"></section>
 </main>
 <script>window.EPQ_SHOP=<?= json_encode(['mode'=>'backpack','playerId'=>(int)$_SESSION['player_id'],'csrfToken'=>$_SESSION['csrf_token'],'catalog'=>epq_shop_catalog()],JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_AMP|JSON_HEX_QUOT) ?>;</script>
-<script type="module" src="/FYP/js/shop.js?v=20261017-particles1"></script>
+<script type="module" src="/FYP/js/shop.js?v=20261018-newbie1"></script>
 </body></html>

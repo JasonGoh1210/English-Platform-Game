@@ -16,8 +16,8 @@ $epqStorageId = (string)$epqPlayerId;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#101b24">
   <title>English Power Quest · Battle</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261017-particles1">
-  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261017-hints2">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261018-newbie1">
+  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261018-newbie1">
   <?php $epqLoadingMode = 'battle'; require __DIR__.'/includes/loading_screen.php'; ?>
 </head>
 <body class="battle-page">
@@ -74,6 +74,7 @@ $epqStorageId = (string)$epqPlayerId;
       </aside>
       <div class="battle-message-line" id="battleMessage" data-i18n="battle.initialMessage">A wild opponent appeared!</div>
       <p class="battle-word-strike hidden" id="battleWordStrike"></p>
+      <p class="battle-mistake-note" id="battleMistakeStreak" role="status" aria-live="polite" data-i18n="battle.mistakeHelp">连续答错会增加伤害，答对后重置。</p>
 
       <div id="battleMenu" class="battle-menu">
         <div class="command-prompt">
@@ -108,6 +109,7 @@ $epqStorageId = (string)$epqPlayerId;
           <span class="battle-timer" id="timerText">5.0s</span>
         </div>
         <p class="question-theme hidden" id="questionTheme"></p>
+        <aside id="combatIntent" class="combat-intent hidden" role="status" aria-live="polite"></aside>
         <h2 id="questionText" data-i18n="battle.loadingQuestion">Loading question...</h2>
         <p class="question-translation hidden" id="questionTranslation"></p>
         <p id="questionPrompt" data-i18n="battle.answerPrompt">Answer correctly to attack.</p>
@@ -115,8 +117,9 @@ $epqStorageId = (string)$epqPlayerId;
         <div id="answerArea" class="battle-answers"></div>
         <div class="question-battle-actions" aria-label="Battle actions" data-i18n-aria-label="battle.actions">
           <button type="button" id="activeSkillButton" class="battle-action-button"><span>✦ </span><span data-i18n="battle.skill">SKILL</span></button>
-          <button type="button" id="activeItemButton" class="battle-action-button"><span>◈ </span><span data-i18n="battle.item">ITEM</span></button>
-          <button type="button" id="activePotionButton" class="battle-action-button hidden"></button>
+          <button type="button" id="activeGuardButton" class="battle-action-button hidden"></button>
+          <button type="button" id="activeSurgeButton" class="battle-action-button hidden"></button>
+          <button type="button" id="activePotionButton" class="battle-action-button"></button>
           <button type="button" id="activeHintPotionButton" class="battle-action-button hidden"></button>
           <button type="button" id="activeRunButton" class="battle-action-button danger"><span>↩ </span><span data-i18n="battle.run">RUN</span></button>
         </div>
@@ -125,15 +128,17 @@ $epqStorageId = (string)$epqPlayerId;
 
     <div class="battle-result hidden" id="battleResult" role="dialog" aria-modal="true" aria-labelledby="resultTitle" aria-describedby="resultText">
       <div class="result-card">
-        <div class="result-language" aria-label="Language / 语言">
-          <button type="button" data-set-language="en">English</button>
-          <button type="button" data-set-language="zh">中文</button>
+        <div class="result-content">
+          <div class="result-language" aria-label="Language / 语言">
+            <button type="button" data-set-language="en">English</button>
+            <button type="button" data-set-language="zh">中文</button>
+          </div>
+          <span class="battle-kicker" id="resultKicker" data-i18n="battle.victory">VICTORY</span>
+          <h2 id="resultTitle" data-i18n="battle.enemyDefeated">Enemy Defeated!</h2>
+          <p id="resultText" data-i18n="battle.stronger">You got stronger.</p>
+          <div class="result-rewards" id="resultRewards"></div>
+          <section id="battleReview" class="battle-review" aria-labelledby="battleReviewTitle"></section>
         </div>
-        <span class="battle-kicker" id="resultKicker" data-i18n="battle.victory">VICTORY</span>
-        <h2 id="resultTitle" data-i18n="battle.enemyDefeated">Enemy Defeated!</h2>
-        <p id="resultText" data-i18n="battle.stronger">You got stronger.</p>
-        <div class="result-rewards" id="resultRewards"></div>
-        <section id="battleReview" class="battle-review" aria-labelledby="battleReviewTitle"></section>
         <div class="result-actions">
           <a id="resultLearningLink" class="battle-action-button" href="/FYP/learning.php" data-i18n="learning.open">LEARNING & MISTAKES</a>
           <button id="resultButton" data-i18n="battle.returnMap">Return to Map</button>
@@ -172,6 +177,6 @@ $epqStorageId = (string)$epqPlayerId;
       'character' => $_SESSION['character'] ?? epq_character_profile(epq_db(), $epqPlayerId)
     ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   </script>
-  <script type="module" src="/FYP/js/battle.js?v=20261017-particles1"></script>
+  <script type="module" src="/FYP/js/battle.js?v=20261018-newbie1"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 {
-  "potion": {"kind":"potion","nameZh":"红宝石药水","name":"Ruby Potion","price":12,"heal":40,"sprite":"/FYP/images/shop/ruby-potion-32.png"},
-  "hint_potion": {"kind":"potion","effect":"hint","nameZh":"星光提示药水","name":"Starlight Hint Potion","price":15,"sprite":"/FYP/images/shop/insight-potion-32.png"},
+  "potion": {"kind":"potion","nameZh":"红宝石药水","name":"Ruby Potion","price":25,"heal":40,"sprite":"/FYP/images/shop/ruby-potion-32.png"},
+  "hint_potion": {"kind":"potion","effect":"hint","nameZh":"星光提示药水","name":"Starlight Hint Potion","price":30,"sprite":"/FYP/images/shop/insight-potion-32.png"},
   "owl": {"kind":"companion","nameZh":"向导猫头鹰","name":"Scout Owl","price":0,"sprite":"/FYP/images/companions/owl-64.png","animation":{"sheet":"/FYP/images/companions/owl-motion-64.png?v=20261015-village2","motion":"fly","hover":76}},
   "fox": {"kind":"companion","nameZh":"枫叶小狐","name":"Maple Fox","price":40,"sprite":"/FYP/images/companions/fox-64.png","animation":{"sheet":"/FYP/images/companions/fox-motion-64.png?v=20261015-village2","motion":"walk"}},
   "cat": {"kind":"companion","nameZh":"星月灵猫","name":"Moon Cat","price":55,"sprite":"/FYP/images/companions/cat-64.png","animation":{"sheet":"/FYP/images/companions/cat-motion-64.png?v=20261015-village2","motion":"walk"}},

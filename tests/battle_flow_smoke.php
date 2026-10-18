@@ -3,6 +3,7 @@ declare(strict_types=1);
 // Only run with the disposable CI database created by the workflow.
 require_once __DIR__.'/../includes/battle_rules.php';
 require_once __DIR__.'/../config/db.php';
+require_once __DIR__.'/../includes/shop.php';
 if (getenv('EPQ_BATTLE_TEST_DB') !== 'isolated') throw new RuntimeException('Isolated database acknowledgement required.');
 function verify(bool $condition, string $label): void { if (!$condition) throw new RuntimeException($label); }
 function canonicalReceipt(mixed $value): mixed {
@@ -141,7 +142,7 @@ verify(!$miss['outcome']['correct'] && $miss['battle']['playerHp'] === 90 && $mi
 verify(sameReceipt($miss, $replay), 'Exact receipt replay');
 verify(action($actor, $battle, 'ANSWER', $wrongInputs)[0] === 409, 'New request cannot claim an old question');
 verify(action($actor, $battle, 'ANSWER', ['questionToken'=>$questionToken,'answer'=>validAnswer($question)], $request)[0] === 409, 'Token cannot change answer');
-verify(action($actor, $battle, 'HERB')[0] === 409, 'Insufficient Coins rejects purchase');
+verify(action($actor, $battle, 'HERB')[0] === 409, 'Retired in-battle purchase rejects without a charge');
 
 $xp = 0; $coins = 0; $power = 0; $answers = 1;
 // A correct attack preserves HP. Focus and victory use trusted server parameters.
@@ -168,7 +169,10 @@ verify((int)$count === $answers, 'Exactly one attempt per question');
 $stats = $db->query('SELECT SUM(total_attempts) AS attempts, SUM(correct_attempts) AS correct FROM player_english_stats WHERE player_id='.(int)$actor[2])->fetch_assoc();
 verify((int)$stats['attempts'] === $answers && (int)$stats['correct'] === $answers-1, 'Wrong and correct answers persist learning metrics');
 
-// Herbs, timeouts, rollback and retry all use a second real battle.
+// Unrelated timer/rollback checks start with three previously owned potions.
+// Trusted shop prices/purchases are exercised in the dedicated shop flow.
+for($i=0;$i<3;$i++)epq_shop_record($db,$actor[2],['id'=>token(),'action'=>'BUY','item'=>'potion']);
+// Stored potions, timeouts, rollback and retry use a second real battle.
 $battle2 = token();
 fixtureDungeonAccess($db,$actor,'ruins');
 action($actor, $battle2, 'START', ['enemyId'=>'cave-wraith-01']);
@@ -176,29 +180,29 @@ action($actor, $battle2, 'START', ['enemyId'=>'cave-wraith-01']);
 [, $timeout] = action($actor, $battle2, 'ANSWER', ['questionToken'=>$issued['battle']['questionToken'],'answer'=>validAnswer($issued['battle']['question']),'timedOut'=>true]);
 verify($timeout['outcome']['timedOut'] && $timeout['battle']['playerHp'] === 86, 'Timeout causes existing Wraith damage');
 $request = token();
-[, $herb] = action($actor, $battle2, 'HERB', [], $request);
-[, $herbReplay] = action($actor, $battle2, 'HERB', [], $request);
-verify($herb['battle']['playerHp'] === 100 && $herb['player']['coins'] === $coins + 5 && sameReceipt($herb, $herbReplay), 'Herb heals at most 20 and charges exactly once');
-verify(action($actor, $battle2, 'HERB')[0] === 409, 'Full HP rejects charge');
+[, $herb] = action($actor, $battle2, 'POTION', [], $request);
+[, $herbReplay] = action($actor, $battle2, 'POTION', [], $request);
+verify($herb['battle']['playerHp'] === 100 && $herb['player']['coins'] === $coins + 10 && $herb['shop']['potions']===2 && sameReceipt($herb, $herbReplay), 'Stored potion heals up to40 and consumes once without a charge');
+verify(action($actor, $battle2, 'POTION')[0] === 409, 'Full HP rejects consumption');
 [, $issued] = action($actor, $battle2, 'QUESTION');
 action($actor, $battle2, 'ANSWER', ['questionToken'=>$issued['battle']['questionToken'],'timedOut'=>true]);
 $request = token();
 $db->query("CREATE TRIGGER epq_test_verified_ledger BEFORE INSERT ON player_coin_transactions FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Isolated rollback test'");
-try { verify(action($actor, $battle2, 'HERB', [], $request)[0] === 503, 'Ledger error rejects purchase'); }
+try { verify(action($actor, $battle2, 'POTION', [], $request)[0] === 503, 'Ledger error rejects item use'); }
 finally { $db->query('DROP TRIGGER epq_test_verified_ledger'); }
 [, $beforeRetry] = action($actor, $battle2, 'START', ['enemyId'=>'cave-wraith-01']);
-verify($beforeRetry['battle']['playerHp'] === 86 && $beforeRetry['player']['coins'] === $coins + 5, 'Ledger failure rolls back HP and balance');
-[, $retried] = action($actor, $battle2, 'HERB', [], $request);
-verify($retried['battle']['playerHp'] === 100 && $retried['player']['coins'] === $coins, 'Failed transaction can safely retry');
+verify($beforeRetry['battle']['playerHp'] === 81 && $beforeRetry['player']['coins'] === $coins + 10 && $beforeRetry['shop']['potions']===2, 'Ledger failure rolls back HP and stock');
+[, $retried] = action($actor, $battle2, 'POTION', [], $request);
+verify($retried['battle']['playerHp'] === 100 && $retried['player']['coins'] === $coins + 10 && $retried['shop']['potions']===1, 'Failed item transaction can safely retry');
 
-// Purchase pauses an open question until the client confirms and resumes it.
+// Item use pauses an open question until the client confirms and resumes it.
 [, $issued] = action($actor, $battle2, 'QUESTION');
 action($actor, $battle2, 'ANSWER', ['questionToken'=>$issued['battle']['questionToken'],'timedOut'=>true]);
 [, $issued] = action($actor, $battle2, 'QUESTION');
-[, $herb] = action($actor, $battle2, 'HERB');
+[, $herb] = action($actor, $battle2, 'POTION');
 usleep(150000);
 [, $resume] = action($actor, $battle2, 'RESUME');
-verify($resume['battle']['questionToken'] === $issued['battle']['questionToken'] && abs($resume['battle']['remaining'] - $herb['battle']['remaining']) < 0.1, 'Purchase pause keeps the same question and excludes confirmation wait');
+verify($resume['battle']['questionToken'] === $issued['battle']['questionToken'] && abs($resume['battle']['remaining'] - $herb['battle']['remaining']) < 0.1, 'Stored potion keeps the same question and excludes confirmation wait');
 [, $escaped] = action($actor, $battle2, 'RUN');
 verify($escaped['battle']['status'] === 'ESCAPED' && action($actor, $battle2, 'QUESTION')[0] === 409, 'Run ends server battle');
 foreach (['QUESTION','ENEMY','SHOP_PURCHASE','ADMIN_ADJUSTMENT'] as $source) {

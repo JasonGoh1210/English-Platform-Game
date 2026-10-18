@@ -1,12 +1,20 @@
-import {t,getLanguage,onLanguageChange,setLanguage} from './i18n.js?v=20261017-particles1';
-import {playSound} from './audio.js?v=20261017-particles1';
-import {createEffectPreviews} from './particle-effects.js?v=20261017-particles1';
+import {t,getLanguage,onLanguageChange,setLanguage} from './i18n.js?v=20261018-newbie1';
+import {playSound} from './audio.js?v=20261018-newbie1';
+import {createEffectPreviews} from './particle-effects.js?v=20261018-newbie1';
 
 const config=window.EPQ_SHOP,catalog=config.catalog,backpack=config.mode==='backpack',key=`englishPowerQuest.${backpack?'backpack':'shop'}.pending.${config.playerId}`;
 const messageKey=id=>`${backpack?'backpack':'shop'}.${id}`;
 let view=null,pending=null,busy=false,selection=null;
 const effectPreviews=createEffectPreviews();
 const status=document.getElementById('shopStatus'),retry=document.getElementById('shopRetry'),dialog=document.getElementById('shopConfirm');
+const acquisitionHelp=document.createElement('p');acquisitionHelp.className='learning-note hidden';acquisitionHelp.setAttribute('role','status');status.after(acquisitionHelp);
+let acquisitionKey='',acquisitionFresh=false;
+function firstAcquisition(item){
+  const p=catalog[item],kind=p.kind==='potion'?(p.effect==='hint'?'hint':'healing'):p.kind;
+  const seenKey='englishPowerQuest.itemHelp.v1.'+config.playerId+'.'+kind;
+  try{if(localStorage.getItem(seenKey))return;localStorage.setItem(seenKey,'1');}catch{}
+  acquisitionKey='shop.first.'+kind;acquisitionFresh=true;acquisitionHelp.tabIndex=-1;acquisitionHelp.textContent=t(acquisitionKey);acquisitionHelp.classList.remove('hidden');
+}
 let statusKey='';
 function showStatus(key){statusKey=key;status.textContent=key?t(key):'';}
 try {pending=JSON.parse(localStorage.getItem(key));if(pending && (!/^[a-f0-9]{32}$/.test(pending.requestId)||!catalog[pending.item]||!(backpack?['EQUIP']:['BUY','EQUIP']).includes(pending.action)))pending=null;}catch{}
@@ -38,6 +46,7 @@ function render(){
       else {img.src=p.sprite;img.alt=name(id);img.width=128;img.height=128;}title.textContent=name(id);
       detail.textContent=kind==='potion'?(hint?t('shop.hintHelp'):t('shop.heal',{hp:p.heal})):kind==='effect'?t(id==='none'?'shop.effectOffHelp':'shop.effect.'+p.pattern):t('shop.follows');price.className='shop-price';price.textContent=backpack?(kind==='potion'?t('backpack.quantity',{count:quantity}):t('backpack.owned')):p.price===0?t(kind==='effect'?'shop.effectFree':'shop.free'):t('shop.price',{coins:p.price});
       button.dataset.shopItem=id;button.textContent=equipped?t(id==='none'?'shop.effectOffSelected':'shop.selected'):owned?t(kind==='effect'?(id==='none'?'shop.effectOff':'shop.effectEquip'):'shop.equip'):t('shop.buy');button.disabled=busy||Boolean(pending)||equipped||(kind==='potion'&&quantity>=99)||(!owned&&view.coins<p.price);
+      if(!backpack&&!owned&&view.coins<p.price){button.textContent=t('shop.needCoins',{coins:p.price-view.coins});button.title=t('shop.earnCoinsHelp');}
       button.addEventListener('click',()=>{if(owned){void mutate('EQUIP',id);}else{selection=id;document.getElementById('shopConfirmText').textContent=t('shop.confirmText',{name:name(id),coins:p.price});dialog.showModal();document.getElementById('shopCancel').focus();}});
       card.tabIndex=-1;
       card.append(art,title,detail,price);
@@ -60,14 +69,14 @@ async function load(){busy=true;retry.classList.add('hidden');showStatus(message
 async function mutate(action,item){
   if(busy||(backpack&&action!=='EQUIP'))return;if(!pending){pending={action,item,requestId:token()};persist();}busy=true;render();retry.classList.add('hidden');showStatus(messageKey('saving'));
   try {const {response,data}=await fetchShop({method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...pending,csrfToken:config.csrfToken})});
-    if(response.ok && data.ok && validShopView(data.shop,catalog)){view=data.shop;pending=null;persist();showStatus(messageKey('saved'));playSound('heal');}
+    if(response.ok && data.ok && validShopView(data.shop,catalog)){const confirmed=pending;view=data.shop;pending=null;persist();showStatus(messageKey('saved'));if(confirmed.action==='BUY')firstAcquisition(confirmed.item);playSound('heal');}
     else if(response.status>=400&&response.status<500){const code=data.errorCode;pending=null;persist();await load();showStatus(backpack?messageKey('rejected'):code==='NOT_ENOUGH_COINS'?'shop.noCoins':'shop.rejected');}
     else throw Error();
-  }catch{showStatus(messageKey('pending'));retry.classList.remove('hidden');}finally{busy=false;render();const button=document.querySelector(`[data-shop-item="${item}"]`);(button?.disabled?button.closest('.shop-card'):button)?.focus();}
+  }catch{showStatus(messageKey('pending'));retry.classList.remove('hidden');}finally{busy=false;render();if(acquisitionFresh){acquisitionFresh=false;acquisitionHelp.focus();acquisitionHelp.scrollIntoView({block:'nearest'});}else{const button=document.querySelector(`[data-shop-item="${item}"]`);(button?.disabled?button.closest('.shop-card'):button)?.focus();}}
 }
 retry.addEventListener('click',()=>pending?mutate(pending.action,pending.item):load());
 document.getElementById('shopCancel')?.addEventListener('click',()=>dialog.close());
 document.getElementById('shopBuy')?.addEventListener('click',()=>{const item=selection;dialog.close();void mutate('BUY',item);});
 dialog?.addEventListener('close',()=>document.querySelector(`[data-shop-item="${selection}"]`)?.focus());
 document.querySelectorAll('[data-set-language]').forEach(button=>button.addEventListener('click',()=>setLanguage(button.dataset.setLanguage)));
-onLanguageChange(()=>{render();showStatus(statusKey);});void load();
+onLanguageChange(()=>{render();showStatus(statusKey);if(acquisitionKey)acquisitionHelp.textContent=t(acquisitionKey);});void load();

@@ -1,11 +1,13 @@
-import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261017-particles1";
-import { battleToken, createBattleClient } from "./battle-api.js?v=20261017-particles1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261017-particles1";
-import { playSound } from "./audio.js?v=20261017-particles1";
-import { normalizeTutorial } from "./tutorial.js?v=20261017-particles1";
-import { paintCharacterImages } from "./characters.js?v=20261017-particles1";
-import { createBattleReviewPanel } from "./battle-review.js?v=20261017-particles1";
-import { pixelArtPaths } from "./pixel-world.js?v=20261017-particles1";
+import { t, getLanguage, setLanguage, onLanguageChange } from "./i18n.js?v=20261018-newbie1";
+import { battleToken, createBattleClient } from "./battle-api.js?v=20261018-newbie1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261018-newbie1";
+import { playSound } from "./audio.js?v=20261018-newbie1";
+import { normalizeTutorial } from "./tutorial.js?v=20261018-newbie1";
+import { paintCharacterImages } from "./characters.js?v=20261018-newbie1";
+import { createBattleReviewPanel } from "./battle-review.js?v=20261018-newbie1";
+import { pixelArtPaths } from "./pixel-world.js?v=20261018-newbie1";
+import {createCombatVisuals} from './combat-visuals.js?v=20261018-newbie1';
+const combatFX=createCombatVisuals(document.querySelector('.battlefield-pokemon-layout'),document.getElementById('enemyFigure'));
 
 // Use the same per-player storage namespace as the map. If these keys differ,
 // the battle page cannot find the enemy that the map just stored and redirects back.
@@ -55,6 +57,14 @@ function applyServerBattle(result) {
   state.enemyHp = result.battle.enemyHp;
   state.focusUsed = result.battle.focusUsed;
   state.wordStrikeLevel = result.battle.wordStrikeLevel || 0;
+  state.combat=result.battle.combat||null;
+  combatFX.update({combat:state.combat,status:result.battle.status});
+  renderCombatIntent();
+  state.progression=result.battle.progression||null;
+  state.wrongStreak = result.battle.wrongStreak || 0;
+  state.nextMistakeDamage = result.battle.nextMistakeDamage ?? state.enemy.damage;
+  renderMistakeStatus();
+  renderQuestionDifficulty();
   if(result.shop){potionStock=result.shop.potions;hintPotionStock=result.shop.hintPotions||0;renderPotions();}
   state.questionHint=result.battle.hint||null;
   state.hintQuestionToken=result.battle.questionToken||null;
@@ -191,6 +201,9 @@ const state = {
   questionToken: null,
   remaining: 0,
   wordStrikeLevel: 0,
+  wrongStreak: 0,
+  progression:null,
+  nextMistakeDamage: 0,
   loadingQuestion: false,
   skillPending: false,
   confirmedEnemyTurn: null,
@@ -275,14 +288,14 @@ function localizeBattleStaticText() {
   ui.enemyName.textContent = localEnemyName();
   ui.enemyLabel.textContent = localEnemyName().toUpperCase();
   ui.enemyRole.textContent = t(state.enemy.roleKey);
-  if (ui.enemyDifficulty) ui.enemyDifficulty.textContent = t("battle." + String(state.enemy.difficulty).toLowerCase());
+  renderQuestionDifficulty();
 
   if (state.currentQuestion) {
     localizeQuestionTheme();
     // Global static translations replace the loading placeholder on language changes.
     ui.questionText.textContent = state.currentQuestion.question;
     ui.questionType.textContent = formatType(state.currentQuestion.type);
-    ui.questionDifficulty.textContent = t("battle." + String(state.currentQuestion.difficulty || state.enemy.difficulty).toLowerCase());
+    renderQuestionDifficulty();
     const translatedQuestion = state.currentQuestion.questionZh || "";
     ui.questionTranslation.textContent = translatedQuestion;
     ui.questionTranslation.classList.toggle("hidden", getLanguage() !== "zh" || !translatedQuestion);
@@ -321,8 +334,19 @@ function localizeQuestionTheme() {
   ui.questionTheme.classList.toggle("hidden", !themed);
 }
 
+function renderQuestionDifficulty(){
+  const level=state.currentQuestion?.difficulty||state.progression?.difficulty||state.enemy?.difficulty||'EASY';
+  if(ui.enemyDifficulty)ui.enemyDifficulty.textContent=t('battle.'+(state.progression?.difficulty||level).toLowerCase());
+  if(!ui.questionDifficulty)return;
+  ui.questionDifficulty.textContent=t('battle.'+level.toLowerCase());
+  const p=state.progression;
+  if(p?.nextDifficulty&&p.correctAnswers<p.advanceAfter)ui.questionDifficulty.textContent+=' · '+t('battle.progression',{count:p.correctAnswers,total:p.advanceAfter,next:t('battle.'+p.nextDifficulty.toLowerCase())});
+}
+
 onLanguageChange(() => {
+  renderCombatIntent();
   renderPotions();
+  renderMistakeStatus();
   renderBattleHint();
   renderSettingsPause();
   localizeBattleStaticText();
@@ -341,6 +365,7 @@ onLanguageChange(() => {
 });
 
 function renderSettingsPause() {
+  renderCombatIntent();
   const notice = document.getElementById("battlePauseStatus");
   if (notice) notice.textContent = state.completed ? "" : t(state.settingsFailed ? "battle.pauseFailed"
     : state.settingsPending ? (state.settingsOpen ? "battle.pausing" : "battle.resuming") : "battle.paused");
@@ -404,6 +429,12 @@ function showQuestionPanel() {
 
 function disableAnswers() {
   ui.answerArea.querySelectorAll("button").forEach(button => { button.disabled = true; });
+}
+function lockSkillAnswers(){
+  const controls=[...ui.answerArea.querySelectorAll('button')].map(button=>({button,disabled:button.disabled}));
+  controls.forEach(({button})=>{button.disabled=true;});
+  return ()=>{if(state.locked||state.completed||state.leaving||state.settingsOpen||state.settingsPending||state.settingsPaused||state.settingsFailed)return;
+    controls.forEach(({button,disabled})=>{if(button.isConnected)button.disabled=disabled;});renderBattleHint();};
 }
 
 
@@ -500,13 +531,14 @@ async function startQuestion() {
   if (!applyServerBattle(result)) { battleFailure(result); return; }
   state.locked = false;
   state.selectedWords = [];
+  renderCombatIntent();
   state.currentQuestion = result.battle.question;
   state.questionToken = result.battle.questionToken;
   const q = state.currentQuestion;
   ui.questionPrompt.classList.toggle("generic-prompt", !q.prompt && !q.promptZh);
   localizeQuestionTheme();
   ui.questionType.textContent = formatType(q.type);
-  ui.questionDifficulty.textContent = t("battle." + String(q.difficulty).toLowerCase());
+  renderQuestionDifficulty();
   ui.questionText.textContent = q.question;
   ui.questionTranslation.textContent = q.questionZh || "";
   ui.questionTranslation.classList.toggle("hidden", getLanguage() !== "zh" || !q.questionZh);
@@ -573,7 +605,7 @@ function enemyTurn() {
   playEnemyAttackAnimation();
   playSound("hurt");
   applyServerBattle(result);
-  setBattleMessage("battle.enemyAttack", {enemy:localEnemyName(), damage:state.enemy.damage});
+  setBattleMessage("battle.enemyAttack", {enemy:localEnemyName(), damage:result.outcome?.enemyDamage??state.enemy.damage});
   if (result.battle.status === "DEFEAT") window.setTimeout(finishDefeat, 800);
   else window.setTimeout(startQuestion, 750);
 }
@@ -586,9 +618,10 @@ async function useSkill() {
   if (state.settingsOpen || state.settingsPending || state.settingsPaused || state.settingsFailed) return;
   if (state.completed || state.locked || state.itemPending || state.skillPending || state.leaving || !serverReady) return;
   if (state.focusUsed) { setBattleMessage("battle.focusAlready"); return; }
+  if(state.combat?.guard)return;
   state.skillPending = true;
-  const result = await battleRequest("FOCUS");
-  state.skillPending = false;
+  const restore=lockSkillAnswers();renderCombatIntent();let result;
+  try{result=await battleRequest("FOCUS");}finally{state.skillPending=false;restore();renderCombatIntent();}
   if (state.leaving) return;
   if (!applyServerBattle(result)) { battleFailure(result); return; }
   if (typeof result.battle.remaining === "number") state.remaining = result.battle.remaining;
@@ -598,8 +631,38 @@ async function useSkill() {
   if (ui.questionPanel.classList.contains("hidden")) { showQuestionPanel(); void startQuestion(); }
 }
 function renderPotions(){
-  const button=document.getElementById('activePotionButton');if(button){button.textContent=t('battle.potion',{count:potionStock});button.classList.toggle('hidden',potionStock===0);}
+  const button=document.getElementById('activePotionButton');if(button){button.textContent=t('battle.potion',{count:potionStock});button.classList.remove('hidden');}
   const hint=document.getElementById('activeHintPotionButton');if(hint){hint.textContent=t('hint.potion',{count:hintPotionStock});hint.classList.toggle('hidden',hintPotionStock===0);}
+}
+function renderCombatIntent(){
+  const panel=document.getElementById('combatIntent'),c=state.combat;
+  if(!panel)return;panel.classList.toggle('hidden',!c);
+  const guard=document.getElementById('activeGuardButton'),surge=document.getElementById('activeSurgeButton');
+  guard?.classList.toggle('hidden',!c);surge?.classList.toggle('hidden',!c||!c.sentenceLevel);
+  if(!c)return;const zh=getLanguage()==='zh';
+  const intents={practice:['Watch the slime. Try Focus or Guard.','观察史莱姆，试试专注或防御。'],circle:['The bat is circling. A dive window comes every3turns.','蝙蝠正在盘旋，每3回合出现俯冲破绽。'],dive:['Dive incoming! A correct answer interrupts it for +6damage.','俯冲预警！答对可打断，额外造成6点伤害。'],vines:['Vines protect the tree. Vocabulary, sentences or Focus break them faster.','藤蔓保护树怪，词汇、排句或专注可以更快破除。'],shield:['Armour active: other hits lose6damage; vocabulary, sentences or Focus break it.','护甲生效：普通攻击减6伤害；词汇、排句或专注可击破。'],exposed:['Barrier broken! Full damage now.','屏障已破！现在可以造成完整伤害。'],rune:['Rune exposed: answer correctly for +4damage.','符文露出：答对额外造成4点伤害。'],watch:['The guardian is watching. A rune opens every second turn.','守卫正在观察，每隔一回合露出符文。'],haunt:['Keep calm: Guard halves a mistake hit; Focus strengthens a correct attack.','保持冷静：防御让本题失误伤害减半，专注强化正确攻击。']};
+  const intent=intents[c.intent]||intents.practice;
+  panel.textContent=(zh?intent[1]:intent[0])+' '+(zh?'护盾 ':'Shield ')+c.shield+' · '+(zh?'能量 ':'Energy ')+c.energy+'/3'+(c.barrier?' · '+(zh?'屏障 ':'Barrier ')+c.barrier:'');
+  if(c.grammarLevel)panel.textContent+=' · '+(zh?'语法答对护盾 +':'Grammar shield +')+[2,4,6][c.grammarLevel-1];
+  if(c.sentenceLevel)panel.textContent+=' · '+(zh?'排句答对能量 +1':'Sentence energy +1');
+  guard.textContent=zh?(c.guard?'✓ 防御已准备':'◇ 防御 · 失误伤害减半'):(c.guard?'✓ Guard ready':'◇ Guard · half mistake damage');
+  guard.disabled=Boolean(c.guard||c.surge||state.focusUsed||state.locked||state.skillPending||state.itemPending||state.settingsOpen||state.settingsPending||state.settingsPaused||state.settingsFailed);
+  if(ui.activeSkillButton){ui.activeSkillButton.textContent=zh?'✦ 专注 · 伤害 +50%':'✦ Focus · +50% damage';ui.activeSkillButton.disabled=Boolean(c.guard||state.focusUsed||state.locked||state.skillPending||state.itemPending||state.settingsOpen||state.settingsPending||state.settingsPaused||state.settingsFailed);}
+  surge.textContent=zh?(c.surge?'✦ 重击已准备':'✦ 蓄力重击 · '+c.energy+'/3'):(c.surge?'✦ Surge ready':'✦ Surge · '+c.energy+'/3');
+  surge.disabled=Boolean(c.energy<3||c.guard||c.surge||state.locked||state.skillPending||state.itemPending||state.settingsOpen||state.settingsPending||state.settingsPaused||state.settingsFailed);
+}
+async function combatChoice(action){
+  if(state.locked||state.completed||state.leaving||state.skillPending||state.itemPending||state.settingsOpen||state.settingsPending||state.settingsPaused||state.settingsFailed||!serverReady)return;
+  state.skillPending=true;const restore=lockSkillAnswers();renderCombatIntent();let result;
+  try{result=await battleRequest(action);}finally{state.skillPending=false;restore();renderCombatIntent();}
+  if(!applyServerBattle(result)){battleFailure(result);renderCombatIntent();return;}
+  if(typeof result.battle.remaining==='number')state.remaining=result.battle.remaining;
+  playSound('focus');
+}
+function renderMistakeStatus(){
+  const note=document.getElementById('battleMistakeStreak');if(!note)return;
+  note.textContent=t(state.wrongStreak>0?'battle.mistakeStreak':'battle.mistakeHelp',{count:state.wrongStreak,damage:state.nextMistakeDamage});
+  note.classList.toggle('danger',state.wrongStreak>1);
 }
 function renderBattleHint(){
   const panel=document.getElementById('battleHint');if(!panel)return;
@@ -615,18 +678,18 @@ function renderBattleHint(){
   }
   const button=document.getElementById('activeHintPotionButton');if(button)button.disabled=Boolean(hint)||state.itemPending||state.locked||!state.questionToken;
 }
-function useItem(action='HERB') {
+function useItem(action='POTION') {
   if (state.settingsOpen || state.settingsPending || state.settingsPaused || state.settingsFailed) return;
   if (state.completed || state.locked || state.itemPending || state.skillPending || state.leaving || !serverReady) return;
+  if(!['POTION','HINT'].includes(action)){setBattleMessage('battle.shopOnly');return;}
   const questionAlreadyOpen = !ui.questionPanel.classList.contains("hidden");
+  if(action==='POTION' && potionStock<1){setBattleMessage('battle.noPotions');return;}
   if (action!=='HINT' && state.playerHp >= state.playerMaxHp) { setBattleMessage("battle.hpFull"); return; }
   if(action==='HINT'){
     if(hintPotionStock<1){setBattleMessage('hint.noStock');return;}
     if(!questionAlreadyOpen||!state.questionToken){setBattleMessage('hint.noQuestion');return;}
     if(state.questionHint){setBattleMessage('hint.used');return;}
   }
-  if(action==='POTION' && potionStock<1){setBattleMessage('battle.noPotions');return;}
-  if (action==='HERB' && Number(getSave().coins || 0) < 5) { setBattleMessage("battle.notEnoughCoins"); return; }
   state.itemPending = true;
   const buttons = [...ui.answerArea.querySelectorAll("button"), ui.itemButton, ui.activeItemButton,ui.activePotionButton,ui.activeHintPotionButton].filter(Boolean);
   const disabledBefore = buttons.map(button => button.disabled);
@@ -636,7 +699,7 @@ function useItem(action='HERB') {
     try {
       const result = await battleRequest(action,action==='HINT'?{questionToken:state.questionToken}:{});
       if (!result.ok) { const hintError={NO_HINT_POTIONS:'hint.noStock',HINT_ALREADY_USED:'hint.used',HINT_NO_QUESTION:'hint.noQuestion',HINT_EXPIRED:'hint.expired'};
-        setBattleMessage(action==='HINT'?(hintError[result.error]||'hint.failed'):result.status === 409 ? "battle.notEnoughCoins" : "battle.itemFailed");return false; }
+        setBattleMessage(action==='HINT'?(hintError[result.error]||'hint.failed'):result.error==='NO_POTIONS'?'battle.noPotions':result.error==='HP is full.'?'battle.hpFull':'battle.itemFailed');return false; }
       applyServerBattle(result);
       playSound(action==='HINT'?'focus':'heal');
       if (tutorialBattle && action!=='HINT') coachBattle("tutorial.battle.heal");
@@ -644,7 +707,7 @@ function useItem(action='HERB') {
         const resumed = await battleRequest("RESUME");
         if (resumed.ok) state.remaining = resumed.battle.remaining;
       }
-      setBattleMessage(action==='HINT'?'hint.ready':action==='POTION'?"battle.potionHealed":"battle.healed");
+      setBattleMessage(action==='HINT'?'hint.ready':'battle.potionHealed');
       return true;
     } catch { setBattleMessage("battle.itemFailed"); return false; }
     finally {
@@ -866,6 +929,8 @@ function bindBattleEvents() {
 }
 
 async function init() {
+  document.getElementById('activeGuardButton')?.addEventListener('click',()=>void combatChoice('GUARD'));
+  document.getElementById('activeSurgeButton')?.addEventListener('click',()=>void combatChoice('SURGE'));
   state.settingsOpen = !document.getElementById("settingsScreen").classList.contains("hidden");
   document.body.classList.add("battle-js-ready");
   setBattleMessage("battle.loading");
@@ -984,13 +1049,18 @@ window.render_game_to_text = () => JSON.stringify({
   mode: state.completed ? state.resultType : state.mode,
   enemy: state.enemy ? { name: localEnemyName(), hp: state.enemyHp } : null,
   playerHp: state.playerHp,
+  potions:potionStock,
+  wrongStreak:state.wrongStreak,
+  nextMistakeDamage:state.nextMistakeDamage,
+  combat:state.combat,
+  progression:state.progression,
   focus: state.focusUsed,
   hint:{stock:hintPotionStock,used:Boolean(state.questionHint)},
   timer: state.currentQuestion?.timed === false ? null : Math.max(0, Number(state.remaining || 0)),
   wordStrikeLevel: state.wordStrikeLevel,
   paused: Boolean(state.settingsOpen || state.settingsPaused),
   pausePending: Boolean(state.settingsPending),
-  question: state.currentQuestion ? { type: state.currentQuestion.type, text: state.currentQuestion.question, realm:state.currentQuestion.realm || null } : null,
+  question: state.currentQuestion ? { type: state.currentQuestion.type, text: state.currentQuestion.question,difficulty:state.currentQuestion.difficulty, realm:state.currentQuestion.realm || null } : null,
   review: reviewPanel?.getStats() || null,
   tutorial: tutorialBattle ? normalizeTutorial(getSave().tutorial)?.stage : null,
   coach: tutorialBattle && state.coachMessage ? t(state.coachMessage.key, state.coachMessage.values) : null

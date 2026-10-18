@@ -11,6 +11,7 @@ function fixture() {
   const handlers = new Map();
   const on = scope => (name, callback) => handlers.set(scope + ':' + name, callback);
   const c = {
+    adventure:{isOpen:()=>false},
     keys: new Set(), touch: { left: false, right: false }, settings: false,
     world: { player: { x: 600, vx: 0, walkFrame: 0, walkTimer: 0 }, storyIntroOpen: false,
       typingCaveOpen: false, travelMenu: false, interacting: false, battle: false },
@@ -44,6 +45,12 @@ test('Map settings keep native Space and arrow actions and never accept movement
 
 test('Focused toolbar controls keep native Space and Enter without triggering world interactions', () => {
   const f=fixture(),target={closest:selector=>selector==='.map-tool-icons'?{}:null};
+  for(const key of [' ','Enter','ArrowRight'])assert.equal(f.key(key,false,target).defaultPrevented,false);
+  assert.equal(f.c.interactions,0);assert.equal(f.c.keys.size,0);
+});
+
+test('Exploration journal and mini-map keep native keyboard actions without moving the hero',()=>{
+  const f=fixture(),target={closest:selector=>selector==='.adventure-hud'?{}:null};
   for(const key of [' ','Enter','ArrowRight'])assert.equal(f.key(key,false,target).defaultPrevented,false);
   assert.equal(f.c.interactions,0);assert.equal(f.c.keys.size,0);
 });

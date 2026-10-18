@@ -6,7 +6,7 @@ const moduleReady = import("data:text/javascript;base64," + Buffer.from(fs.readF
 
 test("Next NPC follows the saved chapter, and cross-world directions point at the current world's fixed portal", async () => {
   const { questGuidance } = await moduleReady;
-  for (const [chapter, id, realm] of [[0,"elder","maple"],[1,"mira","forest"],[2,"tala","camp"],[3,"kai","ruins"],[4,"typing","ruins"],[5,"kai","ruins"]]) {
+  for (const [chapter, id, realm] of [[0,"elder","maple"],[1,"mira","forest"],[2,"tala","camp"],[3,"kai","ruins"],[4,"typing","ruins"],[5,"elder","maple"]]) {
     const guide = questGuidance({ chapter, realm, x: 440 });
     assert.equal(guide.target.id, id); assert.equal(guide.target.realm, realm);
     assert.equal(guide.viaPortal, false); assert.equal(guide.direction, "right");

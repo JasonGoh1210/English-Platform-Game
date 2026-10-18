@@ -29,7 +29,7 @@ function fixture() {
   const tasks = [];
   const warnings = new Map();
   const c = {
-    console: { warn() {} }, AbortController, Promise,
+    console: { warn() {} }, AbortController, Promise,combatFX:{update(){}},
     localStorage: {
       getItem: key => storage.get(key) ?? null,
       setItem: (key, value) => storage.set(key, String(value)),
@@ -55,7 +55,7 @@ function fixture() {
     t: key => key, localEnemyName: () => "Word Slime", questionSkillCode: () => "VOCABULARY",
     messages: [], setBattleMessage: key => c.messages.push(key),
     sounds: [], playSound: name => c.sounds.push(name),
-    updateHp() {}, playAttackAnimation() {}, playEnemyAttackAnimation() {}, renderBattleHint() {},
+    updateHp() {}, playAttackAnimation() {}, playEnemyAttackAnimation() {}, renderBattleHint() {},renderCombatIntent(){},renderMistakeStatus(){},renderQuestionDifficulty(){},renderPotions(){},potionStock:1,
     disableAnswers() {}, showQuestionPanel() {}, startQuestion() {},
     showResult() {}, finishDefeat() {}, battleFailure() {},
     state: {
@@ -137,7 +137,13 @@ test("Wrong answers and timeouts trigger enemy damage and continuous questions",
   }
 });
 
-test("Healing Herb waits for confirmation, blocks double clicks and resumes the same question", async () => {
+test('Enemy attack text uses the confirmed escalating damage and next-hit warning',()=>{
+  const f=fixture(),messages=[];f.c.setBattleMessage=(key,values)=>messages.push({key,values});
+  f.c.state.confirmedEnemyTurn={ok:true,battle:{playerHp:40,enemyHp:60,focusUsed:false,status:'ACTIVE',wrongStreak:4,nextMistakeDamage:30},outcome:{correct:false,enemyDamage:25}};
+  f.load(battleSource,['enemyTurn','applyServerBattle']);f.c.enemyTurn();assert.equal(messages[0].values.damage,25);assert.equal(f.c.state.wrongStreak,4);assert.equal(f.c.state.nextMistakeDamage,30);assert.equal(f.c.state.playerHp,40);
+});
+
+test("Stored potion waits for confirmation, blocks double clicks and resumes without a Coin charge", async () => {
   const f = fixture(), purchase = deferred();
   f.c.battleRequest = action => { if(action === "RESUME") return Promise.resolve({ok:true,battle:{remaining:4}}); f.c.rewards.push(action); return purchase.promise; };
   f.load(battleSource, ["useItem", "resolve", "applyServerBattle"]);
@@ -146,16 +152,19 @@ test("Healing Herb waits for confirmation, blocks double clicks and resumes the 
   assert.equal(f.c.state.playerHp, 65);
   assert.equal(f.c.saved.coins, 10);
   assert.equal(f.c.state.itemPending, true);
-  assert.equal(f.c.sounds.length, 0, "No healing sound before purchase confirmation");
+  assert.equal(f.c.sounds.length, 0, "No healing sound before item confirmation");
   f.c.useItem();
   f.c.resolve(true, null, false);
   assert.equal(f.c.rewards.length, 1);
   assert.equal(f.c.state.enemyHp, 60);
   f.c.now += 1500;
-  purchase.resolve({ ok: true, battle:{playerHp:85,enemyHp:60,focusUsed:false}, player: { coins: 5, xp:0, englishPowerTotal:0, level:1 } });
+  purchase.resolve({ ok: true, battle:{playerHp:100,enemyHp:60,focusUsed:false,wrongStreak:2,nextMistakeDamage:20},shop:{potions:0,hintPotions:0}, player: { coins: 10, xp:0, englishPowerTotal:0, level:1 } });
   assert.equal(await result, true);
-  assert.equal(f.c.state.playerHp, 85);
-  assert.equal(f.c.saved.coins, 5);
+  assert.equal(f.c.state.playerHp, 100);
+  assert.equal(f.c.saved.coins, 10);
+  assert.equal(f.c.potionStock,0);
+  assert.equal(f.c.state.wrongStreak,2,'Healing cannot reset the server mistake streak');
+  assert.equal(f.c.rewards[0],'POTION');
   assert.deepEqual(f.c.sounds, ["heal"]);
   assert.equal(f.c.state.currentQuestion, currentQuestion);
   assert.equal(f.c.state.remaining, 4, "Purchase resumes the server countdown");
@@ -164,7 +173,7 @@ test("Healing Herb waits for confirmation, blocks double clicks and resumes the 
   assert.equal(f.tasks.length, 0, "Current question is not restarted");
 });
 
-test("Rejected, unconfirmed and failed herb requests grant no healing or local spending", async () => {
+test("Rejected, unconfirmed and failed potion uses grant no healing or local spending", async () => {
   for (const response of [{ ok: false, status: 409 }, { ok: false, status: 500 }, { ok: false, status: 0 }, new Error("offline")]) {
     const f = fixture();
     f.c.battleRequest = async () => { if (response instanceof Error) throw response; return response; };
@@ -178,15 +187,20 @@ test("Rejected, unconfirmed and failed herb requests grant no healing or local s
   }
 });
 
-test("Full HP and insufficient local Coins never issue a purchase", () => {
-  for (const [hp, coins] of [[100, 10], [65, 4]]) {
+test("Full HP, empty stock and retired battle purchases never issue a use", () => {
+  for (const [hp, stock,action] of [[100,1,'POTION'],[65,0,'POTION'],[65,1,'HERB']]) {
     const f = fixture();
     f.c.state.playerHp = hp;
-    f.c.saved.coins = coins;
+    f.c.potionStock=stock;
     f.load(battleSource, ["useItem"]);
-    f.c.useItem();
+    f.c.useItem(action);
     assert.equal(f.c.rewards.length, 0);
   }
+});
+
+test('Backpack potions remain usable with zero Coins',async()=>{
+  const f=fixture();f.c.saved.coins=0;f.c.battleRequest=async action=>{f.c.rewards.push(action);return action==='RESUME'?{ok:true,battle:{remaining:null}}:{ok:true,battle:{playerHp:100,enemyHp:60,focusUsed:false,wrongStreak:1,nextMistakeDamage:13},shop:{potions:0,hintPotions:0},player:{coins:0,xp:0,englishPowerTotal:0,level:1}};};
+  f.load(battleSource,['useItem','applyServerBattle']);assert.equal(await f.c.useItem(),true);assert.equal(f.c.saved.coins,0);assert.equal(f.c.state.playerHp,100);assert.deepEqual(f.c.rewards,['POTION','RESUME']);
 });
 
 test("Hint potions work at full HP, bind the current question and block duplicate clicks", async () => {
@@ -335,4 +349,26 @@ test("Confirmed map writes do not clear unrelated reward failure warnings", asyn
   f.load(mapSource, ["queueGameSave", "flushGameSave"]);
   f.c.queueGameSave({ questStep: 4 }); await f.c.flushGameSave();
   assert.equal(f.warnings.get("rewards"), "save.rewardFailed");
+});
+
+test('Focus and Guard visibly lock answers until their receipt arrives, preserving an incomplete sentence',async()=>{
+  for(const action of ['FOCUS','GUARD']){
+    const f=fixture(),reply=deferred();f.c.answerButtons.forEach(b=>b.isConnected=true);
+    f.c.battleRequest=()=>reply.promise;f.c.applyServerBattle=()=>true;
+    f.load(battleSource,['lockSkillAnswers','useSkill','combatChoice']);
+    const pending=action==='FOCUS'?f.c.useSkill():f.c.combatChoice(action);
+    assert.equal(f.c.state.skillPending,true);assert.ok(f.c.answerButtons.every(b=>b.disabled));
+    reply.resolve({ok:true,battle:{remaining:5}});await pending;
+    assert.equal(f.c.state.skillPending,false);assert.deepEqual(f.c.answerButtons.map(b=>b.disabled),[false,true]);
+    assert.equal(f.c.state.remaining,5,'Skill receipt restores the trusted timer on timed cave questions');
+  }
+});
+
+test('A delayed skill receipt does not enable answers behind settings',async()=>{
+  const f=fixture(),reply=deferred();f.c.answerButtons.forEach(b=>b.isConnected=true);
+  f.c.battleRequest=()=>reply.promise;f.c.applyServerBattle=()=>true;
+  f.load(battleSource,['lockSkillAnswers','combatChoice']);
+  const pending=f.c.combatChoice('GUARD');f.c.state.settingsOpen=true;
+  reply.resolve({ok:true,battle:{}});await pending;
+  assert.ok(f.c.answerButtons.every(b=>b.disabled));assert.equal(f.c.state.skillPending,false);
 });

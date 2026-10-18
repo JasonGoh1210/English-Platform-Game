@@ -59,7 +59,7 @@ export function drawPixelGround(ctx,{width,height,ground,realm,camera=0}) {
 const tiles=new Map();
 function landmarkTile(type,variant) {
   const key=type+":"+variant;if(tiles.has(key))return tiles.get(key);
-  const c=document.createElement("canvas");c.width=32;c.height=32;const ctx=c.getContext("2d");
+  const c=document.createElement("canvas");c.width=32;c.height=32;const ctx=c.getContext("2d",{willReadFrequently:true});
   const rect=(color,x,y,w,h)=>{ctx.fillStyle=color;ctx.fillRect(x,y,w,h);};
   if(type==="cave" || type==="typingCave"){
     c.width=c.height=64;

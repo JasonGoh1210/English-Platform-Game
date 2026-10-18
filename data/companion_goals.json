@@ -1,0 +1,92 @@
+{
+  "owl": {
+    "name": "A guide's first lesson",
+    "nameZh": "向导的第一课",
+    "metric": "correct",
+    "required": 5,
+    "help": "Answer 5 battle questions correctly.",
+    "helpZh": "在战斗中累计答对5道题。",
+    "charm": "#e5c674"
+  },
+  "fox": {
+    "name": "Well-prepared paws",
+    "nameZh": "补给小管家",
+    "metric": "suppliesBought",
+    "required": 2,
+    "help": "Buy 2 potions of either kind at the village shop.",
+    "helpZh": "在村庄商店累计购买2瓶治疗或提示药水。",
+    "charm": "#efae74"
+  },
+  "cat": {
+    "name": "A curious scholar",
+    "nameZh": "好奇的小学者",
+    "metric": "firstCorrect",
+    "required": 10,
+    "help": "Answer 10 different questions correctly on your first attempt.",
+    "helpZh": "累计10道不同题目首次作答正确。",
+    "charm": "#b8a0ed"
+  },
+  "dragon": {
+    "name": "Courage in the ruins",
+    "nameZh": "遗迹里的勇气",
+    "metric": "ruinsVictories",
+    "required": 2,
+    "help": "Win 2 battles in the Ancient Ruins.",
+    "helpZh": "在古代遗迹累计赢得2场战斗。",
+    "charm": "#84d8d1"
+  },
+  "wisp": {
+    "name": "A light remembered",
+    "nameZh": "点亮记忆之光",
+    "metric": "mastered",
+    "required": 1,
+    "help": "Master 1 memory rune with spaced reviews.",
+    "helpZh": "通过间隔复习掌握1枚记忆符文。",
+    "charm": "#a6efba"
+  },
+  "bunny": {
+    "name": "A message of hope",
+    "nameZh": "传递希望的信使",
+    "metric": "chapter",
+    "required": 2,
+    "help": "Finish the elder and Mira's story chapters.",
+    "helpZh": "完成长老与米拉的两段主线剧情。",
+    "charm": "#edb9d0"
+  },
+  "slime": {
+    "name": "A careful recovery",
+    "nameZh": "认真照顾自己",
+    "metric": "potionUses",
+    "required": 1,
+    "help": "Use an owned healing potion during a battle.",
+    "helpZh": "在战斗中使用1瓶已拥有的治疗药水。",
+    "charm": "#c5db76"
+  },
+  "penguin": {
+    "name": "Stand your ground",
+    "nameZh": "稳稳守住阵地",
+    "metric": "guards",
+    "required": 2,
+    "help": "Prepare Guard on 2 battle questions.",
+    "helpZh": "在战斗中为2道题准备防御。",
+    "charm": "#98cbea"
+  },
+  "turtle": {
+    "name": "Patience and grammar",
+    "nameZh": "耐心的语法课",
+    "metric": "grammarCorrect",
+    "required": 5,
+    "help": "Answer 5 grammar questions correctly in battle.",
+    "helpZh": "在战斗中累计答对5道语法题。",
+    "charm": "#b2c48c"
+  },
+  "bat": {
+    "name": "Listen to the echoes",
+    "nameZh": "聆听洞穴回声",
+    "metric": "caveVictories",
+    "required": 1,
+    "help": "Defeat 1 guardian inside a cave or tower.",
+    "helpZh": "击败1只洞穴或高塔内部的守卫。",
+    "charm": "#c5afea"
+  }
+}

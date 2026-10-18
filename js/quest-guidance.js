@@ -28,7 +28,7 @@ export function questGuidance({ chapter = 0, realm = "maple", x = 440, insideCav
   tutorial = null, slimeX = 1140, defeatedIds = [], rooms = echoRooms, dungeonAccess = null, castle = null } = {}) {
   const step = Number.isFinite(chapter) ? Math.max(0, Math.min(5, Math.floor(chapter))) : 0;
   let target = storyTargets[Math.min(step, 4)];
-  if (step >= 5) target = storyTargets[3]; // Kai has the existing post-ending dialogue.
+  if (step >= 5) target = storyTargets[0]; // Return to the village celebration after the ending.
   if (tutorial?.stage === "RETURN") target = storyTargets[0];
   if (["SLIME", "BATTLE"].includes(tutorial?.stage)) {
     target = { id: "slime-01", realm: "maple", x: slimeX, nameKey: "guide.slime" };

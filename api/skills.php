@@ -16,9 +16,9 @@ try {
     if (!epq_csrf_is_valid(is_string($body['csrfToken']??null)?$body['csrfToken']:null)) {
         epq_json(['ok'=>false,'error'=>'Invalid request token.'],403);
     }
-    if (($body['skill']??null)!=='word-strike' || !is_int($body['targetLevel']??null)) throw new InvalidArgumentException('Invalid skill.');
+    if (!is_string($body['skill']??null) || !isset(epq_skill_branches()[$body['skill']]) || !is_int($body['targetLevel']??null)) throw new InvalidArgumentException('Invalid skill.');
     $db->begin_transaction();
-    $changed=epq_unlock_word_strike($db,$playerId,$body['targetLevel']);
+    $changed=epq_unlock_branch($db,$playerId,$body['skill'],$body['targetLevel']);
     $response=['ok'=>true,'changed'=>$changed,'skills'=>epq_skills_view($db,$playerId)];
     $db->commit(); epq_json($response);
 } catch (Throwable $e) {

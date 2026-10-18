@@ -23,10 +23,13 @@ bilingual update message and permits returning to the map; no unverified reward 
   the older SQL question/combat tables are not yet used by this runtime. [World-themed pools](THEMED_QUESTION_BANK.md) now provide80playable questions and player-scoped recent-history avoidance.
 - ANSWER checks the issued snapshot and answer type. The server computes correctness,
   timeout, speed bonus, damage, XP, Coins and English Power. Correct answers never harm
-  the player; wrong/timeout answers damage only the player.
-- Knowledge Focus, Herb, victory and Run update the same server battle. Herb deducts
-  5 Coins and heals at most 20 HP atomically. An open question pauses during purchase
-  confirmation and resumes without selecting another question.
+  the player and reset the mistake streak. Consecutive wrong/timeout answers add3
+  damage per additional mistake, capped at12 extra. Reload and healing preserve the streak.
+- Knowledge Focus, stored potions, victory and Run update the same server battle.
+  Buy healing25Coin/hint30Coin potions in the village shop before battle; new HERB
+  purchases in battle are rejected. Healing consumes one owned bottle for up to40HP,
+  without charging Coins. An open question pauses during item confirmation and resumes
+  without selecting another question. See [supply and mistake rules](BATTLE_SUPPLIES_AND_MISTAKES.md).
 - Every action has a request ID. Identical replays return the receipt; changed inputs
   under that ID return 409. An issued question can be answered only once, even with a
   new request ID. Attempts, balances, ledgers, state and receipts commit/roll back together.
@@ -48,6 +51,6 @@ settlement and forged combat reward amounts; it is not a complete anti-cheat sys
 - PHP/JavaScript syntax, Node gameplay/network-replay checks, PHP grading for all question types.
 - Disposable MySQL 8 / MariaDB 10.4: guest ownership, CSRF, wrong/correct/timeout, metrics,
   repeat requests, payload conflicts, victory reload, insufficient funds, full HP,
-  ledger rollback/retry, Herb pause, Run and legacy bypass rejection.
+  ledger rollback/retry, potion pause, streak damage/reset/cap, Run and legacy bypass rejection.
 - Local browser checks use a separate PHP server and MariaDB data directory/port,
   without connecting to the user's existing XAMPP database.

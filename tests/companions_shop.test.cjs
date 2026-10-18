@@ -44,3 +44,14 @@ test('Winged companions hover and flap while ground companions walk or hop throu
     assert.ok(moving.size>=3,'Movement changes actual pose indices');assert.ok([...moving].every(frame=>frame>=4&&frame<8));
   }
 });
+
+test('Companions greet, perch, wag or orbit without stealing movement or remaining stuck after travel',()=>{
+  const source=fs.readFileSync(path.join(root,'js/companions.js'),'utf8').replace(/^import .+;\r?\n/,'').replaceAll('export function','function');
+  const c={Image:class{}};vm.createContext(c);vm.runInContext(source,c);const products=JSON.parse(fs.readFileSync(path.join(root,'data/shop.json')));
+  const fields={playerX:440,playerFacing:1,routeX:880,width:2800,realm:'maple',inside:false};
+  for(const id of Object.keys(products).filter(id=>products[id].kind==='companion')){
+    const b=c.createCompanion(products);b.update(.1,{...fields,equipped:id});b.interact();assert.equal(b.state(id).reaction,'greeting');b.update(3.1,{...fields,equipped:id});assert.notEqual(b.state(id).reaction,'greeting');
+  }
+  const fox=c.createCompanion(products);fox.update(1,{...fields,equipped:'fox',interest:{x:450,kind:'supplies'}});assert.equal(fox.state('fox').motion,'wag');fox.update(.1,{...fields,playerX:460,equipped:'fox',interest:{x:450,kind:'supplies'}});assert.equal(fox.state('fox').motion,'walk');
+  const bat=c.createCompanion(products),cave={...fields,equipped:'bat',interest:{x:470,kind:'cave'}};bat.update(.5,cave);assert.equal(bat.state('bat').motion,'orbit');const x=bat.state('bat').x;bat.update(.4,cave);assert.notEqual(bat.state('bat').x,x);bat.update(.1,{...cave,playerX:480});assert.equal(bat.state('bat').motion,'fly');bat.update(.1,{...cave,realm:'ruins',playerX:1500,interest:null});assert.notEqual(bat.state('bat').motion,'orbit');
+});

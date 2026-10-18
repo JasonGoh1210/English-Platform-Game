@@ -14,7 +14,7 @@ migration 005 on older databases.
    of his existing first chapter and grants its existing reward once.
 3. The existing Word Slime appears nearby at X1140. Enter its normal `battle.php`
    encounter. Rowan explains FIGHT, TRUE/FALSE, odd words, correct/wrong answers,
-   Knowledge Focus and confirmed Herb purchases in a non-blocking coach panel.
+   Knowledge Focus, stored potion use and consecutive-mistake damage in a non-blocking coach panel.
    Questions remain continuous; the guide does not pause/reset server timers or
    alter combat HP, damage, rewards, question pools or prices.
 4. After victory, return to Rowan and interact for a debrief. The forest quest

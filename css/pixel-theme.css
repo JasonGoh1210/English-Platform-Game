@@ -154,6 +154,10 @@ body.battle-page { height:auto; min-height:100dvh; }
 .battle-page .review-mistake summary { color:#e7dec7; }
 .battle-page .review-correct-answer { background:#284737; color:#d5e8d2; }
 .battle-page .review-mistake-body { color:#cfdae0; }
+.battle-page .result-card .review-words { background:#142b39; color:#d9e6de; }
+.combat-intent {border:2px solid #aa9867;background:#122d38;padding:10px 12px;margin:10px 0;color:#eadfb5;font:14px/1.6 system-ui;overflow-wrap:anywhere}
+#activeGuardButton {border-color:#82b9bd;background:#25494e}
+#activeSurgeButton {border-color:#d7ba78;background:#51442e}
 .battle-page button:focus-visible, .battle-page a:focus-visible { outline:3px solid #f4d68b; outline-offset:3px; }
 
 @media (max-width:780px) {
@@ -256,3 +260,8 @@ body.battle-page { height:auto; min-height:100dvh; }
   .question-battle-actions {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
   .question-battle-actions .battle-action-button {min-height:44px;padding:9px 6px;font-size:11px;line-height:1.4}
 }
+.battle-mistake-note {margin:6px 0 10px;color:#a9cbd2;font-size:12px;line-height:1.55;overflow-wrap:anywhere}
+.battle-mistake-note.danger {color:#ffd29c}
+.battlefield-pokemon-layout{position:relative}.combat-pixel-effects{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none;image-rendering:pixelated}.monster-sprite[data-intent=dive] img{animation:pixel-dive-warning 1.1s steps(3,end) infinite}.monster-sprite[data-barrier='1']{filter:none}
+@keyframes pixel-dive-warning{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@media(prefers-reduced-motion:reduce){.monster-sprite[data-intent=dive] img{animation:none}}

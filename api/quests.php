@@ -16,8 +16,11 @@ try {
     $db->begin_transaction();
     $lock=$db->prepare('SELECT player_id FROM players WHERE player_id=? FOR UPDATE');
     $lock->bind_param('i',$playerId);$lock->execute();$lock->get_result()->free();
-    $hash=hash('sha256',json_encode([$body['action']??null,$body['npcId']??null,$body['runId']??null,
-        $body['questionToken']??null,$body['answer']??null],JSON_THROW_ON_ERROR));
+    $hashParts=[$body['action']??null,$body['npcId']??null,$body['runId']??null,$body['questionToken']??null,$body['answer']??null];
+    if(array_key_exists('adventureId',$body))$hashParts[]=$body['adventureId'];
+    if(array_key_exists('companionId',$body))$hashParts[]=$body['companionId'];
+    if(array_key_exists('realmId',$body))$hashParts[]=$body['realmId'];
+    $hash=hash('sha256',json_encode($hashParts,JSON_THROW_ON_ERROR));
     $stmt=$db->prepare('SELECT payload_hash,response_json FROM verified_quest_events WHERE player_id=? AND request_id=?');
     $stmt->bind_param('is',$playerId,$request);$stmt->execute();$old=$stmt->get_result()->fetch_assoc();
     if ($old) {
@@ -26,6 +29,10 @@ try {
         // Preserve the outcome while reporting current balances/chapter, never stale receipt balances.
         $response['player']=epq_reward_balance($db,$playerId);$response['chapterStep']=epq_story_step($db,$playerId);
         $response['castle']=epq_castle_progress($db,$playerId);
+        if(isset($response['outcome']['adventure'])){
+            $activityState=epq_adventure_load($db,$playerId);$response['outcome']['adventure']=epq_adventure_view($db,$playerId,$activityState);
+            if(isset($response['outcome']['activity'])&&($activityState['current']['token']??null)!==$response['outcome']['activity']['token']){unset($response['outcome']['activity']);$response['outcome']['expired']=true;}
+        }
     } else {
         $response=epq_quest_action($db,$playerId,$body);
         $json=json_encode($response,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE);

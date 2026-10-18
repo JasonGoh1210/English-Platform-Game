@@ -20,6 +20,8 @@ function epq_battle_enemies(): array {
     foreach (epq_dungeon_specs() as $realm=>$spec) foreach ($spec['enemies'] as $enemy) {
         $enemies[$enemy['id']]=array_merge($enemy,['realm'=>$realm,'dungeon'=>$realm]);
     }
+    foreach($enemies as &$enemy)$enemy['difficulty']=epq_question_progression()[$enemy['realm']]['levels'][0];
+    unset($enemy);
     return $enemies;
 }
 
@@ -32,10 +34,22 @@ function epq_question_bank(): array {
     return $bank;
 }
 
-function epq_question_pool(array $enemy, array $used, array $recent = []): array {
+function epq_question_progression(): array {
+    static $plans;
+    return $plans ??= json_decode((string)file_get_contents(__DIR__.'/../data/question_progression.json'),true,512,JSON_THROW_ON_ERROR);
+}
+function epq_question_stage(array $enemy,int $correctAnswers): array {
+    $plan=epq_question_progression()[$enemy['realm']];
+    $index=count($plan['levels'])>1&&$correctAnswers>=$plan['advanceAfter']?1:0;
+    return ['difficulty'=>$plan['levels'][$index],'baseDifficulty'=>$plan['levels'][0],
+        'nextDifficulty'=>$plan['levels'][$index+1]??null,'advanceAfter'=>$plan['advanceAfter'],'correctAnswers'=>max(0,$correctAnswers)];
+}
+
+function epq_question_pool(array $enemy, array $used, array $recent = [],?string $difficulty=null): array {
+    $difficulty ??= $enemy['difficulty'];
     $pool = array_values(array_filter(epq_question_bank(), static fn($q) =>
         ($q['realm'] ?? null) === $enemy['realm']
-        && in_array($q['type'], $enemy['types'], true) && $q['difficulty'] === $enemy['difficulty']));
+        && in_array($q['type'], $enemy['types'], true) && $q['difficulty'] === $difficulty));
     if (!$pool) throw new RuntimeException('No questions configured for this realm and encounter.');
     $unused = array_values(array_filter($pool, static fn($q) => !in_array($q['id'], $used, true)));
     $fresh = array_values(array_filter($unused, static fn($q) => !in_array($q['id'], $recent, true)));
@@ -115,4 +129,10 @@ function epq_grade_attack(array $question, mixed $answer, bool $timeout, float $
         'power' => $correct ? (int)($question['englishPower'] ?? 1) : 0,
         'usedFocus' => $correct && $focus
     ];
+}
+
+// The first mistake is the enemy's normal hit. Further consecutive mistakes
+// add 5 HP each, capped at +20. A correct answer resets the stored streak.
+function epq_mistake_damage(int $baseDamage, int $wrongStreak): int {
+    return max(0,$baseDamage)+min(4,max(0,$wrongStreak-1))*5;
 }

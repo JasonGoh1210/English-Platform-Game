@@ -7,14 +7,21 @@ foreach (['slime-01','bat-01','road-guardian-01','guardian-01'] as $enemyId) {
     $realm = epq_battle_enemies()[$enemyId]['realm'];
     $topicBattle = token();
     action($topicActor,$topicBattle,'START',['enemyId'=>$enemyId,'realm'=>'forged']);
-    // Only this disposable battle: enough enemy HP to exercise all20 question tokens.
+    // Only this disposable battle: enough enemy HP to exercise every stage pool.
     $db->query("UPDATE verified_battles SET state_json=JSON_SET(state_json,'$.enemyHp',10000) WHERE battle_id='$topicBattle'");
     $seen = [];
-    for ($i=0;$i<20;$i++) {
+    $stagePlan=epq_question_progression()[$realm];$stageDifficulty=[];
+    foreach($stagePlan['levels'] as $level)foreach(epq_question_pool(epq_battle_enemies()[$enemyId],[],[],$level) as $unusedQuestion)$stageDifficulty[]=$level;
+    for ($i=0;$i<count($stageDifficulty);$i++) {
+        // Pin only this exhaustive content fixture to its current tier. The
+        // dedicated progression flow separately tests natural correct counts.
+        $correctForTier=$stageDifficulty[$i]===$stagePlan['levels'][0]?0:$stagePlan['advanceAfter'];
+        $db->query("UPDATE verified_battles SET state_json=JSON_SET(state_json,'$.correctAnswers',$correctForTier) WHERE battle_id='$topicBattle'");
         $requestId = token();
         [$status,$issued] = action($topicActor,$topicBattle,'QUESTION',[],$requestId);
         $question = $issued['battle']['question'];
         verify($status===200 && $question['realm']===$realm, 'Server selects encounter realm, not client realm');
+        verify($question['difficulty']===$stageDifficulty[$i],'Server selects the authoritative current stage');
         verify(!in_array($question['id'],$seen,true), 'No repeated question before this battle pool is exhausted');
         verify(!isset($question['answer']) && !isset($question['answerOrder']) && !isset($question['explanation']), 'Active themed questions omit answers/explanations');
         if ($question['type']==='SENTENCE_BUILDER') verify($question['words']!==validAnswer($question), 'Issued sentence words shuffled');
@@ -55,4 +62,4 @@ $stmt->bind_param('ss',$oldState,$oldBattle);$stmt->execute();
 verify($restored['battle']['question']['id']==='dw-v-001' && !isset($restored['battle']['question']['realm']), 'Existing issued legacy question preserved');
 [, $oldHit] = action($topicOther,$oldBattle,'ANSWER',['questionToken'=>$oldToken,'answer'=>true]);
 verify($oldHit['outcome']['correct'] && $oldHit['outcome']['xp']===10, 'Legacy answer and reward still settle normally');
-echo "PASS: all80themed questions issued/graded, four server realms, no in-battle repeats, recent8across battles, Wraith shared history, independent players, stable shuffle/reload/replay and legacy active snapshot\n";
+echo "PASS: all240themed questions issued/graded across stages, four server realms, no in-stage repeats, recent8across battles, Wraith shared history, independent players, stable shuffle/reload/replay and legacy active snapshot\n";

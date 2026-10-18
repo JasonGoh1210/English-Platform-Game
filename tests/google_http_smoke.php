@@ -103,7 +103,7 @@ try{
     $guestSub='guest-'.$suffix;$guestMail=$guestSub.'@example.com';
     ghcheck(ghlogin($link,ghtoken($link,$guestSub,$guestMail),$guest)[0]===200,'Guest Google binding after conflict');
     $after=ghhttp('api/player.php',null,$guest)[1]['player'];
-    ghcheck($after['playerId']===$guestId&&$after['displayName']==='Bound Guest'&&$after['xp']===55&&$after['coins']===448
+    ghcheck($after['playerId']===$guestId&&$after['displayName']==='Bound Guest'&&$after['xp']===55&&$after['coins']===435
         &&$after['character']===$before['character'],'Binding preserves character, outfit and balances');
     ghcheck(ghhttp('api/game_state.php',null,$guest)[1]['state']===$stateBefore,'Binding preserves map save');
     ghcheck(ghhttp('api/shop.php',null,$guest)[1]['shop']===$shopBefore,'Binding preserves owned skin, equipped guide and potion');

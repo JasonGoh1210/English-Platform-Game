@@ -21,9 +21,9 @@ test("Lost combat responses replay the same request and serialize later actions"
   vm.createContext(context); vm.runInContext(source, context);
   const request = context.createBattleClient("a".repeat(32),"csrf", retry => warnings.push(retry));
   const answer = request("ANSWER", {questionToken:"q",answer:true});
-  const herb = request("HERB");
+  const herb = request("POTION");
   await Promise.all([answer,herb]);
-  assert.deepEqual(calls.map(c=>c.action),["ANSWER","ANSWER","HERB"]);
+  assert.deepEqual(calls.map(c=>c.action),["ANSWER","ANSWER","POTION"]);
   assert.deepEqual(calls[0],calls[1]);
   assert.notEqual(calls[1].requestId,calls[2].requestId);
   assert.ok(warnings.includes(true)); assert.equal(warnings.at(-1),false);
@@ -35,7 +35,7 @@ test("Rejected purchases and missing migrations terminate without automatic char
     const c = {AbortController,Promise,crypto:{randomUUID:()=>"b".repeat(32)},setTimeout:()=>1,clearTimeout(){},
       fetch:async()=>{calls++;return {ok:false,status:data.errorCode?503:409,json:async()=>data};}};
     vm.createContext(c); vm.runInContext(source,c);
-    const result = await c.createBattleClient("a".repeat(32),"csrf")("HERB");
+    const result = await c.createBattleClient("a".repeat(32),"csrf")("POTION");
     assert.equal(result.ok,false); assert.equal(calls,1);
   }
 });

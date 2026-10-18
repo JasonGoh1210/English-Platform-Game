@@ -6,15 +6,23 @@ require_once __DIR__ . '/../includes/rewards.php';
 require_once __DIR__.'/../includes/shop.php';
 require_once __DIR__.'/../includes/castle.php';
 require_once __DIR__.'/../includes/question_hints.php';
+require_once __DIR__.'/../includes/combat_depth.php';
 
 function epq_battle_key(mixed $key): string {
     if (!is_string($key) || !preg_match('/\A[a-f0-9]{32}\z/', $key)) throw new InvalidArgumentException('Invalid battle/request token.');
     return $key;
 }
 
-function epq_battle_view(array $state): array {
+function epq_battle_view(array $state,array $enemy): array {
     $view = array_intersect_key($state, array_flip(['status','enemyHp','playerHp','focusUsed']));
     $view['wordStrikeLevel'] = (int)($state['wordStrikeLevel'] ?? 0);
+    $view['wrongStreak'] = max(0,(int)($state['wrongStreak'] ?? 0));
+    $view['combat']=epq_combat_view($state);
+    $view['nextMistakeDamage'] = epq_mistake_damage($enemy['damage'],$view['wrongStreak']+1);
+    $view['baseMistakeDamage']=$view['nextMistakeDamage'];
+    if(isset($state['combat']))$view['nextMistakeDamage']=max(0,(!empty($state['combat']['guard'])?(int)ceil($view['nextMistakeDamage']/2):$view['nextMistakeDamage'])-(int)$state['combat']['shield']);
+    $view['progression']=epq_question_stage($enemy,(int)($state['correctAnswers']??0));
+    if($state['question']!==null)$view['progression']['difficulty']=$state['question']['difficulty'];
     $view['paused'] = isset($state['pausedAt']) && ($state['pauseReason'] ?? null) === 'settings';
     if ($state['question'] !== null) {
         $view['question'] = epq_public_question($state['question']);
@@ -50,7 +58,7 @@ try {
     if (!is_array($body)) throw new InvalidArgumentException('Object required.');
     if (!epq_csrf_is_valid($body['csrfToken'] ?? null)) epq_json(['ok'=>false, 'error'=>'Invalid request token.'], 403);
     $action = $body['action'] ?? '';
-    if (!in_array($action, ['START','QUESTION','ANSWER','FOCUS','HERB','POTION','HINT','PAUSE','RESUME','RUN'], true)) throw new InvalidArgumentException('Unknown action.');
+    if (!in_array($action, ['START','QUESTION','ANSWER','FOCUS','GUARD','SURGE','HERB','POTION','HINT','PAUSE','RESUME','RUN'], true)) throw new InvalidArgumentException('Unknown action.');
     $battleId = epq_battle_key($body['battleId'] ?? null);
     $requestId = epq_battle_key($body['requestId'] ?? null);
     $db = epq_db();
@@ -78,8 +86,9 @@ try {
             $existingBattle->bind_param('si',$battleId,$playerId);$existingBattle->execute();
             if (!$existingBattle->get_result()->fetch_assoc()) epq_require_dungeon_access($db,$playerId,$enemy['dungeon']);
         }
-        $initial = json_encode(['status'=>'ACTIVE', 'enemyHp'=>$enemy['hp'], 'playerHp'=>100, 'focusUsed'=>false,
-            'wordStrikeLevel'=>epq_word_strike_level($db,$playerId),
+        $initial = json_encode(['status'=>'ACTIVE', 'enemyHp'=>$enemy['hp'], 'playerHp'=>100, 'focusUsed'=>false,'wrongStreak'=>0,
+            'combat'=>epq_combat_start($enemyCode,epq_skills_view($db,$playerId)),
+            'wordStrikeLevel'=>epq_word_strike_level($db,$playerId),'correctAnswers'=>0,
             'question'=>null, 'used'=>[], 'startedAt'=>0], JSON_THROW_ON_ERROR);
         $stmt = $db->prepare('INSERT IGNORE INTO verified_battles (battle_id, player_id, enemy_code, state_json) VALUES (?, ?, ?, ?)');
         $stmt->bind_param('siss', $battleId, $playerId, $enemyCode, $initial);
@@ -93,6 +102,11 @@ try {
     if ($action === 'START' && $row['enemy_code'] !== $body['enemyId']) throw new DomainException('Battle enemy cannot change.');
     $state = json_decode($row['state_json'], true, 512, JSON_THROW_ON_ERROR);
     $enemy = epq_battle_enemies()[$row['enemy_code']];
+    if(!isset($state['correctAnswers'])){
+        $correctCount=$db->prepare('SELECT COUNT(*) AS n FROM verified_answer_attempts WHERE battle_id=? AND is_correct=1');
+        $correctCount->bind_param('s',$battleId);$correctCount->execute();
+        $state['correctAnswers']=(int)$correctCount->get_result()->fetch_assoc()['n'];
+    }
     // Hash only the action inputs; client reward fields and player IDs have no authority.
     $payloadHash = hash('sha256', json_encode([$action, $body['questionToken'] ?? null, $body['answer'] ?? null,
         $body['timedOut'] ?? false, $body['enemyId'] ?? null], JSON_THROW_ON_ERROR));
@@ -106,16 +120,19 @@ try {
         // A retried question response must not restart its countdown at old time.
         if (in_array($action, ['QUESTION','HINT','PAUSE','RESUME'], true) && isset($replayed['battle']['questionToken'])
             && $state['question'] !== null && $replayed['battle']['questionToken'] === $state['questionToken']) {
-            $replayed['battle']['remaining'] = epq_battle_view($state)['remaining'];
-            $replayed['battle']['paused'] = epq_battle_view($state)['paused'];
+            $replayed['battle']['remaining'] = epq_battle_view($state,$enemy)['remaining'];
+            $replayed['battle']['paused'] = epq_battle_view($state,$enemy)['paused'];
         }
         $db->commit();
         epq_json($replayed);
     }
     $outcome = null;
+    // Historical successful HERB receipts can still be recovered above. New
+    // battle purchases are rejected, including requests from cached old clients.
+    if($action==='HERB')throw new DomainException('BATTLE_SHOP_ONLY');
     if ($action !== 'START' && $state['status'] !== 'ACTIVE') throw new DomainException('Battle has already ended.');
     $settingsPaused = isset($state['pausedAt']) && ($state['pauseReason'] ?? null) === 'settings';
-    if ($settingsPaused && in_array($action, ['ANSWER','FOCUS','HERB','POTION','HINT'], true)) {
+    if ($settingsPaused && in_array($action, ['ANSWER','FOCUS','GUARD','SURGE','HERB','POTION','HINT'], true)) {
         throw new DomainException('Close settings before continuing the battle.');
     }
     if (isset($state['pausedAt']) && (in_array($action, ['RESUME','RUN'], true)
@@ -128,7 +145,8 @@ try {
         $state['pauseReason'] = 'settings';
     } elseif ($action === 'QUESTION' && $state['question'] === null) {
         $recent = epq_recent_question_ids($db, $playerId, $enemy['realm']);
-        $pool = epq_question_pool($enemy, $state['used'], $recent);
+        $stage=epq_question_stage($enemy,$state['correctAnswers']);
+        $pool = epq_question_pool($enemy, $state['used'], $recent,$stage['difficulty']);
         $state['question'] = epq_prepare_question($pool[random_int(0, count($pool)-1)]);
         // Ordinary map fights are self-paced; unlocked realm dungeons use timed challenges.
         // An already issued old question retains its original timer across an update/reload.
@@ -142,6 +160,8 @@ try {
         $q = $state['question'];
         $elapsed = max(0, microtime(true) - $state['startedAt']);
         $outcome = epq_grade_attack($q, $body['answer'] ?? null, ($body['timedOut'] ?? false) === true, $elapsed, $state['focusUsed'], (int)($state['wordStrikeLevel'] ?? 0));
+        $nextWrong=max(0,(int)($state['wrongStreak']??0))+1;
+        epq_combat_answer($state,$q,$outcome,epq_mistake_damage($enemy['damage'],$nextWrong));
         $skill = epq_question_skill($q);
         $questionJson = json_encode($q, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
         $answerJson = json_encode($body['answer'] ?? null, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
@@ -153,6 +173,9 @@ try {
         $attempt->execute();
         epq_record_accuracy($db, $playerId, $skill, $outcome['correct']);
         if ($outcome['correct']) {
+            $state['correctAnswers']++;
+            $state['wrongStreak']=0;
+            $outcome['enemyDamage']=0;
             $state['enemyHp'] = max(0, $state['enemyHp'] - $outcome['damage']);
             $state['focusUsed'] = false;
             epq_apply_reward($db, $playerId, $outcome['xp'], $outcome['coins'], $outcome['power'], $skill, 'QUESTION', 'Verified question: '.$q['id']);
@@ -161,13 +184,18 @@ try {
                 epq_apply_reward($db, $playerId, $enemy['xp'], $enemy['coins'], 0, 'VOCABULARY', 'ENEMY', 'Verified victory: '.$row['enemy_code']);
             }
         } else {
-            $state['playerHp'] = max(0, $state['playerHp'] - $enemy['damage']);
+            $state['wrongStreak']=max(0,(int)($state['wrongStreak']??0))+1;
+            $outcome['enemyDamage']=$outcome['enemyDamage']??epq_mistake_damage($enemy['damage'],$state['wrongStreak']);
+            $state['playerHp'] = max(0, $state['playerHp'] - $outcome['enemyDamage']);
             if ($state['playerHp'] === 0) $state['status'] = 'DEFEAT';
         }
         $state['question'] = null;
         unset($state['questionHint']);
     } elseif ($action === 'FOCUS') {
+        if(!empty($state['combat']['guard']))throw new DomainException('COMBAT_CHOICE_LOCKED');
         $state['focusUsed'] = true;
+    } elseif (in_array($action,['GUARD','SURGE'],true)) {
+        epq_combat_choice($state,$action);
     } elseif ($action === 'HINT') {
         if($state['question']===null || ($body['questionToken']??'')!==$state['questionToken'])throw new DomainException('HINT_NO_QUESTION');
         if(isset($state['questionHint']))throw new DomainException('HINT_ALREADY_USED');
@@ -180,16 +208,11 @@ try {
         epq_use_potion($db,$playerId,$requestId);
         $state['playerHp']=min(100,$state['playerHp']+epq_shop_catalog()['potion']['heal']);
         if ($state['question'] !== null) $state['pausedAt'] = microtime(true);
-    } elseif ($action === 'HERB') {
-        if ($state['playerHp'] >= 100) throw new DomainException('HP is full.');
-        epq_apply_reward($db, $playerId, 0, -5, 0, 'VOCABULARY', 'SHOP_PURCHASE', 'Verified Healing Herb');
-        $state['playerHp'] = min(100, $state['playerHp'] + 20);
-        if ($state['question'] !== null) $state['pausedAt'] = microtime(true);
     } elseif ($action === 'RUN') {
         $state['status'] = 'ESCAPED';
         $state['question'] = null;
     }
-    $response = ['ok'=>true, 'battle'=>epq_battle_view($state), 'player'=>epq_reward_balance($db, $playerId), 'outcome'=>$outcome,
+    $response = ['ok'=>true, 'battle'=>epq_battle_view($state,$enemy), 'player'=>epq_reward_balance($db, $playerId), 'outcome'=>$outcome,
         'shop'=>epq_shop_view($db,$playerId)];
     $stateJson = json_encode($state, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
     $stmt = $db->prepare('UPDATE verified_battles SET state_json = ? WHERE battle_id = ?');
@@ -206,7 +229,7 @@ try {
         try { $db->rollback(); }
         catch (Throwable $rollbackError) { error_log('[English Power Quest battle rollback] '.$rollbackError->getMessage()); }
     }
-    if ($e instanceof DomainException) epq_json(['ok'=>false, 'error'=>$e->getMessage(), 'errorCode'=>$e->getMessage()==='DUNGEON_LOCKED'?'DUNGEON_LOCKED':null], 409);
+    if ($e instanceof DomainException) epq_json(['ok'=>false, 'error'=>$e->getMessage(), 'errorCode'=>in_array($e->getMessage(),['DUNGEON_LOCKED','BATTLE_SHOP_ONLY'],true)?$e->getMessage():null], 409);
     if ($e instanceof InvalidArgumentException || $e instanceof JsonException) epq_json(['ok'=>false, 'error'=>'Invalid battle request.'], 400);
     error_log('[English Power Quest battle] '.$e->getMessage());
     $missing = $e instanceof mysqli_sql_exception && $e->getCode() === 1146;

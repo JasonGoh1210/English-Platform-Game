@@ -34,13 +34,14 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
   <meta name="theme-color" content="#111b22">
   <meta name="description" content="English Power Quest - a story-driven English learning RPG.">
   <title>English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/style.css?v=20261017-particles1">
-  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261017-particles1">
-  <link rel="stylesheet" href="/FYP/css/story-pixel.css?v=20261017-particles1">
-  <link rel="stylesheet" href="/FYP/css/dungeon-pixel.css?v=20261017-particles1">
-  <link rel="stylesheet" href="/FYP/css/companions.css?v=20261017-particles1">
-  <link rel="stylesheet" href="/FYP/css/quest-guide.css?v=20261017-particles1">
-  <link rel="stylesheet" href="/FYP/css/map-toolbar.css?v=20261017-particles1">
+  <link rel="stylesheet" href="/FYP/css/style.css?v=20261018-newbie1">
+  <link rel="stylesheet" href="/FYP/css/pixel-theme.css?v=20261018-newbie1">
+  <link rel="stylesheet" href="/FYP/css/story-pixel.css?v=20261018-newbie1">
+  <link rel="stylesheet" href="/FYP/css/dungeon-pixel.css?v=20261018-newbie1">
+  <link rel="stylesheet" href="/FYP/css/companions.css?v=20261018-newbie1">
+  <link rel="stylesheet" href="/FYP/css/quest-guide.css?v=20261018-newbie1">
+  <link rel="stylesheet" href="/FYP/css/adventure.css?v=20261018-newbie1">
+  <link rel="stylesheet" href="/FYP/css/map-toolbar.css?v=20261018-newbie1">
   <?php $epqLoadingMode = 'map'; require __DIR__.'/includes/loading_screen.php'; ?>
 </head>
 <body>
@@ -255,6 +256,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
       </div>
 
       <div class="typing-cave-controls">
+        <div id="bossChallengeControls" class="boss-challenge-controls hidden"></div>
         <form id="typingCaveForm" class="typing-cave-form">
           <label for="typingCaveInput" id="typingCaveAnswerLabel">Type your answer</label>
           <div class="typing-cave-answer-row">
@@ -355,7 +357,7 @@ foreach (['maple'=>'maple-town', 'forest'=>'whispering-forest', 'camp'=>'old-cam
         canvas.style.backgroundSize = "cover";
       }
 
-      const startGame = () => import("/FYP/js/rpg.js?v=20261017-particles1").catch((error) => {
+      const startGame = () => import("/FYP/js/rpg.js?v=20261018-newbie1").catch((error) => {
         window.EPQLoading?.fail();
         console.error("[English Power Quest] Game script failed to initialize:", error);
         const notice = document.createElement("div");

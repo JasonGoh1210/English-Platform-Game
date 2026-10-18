@@ -1,15 +1,18 @@
-import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261017-particles1";
-import { playSound } from "./audio.js?v=20261017-particles1";
-import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261017-particles1";
-import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261017-particles1";
-import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText, loadCharacterAssets } from "./characters.js?v=20261017-particles1";
-import { createQuestClient } from "./quest-api.js?v=20261017-particles1";
-import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261017-particles1";
-import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave, drawDungeonBackdrop, drawGroundedSprite } from "./pixel-world.js?v=20261017-particles1";
-import {createCompanion} from './companions.js?v=20261017-particles1';
-import { storyPortraitSource } from "./story-visuals.js?v=20261017-particles1";
-import { drawVillageCrossing } from "./village-river.js?v=20261017-particles1";
-import {createParticleEffect} from './particle-effects.js?v=20261017-particles1';
+import { t, getLanguage, onLanguageChange } from "./i18n.js?v=20261018-newbie1";
+import { playSound,setMusicScene,getMusicState } from "./audio.js?v=20261018-newbie1";
+import { setSaveWarning, clearSaveWarning } from "./save-status.js?v=20261018-newbie1";
+import { normalizeTutorial, initialTutorial, tutorialActive, tutorialSlimeVisible, tutorialSlimeX, createTutorialGuide } from "./tutorial.js?v=20261018-newbie1";
+import { characterSprite, paintCharacterImages, paintCharacterImage, heroStoryText, loadCharacterAssets } from "./characters.js?v=20261018-newbie1";
+import { createQuestClient } from "./quest-api.js?v=20261018-newbie1";
+import { questGuidance, echoRooms, echoEnemyAvailable, storyTargets } from "./quest-guidance.js?v=20261018-newbie1";
+import { pixelArtPaths, drawPixelBackdrop, drawPixelGround, drawPixelLandmark, drawPixelCave, drawDungeonBackdrop, drawGroundedSprite } from "./pixel-world.js?v=20261018-newbie1";
+import {createCompanion} from './companions.js?v=20261018-newbie1';
+import { storyPortraitSource } from "./story-visuals.js?v=20261018-newbie1";
+import { drawVillageCrossing } from "./village-river.js?v=20261018-newbie1";
+import {createParticleEffect} from './particle-effects.js?v=20261018-newbie1';
+import {createAdventure} from './adventure.js?v=20261018-newbie1';
+import {drawVillageCelebration} from './world-celebration.js?v=20261018-newbie1';
+import {createBossPresentation} from './boss-presentation.js?v=20261018-newbie1';
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -89,6 +92,8 @@ const typingUi = {
   winReplay: document.getElementById("typingCaveWinReplay"),
   winExit: document.getElementById("typingCaveWinExit")
 };
+const bossPresentation=createBossPresentation({screen:typingUi.screen,stage:typingUi.screen.querySelector('.typing-cave-stage'),monster:typingUi.monster});
+let festivalReturnPending=false;
 
 const TYPING_CAVE_TOTAL_LEVELS = 3;
 const TYPING_CAVE_START_POSITION = 84;
@@ -127,11 +132,11 @@ const deadTreeSprite=new Image();deadTreeSprite.src='/FYP/images/castle/withered
 const sakuraTreeSprite=new Image();sakuraTreeSprite.src='/FYP/images/castle/restored-sakura-192.png';
 const castleGateSprite=new Image();castleGateSprite.src='/FYP/images/castle/castle-gate-128.png';
 const castleGateOpenSprite=new Image();castleGateOpenSprite.src='/FYP/images/castle/castle-gate-open-128.png';
-const exitDoorSprite=new Image();exitDoorSprite.src='/FYP/images/dungeons/exit-door-128.png?v=20261017-particles1';
-const villageShopSprite=new Image();villageShopSprite.src='/FYP/images/shop/village-apothecary-192.png?v=20261017-particles1';
-const finalCastleSprite=new Image();finalCastleSprite.src='/FYP/images/castle/final-castle-192.png?v=20261017-particles1';
-const finalBossSprite=new Image();finalBossSprite.src='/FYP/images/castle/wordless-king-128.png?v=20261017-particles1';
-const finalCastleHall=new Image();finalCastleHall.src='/FYP/images/castle/throne-hall.png?v=20261017-particles1';
+const exitDoorSprite=new Image();exitDoorSprite.src='/FYP/images/dungeons/exit-door-128.png?v=20261018-newbie1';
+const villageShopSprite=new Image();villageShopSprite.src='/FYP/images/shop/village-apothecary-192.png?v=20261018-newbie1';
+const finalCastleSprite=new Image();finalCastleSprite.src='/FYP/images/castle/final-castle-192.png?v=20261018-newbie1';
+const finalBossSprite=new Image();finalBossSprite.src='/FYP/images/castle/wordless-king-128.png?v=20261018-newbie1';
+const finalCastleHall=new Image();finalCastleHall.src='/FYP/images/castle/throne-hall.png?v=20261018-newbie1';
 const companionHint=document.createElement('p');companionHint.className='companion-hint hidden';document.querySelector('.game-shell').appendChild(companionHint);
 document.getElementById('companionLead')?.addEventListener('click',()=>{
   const leading=companion.toggle();document.getElementById('companionLead').setAttribute('aria-pressed',String(leading));
@@ -140,13 +145,15 @@ document.getElementById('companionLead')?.addEventListener('click',()=>{
 });
 function updateCompanionHint(){
   const guide=currentGuidance();companionHint.textContent=t('companion.hint',{name:t(guide.target.nameKey),realm:getLocalizedRealmName(guide.target.realm),route:t(guide.routeKey,{realm:getLocalizedRealmName(guide.target.realm)})});
-  const state=companion.state(world.shop.equipped);companionHint.classList.toggle('hidden',!state.leading||world.storyIntroOpen||world.interacting||world.travelMenu||world.typingCaveOpen||settingsIsOpen()||guideIsOpen());
+  const state=companion.state(world.shop.equipped),interest=adventure.interest();
+  if(!state.leading&&interest){const hints={supplies:['Your companion found the merchant supplies.','随从发现了商人的补给箱。'],cave:['Your companion is listening near the cave entrance.','随从正在洞口附近聆听回声。'],memory:['Your companion noticed a memory monument.','随从注意到了附近的记忆遗迹。']};const text=hints[interest.kind];if(text)companionHint.textContent=getLanguage()==='zh'?text[1]:text[0];}
+  companionHint.classList.toggle('hidden',(!state.leading&&!interest)||world.storyIntroOpen||world.interacting||world.travelMenu||world.typingCaveOpen||settingsIsOpen()||guideIsOpen()||adventure.isOpen());
 }
 function updateCompanionButton(leading) {
   const label=document.getElementById('companionLeadLabel');
   if(label){label.dataset.i18n=leading?'companion.follow':'companion.lead';label.textContent=t(label.dataset.i18n);}
 }
-function drawCompanion(){companion.draw(ctx,{camera:world.cameraX,ground:world.groundY,equipped:world.shop.equipped,playerX:world.player.x,routeX:currentGuidance().routeX,time:world.time});}
+function drawCompanion(){companion.draw(ctx,{camera:world.cameraX,ground:world.groundY,equipped:world.shop.equipped,playerX:world.player.x,routeX:currentGuidance().routeX,time:world.time,charm:adventure.companionCharm(world.shop.equipped)});}
 
 const worldBackgrounds = {
   maple: new Image(),
@@ -168,7 +175,7 @@ const worldBackgroundPaths = {
 for (const realmId of Object.keys(worldBackgroundPaths)) {
   const availablePaths = window.EPQ_AUTH?.worldBackgrounds?.[realmId];
   if (Array.isArray(availablePaths)) {
-    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261017-particles1");
+    worldBackgroundPaths[realmId] = availablePaths.map(path => path + "?v=20261018-newbie1");
   }
 }
 
@@ -211,6 +218,12 @@ world.dungeonAccess = null;
 world.dungeonPending = false;
 const questClient=createQuestClient(AUTH_CONTEXT.csrfToken,AUTH_CONTEXT.storageId||AUTH_CONTEXT.playerId,
   applyConfirmedQuest,waiting=>waiting?setSaveWarning("rewards","save.rewardFailed"):clearSaveWarning("rewards"));
+const adventure=createAdventure({
+  getContext:()=>({realm:world.currentRealmId,x:world.player.x,width:world.width,inside:world.insideCave,caveX:landmarks.find(l=>l.realmId===world.currentRealmId&&l.type==='cave')?.x,enabled:world.ready&&!world.storyIntroOpen&&!world.typingCaveOpen&&!world.travelMenu&&!world.battle&&!world.interacting&&!settingsIsOpen()&&!guideIsOpen()&&!tutorialActive(world.tutorial)}),
+  request:(action,inputs)=>questClient.request(action,inputs),
+  beforeAction:async()=>{saveWorldState();return await flushGameSave();},
+  onChanged:()=>void loadServerPlayer(),onPet:()=>companion.interact()
+});
 paintCharacterImages(AUTH_CONTEXT.character);
 const IS_GUEST = Boolean(AUTH_CONTEXT.isGuest);
 const AUTH_PLAYER_ID = String(AUTH_CONTEXT.storageId || AUTH_CONTEXT.playerId || "guest");
@@ -988,6 +1001,7 @@ document.addEventListener("visibilitychange", () => {
 });
 
 window.addEventListener("keydown", (e) => {
+  if(adventure.isOpen())return;
   const k = e.key.toLowerCase();
   // Native settings controls own their keys; Escape may already have closed the menu.
   if (e.defaultPrevented || settingsIsOpen()) return;
@@ -1058,7 +1072,7 @@ window.addEventListener("keydown", (e) => {
     return;
   }
 
-  if (world.interacting || e.target?.closest?.('.map-tool-icons')) return;
+  if (world.interacting || e.target?.closest?.('.map-tool-icons') || e.target?.closest?.('.adventure-hud')) return;
 
   if (["arrowleft","arrowright","a","d"," ","e"].includes(k)) e.preventDefault();
   keys.add(k);
@@ -1122,7 +1136,7 @@ typingUi.retry.addEventListener("click", retryTypingCave);
 typingUi.loseRetry.addEventListener("click", retryTypingCave);
 typingUi.loseExit.addEventListener("click", closeTypingCave);
 typingUi.winReplay.addEventListener("click", retryTypingCave);
-typingUi.winExit.addEventListener("click", closeTypingCave);
+typingUi.winExit.addEventListener("click",async()=>{const returnHome=festivalReturnPending;closeTypingCave();if(returnHome){world.selectedDestinationIndex=0;world.travelMenu=true;await travelToSelectedDestination();}});
 typingUi.form.addEventListener("submit", (event) => {
   event.preventDefault();
   submitTypingAnswer();
@@ -1422,6 +1436,7 @@ function finishStoryIntro() {
 
 let npcQuestPending=false;
 async function interact() {
+  if(adventure.isOpen())return;
   if (!world.ready || window.EPQLoading?.active || journalNavigationPending) return;
   if(npcQuestPending || world.dungeonPending)return;
   if (world.interacting || world.battle || world.travelMenu || settingsIsOpen()) return;
@@ -1453,6 +1468,7 @@ async function interact() {
   }
 
   const cave = landmarks.find(item => item.realmId === world.currentRealmId && item.type === "cave");
+  if(await adventure.interact())return;
   if (cave && Math.abs(cave.x - world.player.x) < 105) {
     enterCave();
     return;
@@ -1500,8 +1516,8 @@ async function interact() {
         world.tutorial = { ...world.tutorial, stage: "SLIME" };
       }
       updateQuest();syncHUD();saveWorldState();
-    } else if (npc.id === "kai" && world.questStep >= 5) {
-      dialogueKey = "npc.kai.after";
+    } else if (world.questStep >= 5) {
+      dialogueKey = 'npc.'+npc.id+'.festival';
     }
 
     if (storyBeatTriggered) {
@@ -1601,6 +1617,32 @@ function leaveCave() {
   saveWorldState({ playerX: world.player.x, insideCave: false });
 }
 
+let bossSelected=[],bossSelectionToken=null;
+function focusBossAnswer(){
+  if(typingCaveState.gameOver||typingCaveState.busy)return;
+  const mode=typingCaveState.currentWord?.mode||'spelling';
+  (mode==='spelling'?typingUi.input:document.querySelector('#bossChallengeControls button:not(:disabled)'))?.focus({preventScroll:true});
+}
+function renderBossChallenge(){
+  const word=typingCaveState.currentWord,root=document.getElementById('bossChallengeControls');if(!word||!root)return;
+  const focused=root.contains(document.activeElement)?document.activeElement.dataset.bossFocus:null;
+  const mode=word.mode||'spelling',zh=getLanguage()==='zh';root.replaceChildren();root.classList.toggle('hidden',mode==='spelling');
+  typingUi.input.classList.toggle('hidden',mode!=='spelling');typingUi.submit.classList.toggle('hidden',mode!=='spelling');typingUi.hint.classList.toggle('hidden',mode!=='spelling');typingUi.hintLabel.classList.toggle('hidden',mode!=='spelling');
+  if(mode==='spelling')return;
+  if(bossSelectionToken!==typingCaveState.questionToken){bossSelected=[];bossSelectionToken=typingCaveState.questionToken;}
+  let buttonIndex=0;
+  const make=(text,action)=>{const b=document.createElement('button');b.type='button';b.dataset.bossFocus=String(buttonIndex++);b.textContent=text;b.disabled=typingCaveState.busy||typingCaveState.gameOver;b.addEventListener('click',action);return b;};
+  if(mode==='meaning')for(const choice of word.choices||[])root.append(make(choice,()=>{typingUi.input.value=choice;void submitTypingAnswer();}));
+  else{
+    const chosen=document.createElement('div');chosen.className='boss-sentence-selected';chosen.setAttribute('aria-live','polite');
+    for(const [slot,index] of bossSelected.entries())chosen.append(make(word.words[index],()=>{bossSelected.splice(slot,1);renderBossChallenge();}));
+    const bank=document.createElement('div');bank.className='boss-word-bank';for(const [index,text] of word.words.entries()){const b=make(text,()=>{bossSelected.push(index);renderBossChallenge();root.querySelector('.boss-word-bank button:not(:disabled),[data-boss-submit=sentence]:not(:disabled)')?.focus({preventScroll:true});});b.disabled||=bossSelected.includes(index);bank.append(b);}
+    const clear=make(zh?'清空':'Clear',()=>{bossSelected=[];renderBossChallenge();}),submit=make(zh?'击碎封印':'Break the seal',()=>{typingUi.input.value=bossSelected.map(i=>word.words[i]).join(' ');void submitTypingAnswer();});submit.disabled||=bossSelected.length!==word.words.length;submit.dataset.bossSubmit='sentence';root.append(chosen,bank,clear,submit);
+  }
+  typingUi.questionLabel.textContent=zh?(mode==='meaning'?'选择符合词义的单词':'按正确顺序组合句子'):(mode==='meaning'?'CHOOSE THE MATCHING WORD':'BUILD THE SENTENCE');
+  typingUi.answerLabel.textContent=zh?'破除封印':'Break the seal';
+  if(focused!==null&&!typingCaveState.busy){const old=root.querySelector('[data-boss-focus="'+focused+'"]');(old&&!old.disabled?old:root.querySelector('button:not(:disabled)'))?.focus({preventScroll:true});}
+}
 function renderTypingQuestion() {
   const word = typingCaveState.currentWord;
   if (!typingUi.screen || !word) return;
@@ -1625,7 +1667,10 @@ function renderTypingQuestion() {
   typingUi.stageLabel.textContent = isChinese
     ? `封印 ${Math.min(typingCaveState.completedLevels + 1, TYPING_CAVE_TOTAL_LEVELS)} / ${TYPING_CAVE_TOTAL_LEVELS}`
     : `SEAL ${Math.min(typingCaveState.completedLevels + 1, TYPING_CAVE_TOTAL_LEVELS)} / ${TYPING_CAVE_TOTAL_LEVELS}`;
-  typingUi.instructions.textContent = t('castle.instructions');
+  const mode=word.mode||'spelling';
+  typingUi.instructions.textContent = mode==='spelling'?t('castle.instructions'):isChinese
+    ?(mode==='meaning'?'根据释义选择单词，答对击碎第一道封印。每12秒怪物前进一步。':'选择词块组合完整句子；可以点已选词撤回。每20秒怪物前进一步。')
+    :(mode==='meaning'?'Choose the matching word to break the first seal. The boss approaches every12seconds.':'Build the whole sentence; select a chosen word to undo it. The boss approaches every20seconds.');
   typingUi.questionLabel.textContent = isChinese ? "输入符合以下解释的单词" : "TYPE THE WORD THAT MEANS";
   typingUi.question.textContent = word.definition;
   typingUi.translation.textContent = word.definitionZh || "";
@@ -1651,12 +1696,14 @@ function renderTypingQuestion() {
   typingUi.retry.textContent = isChinese ? "再试一次" : "TRY AGAIN";
   typingUi.exit.textContent = isChinese ? "↩ 返回地图" : "↩ BACK TO MAP";
   updateTypingCaveVisuals();
+  renderBossChallenge();
 }
 
 function updateTypingCaveVisuals() {
   typingUi.monster.style.left = (Math.min(84,typingCaveState.monsterLeft) - (window.innerWidth<600?6:0)) + "%";
   const remaining=Math.max(0,3-typingCaveState.completedLevels), phase=Math.min(3,typingCaveState.completedLevels+1);
   typingUi.screen.dataset.phase=String(phase);
+  bossPresentation.setPhase(phase);if(!typingCaveState.gameOver)setMusicScene('boss'+phase);
   document.getElementById('castleBossPhase').textContent=t(remaining?'castle.phase'+phase:'castle.defeated');
   const seals=document.getElementById('castleBossSeals');
   seals.setAttribute('aria-valuenow',String(remaining));
@@ -1680,6 +1727,7 @@ async function openTypingCave() {
   playSound("cave");
   window.EPQLoading?.begin('assets');
   world.typingCaveOpen = true;
+  festivalReturnPending=false;bossPresentation.reset();bossPresentation.setPhase(1);setMusicScene('boss1');
   world.player.vx = 0;
   keys.clear();
   touch.left = false;
@@ -1708,7 +1756,7 @@ async function openTypingCave() {
   const generation=typingCaveState.roundToken;
   saveWorldState();
   if(await flushGameSave()===false){window.EPQLoading?.ready(true);typingUi.retry.classList.remove("hidden");setTypingMessage(getLanguage()==="zh"?"存档尚未确认，请检查连接后重试。":"Save not confirmed. Check your connection and retry.");return;}
-  for(const art of [finalBossSprite,finalCastleHall])if(art.complete&&!art.naturalWidth)art.src=art.src.split('?')[0]+'?v=20261017-particles1&retry='+Date.now();
+  for(const art of [finalBossSprite,finalCastleHall])if(art.complete&&!art.naturalWidth)art.src=art.src.split('?')[0]+'?v=20261018-newbie1&retry='+Date.now();
   await window.EPQLoading?.waitForImages([finalBossSprite,finalCastleHall]);
   await window.EPQLoading?.waitForMinimum();
   if(!finalBossSprite.naturalWidth||!finalCastleHall.naturalWidth){window.EPQLoading?.ready(true);typingUi.retry.classList.remove('hidden');setTypingMessage(t('castle.artFailed'));return;}
@@ -1722,15 +1770,16 @@ async function openTypingCave() {
   renderTypingQuestion();
   typingUi.input.disabled = false;
   typingUi.submit.disabled = false;
-  typingUi.input.focus();
-  setTypingMessage(getLanguage() === "zh"
-    ? "输入英文单词并按 Enter。答错会让怪物前进一步。"
-    : "Type the word and press Enter. A wrong answer moves the monster one step closer.");
+  focusBossAnswer();
+  setTypingMessage(typingCaveState.currentWord.mode==='meaning'
+    ?(getLanguage()==='zh'?'选择符合释义的单词。答错会让怪物前进一步。':'Choose the matching word. A wrong answer moves the boss closer.')
+    :(getLanguage()==='zh'?'输入英文单词并按 Enter。答错会让怪物前进一步。':'Type the word and press Enter. A wrong answer moves the monster one step closer.'));
 }
 
 function closeTypingCave() {
   if (!world.typingCaveOpen) return;
   world.typingCaveOpen = false;
+  festivalReturnPending=false;bossPresentation.stop();setMusicScene(null);
   if(typingCaveState.runId)void questClient.request("TYPING_CLOSE",{runId:typingCaveState.runId});
   typingCaveState.roundToken += 1;
   keys.clear();
@@ -1754,6 +1803,7 @@ function advanceTypingMonster(reason) {
 
   const isChinese = getLanguage() === "zh";
   if (typingCaveState.monsterLeft <= 32) {
+    setMusicScene(null);
     playSound("defeat");
     typingCaveState.gameOver = true;
     if(typingCaveState.runId)void questClient.request("TYPING_CLOSE",{runId:typingCaveState.runId});
@@ -1762,26 +1812,30 @@ function advanceTypingMonster(reason) {
     typingUi.submit.disabled = true;
     typingUi.retry.classList.add("hidden");
 
+    const failedMode=typingCaveState.currentWord?.mode||'spelling';
+    const reviewHelp=isChinese
+      ?failedMode==='meaning'?'词义选择的正确答案与解释':failedMode==='sentence'?'正确句子与语序说明':'正确答案和拼写解释'
+      :failedMode==='meaning'?'the word meaning and its explanation':failedMode==='sentence'?'the correct sentence and word order':'the correct answer and spelling explanation';
     typingUi.loseTitle.textContent = isChinese ? "你输了！" : "YOU LOSE";
     typingUi.loseMessage.textContent = isChinese
-      ? "怪物追上你了。看一下本题的答案和拼写解释，再挑战一次吧。"
-      : "The monster caught you. Review this word and its spelling explanation, then try again.";
+      ? "怪物追上你了。看一下"+reviewHelp+"，再挑战一次吧。"
+      : "The monster caught you. Review "+reviewHelp+", then try again.";
 
     const reviewWord = typingCaveState.currentWord;
     const lastMistake = typingCaveState.lastMistake;
     typingUi.loseAttempt.textContent = isChinese
-      ? "你输入的答案：" + (lastMistake ? lastMistake.typedAnswer : "本题没有提交错误答案（超时）")
+      ? "你的答案：" + (lastMistake ? lastMistake.typedAnswer : "本题没有提交错误答案（超时）")
       : "Your answer: " + (lastMistake ? lastMistake.typedAnswer : "No incorrect answer submitted (time ran out)");
     typingUi.loseCorrect.textContent = isChinese
       ? "正确答案：" + (lastMistake ? lastMistake.correctAnswer : String(reviewWord?.answer || "").toUpperCase())
       : "Correct answer: " + (lastMistake ? lastMistake.correctAnswer : String(reviewWord?.answer || "").toUpperCase());
     typingUi.loseExplanation.textContent = isChinese
-      ? "拼写解释：" + (lastMistake
+      ? "答题说明：" + (lastMistake
         ? lastMistake.explanation
-        : "本题超时，未提交答案。请根据下方单词释义记住正确拼写。")
+        : "本题超时，未提交答案。请回顾"+reviewHelp+"。")
       : "Explanation: " + (lastMistake
         ? lastMistake.explanation
-        : "Time ran out before an answer was submitted. Review the word meaning below and remember its spelling.");
+        : "Time ran out before an answer was submitted. Review "+reviewHelp+".");
     typingUi.loseMeaning.textContent = isChinese
       ? "题目释义：" + (reviewWord?.definitionZh || reviewWord?.definition || "")
       : "Definition: " + (reviewWord?.definition || "") +
@@ -1797,17 +1851,25 @@ function advanceTypingMonster(reason) {
 
   setTypingMessage(
     reason === "wrong"
-      ? (isChinese ? "答案不正确！怪物前进一步，并揭示了一个字母。" : "Not quite! The monster moves one step closer and reveals a letter.")
-      : (isChinese ? "怪物正在靠近……又揭示了一个字母！" : "The monster creeps closer… another letter is revealed!"),
+      ? (isChinese ? "答案不正确！怪物前进一步。" : "Not quite! The monster moves one step closer.")
+      : (isChinese ? "怪物正在靠近……请继续解开封印！" : "The monster creeps closer… keep working on the seal!"),
     reason === "wrong" ? "warning" : "danger"
   );
-  typingUi.input.focus();
+  focusBossAnswer();
 }
 
 function showTypingSpellingFeedback(typedAnswer, correctAnswer) {
   const typed = String(typedAnswer || "").trim().toLowerCase();
   const correct = String(correctAnswer || "").trim().toLowerCase();
   const isChinese = getLanguage() === "zh";
+  const mode=typingCaveState.currentWord?.mode||'spelling';
+  if(mode!=='spelling'){
+    const explanation=isChinese
+      ?(mode==='meaning'?'请对照题目释义，重新选择符合意思的单词。':'请检查开头、主语、动词和其余词块的顺序，重新组合完整句子。')
+      :(mode==='meaning'?'Compare each word with the definition and choose the matching meaning.':'Check the opening, subject, verb and remaining word order, then rebuild the complete sentence.');
+    typingUi.spellingFeedback.textContent=explanation;typingUi.spellingFeedback.classList.remove('hidden');
+    typingCaveState.lastMistake={typedAnswer:typed.toUpperCase(),correctAnswer:correct.toUpperCase(),explanation};return;
+  }
   let differenceIndex = 0;
 
   while (
@@ -1876,21 +1938,23 @@ async function submitTypingAnswer() {
   const typed = typingUi.input.value.trim().toLowerCase().replace(/\s+/g, " ");
   if (!typed) {
     setTypingMessage(getLanguage() === "zh" ? "先输入一个英文答案。" : "Type an answer first.", "warning");
-    typingUi.input.focus();
+    focusBossAnswer();
     return;
   }
 
   const generation=typingCaveState.roundToken;
   typingCaveState.busy=true;typingUi.input.disabled=true;typingUi.submit.disabled=true;
+  renderBossChallenge();
   const verified=await questClient.request("TYPING_ANSWER",{runId:typingCaveState.runId,questionToken:typingCaveState.questionToken,answer:typed});
   if(!world.typingCaveOpen||generation!==typingCaveState.roundToken)return;
   typingCaveState.busy=false;typingUi.input.disabled=false;typingUi.submit.disabled=false;
-  if(!verified.ok){setTypingMessage(getLanguage()==="zh"?"答案尚未确认，请重试或重新进入挑战。":"Answer not confirmed. Retry or re-enter the challenge.","warning");return;}
+  if(!verified.ok){renderBossChallenge();setTypingMessage(getLanguage()==="zh"?"答案尚未确认，请重试或重新进入挑战。":"Answer not confirmed. Retry or re-enter the challenge.","warning");return;}
   const correctAnswer = String(typingCaveState.currentWord.answer).trim().toLowerCase();
   if (!verified.outcome.correct) {
     typingUi.input.value = "";
     showTypingSpellingFeedback(typed, correctAnswer);
     advanceTypingMonster("wrong");
+    bossSelected=[];renderBossChallenge();
     return;
   }
 
@@ -1906,6 +1970,7 @@ async function submitTypingAnswer() {
   typingUi.monster.classList.remove('boss-struck');
   void typingUi.monster.offsetWidth;
   typingUi.monster.classList.add('boss-struck');
+  bossPresentation.hit();playSound('seal');
   typingCaveState.monsterLeft = Math.min(
     TYPING_CAVE_RIGHT_LIMIT,
     typingCaveState.monsterLeft + TYPING_CAVE_STEP
@@ -1928,7 +1993,7 @@ async function submitTypingAnswer() {
   );
 
 
-  window.setTimeout(() => {
+  window.setTimeout(async () => {
     if (!world.typingCaveOpen || token !== typingCaveState.roundToken) return;
     typingCaveState.passiveTimer = 0;
     clearTypingSpellingFeedback();
@@ -1937,8 +2002,11 @@ async function submitTypingAnswer() {
     if (typingCaveState.completedLevels >= TYPING_CAVE_TOTAL_LEVELS) {
       typingCaveState.gameOver = true;
       typingCaveState.busy = true;
+      setMusicScene(null);playSound('bossDefeat');setTypingMessage(getLanguage()==='zh'?'最后一道封印碎裂，无言魔王正在消散……':'The final seal breaks. The Wordless King fades into embers…','success');
+      if(!await bossPresentation.die()||!world.typingCaveOpen||token!==typingCaveState.roundToken)return;
       const storyEnding = verified.outcome.storyEnding;
       const showTypingVictory = () => {
+        const isChinese=getLanguage()==='zh';festivalReturnPending=storyEnding;
         playSound("victory");
         typingUi.winTitle.textContent = storyEnding
           ? t("story.ending.title")
@@ -1951,7 +2019,7 @@ async function submitTypingAnswer() {
             ? "三道封印全部击碎！无言魔王已被击败，城堡重归平静。奖励已确认。"
             : "All three seals are broken! The Wordless King is defeated and the castle is quiet. Rewards are confirmed.");
         typingUi.winReplay.textContent = isChinese ? "再玩一次" : "PLAY AGAIN";
-        typingUi.winExit.textContent = isChinese ? "返回地图" : "BACK TO MAP";
+        typingUi.winExit.textContent = storyEnding?(isChinese?'回村庆祝':'RETURN TO THE FESTIVAL'):(isChinese?'返回地图':'BACK TO MAP');
         typingUi.winOverlay.classList.remove("hidden");
         typingUi.winReplay.focus();
       };
@@ -1975,7 +2043,7 @@ async function submitTypingAnswer() {
         ? `下一关！还剩 ${TYPING_CAVE_TOTAL_LEVELS - typingCaveState.completedLevels} 关，继续把怪物击退！`
         : `Next level! ${TYPING_CAVE_TOTAL_LEVELS - typingCaveState.completedLevels} level(s) remaining. Keep pushing the monster back!`
     );
-    typingUi.input.focus();
+    focusBossAnswer();
   }, 900);
 }
 
@@ -2097,6 +2165,9 @@ async function travelToSelectedDestination() {
       dungeonArt[destination.id]?.entrance
     ]);
     draw();
+    // Warm cached canvas sprites/landmarks before revealing the destination.
+    // Image readiness alone does not guarantee their first composited frame is visible.
+    await new Promise(resolve=>requestAnimationFrame(()=>{draw();requestAnimationFrame(resolve);}));
     window.EPQLoading?.ready();
   } catch (error) {
     window.EPQLoading?.fail();
@@ -2125,10 +2196,11 @@ function defeatedEnemyIds() {
 }
 
 function currentGuidance() {
-  return questGuidance({ chapter: world.questStep, realm: world.currentRealmId,
+  const guide=questGuidance({ chapter: world.questStep, realm: world.currentRealmId,
     x: world.player.x, insideCave: world.insideCave, tutorial: world.tutorial,
     slimeX: tutorialActive(world.tutorial) ? tutorialSlimeX(world.tutorial) : 1435,
     defeatedIds: defeatedEnemyIds(),rooms:currentDungeonRooms(),dungeonAccess:world.dungeonAccess,castle:world.castle });
+  return guide;
 }
 
 function guideIsOpen() {
@@ -2248,7 +2320,14 @@ function refreshWorldLanguage() {
     }
   }
   if (world.travelMenu) renderDestinationSelection();
-  if (world.typingCaveOpen) renderTypingQuestion();
+  if (world.typingCaveOpen) {
+    renderTypingQuestion();
+    if(!typingCaveState.busy&&!typingCaveState.gameOver){
+      setTypingMessage(typingUi.instructions.textContent);
+      const mistake=typingCaveState.lastMistake;
+      if(mistake)showTypingSpellingFeedback(mistake.typedAnswer,mistake.correctAnswer);
+    }
+  }
   if (!ui.dialogue.classList.contains("hidden")) ui.dialoguePortrait.alt=ui.dialogueName.textContent;
 }
 
@@ -2350,6 +2429,10 @@ async function startBattle(enemy) {
 }
 
 function update(dt) {
+  adventure.update(world.time);
+  if(!world.typingCaveOpen)setMusicScene(world.ready&&world.questStep>=5&&world.currentRealmId==='maple'&&!world.storyIntroOpen&&!world.interacting&&!world.travelMenu&&!world.battle&&!adventure.isOpen()&&!settingsIsOpen()?'festival':null);
+  if(world.storyIntroOpen||world.typingCaveOpen||adventure.isOpen())companionHint.classList.add('hidden');
+  if(adventure.isOpen()){keys.clear();touch.left=false;touch.right=false;world.player.vx=0;return;}
   if (!world.ready || window.EPQLoading?.active || journalNavigationPending) return;
   world.time += dt;
   updateMapTutorial();
@@ -2359,7 +2442,7 @@ function update(dt) {
   if (world.typingCaveOpen) {
     if (!typingCaveState.busy && !typingCaveState.gameOver) {
       typingCaveState.passiveTimer += dt;
-      if (typingCaveState.passiveTimer >= 8) {
+      if (typingCaveState.passiveTimer >= (typingCaveState.currentWord?.mode==='sentence'?20:typingCaveState.currentWord?.mode==='meaning'?12:8)) {
         advanceTypingMonster("time");
       }
     }
@@ -2404,7 +2487,7 @@ function update(dt) {
 
   updateLocation();
   updateQuestGuidance();
-  const guidance=currentGuidance();companion.update(dt,{playerX:world.player.x,playerFacing:world.player.facing,routeX:guidance.routeX,width:world.width,realm:world.currentRealmId,inside:world.insideCave,equipped:world.shop.equipped,
+  const guidance=currentGuidance();companion.update(dt,{playerX:world.player.x,playerFacing:world.player.facing,routeX:guidance.routeX,width:world.width,realm:world.currentRealmId,inside:world.insideCave,equipped:world.shop.equipped,interest:adventure.interest(),
     camera:world.cameraX,safeScreenLeft:window.innerHeight<=540&&window.innerWidth>=560?240:0});
   updateCompanionHint();
   const effect=window.EPQ_AUTH?.shopCatalog?.[world.shop.equippedEffect];
@@ -2434,8 +2517,10 @@ function draw() {
   drawWorldBackdrop(w, h, scene);
   drawGround(w, h, scene);
   drawLandmarks();
+  if(scene==='maple')drawVillageCelebration(ctx,{camera:world.cameraX,ground:world.groundY,time:world.time,ending:world.questStep>=5,reducedMotion:particleMotion.matches});
   drawWorldPortals();
   drawNPCs();
+  adventure.draw(ctx,{camera:world.cameraX,ground:world.groundY,time:world.time});
   drawEnemies();
   drawPlayer();
   drawCompanion();
@@ -3517,7 +3602,7 @@ window.render_game_to_text = () => JSON.stringify({
   realm: world.currentRealmId,
   ready: world.ready,
   loading: Boolean(window.EPQLoading?.active),
-  mode: world.storyIntroOpen ? "STORY" : world.interacting ? "DIALOGUE" : world.typingCaveOpen ? "TYPING"
+  mode: adventure.isOpen() ? "ADVENTURE" : world.storyIntroOpen ? "STORY" : world.interacting ? "DIALOGUE" : world.typingCaveOpen ? "TYPING"
     : guideIsOpen() ? "QUEST_GUIDE" : world.travelMenu ? "TRAVEL" : world.battle ? "BATTLE_TRANSITION" : "MAP",
   player: { x: Math.round(world.player.x), vx: world.player.vx, groundY: world.groundY },
   tutorial: world.tutorial?.stage || null,
@@ -3532,11 +3617,14 @@ window.render_game_to_text = () => JSON.stringify({
     name:dungeonSpecs[world.currentRealmId]?.legacyOnly&&!world.insideCave?null:currentDungeonName(),rooms:currentDungeonRooms().length,pending:world.dungeonPending },
   landmarks: landmarks.filter(item=>item.realmId===world.currentRealmId).map(item=>({type:item.type,x:item.x})),
   guidance: currentGuidance(),
+  adventure:adventure.state(),
+  festival:world.currentRealmId==='maple'&&world.questStep>=5,music:getMusicState(),bossPresentation:bossPresentation.state(),
   companion:companion.state(world.shop.equipped),
   particleEffect:{equipped:world.shop.equippedEffect||'none',...cosmeticParticles.state()},
   restoredTree:{restored:Boolean(world.castle?.treeCleared),x:castleLayout.treantX,height:restoredTreeHeight(),visible:world.currentRealmId==='ruins'&&!world.insideCave&&Boolean(world.castle?.treeCleared)&&worldToScreen(castleLayout.treantX)>-240&&worldToScreen(castleLayout.treantX)<window.innerWidth+240},
   finalCastle: {x:storyTargets[4].x,height:finalCastleHeight(),gateX:castleLayout.castleGateX,treantX:castleLayout.treantX,wardenX:castleLayout.castleWardenX,...world.castle,visible:world.currentRealmId==='ruins'&&!world.insideCave&&worldToScreen(storyTargets[4].x)>-320&&worldToScreen(storyTargets[4].x)<window.innerWidth+320},
   typing: world.typingCaveOpen ? { round: Math.min(3,typingCaveState.completedLevels + 1), boss:'wordless-king',sealsRemaining:Math.max(0,3-typingCaveState.completedLevels), monsterLeft: typingCaveState.monsterLeft,
+    phase:typingCaveState.currentWord?.mode||'spelling',approachSteps:typingCaveState.approachSteps,
     hintHiddenLetters: document.querySelectorAll(".typing-cave-letter:not(.revealed)").length } : null,
   enemies: enemies.filter(enemy => enemy.realmId === world.currentRealmId && !enemy.defeated
     && Boolean(enemy.caveOnly) === world.insideCave && (!enemy.caveOnly || dungeonReady() && echoEnemyAvailable(enemy.id, defeatedEnemyIds(),currentDungeonRooms()))
@@ -3578,6 +3666,7 @@ void (async () => {
     window.EPQLoading?.waitForImages([worldBackgrounds[world.currentRealmId], playerStandSprite, realmPortalSprite, ...Object.values(npcPixelSprites), ...(world.currentRealmId==='maple'?[villageShopSprite]:[]), ...(world.currentRealmId==='ruins'?[deadTreeSprite,sakuraTreeSprite,castleGateSprite,finalCastleSprite,...Object.values(mapEnemyArtById)]:[])])
   ]);
   world.ready=Boolean(restored&&playerReady);
+  if(world.ready)void adventure.refresh();
   draw();
   if (restored && playerReady) window.EPQLoading?.ready();
   else window.EPQLoading?.fail();

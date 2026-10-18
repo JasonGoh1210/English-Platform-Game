@@ -8,8 +8,8 @@ epq_require_login_page();
 <html lang="zh-CN"><head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
   <title>旅人商店 · English Power Quest</title>
-  <link rel="stylesheet" href="/FYP/css/learning.css?v=20261017-particles1">
-  <link rel="stylesheet" href="/FYP/css/shop.css?v=20261017-particles1">
+  <link rel="stylesheet" href="/FYP/css/learning.css?v=20261018-newbie1">
+  <link rel="stylesheet" href="/FYP/css/shop.css?v=20261018-newbie1">
 <?php $epqLoadingMode = 'shop'; require __DIR__.'/includes/loading_screen.php'; ?>
 </head><body class="learning-page shop-page">
 <main class="learning-shell">
@@ -26,5 +26,5 @@ epq_require_login_page();
   <dialog id="shopConfirm" aria-labelledby="shopConfirmTitle"><h2 id="shopConfirmTitle" data-i18n="shop.confirmTitle">购买这件商品？</h2><p id="shopConfirmText"></p><div class="shop-actions"><button id="shopCancel" data-i18n="skills.cancel">返回</button><button id="shopBuy" data-i18n="shop.confirm">确认购买</button></div></dialog>
 </main>
 <script>window.EPQ_SHOP=<?= json_encode(['playerId'=>(int)$_SESSION['player_id'],'csrfToken'=>$_SESSION['csrf_token'],'catalog'=>epq_shop_catalog()],JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_AMP|JSON_HEX_QUOT) ?>;</script>
-<script type="module" src="/FYP/js/shop.js?v=20261017-particles1"></script>
+<script type="module" src="/FYP/js/shop.js?v=20261018-newbie1"></script>
 </body></html>

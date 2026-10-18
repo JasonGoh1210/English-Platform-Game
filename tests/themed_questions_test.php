@@ -30,32 +30,38 @@ foreach ($bank as $q) {
             topicCheck(!empty($q['prompt']) && !empty($q['promptZh']), 'Sentence target is unambiguous');
         }
     }
-    $easy = $q['difficulty']==='EASY';
-    topicCheck($q['xp']===($easy?10:15) && $q['coins']===($easy?5:8) && $q['englishPower']===($easy?1:2), 'Existing reward tiers preserved');
+    $rewards=['EASY'=>[10,5,1],'MEDIUM'=>[15,8,2],'HARD'=>[20,10,3]][$q['difficulty']];
+    topicCheck([$q['xp'],$q['coins'],$q['englishPower']]===$rewards, 'Trusted reward tiers preserved');
     $prepared = epq_prepare_question($q);
     topicCheck(epq_answer_correct($prepared,$q['answerOrder']??$q['answer']), 'Shuffle keeps correct grading');
     if ($q['type']==='SENTENCE_BUILDER') topicCheck($prepared['words']!==$q['answerOrder'], 'Sentence not offered in answer order');
 }
-foreach ($realms as $realm=>$count) topicCheck($count===20, 'Twenty questions in '.$realm);
+foreach ($realms as $realm=>$count) topicCheck($count===60, 'Sixty questions in '.$realm);
 foreach (array_keys($realms) as $realm) {
     $statements = array_values(array_filter($bank,static fn($q)=>($q['realm']??null)===$realm && $q['type']==='TRUE_FALSE'));
-    topicCheck(count($statements)===10 && count(array_filter($statements,static fn($q)=>$q['answer']))===5, 'Balanced true/false statements in '.$realm);
+    topicCheck(count($statements)===30 && count(array_filter($statements,static fn($q)=>$q['answer']))===15, 'Balanced true/false statements in '.$realm);
 }
 $reachable = [];
 foreach (epq_battle_enemies() as $enemy) {
-    $pool = epq_question_pool($enemy, []);
-    $expectedCount = count($enemy['types']) === 1 ? 10 : 20;
-    topicCheck(count($pool)===$expectedCount, 'All matching themed questions reachable by encounter');
+  foreach(epq_question_progression()[$enemy['realm']]['levels'] as $difficulty){
+    $pool = epq_question_pool($enemy, [],[],$difficulty);
+    $expectedCount = count(array_filter($bank,static fn($q)=>($q['realm']??null)===$enemy['realm']&&$q['difficulty']===$difficulty&&in_array($q['type'],$enemy['types'],true)));
+    topicCheck(count($pool)===$expectedCount && $expectedCount>=15, 'All matching themed questions reachable by stage');
     foreach ($pool as $q) {
-        topicCheck($q['realm']===$enemy['realm'] && $q['difficulty']===$enemy['difficulty'] && in_array($q['type'],$enemy['types'],true), 'Realm/difficulty/type selection');
+        topicCheck($q['realm']===$enemy['realm'] && $q['difficulty']===$difficulty && in_array($q['type'],$enemy['types'],true), 'Realm/difficulty/type selection');
         $reachable[$q['id']] = true;
     }
     $recent = array_column(array_slice($pool,0,8),'id');
-    foreach (epq_question_pool($enemy, [], $recent) as $q) topicCheck(!in_array($q['id'],$recent,true), 'Avoid last eight questions');
+    foreach (epq_question_pool($enemy, [], $recent,$difficulty) as $q) topicCheck(!in_array($q['id'],$recent,true), 'Avoid last eight questions');
     $used = array_column(array_slice($pool,0,$expectedCount-1),'id');
-    topicCheck(count(epq_question_pool($enemy,$used,array_column($pool,'id')))===1, 'Unused question preferred over history when nearly exhausted');
+    topicCheck(count(epq_question_pool($enemy,$used,array_column($pool,'id'),$difficulty))===1, 'Unused question preferred over history when nearly exhausted');
     $used = array_column($pool,'id');
-    foreach (epq_question_pool($enemy,$used,$used) as $q) topicCheck($q['id']!==$used[$expectedCount-1], 'Exhausted pool never immediately repeats last question');
+    foreach (epq_question_pool($enemy,$used,$used,$difficulty) as $q) topicCheck($q['id']!==$used[$expectedCount-1], 'Exhausted pool never immediately repeats last question');
+  }
 }
-topicCheck(count($reachable)===80 && count($bank)===99, 'Eighty playable themed questions and nineteen retained legacy questions');
-echo "PASS:99questions,80reachable,20perworld, bilingual explanations, choices/answers, reward tiers, shuffled sentences and bounded repeat avoidance\n";
+topicCheck(count($reachable)===240 && count($bank)===259, '240 playable themed questions and19retained legacy questions');
+foreach(epq_battle_enemies() as $enemy){
+    $plan=epq_question_progression()[$enemy['realm']];
+    foreach([0,1,2,9] as $correct){$stage=epq_question_stage($enemy,$correct);$expected=count($plan['levels'])>1&&$correct>=2?end($plan['levels']):$plan['levels'][0];topicCheck($stage['difficulty']===$expected,'World-ordered correct-answer progression');}
+}
+echo "PASS:259questions,240reachable,60perworld, bilingual explanations, balanced judgments, choices/answers, reward tiers, progressive stages, shuffled sentences and bounded repeat avoidance\n";

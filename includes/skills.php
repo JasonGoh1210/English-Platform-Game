@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-// One playable GDD Word Power branch. Permanent unlocks use the existing,
+// Three permanent branches. Unlocks use the existing,
 // server-owned skill purchase ledger; no client save or schema update is needed.
 function epq_word_strike_nodes(): array {
     return [1=>['cost'=>1,'requiredLevel'=>2,'bonus'=>4],
@@ -10,14 +10,22 @@ function epq_word_strike_nodes(): array {
 }
 
 function epq_word_strike_level(mysqli $db, int $playerId): int {
+    return epq_branch_level($db,$playerId,'word-strike');
+}
+function epq_skill_branches(): array {
+    return ['word-strike'=>[4,8,12],'grammar-guard'=>[2,4,6],'sentence-surge'=>[6,12,18]];
+}
+function epq_branch_level(mysqli $db,int $playerId,string $branch): int {
+    if(!isset(epq_skill_branches()[$branch]))throw new InvalidArgumentException('Unknown skill branch.');
     $stmt = $db->prepare("SELECT description, amount FROM player_skill_point_transactions
         WHERE player_id=? AND source_type='SKILL_PURCHASE'
-        AND description IN ('EPQ:word-strike:1','EPQ:word-strike:2','EPQ:word-strike:3')");
-    $stmt->bind_param('i',$playerId); $stmt->execute();
+        AND description IN (?,?,?)");
+    $one='EPQ:'.$branch.':1';$two='EPQ:'.$branch.':2';$three='EPQ:'.$branch.':3';
+    $stmt->bind_param('isss',$playerId,$one,$two,$three); $stmt->execute();
     $owned = [];
     foreach ($stmt->get_result()->fetch_all(MYSQLI_ASSOC) as $row) {
         foreach (epq_word_strike_nodes() as $level=>$node) {
-            if ($row['description']==='EPQ:word-strike:'.$level && (int)$row['amount']===-$node['cost']) $owned[$level]=true;
+            if ($row['description']==='EPQ:'.$branch.':'.$level && (int)$row['amount']===-$node['cost']) $owned[$level]=true;
         }
     }
     $level=0;
@@ -31,12 +39,16 @@ function epq_word_strike_bonus(array $question, int $level): int {
 
 // Caller owns the transaction and locks the player first, like combat rewards.
 function epq_unlock_word_strike(mysqli $db, int $playerId, int $target): bool {
+    return epq_unlock_branch($db,$playerId,'word-strike',$target);
+}
+function epq_unlock_branch(mysqli $db,int $playerId,string $branch,int $target): bool {
+    if(!isset(epq_skill_branches()[$branch]))throw new InvalidArgumentException('Unknown skill branch.');
     $node=epq_word_strike_nodes()[$target] ?? null;
     if (!$node) throw new InvalidArgumentException('Unknown skill level.');
     $stmt=$db->prepare('SELECT skill_points_total,level_no FROM players WHERE player_id=? FOR UPDATE');
     $stmt->bind_param('i',$playerId); $stmt->execute(); $player=$stmt->get_result()->fetch_assoc();
     if (!$player) throw new RuntimeException('Player not found.');
-    $current=epq_word_strike_level($db,$playerId);
+    $current=epq_branch_level($db,$playerId,$branch);
     // The target level is an idempotency key: a lost response cannot buy level 2.
     if ($current>=$target) return false;
     if ($target!==$current+1) throw new DomainException('PREVIOUS_SKILL_REQUIRED');
@@ -45,7 +57,7 @@ function epq_unlock_word_strike(mysqli $db, int $playerId, int $target): bool {
     $cost=$node['cost'];
     $update=$db->prepare('UPDATE players SET skill_points_total=skill_points_total-? WHERE player_id=?');
     $update->bind_param('ii',$cost,$playerId); $update->execute();
-    $amount=-$cost; $description='EPQ:word-strike:'.$target;
+    $amount=-$cost; $description='EPQ:'.$branch.':'.$target;
     $ledger=$db->prepare("INSERT INTO player_skill_point_transactions
         (player_id,amount,source_type,source_id,description) VALUES (?,?,'SKILL_PURCHASE',?,?)");
     $ledger->bind_param('iiis',$playerId,$amount,$target,$description); $ledger->execute();
@@ -56,5 +68,7 @@ function epq_skills_view(mysqli $db, int $playerId): array {
     $stmt=$db->prepare('SELECT level_no,skill_points_total FROM players WHERE player_id=?');
     $stmt->bind_param('i',$playerId); $stmt->execute(); $player=$stmt->get_result()->fetch_assoc();
     return ['characterLevel'=>(int)$player['level_no'],'skillPoints'=>(int)$player['skill_points_total'],
-        'wordStrikeLevel'=>epq_word_strike_level($db,$playerId)];
+        'wordStrikeLevel'=>epq_word_strike_level($db,$playerId),
+        'grammarGuardLevel'=>epq_branch_level($db,$playerId,'grammar-guard'),
+        'sentenceSurgeLevel'=>epq_branch_level($db,$playerId,'sentence-surge')];
 }
