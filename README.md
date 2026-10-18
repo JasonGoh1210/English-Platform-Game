@@ -2,9 +2,37 @@
 
 **Level up your character. Level up yourself.**
 
-一个简体中文 / English 双语像素风英语学习 RPG。玩家从枫叶镇出发，通过 NPC 剧情、英语答题战斗、技能成长和三阶段最终 Boss 完成冒险。
+**用英语，打破最后一道封印。**
 
-本说明面向**从 GitHub 下载 ZIP 或拿到项目文件夹的人**：先安装并启动项目，再按下方路线试玩。项目使用 **PHP + MySQL / MariaDB + 原生 JavaScript / Canvas**，不是可以双击打开的离线 HTML 游戏。
+欢迎来到艾瑟利亚，一个路牌、承诺与魔法都由语言维系的像素世界。你在枫叶镇醒来，跟随伙伴穿过森林、营地与古代遗迹：读懂一个单词，可能就是击破怪物护盾的机会；排好一句话，也可能成为打开下一道封印的力量。
+
+**像素 RPG · 剧情冒险 · 四个世界 · 240 道世界主题英语题 · 简体中文 / English**
+
+## 怎么玩
+
+你不需要一开始就认识所有单词。先听长老讲述任务，在地图上找到目标，再把遇见的怪物变成一次英语挑战：
+
+1. **出发与相遇**：左右移动，与 NPC 交谈，听懂他们的故事和下一步提示。
+2. **用答案出招**：判断句子、找出不同类的词，或把单词排列成句；答对就攻击怪物。
+3. **观察再选择**：注意怪物的俯冲、藤蔓和护盾，决定使用专注、防御还是已有的药水。
+4. **带着收获继续走**：赚取金币和 XP，选择技能路线、准备补给、解锁随从，再前往下一个世界。
+
+普通战斗可以慢慢读题；想挑战自己时，再进入带有计时挑战的洞穴或高塔。答错后有答案和解释，也可以在错题复习中再次练习。
+
+## 你可以期待什么
+
+| 冒险内容 | 等着你的体验 |
+| --- | --- |
+| 四个不同的世界 | 从宁静的枫叶镇，到低语森林、旧营地道路与古代遗迹，遇见各地的角色和守卫。 |
+| 会改变战术的怪物 | 打断蝙蝠俯冲、解除树妖藤蔓、击破侍卫护盾，观察提示，让正确答案发挥更大的作用。 |
+| 三条成长路线 | 词汇强化攻击、语法积累护盾、句子储存重击能量，用有限的技能点选择自己的打法。 |
+| 会陪你前进的伙伴 | 解锁 10 种随从造型，让会走、会跳、会飞的伙伴跟随你，并提示下一步去哪里。 |
+| 冒险赚来的新装扮 | 过桥找到村庄商人，用金币购买补给、随从造型和 6 种像素粒子特效。 |
+| 三道封印的最终 Boss | 拿到钥匙、开启城门，依次通过词义、排句和拼写挑战，面对无言魔王。 |
+| 看得见的旅途记录 | 点亮怪物图鉴、完成世界目标、查看学习报告，通过间隔复习逐步修复记忆碑。 |
+| 会回应你的世界 | 击败树妖让樱花重新盛开，完成结局后回到村庄，看庆典装饰、听 NPC 的新对话。 |
+
+从第一只单词史莱姆，到终焉城堡的最后一击——这趟旅程，等你用自己的答案走完。
 
 ## 游戏截图
 
@@ -12,7 +40,7 @@
 
 ![登录界面：账号密码、Google 登录和游客入口](docs/screenshots/01-login.png)
 
-支持用户名密码、Google 账号或游客进入游戏，并继续对应角色的冒险进度。
+选择账号、Google 登录或游客身份，从这里开启属于你的像素冒险。
 
 <details>
 <summary>展开完整游玩截图：剧情、战斗、商店、世界与怪物图鉴</summary>
@@ -21,203 +49,71 @@
 
 ![序章：一个由词语构成的世界](docs/screenshots/02-prologue.png)
 
-序章介绍由语言构成的异世界，引导玩家进入英语学习冒险。
+在陌生的天空下醒来，发现这个世界的路牌、承诺和魔法都与英语相连。
 
 ### 03 · 主线剧情
 
 ![第一章：罗文长老介绍枫叶镇与最初的任务](docs/screenshots/03-story-chapter.png)
 
-通过与罗文长老对话推进第一章，了解任务目标和世界背景。
+听罗文长老讲述最初的故事，从枫叶镇迈出冒险的第一步。
 
 ### 04 · 英语答题战斗
 
 ![单词史莱姆战斗：找不同题目、生命值与战斗操作](docs/screenshots/04-word-battle.png)
 
-玩家通过英语题目攻击怪物，并可以选择专注、防御或使用库存药水。
+把正确答案变成攻击，再用专注、防御和已有药水应对怪物的威胁。
 
 ### 05 · 村庄桥梁与商人
 
 ![村庄右侧桥梁、商人布兰姆与旅人商店](docs/screenshots/05-bridge-merchant.png)
 
-走过村庄右侧的桥后，可遇到商人布兰姆并进入旅人商店。
+穿过村庄的小桥，和商人布兰姆打个招呼，为下一段旅程准备补给。
 
 ### 06 · 药水、粒子与随从商店
 
 ![旅人商店：药水、像素粒子特效与十种随从造型](docs/screenshots/06-shop.png)
 
-商店提供治疗与提示药水、粒子特效以及十种随从造型。
+用冒险赚来的金币备好药水、挑选伙伴，再为角色搭配喜欢的像素粒子。
 
 ### 07 · 世界传送
 
 ![领域传送门：世界卡片与左右切换按钮](docs/screenshots/07-realm-travel.png)
 
-使用传送门切换四个世界，点击世界卡片即可前往选定地点。
+转动传送门的世界卡片，选择下一站，也随时回枫叶镇歇歇脚。
 
 ### 08 · 旧营地与高塔
 
 ![旧营地道路：道路守卫、烽火高塔与记忆碑](docs/screenshots/08-camp-tower.png)
 
-旧营地的高塔在击败外部守卫后解锁，玩家也可通过记忆碑复习错题。
+暮色中的高塔仍被守卫封锁，先赢下外部战斗，再踏入里面的试炼。
 
 ### 09 · 古代遗迹守卫
 
 ![古代遗迹中的主角、随从与语法守卫](docs/screenshots/09-ruins-guardian.png)
 
-古代遗迹中有语法守卫等怪物，击败外部守卫后可进入对应内部挑战。
+与伙伴并肩面对遗迹守卫，用读懂的句子争取前进的机会。
 
 ### 10 · 回声洞穴
 
 ![回声洞穴内部：出口大门、幽魂与连续房间提示](docs/screenshots/10-echo-cave.png)
 
-回声洞穴由连续房间组成，玩家依次挑战幽魂、水晶甲虫和回声飞龙。
+深入蓝紫色的回声洞穴，依次迎战幽魂、水晶甲虫与回声飞龙。
 
 ### 11 · 枯树林与树妖
 
 ![前往城堡途中的枯树林与枯木树妖](docs/screenshots/11-hollow-treant.png)
 
-遗迹枯树林中的树妖守住前往城堡的道路，击败后会复原为樱花树。
+击败挡住城堡道路的枯木树妖，让这片枯树林重新迎来一树樱花。
 
 ### 12 · 怪物图鉴
 
 ![冒险手册怪物图鉴：已发现怪物、击败状态与未知剪影](docs/screenshots/12-monster-codex.png)
 
-怪物图鉴记录已发现与已击败的怪物，尚未遇见的怪物以剪影显示。
+让未知剪影随着相遇与胜利逐一揭晓，把亲自走过的冒险留在图鉴里。
 
 </details>
 
-## 1. 运行前需要准备什么
-
-| 项目 | 说明 |
-| --- | --- |
-| XAMPP | 使用其中的 Apache、PHP 和 MySQL / MariaDB。现有本地验证环境为 PHP 8.2.12；不要使用 PHP 7。 |
-| PHP 扩展 | 游戏需要 `mysqli`；Google 登录另需 `curl`、`openssl` 和有效的 CA 证书。 |
-| 数据库 | 数据库集成测试覆盖 MySQL 8.0、MariaDB 10.4。 |
-| 浏览器 | 支持 Canvas、JavaScript、Cookie 和 LocalStorage 的现代浏览器，例如 Chrome / Edge。 |
-| 网络 | 本地普通账号和游客游玩由本机服务提供；Google 登录另需连接 Google 服务。 |
-
-**正常安装游玩不需要 Node.js、npm、Composer 或前端打包，也不需要另外下载图片。** 保留项目内的 `assets/`、`images/`、`data/` 等目录。
-
-如果电脑还没有 XAMPP，请先安装，并保留 Apache、MySQL、PHP 和 phpMyAdmin。以下步骤以安装在 `C:\xampp` 为例；若安装在其他位置，使用对应位置下的 `htdocs`。
-
-## 2. 下载文件夹后，按这个顺序安装
-
-### 第一步：放入 XAMPP 的网站目录
-
-1. 在 GitHub 点击 **Code → Download ZIP**，解压文件；也可以使用拿到的完整项目文件夹。
-2. 将包含 `index.php`、`login.php` 的那一层文件夹改名为 **`FYP`**。
-3. 将它放到 XAMPP 的 `htdocs` 下。默认 Windows 路径如下：
-
-```text
-C:\xampp\htdocs\FYP\
-├── index.php
-├── login.php
-├── register.php
-├── battle.php
-├── config\
-├── database\
-├── api\
-├── includes\
-├── js\
-├── css\
-├── data\
-├── assets\
-└── images\
-```
-
-确认实际存在 `C:\xampp\htdocs\FYP\index.php`。不要多套一层，变成 `FYP\English-Platform-Game-main\index.php`。
-
-> 当前程序的资源、页面和 Cookie 路径使用 `/FYP/`。第一次安装请保留这个文件夹名。若要改成其他网址前缀，需要同步修改 PHP、JavaScript 和 CSS 中的路径，不能只改文件夹名称。
-
-### 第二步：启动服务器
-
-1. 打开 **XAMPP Control Panel**。
-2. 点击 **Apache → Start**。
-3. 点击 **MySQL → Start**。
-4. 确认两项都处于运行状态，再进行数据库导入。
-
-以下网址以 Apache 使用默认 HTTP 端口 **80** 为例。若你配置的是其他端口，例如 8080，访问地址应改为 `http://localhost:8080/FYP/login.php`，phpMyAdmin 也使用相同端口。
-
-### 第三步：导入数据库（第一次安装）
-
-以下步骤只适用于**没有旧玩家数据的新安装**。
-
-1. 在浏览器打开 [phpMyAdmin](http://localhost/phpmyadmin/)，或点击 XAMPP 中 MySQL 旁的 **Admin**。
-2. 在 phpMyAdmin 的服务器首页点击 **Import / 导入**。
-3. 选择项目内的 [`database/english_power_quest_schema.sql`](database/english_power_quest_schema.sql)。
-4. 执行导入，等待成功提示。
-5. 左侧应出现 **`english_power_quest`** 数据库，里面有 `users`、`players`、`worlds` 等表。若没有马上显示，刷新左侧列表。
-
-这个 SQL 文件会创建并选中 `english_power_quest`，建立表和基础世界数据。**只导入一次即可；新安装不需要再执行 migrations 001–007，也不需要导入 `demo_seed.sql`。**
-
-`demo_seed.sql` 是开发测试资料，其中的 demo 用户没有可用于密码登录的密码。试玩时请自行注册或创建游客。
-
-### 第四步：确认数据库连接
-
-打开 [`config/db.php`](config/db.php)。默认配置对应常见的本机 XAMPP 设置：
-
-```php
-const EPQ_DB_HOST = '127.0.0.1';
-const EPQ_DB_USER = 'root';
-const EPQ_DB_PASS = '';
-const EPQ_DB_NAME = 'english_power_quest';
-```
-
-- 如果你的 MySQL root 没有密码，保持 `EPQ_DB_PASS = ''`。
-- 如果你设置过 MySQL 密码，将 `EPQ_DB_PASS` 改成你本机实际使用的密码。
-- 如果使用另一个数据库用户，修改用户名和密码，并确保该用户可以访问这个数据库。
-- 这些是**数据库连接资料**，不是游戏账号。游戏账号在网页中注册。
-
-服务器也支持 `EPQ_DB_HOST`、`EPQ_DB_USER`、`EPQ_DB_PASS`、`EPQ_DB_NAME` 环境变量，优先于文件默认值。项目不会自动读取 `.env` 文件；使用环境变量时需要让 Apache 实际读取它们，并在修改后重启 Apache。对外部署请使用专用数据库用户，不要提交真实密码。
-
-### 第五步：打开游戏
-
-在浏览器进入：
-
-**[http://localhost/FYP/login.php](http://localhost/FYP/login.php)**
-
-选择一种开始方式：
-
-- **创建账号**：注册后创建自己的角色，之后使用用户名和密码继续存档。
-- **以游客身份游玩**：无需先注册，也会建立真实角色和数据库存档。
-- **通过 Google 继续**：仅在完成下一节的可选配置后可用。
-
-新玩家依次完成角色名字、性别和外观选择，观看序章，进入**枫叶镇 / Maple Town**的新手教学。男女各有三种不同造型：暗影旅人、森林游侠、星辰法师。
-
-注册用户名为 **3–30 位**，允许英文字母、数字、点、横线和下划线，不能与已有用户名重复，大小写视为相同。新密码至少 **8 个字符**，包含至少一个大写英文字母和一个数字；英文与数字密码最多 72 位。邮箱可留空，填写时需要有效且未被其他账号使用。
-
-**不要双击 PHP 文件、使用 `file:///` 地址或仅用 VS Code Live Server 打开。** 游戏需要 Apache 执行 PHP，并连接数据库。
-
-### 安装成功后，先检查这五件事
-
-- [ ] 登录页可以显示，图片和按钮正常。
-- [ ] 能注册或创建游客，保存角色资料。
-- [ ] 新角色从枫叶镇开始，能看到长老教学。
-- [ ] 能移动、对话，完成第一场史莱姆答题战斗。
-- [ ] 正常离开后重新进入，仍能继续同一名角色。
-
-## 3. Google 登录配置（可选）
-
-**不配置 Google 也能完整游玩。** `config/google.local.php` 被 Git 忽略，所以从 GitHub 下载的项目通常没有此机器的 Google Client ID；其他人的本地配置也不会自动同步过来。
-
-启用方法：
-
-1. 在自己的 Google Cloud 项目中创建 **Web application** 类型的 OAuth 客户端。
-2. 为本地访问设置 Authorized JavaScript origin：默认端口使用 `http://localhost`。如果使用其他端口，添加对应的 `http://localhost:端口`。
-3. 将 [`config/google.example.php`](config/google.example.php) 复制为同目录下的 `config/google.local.php`。
-4. 将获得的公开 Client ID 填入新文件：
-
-```php
-<?php
-return ['client_id' => '你的公开客户端ID.apps.googleusercontent.com'];
-```
-
-5. 刷新登录页，使用 Google 按钮测试。这里的占位内容需要替换成真正的完整 ID。
-
-Origin **不包含 `/FYP/` 路径**；`localhost` 和 `127.0.0.1` 也属于不同来源，请统一使用你配置的来源。这个登录流程不需要 Client Secret。也可以使用服务器环境变量 `EPQ_GOOGLE_CLIENT_ID` 配置。
-
-完整说明、账号绑定与错误排查见 [Google 登录与角色创建](docs/GOOGLE_SIGNIN_AND_CHARACTERS.md)。游客想保留当前角色时，请从游戏中的账号设置绑定或升级账号。
-
-## 4. 操作方式
+## 操作方式
 
 | 场景 | 操作 |
 | --- | --- |
@@ -234,7 +130,7 @@ Origin **不包含 `/FYP/` 路径**；`localhost` 和 `127.0.0.1` 也属于不�
 
 右上角像素图标依次对应**技能树、背包、随从带路、任务与洞穴、设置**。地图中的冒险手册包含怪物图鉴、世界完成度、学习报告和随从目标。
 
-## 5. 从开局到通关的游玩过程
+## 从开局到通关的游玩过程
 
 核心循环是：**看任务提示 → 找 NPC → 阅读剧情 → 答题战斗 → 获得 XP / 金币 → 解锁下一段挑战**。各世界传送门都在地图左侧；随从带路与任务提示会指向当前目标。
 
@@ -284,7 +180,7 @@ Origin **不包含 `/FYP/` 路径**；`localhost` 和 `127.0.0.1` 也属于不�
 
 当前版本已移除探索小支线，保留主线、可选战斗、记忆复习和收集目标。
 
-## 6. 战斗、技能与补给规则
+## 战斗、技能与补给规则
 
 ### 答题与怪物机制
 
@@ -323,7 +219,7 @@ Origin **不包含 `/FYP/` 路径**；`localhost` 和 `127.0.0.1` 也属于不�
 
 冒险手册和学习日志会记录真实作答结果，区分普通战斗、重复作答、记忆复习和城堡挑战。样本不足时不会显示虚构的成长比较。记忆复习会隔一段时间以不同语境重现错过的知识；复习不扣 HP，也不要求倒计时作答。
 
-## 7. 存档、游客与交接
+## 存档、游客与交接
 
 - 账号、角色、金币、技能、背包和主要进度保存在 **MySQL**；浏览器还有按角色区分的缓存和未确认保存重试。
 - 游客也有数据库存档，通过同一浏览器的 **30 天恢复 Cookie**继续。不要清除 Cookie，也不要依赖无痕窗口长期保留游客。
@@ -347,7 +243,148 @@ Origin **不包含 `/FYP/` 路径**；`localhost` 和 `127.0.0.1` 也属于不�
 
 **不要向已有玩家的数据库重新导入完整 schema 或 demo seed。** 更新项目文件或执行 `git pull` 不会自动更新数据库。详细方法见 [游客与数据库说明](docs/GUEST_ACCOUNTS_AND_DATABASE.md)。
 
-## 8. 常见问题
+## 本地安装与运行
+
+以下内容面向下载源码后自行运行的使用者；玩家玩法与截图见上方。项目使用 PHP + MySQL / MariaDB + 原生 JavaScript / Canvas，需要服务器执行 PHP。
+
+<details>
+<summary>展开安装步骤：XAMPP、数据库、启动网址与可选 Google 登录</summary>
+
+### 运行前需要准备什么
+
+| 项目 | 说明 |
+| --- | --- |
+| XAMPP | 使用其中的 Apache、PHP 和 MySQL / MariaDB。现有本地验证环境为 PHP 8.2.12；不要使用 PHP 7。 |
+| PHP 扩展 | 游戏需要 `mysqli`；Google 登录另需 `curl`、`openssl` 和有效的 CA 证书。 |
+| 数据库 | 数据库集成测试覆盖 MySQL 8.0、MariaDB 10.4。 |
+| 浏览器 | 支持 Canvas、JavaScript、Cookie 和 LocalStorage 的现代浏览器，例如 Chrome / Edge。 |
+| 网络 | 本地普通账号和游客游玩由本机服务提供；Google 登录另需连接 Google 服务。 |
+
+**正常安装游玩不需要 Node.js、npm、Composer 或前端打包，也不需要另外下载图片。** 保留项目内的 `assets/`、`images/`、`data/` 等目录。
+
+如果电脑还没有 XAMPP，请先安装，并保留 Apache、MySQL、PHP 和 phpMyAdmin。以下步骤以安装在 `C:\xampp` 为例；若安装在其他位置，使用对应位置下的 `htdocs`。
+
+### 下载文件夹后，按这个顺序安装
+
+#### 第一步：放入 XAMPP 的网站目录
+
+1. 在 GitHub 点击 **Code → Download ZIP**，解压文件；也可以使用拿到的完整项目文件夹。
+2. 将包含 `index.php`、`login.php` 的那一层文件夹改名为 **`FYP`**。
+3. 将它放到 XAMPP 的 `htdocs` 下。默认 Windows 路径如下：
+
+```text
+C:\xampp\htdocs\FYP\
+├── index.php
+├── login.php
+├── register.php
+├── battle.php
+├── config\
+├── database\
+├── api\
+├── includes\
+├── js\
+├── css\
+├── data\
+├── assets\
+└── images\
+```
+
+确认实际存在 `C:\xampp\htdocs\FYP\index.php`。不要多套一层，变成 `FYP\English-Platform-Game-main\index.php`。
+
+> 当前程序的资源、页面和 Cookie 路径使用 `/FYP/`。第一次安装请保留这个文件夹名。若要改成其他网址前缀，需要同步修改 PHP、JavaScript 和 CSS 中的路径，不能只改文件夹名称。
+
+#### 第二步：启动服务器
+
+1. 打开 **XAMPP Control Panel**。
+2. 点击 **Apache → Start**。
+3. 点击 **MySQL → Start**。
+4. 确认两项都处于运行状态，再进行数据库导入。
+
+以下网址以 Apache 使用默认 HTTP 端口 **80** 为例。若你配置的是其他端口，例如 8080，访问地址应改为 `http://localhost:8080/FYP/login.php`，phpMyAdmin 也使用相同端口。
+
+#### 第三步：导入数据库（第一次安装）
+
+以下步骤只适用于**没有旧玩家数据的新安装**。
+
+1. 在浏览器打开 [phpMyAdmin](http://localhost/phpmyadmin/)，或点击 XAMPP 中 MySQL 旁的 **Admin**。
+2. 在 phpMyAdmin 的服务器首页点击 **Import / 导入**。
+3. 选择项目内的 [`database/english_power_quest_schema.sql`](database/english_power_quest_schema.sql)。
+4. 执行导入，等待成功提示。
+5. 左侧应出现 **`english_power_quest`** 数据库，里面有 `users`、`players`、`worlds` 等表。若没有马上显示，刷新左侧列表。
+
+这个 SQL 文件会创建并选中 `english_power_quest`，建立表和基础世界数据。**只导入一次即可；新安装不需要再执行 migrations 001–007，也不需要导入 `demo_seed.sql`。**
+
+`demo_seed.sql` 是开发测试资料，其中的 demo 用户没有可用于密码登录的密码。试玩时请自行注册或创建游客。
+
+#### 第四步：确认数据库连接
+
+打开 [`config/db.php`](config/db.php)。默认配置对应常见的本机 XAMPP 设置：
+
+```php
+const EPQ_DB_HOST = '127.0.0.1';
+const EPQ_DB_USER = 'root';
+const EPQ_DB_PASS = '';
+const EPQ_DB_NAME = 'english_power_quest';
+```
+
+- 如果你的 MySQL root 没有密码，保持 `EPQ_DB_PASS = ''`。
+- 如果你设置过 MySQL 密码，将 `EPQ_DB_PASS` 改成你本机实际使用的密码。
+- 如果使用另一个数据库用户，修改用户名和密码，并确保该用户可以访问这个数据库。
+- 这些是**数据库连接资料**，不是游戏账号。游戏账号在网页中注册。
+
+服务器也支持 `EPQ_DB_HOST`、`EPQ_DB_USER`、`EPQ_DB_PASS`、`EPQ_DB_NAME` 环境变量，优先于文件默认值。项目不会自动读取 `.env` 文件；使用环境变量时需要让 Apache 实际读取它们，并在修改后重启 Apache。对外部署请使用专用数据库用户，不要提交真实密码。
+
+#### 第五步：打开游戏
+
+在浏览器进入：
+
+**[http://localhost/FYP/login.php](http://localhost/FYP/login.php)**
+
+选择一种开始方式：
+
+- **创建账号**：注册后创建自己的角色，之后使用用户名和密码继续存档。
+- **以游客身份游玩**：无需先注册，也会建立真实角色和数据库存档。
+- **通过 Google 继续**：仅在完成下方 Google 登录配置后可用。
+
+新玩家依次完成角色名字、性别和外观选择，观看序章，进入**枫叶镇 / Maple Town**的新手教学。男女各有三种不同造型：暗影旅人、森林游侠、星辰法师。
+
+注册用户名为 **3–30 位**，允许英文字母、数字、点、横线和下划线，不能与已有用户名重复，大小写视为相同。新密码至少 **8 个字符**，包含至少一个大写英文字母和一个数字；英文与数字密码最多 72 位。邮箱可留空，填写时需要有效且未被其他账号使用。
+
+**不要双击 PHP 文件、使用 `file:///` 地址或仅用 VS Code Live Server 打开。** 游戏需要 Apache 执行 PHP，并连接数据库。
+
+#### 安装成功后，先检查这五件事
+
+- [ ] 登录页可以显示，图片和按钮正常。
+- [ ] 能注册或创建游客，保存角色资料。
+- [ ] 新角色从枫叶镇开始，能看到长老教学。
+- [ ] 能移动、对话，完成第一场史莱姆答题战斗。
+- [ ] 正常离开后重新进入，仍能继续同一名角色。
+
+### Google 登录配置（可选）
+
+**不配置 Google 也能完整游玩。** `config/google.local.php` 被 Git 忽略，所以从 GitHub 下载的项目通常没有此机器的 Google Client ID；其他人的本地配置也不会自动同步过来。
+
+启用方法：
+
+1. 在自己的 Google Cloud 项目中创建 **Web application** 类型的 OAuth 客户端。
+2. 为本地访问设置 Authorized JavaScript origin：默认端口使用 `http://localhost`。如果使用其他端口，添加对应的 `http://localhost:端口`。
+3. 将 [`config/google.example.php`](config/google.example.php) 复制为同目录下的 `config/google.local.php`。
+4. 将获得的公开 Client ID 填入新文件：
+
+```php
+<?php
+return ['client_id' => '你的公开客户端ID.apps.googleusercontent.com'];
+```
+
+5. 刷新登录页，使用 Google 按钮测试。这里的占位内容需要替换成真正的完整 ID。
+
+Origin **不包含 `/FYP/` 路径**；`localhost` 和 `127.0.0.1` 也属于不同来源，请统一使用你配置的来源。这个登录流程不需要 Client Secret。也可以使用服务器环境变量 `EPQ_GOOGLE_CLIENT_ID` 配置。
+
+完整说明、账号绑定与错误排查见 [Google 登录与角色创建](docs/GOOGLE_SIGNIN_AND_CHARACTERS.md)。游客想保留当前角色时，请从游戏中的账号设置绑定或升级账号。
+
+</details>
+
+## 常见问题
 
 | 问题 | 检查方法 |
 | --- | --- |
@@ -358,7 +395,7 @@ Origin **不包含 `/FYP/` 路径**；`localhost` 和 `127.0.0.1` 也属于不�
 | Unknown database / Table doesn't exist | 新安装检查完整结构文件是否成功导入；旧安装检查缺少的迁移，不要覆盖已有数据库。 |
 | Duplicate table / 已存在的表 | 可能重复导入了完整结构文件。先确认已有数据和安装状态，不要直接删库。 |
 | 注册或游客暂时无法创建 | 先核对数据库连接、表结构和 PHP `mysqli` 扩展，再查看 Apache / PHP 错误日志。 |
-| Google 显示未启用 | 按第 3 节配置自己的 Client ID；不影响普通账号和游客游玩。 |
+| Google 显示未启用 | 按「Google 登录配置」部分设置自己的 Client ID；不影响普通账号和游客游玩。 |
 | Google 提示 origin_mismatch | 检查协议、主机、端口是否与配置来源一致，来源不能带 `/FYP/`。 |
 | Google 验证连接失败 | 检查 PHP `curl`、`openssl` 扩展和有效的 CA 证书，以及 Google 网络连接；不要关闭证书验证。 |
 | 新玩家出现在其他地图 | 先确认浏览器是否恢复了已有游客。测试全新角色可使用独立浏览器配置或新无痕窗口；保留旧游客的 Cookie。真正新建角色应从枫叶镇开始。 |
@@ -367,7 +404,7 @@ Origin **不包含 `/FYP/` 路径**；`localhost` 和 `127.0.0.1` 也属于不�
 | 没声音 | 先点击页面或按键，再到设置开启声音并测试音效；浏览器可能阻止自动播放。 |
 | 更新后仍看到旧界面 | 按 `Ctrl + F5` 强制刷新。不要为了刷新资源清除未升级游客的全部站点数据。 |
 
-## 9. 项目结构与进一步阅读
+## 项目结构与进一步阅读
 
 ```text
 index.php / battle.php       地图与普通答题战斗
@@ -398,7 +435,7 @@ docs/                       功能、更新与验证说明
 
 部分旧文档记录历史实现，可能提到已移除的村庄高塔、探索支线或旧版三关纯拼写挑战。当前玩法以本 README、现有代码和最新功能说明为准。
 
-## 10. 开发者验证（普通试玩者可跳过）
+## 开发者验证（普通试玩者可跳过）
 
 只有修改代码、运行开发测试时才需要 Node.js。以下 PowerShell 命令在项目根目录执行，PHP 路径以默认 Windows XAMPP 为例：
 
