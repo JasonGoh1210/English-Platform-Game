@@ -2,6 +2,7 @@ Original prompt: 试试看做新手教学，有一个小怪出现在村庄，长
 
 ## 2026-10-18 — Publish completed gameplay and recipient README
 
+- Initial publication a41e8d4 reached origin/main with all89pending files and a clean worktree. GitHub syntax and MariaDB10.4 passed; MySQL8 exposed incompatible ASCII/JSON collations in the handbook's guarded-question CONCAT. Replaced string concatenation with a two-column DISTINCT count, preserving per-battle/per-turn semantics and NULL exclusion. Added real-API guard/replay/reload/different-battle coverage to the handbook integration test; no schema/data conversion or balance changes.
 - User explicitly requests pushing the pending work to main after verifying it was still local. Include the completed supplies/question progression, combat/skills/handbook/memory/companion/endgame work, hollow shield, newcomer fixes, tests and recipient installation/gameplay README. No unrelated files or production database changes.
 - Pre-publication checks:106Node tests,9PHP rule suites,85PHP syntax and39JavaScript/tool syntax checks PASS. Pending JSON parses, README links and whitespace checked; ignored Google local configuration remains excluded. Fetched origin/main and confirmed no divergence before committing. Earlier actual browser and isolated database evidence is recorded in the preceding completed entries; these are not new browser runs for this publication.
 

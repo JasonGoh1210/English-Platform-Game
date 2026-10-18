@@ -53,7 +53,9 @@ function epq_handbook_view(mysqli $db,int $playerId,array $activity): array {
     $window=static fn(array $items):array=>$rate(['total'=>count($items),'correct'=>array_sum(array_column($items,'correct'))]);
     $s=$db->prepare("SELECT response_json FROM verified_quest_events WHERE player_id=? AND (JSON_EXTRACT(response_json,'$.outcome.masteryStage') IS NOT NULL OR (JSON_EXTRACT(response_json,'$.outcome.typing') IS NOT NULL AND JSON_EXTRACT(response_json,'$.outcome.correct') IS NOT NULL))");$s->bind_param('i',$playerId);$s->execute();$reviews=['total'=>0,'correct'=>0];$castleAnswers=['total'=>0,'correct'=>0];
     foreach($s->get_result() as $row){$out=json_decode($row['response_json'],true)['outcome'];if(isset($out['masteryStage'])){$reviews['total']++;$reviews['correct']+=!empty($out['correct'])?1:0;}else{$castleAnswers['total']++;$castleAnswers['correct']+=!empty($out['correct'])?1:0;}}
-    $s=$db->prepare("SELECT COUNT(DISTINCT CONCAT(e.battle_id,':',JSON_UNQUOTE(JSON_EXTRACT(e.response_json,'$.battle.combat.turn')))) AS n
+    // Keep the ASCII battle ID and JSON turn separate: MySQL 8 otherwise
+    // mixes incompatible collations while concatenating these values.
+    $s=$db->prepare("SELECT COUNT(DISTINCT e.battle_id,JSON_UNQUOTE(JSON_EXTRACT(e.response_json,'$.battle.combat.turn'))) AS n
         FROM verified_battle_events e JOIN verified_battles b ON b.battle_id=e.battle_id
         WHERE b.player_id=? AND JSON_UNQUOTE(JSON_EXTRACT(e.response_json,'$.battle.combat.guard'))='true'");$s->bind_param('i',$playerId);$s->execute();$guards=(int)$s->get_result()->fetch_assoc()['n'];
     $shop=epq_shop_view($db,$playerId);$bought=0;$uses=0;

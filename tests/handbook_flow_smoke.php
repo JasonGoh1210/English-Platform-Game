@@ -7,6 +7,21 @@ $reader=guest('BookHero');$readerOther=guest('BookOther');$emptyBook=book($reade
 verify($emptyBook['report']['first']['rate']===null&&!$emptyBook['report']['comparisonReady'],'No fabricated percentages or growth from an empty history');
 verify(count($emptyBook['companions'])===10&&!$emptyBook['festival'],'Ten distinct companion goals and no premature village festival');
 foreach($emptyBook['monsters'] as $monster)verify(!$monster['seen']&&!$monster['defeated'],'A fresh codex has no invented sightings');
+
+// Count real guarded questions, not replay/read receipts. The battle ID is ASCII
+// and the turn comes from JSON; this also exercises MySQL 8 collation handling.
+$guardReader=guest('BookGuard');
+for($encounter=0;$encounter<2;$encounter++){
+    $guardedFight=token();action($guardReader,$guardedFight,'START',['enemyId'=>'bat-01']);
+    action($guardReader,$guardedFight,'QUESTION');$guardRequest=token();
+    verify(action($guardReader,$guardedFight,'GUARD',[],$guardRequest)[0]===200,'Guard action succeeds');
+    action($guardReader,$guardedFight,'GUARD',[],$guardRequest);
+    action($guardReader,$guardedFight,'GUARD');
+    action($guardReader,$guardedFight,'START',['enemyId'=>'bat-01']);
+    verify(book($guardReader)['companions']['penguin']['current']===$encounter+1,'Guard receipts count once per battle and turn across reload/replay');
+    action($guardReader,$guardedFight,'RUN');
+}
+
 verify(claim($reader,'WORLD_COMPLETE',['realmId'=>'maple','percent'=>100])[0]===409,'A forged completion percentage earns nothing');
 verify(claim($reader,'COMPANION_CLAIM',['companionId'=>'owl','ready'=>true])[0]===409,'A forged companion milestone earns nothing');
 verify(claim($reader,'WORLD_COMPLETE',['realmId'=>'admin'])[0]===400,'Only real worlds can be claimed');
