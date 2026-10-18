@@ -1,5 +1,11 @@
 Original prompt: 试试看做新手教学，有一个小怪出现在村庄，长老教我们。。。
 
+## 2026-10-18 — README screenshot walkthrough
+
+- User supplies12screenshots and asks to place them in the README with a sentence of explanation. Copied the original PNGs unchanged into docs/screenshots/ with ordered semantic filenames; source/destination SHA256 values match.
+- Added a visible login preview and an expandable11-image walkthrough covering prologue, NPC chapter, English battle, village merchant, shop, travel, camp tower, ruins guardian, Echo Cave, treant and codex. Each image has meaningful alt text and exactly one Chinese explanatory sentence. Installation instructions remain directly below the collapsible gallery; no runtime, assets used by the game or database changes.
+- Verified12unique readable PNGs,12sentence captions,33relative links, UTF-8 and balanced Markdown/details; whitespace PASS. Documentation-only validation, no new gameplay test claim. Publish the README and screenshots under the user's existing instruction to push all completed changes; local configuration and player data remain excluded.
+
 ## 2026-10-18 — Publish completed gameplay and recipient README
 
 - Initial publication a41e8d4 reached origin/main with all89pending files and a clean worktree. GitHub syntax and MariaDB10.4 passed; MySQL8 exposed incompatible ASCII/JSON collations in the handbook's guarded-question CONCAT. Replaced string concatenation with a two-column DISTINCT count, preserving per-battle/per-turn semantics and NULL exclusion. Added real-API guard/replay/reload/different-battle coverage to the handbook integration test; no schema/data conversion or balance changes.
